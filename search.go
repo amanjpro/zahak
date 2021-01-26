@@ -40,9 +40,21 @@ func eval(position *chess.Position) float64 {
 
 func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64) float64 {
 
+	if position.Status() == chess.Checkmate {
+		if isMaximizingPlayer {
+			return math.Inf(-1)
+		}
+		return math.Inf(1)
+	}
+
+	if position.Status() == chess.Stalemate {
+		return 0.0
+	}
+
 	if depth == 0 || position.Status() != chess.NoMethod {
 		return eval(position)
 	}
+
 	moves := position.ValidMoves()
 	if isMaximizingPlayer {
 		var bestEval float64 = math.Inf(1)
