@@ -15,7 +15,8 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 	whiteKnights := 0.0
 	blackBishops := 0.0
 	blackKnights := 0.0
-	pawns := 0.0
+	blackPawns := 0.0
+	whitePawns := 0.0
 	centipawn := 0.0
 
 	whitePawnsPerFile, blackPawnsPerFile := pawnsPerFile(allPieces)
@@ -79,7 +80,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			if white > 1 {
 				bonus -= 0.25
 			}
-			pawns += 1
+			whitePawns += 1
 			centipawn += 1 + bonus
 		case chess.BlackPawn:
 			white := whitePawnsPerFile[file]
@@ -104,14 +105,22 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			if black > 1 {
 				bonus -= 0.25
 			}
-			pawns += 1
+			blackPawns += 1
 			centipawn -= 1 + bonus
 		}
 	}
+	pawns := blackPawns + whitePawns
 	centipawn += whiteBishops * 3 * (1 + (16-pawns)/64)
 	centipawn += blackBishops * -3 * (1 + (16-pawns)/64)
 	centipawn += whiteKnights * 3 * (1 - (16-pawns)/64)
 	centipawn += blackKnights * -3 * (1 - (16-pawns)/64)
+
+	if whiteBishops >= 2 && blackBishops < 2 {
+		centipawn += 0.3 + (8-blackPawns)/64
+	}
+	if whiteBishops < 2 && blackBishops >= 2 {
+		centipawn -= 0.3 + (8-whitePawns)/64
+	}
 	return centipawn
 }
 
