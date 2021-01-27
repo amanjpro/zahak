@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/notnil/chess"
 )
@@ -12,8 +11,7 @@ func main() {
 	// generate moves until game is over
 	for game.Outcome() == chess.NoOutcome {
 		// select a random move
-		moves := game.ValidMoves()
-		move := moves[rand.Intn(len(moves))]
+		move := search(game.Position(), 8)
 		game.Move(move)
 	}
 	// print outcome and game PGN

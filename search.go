@@ -1,10 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"math"
+	"time"
 
 	"github.com/notnil/chess"
+	"github.com/patrickmn/go-cache"
 )
+
+var evalCache = cache.New(1*time.Hour, 10*time.Minute)
 
 func search(position *chess.Position, depth int8) *chess.Move {
 	var bestEval float64
@@ -25,17 +30,13 @@ func search(position *chess.Position, depth int8) *chess.Move {
 				bestMove = move
 			}
 		} else {
-			if localEval > bestEval {
+			if localEval >= bestEval {
 				bestEval = localEval
 				bestMove = move
 			}
 		}
 	}
 	return bestMove
-}
-
-func eval(position *chess.Position) float64 {
-	return 0.0
 }
 
 func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64) float64 {
@@ -51,6 +52,13 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 		return 0.0
 	}
 
+	positionHash := fmt.Sprintf("%x", position.Hash())
+	cachedEval, found := evalCache.Get(positionHash)
+
+	if found {
+		return cachedEval.(float64)
+	}
+
 	if depth == 0 || position.Status() != chess.NoMethod {
 		return eval(position)
 	}
@@ -59,8 +67,11 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 	if isMaximizingPlayer {
 		var bestEval float64 = math.Inf(1)
 		for _, move := range moves {
-			var value float64 = minimax(position.Update(move), depth+1, false, alpha, beta)
+			newPosition := position.Update(move)
+			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
+			var value float64 = minimax(newPosition, depth+1, false, alpha, beta)
 			bestEval = math.Max(bestEval, value)
+			evalCache.Set(newPositionHash, bestEval, cache.DefaultExpiration)
 			alpha = math.Max(alpha, bestEval)
 			if beta <= alpha {
 				break
@@ -71,8 +82,11 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 	} else {
 		var bestEval float64 = math.Inf(-1)
 		for _, move := range moves {
-			var value float64 = minimax(position.Update(move), depth+1, true, alpha, beta)
+			newPosition := position.Update(move)
+			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
+			var value float64 = minimax(newPosition, depth+1, true, alpha, beta)
 			bestEval = math.Min(bestEval, value)
+			evalCache.Set(newPositionHash, bestEval, cache.DefaultExpiration)
 			beta = math.Min(beta, bestEval)
 			if beta <= alpha {
 				break
