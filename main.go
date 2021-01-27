@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/notnil/chess"
 )
@@ -11,11 +14,21 @@ func main() {
 	// generate moves until game is over
 	for game.Outcome() == chess.NoOutcome {
 		// select a random move
-		move := search(game.Position(), 8)
-		game.Move(move)
+		if game.Position().Turn() == chess.White {
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter your next move: ")
+			move, _ := reader.ReadString('\n')
+			err := game.MoveStr(strings.TrimSpace(move))
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			move := search(game.Position(), 5)
+			game.Move(move)
+		}
+		// Position currently
+		fmt.Println(game.Position().Board().Draw())
 	}
-	// print outcome and game PGN
-	fmt.Println(game.Position().Board().Draw())
 	fmt.Printf("Game completed. %s by %s.\n", game.Outcome(), game.Method())
 	fmt.Println(game.String())
 	/*

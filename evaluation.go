@@ -4,20 +4,6 @@ import (
 	"github.com/notnil/chess"
 )
 
-// func eval(position *chess.Position) float64 {
-// 	board := position.Board()
-// 	allPieces := board.SquareMap()
-// 	return (pieceCount(position, &allPieces) +
-// 		files(position, &allPieces) +
-// 		bishopPairs(position, &allPieces) +
-// 		passedPawns(position, &allPieces) +
-// 		mobility(position, &allPieces) +
-// 		castling(position, &allPieces) +
-// 		center(position, &allPieces) +
-// 		backwardPawn(position, &allPieces) +
-// 		doublePawns(position, &allPieces))
-// }
-
 func eval(position *chess.Position) float64 {
 	board := position.Board()
 	allPieces := board.SquareMap()
