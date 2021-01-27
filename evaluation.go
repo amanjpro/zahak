@@ -158,18 +158,6 @@ func pawnsInFile(file chess.File, allPieces *map[chess.Square]chess.Piece) (int8
 	return whitePawn, blackPawn
 }
 
-func files(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
-func bishopPairs(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
-func passedPawns(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
 func mobility(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
 	return 0.0
 }
@@ -183,9 +171,5 @@ func center(position *chess.Position, allPieces *map[chess.Square]chess.Piece) f
 }
 
 func backwardPawn(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
-func doublePawns(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
 	return 0.0
 }
