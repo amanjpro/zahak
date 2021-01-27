@@ -103,7 +103,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 
 			if black > 1 {
-				bonus -= 0.25
+				bonus += 0.25
 			}
 			blackPawns += 1
 			centipawn -= 1 + bonus
@@ -111,9 +111,9 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 	}
 	pawns := blackPawns + whitePawns
 	centipawn += whiteBishops * 3 * (1 + (16-pawns)/64)
-	centipawn += blackBishops * -3 * (1 + (16-pawns)/64)
+	centipawn -= blackBishops * 3 * (1 + (16-pawns)/64)
 	centipawn += whiteKnights * 3 * (1 - (16-pawns)/64)
-	centipawn += blackKnights * -3 * (1 - (16-pawns)/64)
+	centipawn -= blackKnights * 3 * (1 - (16-pawns)/64)
 
 	if whiteBishops >= 2 && blackBishops < 2 {
 		centipawn += 0.3 + (8-blackPawns)/64
