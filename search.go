@@ -81,7 +81,10 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 
 	if depth == 0 {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
-		return eval(position), line
+		if isMaximizingPlayer {
+			return eval(position), line
+		}
+		return -eval(position), line
 	}
 
 	nodesSearched += 1
@@ -89,7 +92,6 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 	moves := position.ValidMoves()
 	newLine := line
 	if isMaximizingPlayer {
-		var bestEval float64 = math.Inf(-1)
 		for _, move := range moves {
 			newPosition := position.Update(move)
 			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
@@ -97,19 +99,18 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 			if found {
 				cacheHits += 1
 				v := cachedEval.(float64)
-				bestEval = math.Max(bestEval, v)
 				if v > alpha {
 					newLine = append(line, *move)
+					alpha = v
 				}
 			} else {
 				v, t := minimax(newPosition, depth-1, false, alpha, beta, append(line, *move))
 				evalCache.Set(newPositionHash, v, cache.DefaultExpiration)
-				bestEval = math.Max(bestEval, v)
 				if v > alpha {
+					alpha = v
 					newLine = t
 				}
 			}
-			alpha = math.Max(alpha, bestEval)
 			if alpha >= beta {
 				return beta, newLine
 			}
@@ -117,7 +118,6 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 		return alpha, newLine
 
 	} else {
-		var bestEval float64 = math.Inf(1)
 		for _, move := range moves {
 			newPosition := position.Update(move)
 			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
@@ -125,19 +125,18 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 			if found {
 				cacheHits += 1
 				v := cachedEval.(float64)
-				bestEval = math.Min(bestEval, v)
 				if v < beta {
+					beta = v
 					newLine = append(line, *move)
 				}
 			} else {
 				v, t := minimax(newPosition, depth-1, true, alpha, beta, append(line, *move))
 				evalCache.Set(newPositionHash, v, cache.DefaultExpiration)
-				bestEval = math.Min(bestEval, v)
 				if v < beta {
+					beta = v
 					newLine = t
 				}
 			}
-			beta = math.Min(beta, bestEval)
 			if beta <= alpha {
 				return alpha, newLine
 			}

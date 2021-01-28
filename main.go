@@ -24,8 +24,9 @@ func main() {
 			}
 			fmt.Println("Current eval is: ", eval(game.Position()))
 		} else {
-			evalMove := search(game.Position(), 7)
+			evalMove := search(game.Position(), 6)
 			game.Move(evalMove.move)
+			fmt.Println("Played: ", evalMove.move)
 			fmt.Println("Current eval is: ", evalMove.eval)
 			fmt.Println("Current tree is: ")
 			for _, mv := range evalMove.line {
