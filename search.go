@@ -18,112 +18,130 @@ var cacheHits int64 = 0
 type EvalMove struct {
 	eval float64
 	move *chess.Move
+	line []chess.Move
 }
 
-func search(position *chess.Position, depth int8) *chess.Move {
+func search(position *chess.Position, depth int8) *EvalMove {
 	nodesVisited = 0
 	nodesSearched = 0
 	cacheHits = 0
-	var bestEval float64
-	var bestMove *chess.Move
-	var isMaximizingPlayer bool
-	if position.Turn() == chess.Black {
-		bestEval = math.Inf(1)
-		isMaximizingPlayer = false
-	} else {
-		bestEval = math.Inf(-1)
-		isMaximizingPlayer = true
-	}
+	evalCache.Flush()
+	var bestEval *EvalMove
+	var isMaximizingPlayer = position.Turn() == chess.White
 	validMoves := position.ValidMoves()
 	evals := make(chan EvalMove)
 	start := time.Now()
 	for _, move := range validMoves {
-		go parallelMinimax(position.Update(move), move, depth, isMaximizingPlayer, evals)
+		go parallelMinimax(position.Update(move), move, depth, true, evals)
 	}
 	for i := 0; i < len(validMoves); i++ {
 		evalMove := <-evals
-		if !isMaximizingPlayer {
-			if evalMove.eval <= bestEval {
-				bestEval = evalMove.eval
-				bestMove = evalMove.move
+
+		fmt.Println("Tree")
+		for _, mv := range evalMove.line {
+			fmt.Printf("%s ", mv.String())
+		}
+		fmt.Println("Eval: ", evalMove.eval)
+		if isMaximizingPlayer {
+			if bestEval == nil || evalMove.eval > bestEval.eval {
+				bestEval = &evalMove
 			}
 		} else {
-			if evalMove.eval >= bestEval {
-				bestEval = evalMove.eval
-				bestMove = evalMove.move
+			if bestEval == nil || evalMove.eval < bestEval.eval {
+				bestEval = &evalMove
 			}
 		}
 	}
 	end := time.Now()
 	close(evals)
 	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n", nodesVisited, nodesSearched, cacheHits)
-	fmt.Printf("Took %d seconds", end.Sub(start).Seconds())
-	return bestMove
+	fmt.Printf("Took %d seconds\n", end.Sub(start).Seconds())
+	return bestEval
 }
 
 func parallelMinimax(position *chess.Position, move *chess.Move, depth int8, isMaximizingPlayer bool, resultEval chan EvalMove) {
-	eval := minimax(position, depth, isMaximizingPlayer, math.Inf(-1), math.Inf(1))
-	resultEval <- EvalMove{eval, move}
+	eval, moves := minimax(position, depth, isMaximizingPlayer, math.Inf(-1), math.Inf(1), []chess.Move{})
+	resultEval <- EvalMove{eval, move, moves}
 }
 
-func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64) float64 {
+func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64, line []chess.Move) (float64, []chess.Move) {
 
 	nodesVisited += 1
 
 	if position.Status() == chess.Checkmate {
 		if isMaximizingPlayer {
-			return math.Inf(-1)
+			return math.Inf(-1), line
 		}
-		return math.Inf(1)
+		return math.Inf(1), line
 	}
 
-	if position.Status() == chess.Stalemate {
-		return 0.0
+	if position.Status() == chess.Stalemate || position.Status() == chess.InsufficientMaterial {
+		return 0.0, line
 	}
 
-	positionHash := fmt.Sprintf("%x", position.Hash())
-	cachedEval, found := evalCache.Get(positionHash)
-
-	if found {
-		cacheHits += 1
-		return cachedEval.(float64)
-	}
-
-	if depth == 0 || position.Status() != chess.NoMethod {
-		return eval(position)
+	if depth == 0 {
+		// TODO: Perform all captures before giving up, to avoid the horizon effect
+		return eval(position), line
 	}
 
 	nodesSearched += 1
 
 	moves := position.ValidMoves()
+	newLine := line
 	if isMaximizingPlayer {
 		var bestEval float64 = math.Inf(-1)
 		for _, move := range moves {
 			newPosition := position.Update(move)
 			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
-			var value float64 = minimax(newPosition, depth-1, false, alpha, beta)
-			bestEval = math.Max(bestEval, value)
-			evalCache.Set(newPositionHash, value, cache.DefaultExpiration)
+			cachedEval, found := evalCache.Get(newPositionHash)
+			if found {
+				cacheHits += 1
+				v := cachedEval.(float64)
+				bestEval = math.Max(bestEval, v)
+				if v > alpha {
+					newLine = append(line, *move)
+				}
+			} else {
+				v, t := minimax(newPosition, depth-1, false, alpha, beta, append(line, *move))
+				evalCache.Set(newPositionHash, v, cache.DefaultExpiration)
+				bestEval = math.Max(bestEval, v)
+				if v > alpha {
+					newLine = t
+				}
+			}
 			alpha = math.Max(alpha, bestEval)
-			if beta <= alpha {
-				break
+			if alpha >= beta {
+				return beta, newLine
 			}
 		}
-		return bestEval
+		return alpha, newLine
 
 	} else {
 		var bestEval float64 = math.Inf(1)
 		for _, move := range moves {
 			newPosition := position.Update(move)
 			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
-			var value float64 = minimax(newPosition, depth-1, true, alpha, beta)
-			bestEval = math.Min(bestEval, value)
-			evalCache.Set(newPositionHash, value, cache.DefaultExpiration)
+			cachedEval, found := evalCache.Get(newPositionHash)
+			if found {
+				cacheHits += 1
+				v := cachedEval.(float64)
+				bestEval = math.Min(bestEval, v)
+				if v < beta {
+					newLine = append(line, *move)
+				}
+			} else {
+				v, t := minimax(newPosition, depth-1, true, alpha, beta, append(line, *move))
+				evalCache.Set(newPositionHash, v, cache.DefaultExpiration)
+				bestEval = math.Min(bestEval, v)
+				if v < beta {
+					newLine = t
+				}
+			}
 			beta = math.Min(beta, bestEval)
 			if beta <= alpha {
-				break
+				return alpha, newLine
 			}
 		}
-		return bestEval
+		return beta, newLine
 	}
 }
