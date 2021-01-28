@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math"
+
 	"github.com/notnil/chess"
 )
 
@@ -18,6 +20,17 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 	blackPawns := 0.0
 	whitePawns := 0.0
 	centipawn := 0.0
+
+	if position.Status() == chess.Checkmate {
+		if position.Turn() == chess.Black {
+			return math.Inf(1)
+		}
+		return math.Inf(-1)
+	}
+
+	if position.Status() == chess.Stalemate {
+		return 0.0
+	}
 
 	whitePawnsPerFile, blackPawnsPerFile := pawnsPerFile(allPieces)
 
@@ -38,7 +51,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			} else if white == 0 { // semi-open file
 				bonus = 0.5
 			}
-			centipawn -= 5 + bonus
+			centipawn += 5 + bonus
 		case chess.BlackRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -66,14 +79,14 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if white >= 1 && black == 0 { // supported passed pawn
-						bonus = 1 + (float64(rank)*9)/8
+						bonus = 1 * ((float64(rank) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
 					} else if white >= 1 { // semi-supported passed pawn
-						bonus = 0.5 + (float64(rank)*9)/8
+						bonus = 0.5 * ((float64(rank) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
 					} else {
-						bonus = 0.25 + (float64(rank)*9)/8
+						bonus = 0.25 * ((float64(rank) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
 					}
 				} else {
-					bonus = 0.25 + (float64(rank)*9)/8
+					bonus = 0.25 * (float64(rank) * 9) / 8
 				}
 			}
 
@@ -91,19 +104,19 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if black >= 1 && white == 0 { // supported passed pawn
-						bonus = 1 + (9-float64(rank)*9)/8
+						bonus = 1 * ((9 - float64(rank)*9) / 8) * (32 - float64(len(*allPieces))) / 32
 					} else if black >= 1 { // semi-supported passed pawn
-						bonus = 0.5 + (9-float64(rank)*9)/8
+						bonus = 0.5 * ((9 - float64(rank)*9) / 8) * (32 - float64(len(*allPieces))) / 32
 					} else {
-						bonus = 0.25 + (9-float64(rank)*9)/8
+						bonus = 0.25 * ((9 - float64(rank)*9) / 8) * (32 - float64(len(*allPieces))) / 32
 					}
 				} else {
-					bonus = 0.25 + (9-float64(rank)*9)/8
+					bonus = 0.25 * (9 - float64(rank)*9) / 8
 				}
 			}
 
 			if black > 1 {
-				bonus += 0.25
+				bonus -= 0.25
 			}
 			blackPawns += 1
 			centipawn -= 1 + bonus
