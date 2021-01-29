@@ -28,7 +28,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 		return math.Inf(-1)
 	}
 
-	if position.Status() == chess.Stalemate {
+	if position.Status() == chess.Stalemate || position.Status() == chess.InsufficientMaterial {
 		return 0.0
 	}
 

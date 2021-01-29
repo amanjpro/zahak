@@ -21,11 +21,15 @@ type EvalMove struct {
 	line []chess.Move
 }
 
+type CachedEval struct {
+	eval float64
+	line []chess.Move
+}
+
 func search(position *chess.Position, depth int8) *EvalMove {
 	nodesVisited = 0
 	nodesSearched = 0
 	cacheHits = 0
-	evalCache.Flush()
 	var bestEval *EvalMove
 	var isMaximizingPlayer = position.Turn() == chess.White
 	validMoves := position.ValidMoves()
@@ -68,17 +72,6 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 
 	nodesVisited += 1
 
-	if position.Status() == chess.Checkmate {
-		if isMaximizingPlayer {
-			return math.Inf(-1), line
-		}
-		return math.Inf(1), line
-	}
-
-	if position.Status() == chess.Stalemate || position.Status() == chess.InsufficientMaterial {
-		return 0.0, line
-	}
-
 	if depth == 0 {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
 		if isMaximizingPlayer {
@@ -96,16 +89,16 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 			newPosition := position.Update(move)
 			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
 			cachedEval, found := evalCache.Get(newPositionHash)
-			if found {
+			if found && len(cachedEval.(CachedEval).line) >= int(depth) {
 				cacheHits += 1
-				v := cachedEval.(float64)
+				v := cachedEval.(CachedEval).eval
 				if v > alpha {
-					newLine = append(line, *move)
+					newLine = append(line, cachedEval.(CachedEval).line...)
 					alpha = v
 				}
 			} else {
 				v, t := minimax(newPosition, depth-1, false, alpha, beta, append(line, *move))
-				evalCache.Set(newPositionHash, v, cache.DefaultExpiration)
+				evalCache.Set(newPositionHash, CachedEval{v, t}, cache.DefaultExpiration)
 				if v > alpha {
 					alpha = v
 					newLine = t
@@ -122,16 +115,16 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 			newPosition := position.Update(move)
 			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
 			cachedEval, found := evalCache.Get(newPositionHash)
-			if found {
+			if found && len(cachedEval.(CachedEval).line) >= int(depth) {
 				cacheHits += 1
-				v := cachedEval.(float64)
+				v := cachedEval.(CachedEval).eval
 				if v < beta {
+					newLine = append(line, cachedEval.(CachedEval).line...)
 					beta = v
-					newLine = append(line, *move)
 				}
 			} else {
 				v, t := minimax(newPosition, depth-1, true, alpha, beta, append(line, *move))
-				evalCache.Set(newPositionHash, v, cache.DefaultExpiration)
+				evalCache.Set(newPositionHash, CachedEval{v, t}, cache.DefaultExpiration)
 				if v < beta {
 					beta = v
 					newLine = t
