@@ -29,7 +29,7 @@ func search(position *chess.Position, depth int8) *EvalMove {
 	evals := make(chan EvalMove)
 	start := time.Now()
 	for _, move := range validMoves {
-		go parallelMinimax(position.Update(move), move, depth, isMaximizingPlayer, evals)
+		go parallelMinimax(position.Update(move), move, depth, !isMaximizingPlayer, evals)
 	}
 	for i := 0; i < len(validMoves); i++ {
 		evalMove := <-evals
@@ -53,17 +53,18 @@ func search(position *chess.Position, depth int8) *EvalMove {
 	end := time.Now()
 	close(evals)
 	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n", nodesVisited, nodesSearched, cacheHits)
-	fmt.Printf("Took %d seconds\n", end.Sub(start).Seconds())
+	fmt.Printf("Took %f seconds\n", end.Sub(start).Seconds())
 	return bestEval
 }
 
-func parallelMinimax(position *chess.Position, move *chess.Move, depth int8, isMaximizingPlayer bool, resultEval chan EvalMove) {
+func parallelMinimax(position *chess.Position, move *chess.Move, depth int8,
+	isMaximizingPlayer bool, resultEval chan EvalMove) {
 	eval, moves := minimax(position, depth, isMaximizingPlayer, math.Inf(-1), math.Inf(1), []chess.Move{})
 	resultEval <- EvalMove{eval, move, moves}
 }
 
-func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64, line []chess.Move) (float64, []chess.Move) {
-
+func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool,
+	alpha float64, beta float64, line []chess.Move) (float64, []chess.Move) {
 	nodesVisited += 1
 
 	if position.Status() == chess.Checkmate {
@@ -75,6 +76,7 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 
 	if depth == 0 {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
+		// Quiescence_Search
 		// if isMaximizingPlayer {
 		return eval(position), line
 		// }
@@ -113,14 +115,16 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 	}
 }
 
-func getEval(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64, move *chess.Move, line []chess.Move) (float64, []chess.Move) {
+func getEval(position *chess.Position, depth int8, isMaximizingPlayer bool,
+	alpha float64, beta float64, move *chess.Move, line []chess.Move) (float64,
+	[]chess.Move) {
 	var score float64
 	var computedLine []chess.Move
 	newPosition := position.Update(move)
 	newHashArray := newPosition.Hash()
 	newPositionHash := binary.BigEndian.Uint64(newHashArray[:])
 	cachedEval, found := evalCache.Get(newPositionHash)
-	if found && len(cachedEval.line) >= int(depth-1) {
+	if found && len(cachedEval.line) >= int(depth) {
 		cacheHits += 1
 		score = cachedEval.eval
 		computedLine = append(append(line, *move), cachedEval.line...)
