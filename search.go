@@ -1,15 +1,13 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math"
 	"time"
 
 	"github.com/notnil/chess"
-	"github.com/patrickmn/go-cache"
 )
-
-var evalCache = cache.New(1*time.Hour, 10*time.Minute)
 
 var nodesVisited int64 = 0
 var nodesSearched int64 = 0
@@ -18,11 +16,6 @@ var cacheHits int64 = 0
 type EvalMove struct {
 	eval float64
 	move *chess.Move
-	line []chess.Move
-}
-
-type CachedEval struct {
-	eval float64
 	line []chess.Move
 }
 
@@ -36,11 +29,12 @@ func search(position *chess.Position, depth int8) *EvalMove {
 	evals := make(chan EvalMove)
 	start := time.Now()
 	for _, move := range validMoves {
-		go parallelMinimax(position.Update(move), move, depth, true, evals)
+		go parallelMinimax(position.Update(move), move, depth, isMaximizingPlayer, evals)
 	}
 	for i := 0; i < len(validMoves); i++ {
 		evalMove := <-evals
 
+		fmt.Println("Move", evalMove.move.String())
 		fmt.Println("Tree")
 		for _, mv := range evalMove.line {
 			fmt.Printf("%s ", mv.String())
@@ -72,68 +66,69 @@ func minimax(position *chess.Position, depth int8, isMaximizingPlayer bool, alph
 
 	nodesVisited += 1
 
+	if position.Status() == chess.Checkmate {
+		if isMaximizingPlayer {
+			return math.Inf(1), line
+		}
+		return math.Inf(-1), line
+	}
+
 	if depth == 0 {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
-		if isMaximizingPlayer {
-			return eval(position), line
-		}
-		return -eval(position), line
+		// if isMaximizingPlayer {
+		return eval(position), line
+		// }
+		// return -eval(position), line
 	}
 
 	nodesSearched += 1
 
 	moves := position.ValidMoves()
 	newLine := line
-	if isMaximizingPlayer {
-		for _, move := range moves {
-			newPosition := position.Update(move)
-			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
-			cachedEval, found := evalCache.Get(newPositionHash)
-			if found && len(cachedEval.(CachedEval).line) >= int(depth) {
-				cacheHits += 1
-				v := cachedEval.(CachedEval).eval
-				if v > alpha {
-					newLine = append(line, cachedEval.(CachedEval).line...)
-					alpha = v
-				}
-			} else {
-				v, t := minimax(newPosition, depth-1, false, alpha, beta, append(line, *move))
-				evalCache.Set(newPositionHash, CachedEval{v, t}, cache.DefaultExpiration)
-				if v > alpha {
-					alpha = v
-					newLine = t
-				}
-			}
-			if alpha >= beta {
-				return beta, newLine
-			}
-		}
-		return alpha, newLine
 
-	} else {
-		for _, move := range moves {
-			newPosition := position.Update(move)
-			newPositionHash := fmt.Sprintf("%x", newPosition.Hash())
-			cachedEval, found := evalCache.Get(newPositionHash)
-			if found && len(cachedEval.(CachedEval).line) >= int(depth) {
-				cacheHits += 1
-				v := cachedEval.(CachedEval).eval
-				if v < beta {
-					newLine = append(line, cachedEval.(CachedEval).line...)
-					beta = v
-				}
-			} else {
-				v, t := minimax(newPosition, depth-1, true, alpha, beta, append(line, *move))
-				evalCache.Set(newPositionHash, CachedEval{v, t}, cache.DefaultExpiration)
-				if v < beta {
-					beta = v
-					newLine = t
-				}
+	for _, move := range moves {
+		score, computedLine := getEval(position, depth-1, !isMaximizingPlayer, alpha, beta, move, line)
+		if isMaximizingPlayer {
+			if score >= beta {
+				return beta, line
 			}
-			if beta <= alpha {
-				return alpha, newLine
+			if score > alpha {
+				newLine = computedLine
+				alpha = score
+			}
+		} else {
+			if score <= alpha {
+				return alpha, line
+			}
+			if score < beta {
+				newLine = computedLine
+				beta = score
 			}
 		}
+	}
+	if isMaximizingPlayer {
+		return alpha, newLine
+	} else {
 		return beta, newLine
 	}
+}
+
+func getEval(position *chess.Position, depth int8, isMaximizingPlayer bool, alpha float64, beta float64, move *chess.Move, line []chess.Move) (float64, []chess.Move) {
+	var score float64
+	var computedLine []chess.Move
+	newPosition := position.Update(move)
+	newHashArray := newPosition.Hash()
+	newPositionHash := binary.BigEndian.Uint64(newHashArray[:])
+	cachedEval, found := evalCache.Get(newPositionHash)
+	if found && len(cachedEval.line) >= int(depth-1) {
+		cacheHits += 1
+		score = cachedEval.eval
+		computedLine = append(append(line, *move), cachedEval.line...)
+	} else {
+		v, t := minimax(newPosition, depth, isMaximizingPlayer, alpha, beta, []chess.Move{})
+		evalCache.Set(newPositionHash, CachedEval{v, t})
+		computedLine = append(append(line, *move), t...)
+		score = v
+	}
+	return score, computedLine
 }
