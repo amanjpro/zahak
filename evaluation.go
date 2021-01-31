@@ -13,6 +13,17 @@ func eval(position *chess.Position) float64 {
 }
 
 func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
+	if position.Status() == chess.Checkmate || position.Status() == chess.Resignation {
+		if position.Turn() == chess.Black {
+			return math.Inf(1)
+		}
+		return math.Inf(-1)
+	}
+
+	if position.Status() != chess.NoMethod {
+		return 0.0
+	}
+
 	whiteBishops := 0.0
 	whiteKnights := 0.0
 	blackBishops := 0.0
@@ -21,23 +32,35 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 	whitePawns := 0.0
 	centipawn := 0.0
 
-	if position.Status() == chess.Checkmate {
-		if position.Turn() == chess.Black {
-			return math.Inf(1)
-		}
-		return math.Inf(-1)
-	}
-
-	if position.Status() == chess.Stalemate || position.Status() == chess.InsufficientMaterial {
-		return 0.0
-	}
-
 	whitePawnsPerFile, blackPawnsPerFile := pawnsPerFile(allPieces)
+	//whitePawnsPerRank, blackPawnsPerRank := pawnsPerRank(allPieces)
 
 	for square, piece := range *allPieces {
 		file := square.File()
 		rank := square.Rank()
 		switch piece {
+		case chess.WhiteKing:
+			// This doesn't consider endgame
+			if position.CastleRights().CanCastle(chess.White, chess.KingSide) ||
+				position.CastleRights().CanCastle(chess.White, chess.QueenSide) ||
+				square == chess.A1 || square == chess.A2 ||
+				square == chess.B1 || square == chess.B2 ||
+				square == chess.F1 || square == chess.F2 ||
+				square == chess.G1 || square == chess.G2 ||
+				square == chess.H1 || square == chess.H2 {
+				centipawn += 1
+			}
+		case chess.BlackKing:
+			// This doesn't consider endgame
+			if position.CastleRights().CanCastle(chess.Black, chess.KingSide) ||
+				position.CastleRights().CanCastle(chess.Black, chess.QueenSide) ||
+				square == chess.A7 || square == chess.A8 ||
+				square == chess.B7 || square == chess.B8 ||
+				square == chess.F7 || square == chess.F8 ||
+				square == chess.G7 || square == chess.G8 ||
+				square == chess.H7 || square == chess.H8 {
+				centipawn -= 1
+			}
 		case chess.WhiteQueen:
 			centipawn += 9
 		case chess.BlackQueen:
@@ -86,7 +109,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 						bonus = 0.25 * ((float64(rank) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
 					}
 				} else {
-					bonus = 0.25 * (float64(rank) * 9) / 8
+					bonus = 0.25 * ((float64(rank) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
 				}
 			}
 
@@ -111,7 +134,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 						bonus = 0.25 * ((9 - float64(rank)*9) / 8) * (32 - float64(len(*allPieces))) / 32
 					}
 				} else {
-					bonus = 0.25 * (9 - float64(rank)*9) / 8
+					bonus = 0.25 * ((9 - float64(rank)*9) / 8) * (32 - float64(len(*allPieces))) / 32
 				}
 			}
 
@@ -158,6 +181,40 @@ func pawnsInFile(file chess.File, allPieces *map[chess.Square]chess.Piece) (int8
 	var whitePawn int8 = 0
 	for _, rank := range ranks {
 		square := chess.Square((rank * 8) + int(file))
+		piece, ok := (*allPieces)[square]
+		if ok {
+			if piece == chess.BlackPawn {
+				blackPawn += 1
+			} else if piece == chess.WhitePawn {
+				whitePawn += 1
+			}
+		}
+	}
+
+	return whitePawn, blackPawn
+}
+
+func pawnsPerRank(allPieces *map[chess.Square]chess.Piece) (map[chess.Rank](int8), map[chess.Rank](int8)) {
+	whites := make(map[chess.Rank]int8)
+	blacks := make(map[chess.Rank]int8)
+
+	ranks := [8]chess.Rank{chess.Rank1, chess.Rank2, chess.Rank3, chess.Rank4, chess.Rank5, chess.Rank6, chess.Rank7, chess.Rank8}
+
+	for _, rank := range ranks {
+		white, black := pawnsInRank(rank, allPieces)
+		whites[rank] = white
+		blacks[rank] = black
+	}
+
+	return whites, blacks
+}
+
+func pawnsInRank(rank chess.Rank, allPieces *map[chess.Square]chess.Piece) (int8, int8) {
+	files := [8]int{0, 1, 2, 3, 4, 5, 6, 7}
+	var blackPawn int8 = 0
+	var whitePawn int8 = 0
+	for _, file := range files {
+		square := chess.Square((int(rank) * 8) + file)
 		piece, ok := (*allPieces)[square]
 		if ok {
 			if piece == chess.BlackPawn {
