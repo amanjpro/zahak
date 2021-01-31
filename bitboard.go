@@ -158,3 +158,42 @@ func (b *Bitboard) Move(s1 Square, s2 Square) {
 		b.whitePieces |= (1 << dest)
 	}
 }
+
+func StartingBoard() Bitboard {
+	bitboard := Bitboard{}
+	for pos := 0; pos < 16; pos++ {
+		bitboard.whitePieces |= (1 << pos)
+	}
+
+	for pos := 48; pos < 64; pos++ {
+		bitboard.blackPieces |= (1 << pos)
+	}
+
+	for pos := 8; pos < 16; pos++ {
+		bitboard.whitePawn |= (1 << pos)
+	}
+
+	for pos := 48; pos < 56; pos++ {
+		bitboard.blackPawn |= (1 << pos)
+	}
+
+	bitboard.whiteRook |= (1 << 0)
+	bitboard.whiteRook |= (1 << 7)
+	bitboard.whiteKnight |= (1 << 1)
+	bitboard.whiteKnight |= (1 << 6)
+	bitboard.whiteBishop |= (1 << 2)
+	bitboard.whiteBishop |= (1 << 5)
+	bitboard.whiteKing |= (1 << 3)
+	bitboard.whiteQueen |= (1 << 4)
+
+	bitboard.blackRook |= (1 << 56)
+	bitboard.blackRook |= (1 << 63)
+	bitboard.blackKnight |= (1 << 57)
+	bitboard.blackKnight |= (1 << 62)
+	bitboard.blackBishop |= (1 << 58)
+	bitboard.blackBishop |= (1 << 61)
+	bitboard.blackKing |= (1 << 59)
+	bitboard.blackQueen |= (1 << 60)
+
+	return bitboard
+}
