@@ -63,8 +63,10 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 		case chess.WhiteQueen:
 			centipawn += 9
+			centipawn += 0.025 * 9 * float64(rank) / 8
 		case chess.BlackQueen:
 			centipawn -= 9
+			centipawn -= 0.025 * 9 * (9 - float64(rank)) / 8
 		case chess.WhiteRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -75,6 +77,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 				bonus = 0.5
 			}
 			centipawn += 5 + bonus
+			centipawn += 0.025 * 5 * (float64(rank)) / 8
 		case chess.BlackRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -85,14 +88,19 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 				bonus = 0.5
 			}
 			centipawn -= 5 + bonus
+			centipawn -= 0.025 * 5 * (9 - float64(rank)) / 8
 		case chess.WhiteBishop:
 			whiteBishops += 1
+			centipawn += 0.025 * 3 * (float64(rank)) / 8
 		case chess.BlackBishop:
 			blackBishops += 1
+			centipawn -= 0.025 * 3 * (9 - float64(rank)) / 8
 		case chess.WhiteKnight:
 			whiteKnights += 1
+			centipawn += 0.025 * 3 * (float64(rank)) / 8
 		case chess.BlackKnight:
 			blackKnights += 1
+			centipawn -= 0.025 * 3 * (9 - float64(rank)) / 8
 		case chess.WhitePawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -153,6 +161,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 			whitePawns += 1
 			centipawn += 1 + bonus
+			centipawn += 0.125 * 1 * (float64(rank)) / 8
 		case chess.BlackPawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -213,6 +222,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 			blackPawns += 1
 			centipawn -= 1 + bonus
+			centipawn += 0.125 * 1 * (9 - float64(rank)) / 8
 		}
 	}
 	pawns := blackPawns + whitePawns
