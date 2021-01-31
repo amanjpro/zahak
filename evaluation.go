@@ -45,7 +45,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 				position.CastleRights().CanCastle(chess.White, chess.QueenSide) ||
 				square == chess.A1 || square == chess.A2 ||
 				square == chess.B1 || square == chess.B2 ||
-				square == chess.F1 || square == chess.F2 ||
+				square == chess.C1 || square == chess.C2 ||
 				square == chess.G1 || square == chess.G2 ||
 				square == chess.H1 || square == chess.H2 {
 				centipawn += 1
@@ -56,7 +56,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 				position.CastleRights().CanCastle(chess.Black, chess.QueenSide) ||
 				square == chess.A7 || square == chess.A8 ||
 				square == chess.B7 || square == chess.B8 ||
-				square == chess.F7 || square == chess.F8 ||
+				square == chess.C7 || square == chess.C8 ||
 				square == chess.G7 || square == chess.G8 ||
 				square == chess.H7 || square == chess.H8 {
 				centipawn -= 1
