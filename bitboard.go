@@ -17,70 +17,35 @@ type Bitboard struct {
 	blackPieces uint64
 }
 
-type Rank int8
-
-const (
-	Rank1 Rank = iota
-	Rank2
-	Rank3
-	Rank4
-	Rank5
-	Rank6
-	Rank7
-	Rank8
-)
-
-type File int8
-
-const (
-	FileA File = iota
-	FileB
-	FileC
-	FileD
-	FileE
-	FileF
-	FileG
-	FileH
-)
-
-type Square struct {
-	file File
-	rank Rank
-}
-
-func (s *Square) BitboardIndex() int8 {
-	return (int8(s.rank) * 8) + int8(s.file)
-}
-
 func (b *Bitboard) AllPieces() map[Square]Piece {
 	allPieces := make(map[Square]Piece, 32)
 	for pos := 0; pos < 64; pos++ {
 		file := File(pos % 8)
-		rank := Rank(pos / 7)
+		rank := Rank(pos / 8)
 		if b.blackPawn&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = BlackPawn
+			allPieces[SquareOf(file, rank)] = BlackPawn
 		} else if b.whitePawn&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = WhitePawn
+			allPieces[SquareOf(file, rank)] = WhitePawn
 		} else if b.blackKnight&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = BlackKnight
+			allPieces[SquareOf(file, rank)] = BlackKnight
 		} else if b.whiteKnight&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = WhiteKnight
+			allPieces[SquareOf(file, rank)] = WhiteKnight
 		} else if b.blackBishop&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = BlackBishop
+			allPieces[SquareOf(file, rank)] = BlackBishop
 		} else if b.whiteBishop&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = WhiteBishop
+			allPieces[SquareOf(file, rank)] = WhiteBishop
 		} else if b.blackRook&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = BlackRook
+			allPieces[SquareOf(file, rank)] = BlackRook
 		} else if b.whiteRook&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = WhiteRook
+			allPieces[SquareOf(file, rank)] = WhiteRook
 		} else if b.blackQueen&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = BlackQueen
+			allPieces[SquareOf(file, rank)] = BlackQueen
 		} else if b.whiteQueen&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = WhiteQueen
+			allPieces[SquareOf(file, rank)] = WhiteQueen
 		} else if b.blackKing&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = WhiteKing
+			allPieces[SquareOf(file, rank)] = BlackKing
 		} else if b.whiteKing&(1<<pos) != 0 {
-			allPieces[Square{file, rank}] = BlackKing
+			allPieces[SquareOf(file, rank)] = WhiteKing
 		}
 	}
 	return allPieces
@@ -183,8 +148,8 @@ func StartingBoard() Bitboard {
 	bitboard.whiteKnight |= (1 << 6)
 	bitboard.whiteBishop |= (1 << 2)
 	bitboard.whiteBishop |= (1 << 5)
-	bitboard.whiteKing |= (1 << 3)
-	bitboard.whiteQueen |= (1 << 4)
+	bitboard.whiteQueen |= (1 << 3)
+	bitboard.whiteKing |= (1 << 4)
 
 	bitboard.blackRook |= (1 << 56)
 	bitboard.blackRook |= (1 << 63)
@@ -192,8 +157,8 @@ func StartingBoard() Bitboard {
 	bitboard.blackKnight |= (1 << 62)
 	bitboard.blackBishop |= (1 << 58)
 	bitboard.blackBishop |= (1 << 61)
-	bitboard.blackKing |= (1 << 59)
-	bitboard.blackQueen |= (1 << 60)
+	bitboard.blackQueen |= (1 << 59)
+	bitboard.blackKing |= (1 << 60)
 
 	return bitboard
 }
