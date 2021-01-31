@@ -113,6 +113,41 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 				}
 			}
 
+			// backward pawn
+			if rank != chess.Rank7 && file != chess.FileA && file != chess.FileH {
+				rPiece, rOk := (*allPieces)[toSquare(int(rank+1), int(file-1))]
+				lPiece, lOk := (*allPieces)[toSquare(int(rank+1), int(file+1))]
+				if rOk && lOk && rPiece == chess.WhitePawn && lPiece == chess.WhitePawn {
+					centipawn -= 0.25
+				}
+			}
+
+			// fawn pawn
+			if rank == chess.Rank6 {
+				fPiece, fOk := (*allPieces)[toSquare(int(rank+1), int(file))] // pawn in front
+				if fOk && fPiece == chess.BlackPawn {
+					if file == chess.FileH {
+						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
+						if rOk && rPiece == chess.BlackPawn {
+							centipawn += 0.25
+						}
+					} else if file == chess.FileA {
+						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
+						if lOk && lPiece == chess.BlackPawn {
+							centipawn += 0.25
+						}
+					} else {
+						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
+						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
+						if (lOk && lPiece == chess.BlackPawn) ||
+							(rOk && rPiece == chess.BlackPawn) {
+							centipawn += 0.25
+						}
+					}
+				}
+			}
+
+			// double pawns
 			if white > 1 {
 				bonus -= 0.25
 			}
@@ -138,6 +173,41 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 				}
 			}
 
+			// backward pawn
+			if rank != chess.Rank2 && file != chess.FileA && file != chess.FileH {
+				rPiece, rOk := (*allPieces)[toSquare(int(rank-1), int(file-1))]
+				lPiece, lOk := (*allPieces)[toSquare(int(rank-1), int(file+1))]
+				if rOk && lOk && rPiece == chess.BlackPawn && lPiece == chess.BlackPawn {
+					centipawn += 0.25
+				}
+			}
+
+			// fawn pawn
+			if rank == chess.Rank2 {
+				fPiece, fOk := (*allPieces)[toSquare(int(rank-1), int(file))] // pawn in front
+				if fOk && fPiece == chess.WhitePawn {
+					if file == chess.FileH {
+						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
+						if rOk && rPiece == chess.WhitePawn {
+							centipawn -= 0.25
+						}
+					} else if file == chess.FileA {
+						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
+						if lOk && lPiece == chess.WhitePawn {
+							centipawn -= 0.25
+						}
+					} else {
+						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
+						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
+						if (lOk && lPiece == chess.WhitePawn) ||
+							(rOk && rPiece == chess.WhitePawn) {
+							centipawn -= 0.25
+						}
+					}
+				}
+			}
+
+			// double pawns
 			if black > 1 {
 				bonus -= 0.25
 			}
@@ -180,7 +250,7 @@ func pawnsInFile(file chess.File, allPieces *map[chess.Square]chess.Piece) (int8
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
 	for _, rank := range ranks {
-		square := chess.Square((rank * 8) + int(file))
+		square := toSquare(rank, int(file))
 		piece, ok := (*allPieces)[square]
 		if ok {
 			if piece == chess.BlackPawn {
@@ -209,12 +279,16 @@ func pawnsPerRank(allPieces *map[chess.Square]chess.Piece) (map[chess.Rank](int8
 	return whites, blacks
 }
 
+func toSquare(rank int, file int) chess.Square {
+	return chess.Square((rank * 8) + file)
+}
+
 func pawnsInRank(rank chess.Rank, allPieces *map[chess.Square]chess.Piece) (int8, int8) {
 	files := [8]int{0, 1, 2, 3, 4, 5, 6, 7}
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
 	for _, file := range files {
-		square := chess.Square((int(rank) * 8) + file)
+		square := toSquare(int(rank), file)
 		piece, ok := (*allPieces)[square]
 		if ok {
 			if piece == chess.BlackPawn {
@@ -228,18 +302,6 @@ func pawnsInRank(rank chess.Rank, allPieces *map[chess.Square]chess.Piece) (int8
 	return whitePawn, blackPawn
 }
 
-func mobility(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
-func castling(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
 func center(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	return 0.0
-}
-
-func backwardPawn(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
 	return 0.0
 }
