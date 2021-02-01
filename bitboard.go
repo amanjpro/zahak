@@ -98,6 +98,10 @@ func (b *Bitboard) UpdateSquare(square *Square, piece Piece) {
 
 func (b *Bitboard) PieceAt(sq *Square) Piece {
 	pos := sq.BitboardIndex()
+	return b.PieceAtIndex(pos)
+}
+
+func (b *Bitboard) PieceAtIndex(pos int8) Piece {
 	if b.blackPawn&(1<<pos) != 0 {
 		return BlackPawn
 	} else if b.whitePawn&(1<<pos) != 0 {

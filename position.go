@@ -71,3 +71,7 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capt
 		}
 	}
 }
+
+func (p *Position) Hash() uint64 {
+	return generateZobristHash(p)
+}
