@@ -45,6 +45,12 @@ func (s *Square) Name() string {
 	return fmt.Sprint(string(fileName), rankName)
 }
 
+func SquareFromIndex(pos int8) Square {
+	file := File(pos % 8)
+	rank := Rank(pos / 8)
+	return SquareOf(file, rank)
+}
+
 func SquareOf(file File, rank Rank) Square {
 	if file == FileA {
 		switch rank {

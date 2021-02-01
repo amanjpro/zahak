@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 type Position struct {
 	board     Bitboard
 	enPassant Square
@@ -77,4 +81,220 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capt
 
 func (p *Position) Hash() uint64 {
 	return generateZobristHash(p)
+}
+
+func (p *Position) ValidMoves() []Move {
+	var allMoves = make([]Move, 0, 256)
+	var whiteChecks uint64 = 0
+	var blackChecks uint64 = 0
+
+	board := p.board
+	allPieces := board.AllPieces()
+	blackKingIndex := 0
+	whiteKingIndex := 0
+
+	for sq, piece := range allPieces {
+		if piece == WhiteRook {
+			checks, moves := rookLikeMoves(&board, White, &sq, allMoves)
+			whiteChecks |= checks
+			allMoves = moves
+		} else if piece == BlackRook {
+			checks, moves := rookLikeMoves(&board, Black, &sq, allMoves)
+			blackChecks |= checks
+			allMoves = moves
+		} else if piece == WhiteQueen {
+			checks1, moves1 := rookLikeMoves(&board, White, &sq, allMoves)
+			checks2, moves2 := bishopLikeMoves(&board, White, &sq, moves1)
+			whiteChecks |= (checks1 | checks2)
+			allMoves = moves2
+		} else if piece == BlackQueen {
+			checks1, moves1 := rookLikeMoves(&board, Black, &sq, allMoves)
+			checks2, moves2 := bishopLikeMoves(&board, Black, &sq, moves1)
+			blackChecks |= (checks1 | checks2)
+			allMoves = moves2
+		} else if piece == WhiteBishop {
+			checks, moves := bishopLikeMoves(&board, White, &sq, allMoves)
+			whiteChecks |= checks
+			allMoves = moves
+		} else if piece == BlackBishop {
+			checks, moves := bishopLikeMoves(&board, Black, &sq, allMoves)
+			blackChecks |= checks
+			allMoves = moves
+		}
+	}
+
+	fmt.Println(blackKingIndex, whiteKingIndex)
+	return allMoves
+}
+
+func rookLikeMoves(b *Bitboard, color Color, srcSq *Square,
+	allMoves []Move) (uint64, []Move) {
+	var checkSet uint64 = 0
+
+	src := srcSq.BitboardIndex()
+
+	// vertical up moves
+	for index := src; index >= 0; index -= 8 {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Rook & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		}
+	}
+
+	// vertical down moves
+	for index := src; index < 64; index += 8 {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Rook & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		}
+	}
+
+	// horizontal up moves
+	for index := src; index >= 0; index-- {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Rook & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		}
+	}
+
+	// horizontal down moves
+	for index := src; index < 8; index++ {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Rook & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		}
+	}
+	return checkSet, allMoves
+}
+
+func bishopLikeMoves(b *Bitboard, color Color, srcSq *Square,
+	allMoves []Move) (uint64, []Move) {
+	var checkSet uint64 = 0
+
+	src := srcSq.BitboardIndex()
+
+	// up-right
+	for index := src; index >= 0; index -= 7 {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Bishop & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			break
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+		}
+	}
+
+	// down-left
+	for index := src; index < 64; index += 7 {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Bishop & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			break
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+		}
+	}
+
+	// up-left
+	for index := src; index >= 0; index -= 9 {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Bishop & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		}
+	}
+
+	// up-right
+	for index := src; index < 8; index += 9 {
+		destSq := SquareFromIndex(index)
+		piece := b.PieceAt(&destSq)
+		if piece == NoPiece {
+			allMoves = append(allMoves, Move{srcSq, &destSq, NoType, 0})
+			setCheckSet(checkSet, index)
+		} else if piece.Color() == color { // Bishop & Queen cannot jump
+			break
+		} else if piece.Type() != King { // This is a capture
+			allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		} else if piece.Type() == King {
+			// This is a check? what is that? don't add anything yet
+			// allMoves = append(allMoves, Move{srcSq, &destSq, piece.Type(), Capture})
+			break
+		}
+	}
+	return checkSet, allMoves
+}
+
+func setCheckSet(checkBitSet uint64, bitIndex int8) {
+	checkBitSet |= (1 << bitIndex)
 }
