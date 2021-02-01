@@ -32,18 +32,21 @@ func (p *Position) Turn() Color {
 func (p *Position) MakeMove(move Move) {
 	p.board.Move(move.source, move.destination)
 	movingPiece := p.board.PieceAt(move.source)
-	if p.HasTag(BlackToMove) && move.HasTag(Check) {
-		p.ClearTag(WhiteCanCastleKingSide)
-		p.ClearTag(WhiteCanCastleQueenSide)
-	} else if p.HasTag(WhiteToMove) && move.HasTag(Check) {
+
+	if movingPiece == BlackKing {
 		p.ClearTag(BlackCanCastleKingSide)
 		p.ClearTag(BlackCanCastleQueenSide)
-	} else if movingPiece == BlackKing || movingPiece == BlackRook {
-		p.ClearTag(BlackCanCastleKingSide)
-		p.ClearTag(BlackCanCastleQueenSide)
-	} else if movingPiece == WhiteKing || movingPiece == WhiteRook {
+	} else if movingPiece == WhiteKing {
 		p.ClearTag(WhiteCanCastleKingSide)
 		p.ClearTag(WhiteCanCastleQueenSide)
+	} else if movingPiece == BlackRook && *(move.source) == A8 {
+		p.ClearTag(BlackCanCastleQueenSide)
+	} else if movingPiece == BlackRook && *(move.source) == H8 {
+		p.ClearTag(BlackCanCastleKingSide)
+	} else if movingPiece == WhiteRook && *(move.source) == A1 {
+		p.ClearTag(WhiteCanCastleQueenSide)
+	} else if movingPiece == WhiteRook && *(move.source) == H1 {
+		p.ClearTag(WhiteCanCastleKingSide)
 	}
 
 	p.ToggleTag(BlackToMove)
