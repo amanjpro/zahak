@@ -51,26 +51,107 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 	return allPieces
 }
 
-func (b *Bitboard) Move(s1 Square, s2 Square) {
+func (b *Bitboard) UpdateSquare(square *Square, piece Piece) {
 
+	pos := square.BitboardIndex()
+
+	// Remove the piece from source square and add it to destination
+	switch piece {
+	case BlackPawn:
+		b.blackPawn |= (1 << pos)
+		b.blackPieces |= (1 << pos)
+	case BlackKnight:
+		b.blackKnight |= (1 << pos)
+		b.blackPieces |= (1 << pos)
+	case BlackBishop:
+		b.blackBishop |= (1 << pos)
+		b.blackPieces |= (1 << pos)
+	case BlackRook:
+		b.blackRook |= (1 << pos)
+		b.blackPieces |= (1 << pos)
+	case BlackQueen:
+		b.blackQueen |= (1 << pos)
+		b.blackPieces |= (1 << pos)
+	case BlackKing:
+		b.blackKing |= (1 << pos)
+		b.blackPieces |= (1 << pos)
+	case WhitePawn:
+		b.whitePawn |= (1 << pos)
+		b.whitePieces |= (1 << pos)
+	case WhiteKnight:
+		b.whiteKnight |= (1 << pos)
+		b.whitePieces |= (1 << pos)
+	case WhiteBishop:
+		b.whiteBishop |= (1 << pos)
+		b.whitePieces |= (1 << pos)
+	case WhiteRook:
+		b.whiteRook |= (1 << pos)
+		b.whitePieces |= (1 << pos)
+	case WhiteQueen:
+		b.whiteQueen |= (1 << pos)
+		b.whitePieces |= (1 << pos)
+	case WhiteKing:
+		b.whiteKing |= (1 << pos)
+		b.whitePieces |= (1 << pos)
+	}
+}
+
+func (b *Bitboard) PieceAt(sq *Square) Piece {
+	pos := sq.BitboardIndex()
+	if b.blackPawn&(1<<pos) != 0 {
+		return BlackPawn
+	} else if b.whitePawn&(1<<pos) != 0 {
+		return WhitePawn
+	} else if b.blackKnight&(1<<pos) != 0 {
+		return BlackKnight
+	} else if b.whiteKnight&(1<<pos) != 0 {
+		return WhiteKnight
+	} else if b.blackBishop&(1<<pos) != 0 {
+		return BlackBishop
+	} else if b.whiteBishop&(1<<pos) != 0 {
+		return WhiteBishop
+	} else if b.blackRook&(1<<pos) != 0 {
+		return BlackRook
+	} else if b.whiteRook&(1<<pos) != 0 {
+		return WhiteRook
+	} else if b.blackQueen&(1<<pos) != 0 {
+		return BlackQueen
+	} else if b.whiteQueen&(1<<pos) != 0 {
+		return WhiteQueen
+	} else if b.blackKing&(1<<pos) != 0 {
+		return BlackKing
+	} else if b.whiteKing&(1<<pos) != 0 {
+		return WhiteKing
+	}
+	return NoPiece
+}
+
+func (b *Bitboard) Clear(square *Square) {
+
+	pos := square.BitboardIndex()
+
+	b.blackPawn &= ^(1 << pos)
+	b.blackKnight &= ^(1 << pos)
+	b.blackBishop &= ^(1 << pos)
+	b.blackRook &= ^(1 << pos)
+	b.blackQueen &= ^(1 << pos)
+	b.blackKing &= ^(1 << pos)
+	b.blackPieces &= ^(1 << pos)
+	b.whitePawn &= ^(1 << pos)
+	b.whiteKnight &= ^(1 << pos)
+	b.whiteBishop &= ^(1 << pos)
+	b.whiteRook &= ^(1 << pos)
+	b.whiteQueen &= ^(1 << pos)
+	b.whiteKing &= ^(1 << pos)
+	b.whitePieces &= ^(1 << pos)
+}
+
+func (b *Bitboard) Move(s1 *Square, s2 *Square) {
 	src := s1.BitboardIndex()
 	dest := s2.BitboardIndex()
 
 	// clear destination square
-	b.blackPawn &= ^(1 << dest)
-	b.blackKnight &= ^(1 << dest)
-	b.blackBishop &= ^(1 << dest)
-	b.blackRook &= ^(1 << dest)
-	b.blackQueen &= ^(1 << dest)
-	b.blackKing &= ^(1 << dest)
-	b.blackPieces &= ^(1 << dest)
-	b.whitePawn &= ^(1 << dest)
-	b.whiteKnight &= ^(1 << dest)
-	b.whiteBishop &= ^(1 << dest)
-	b.whiteRook &= ^(1 << dest)
-	b.whiteQueen &= ^(1 << dest)
-	b.whiteKing &= ^(1 << dest)
-	b.whitePieces &= ^(1 << dest)
+	b.Clear(s2)
 
 	// Remove the piece from source square and add it to destination
 	if b.blackPawn&(1<<src) != 0 {
@@ -114,10 +195,22 @@ func (b *Bitboard) Move(s1 Square, s2 Square) {
 		b.whiteQueen |= (1 << dest)
 		b.whitePieces |= (1 << dest)
 	} else if b.blackKing&(1<<src) != 0 {
+		// Is it a castle?
+		if *s1 == E8 && *s2 == G8 {
+			b.Move(&H8, &F8)
+		} else if *s1 == E8 && *s2 == C8 {
+			b.Move(&A8, &D8)
+		}
 		b.blackKing &= ^(1 << src)
 		b.blackKing |= (1 << dest)
 		b.blackPieces |= (1 << dest)
 	} else if b.whiteKing&(1<<src) != 0 {
+		// Is it a castle?
+		if *s1 == E1 && *s2 == G1 {
+			b.Move(&H1, &F1)
+		} else if *s1 == E1 && *s2 == C1 {
+			b.Move(&A1, &D1)
+		}
 		b.whiteKing &= ^(1 << src)
 		b.whiteKing |= (1 << dest)
 		b.whitePieces |= (1 << dest)

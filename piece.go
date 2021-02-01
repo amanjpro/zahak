@@ -19,6 +19,7 @@ const (
 	BlackQueen
 	WhiteKing
 	BlackKing
+	NoPiece
 )
 
 type PieceType int8
@@ -30,6 +31,7 @@ const (
 	Rook
 	Queen
 	King
+	NoType
 )
 
 type Color int8
@@ -51,8 +53,10 @@ func (p *Piece) Type() PieceType {
 		return Rook
 	case WhiteQueen | BlackQueen:
 		return Queen
+	case WhiteKing | BlackKing:
+		return King
 	}
-	return King
+	return NoType
 }
 
 func (p *Piece) Weight() float64 {
