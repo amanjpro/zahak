@@ -92,6 +92,9 @@ func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 }
 
 func (b *Bitboard) PieceAt(sq Square) Piece {
+	if sq == NoSquare {
+		return NoPiece
+	}
 	if b.blackPawn&(1<<sq) != 0 {
 		return BlackPawn
 	} else if b.whitePawn&(1<<sq) != 0 {

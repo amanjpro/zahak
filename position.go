@@ -113,13 +113,13 @@ func (p *Position) ValidMoves() []Move {
 	var whiteChecksBishop uint64 = 0
 	var whiteChecksQueen uint64 = 0
 	var whiteChecksKnight uint64 = 0
-	// var whiteChecksPawn uint64 = 0
+	var whiteChecksPawn uint64 = 0
 	// var whiteChecksKing uint64 = 0
 	var blackChecksRook uint64 = 0
 	var blackChecksBishop uint64 = 0
 	var blackChecksQueen uint64 = 0
 	var blackChecksKnight uint64 = 0
-	// var blackChecksPawn uint64 = 0
+	var blackChecksPawn uint64 = 0
 	// var blackChecksKing uint64 = 0
 
 	board := p.board
@@ -162,6 +162,14 @@ func (p *Position) ValidMoves() []Move {
 			checks, moves := knightMoves(&board, Black, sq, &allMoves)
 			blackChecksKnight |= checks
 			allMoves = moves
+		} else if piece == WhitePawn {
+			checks, moves := pawnMoves(&board, White, sq, p.enPassant, &allMoves)
+			blackChecksPawn |= checks
+			allMoves = moves
+		} else if piece == BlackPawn {
+			checks, moves := pawnMoves(&board, Black, sq, p.enPassant, &allMoves)
+			whiteChecksPawn |= checks
+			allMoves = moves
 		} else if piece == WhiteKing {
 			whiteKingIndex = sq
 		} else if piece == BlackKing {
@@ -171,6 +179,151 @@ func (p *Position) ValidMoves() []Move {
 
 	fmt.Println(blackKingIndex, whiteKingIndex)
 	return allMoves
+}
+
+func pawnCheckTag(b *Bitboard, sq1 Square, sq2 Square) MoveTag {
+	if sq1 != NoSquare {
+		p := b.PieceAt(sq1)
+		if p.Type() == King {
+			return Check
+		}
+	}
+	if sq2 != NoSquare {
+		p := b.PieceAt(sq2)
+		if p.Type() == King {
+			return Check
+		}
+	}
+	return 0
+}
+
+func pawnAttacks(b *Bitboard, color Color, src Square) (Square, Square) {
+	direction := 1
+	if color == Black {
+		direction = -1
+	}
+
+	file := src.File()
+
+	right := src + Square(direction*9)
+	left := src + Square(direction*7)
+
+	pr := b.PieceAt(right)
+	pl := b.PieceAt(left)
+
+	f := NoSquare
+	s := NoSquare
+
+	if file == FileH {
+		if color == White && pl.Color() == Black {
+			return left, s
+		} else if pr.Color() == White {
+			return right, s
+		}
+	} else if file == FileA {
+		if color == White && pr.Color() == Black {
+			return right, s
+		} else if pl.Color() == White {
+			return left, s
+		}
+	} else {
+
+		if pr.Color() != color && pr != NoPiece {
+			f = right
+		}
+
+		if pl.Color() != color && pl != NoPiece {
+			s = left
+		}
+	}
+
+	return f, s
+}
+
+func pawnMoves(b *Bitboard, color Color, srcSq Square,
+	enPassant Square, allMoves *[]Move) (uint64, []Move) {
+	moves := *allMoves
+	var checkSet uint64 = 0
+	rank := srcSq.Rank()
+	file := srcSq.File()
+
+	f, s := pawnAttacks(b, color, srcSq)
+	if f != NoSquare {
+		setCheckSet(checkSet, f)
+	}
+	if s != NoSquare {
+		setCheckSet(checkSet, f)
+	}
+
+	baseRank := Rank2
+	promoRank := Rank7
+	direction := 1
+	enPassantRank := Rank3
+	if color == Black {
+		promoRank = Rank2
+		baseRank = Rank7
+		enPassantRank = Rank6
+		direction = -1
+	}
+	oneStep := SquareOf(file, Rank(int(rank)+direction))
+	twoSteps := SquareOf(file, Rank(int(rank)+direction+direction))
+	// forward 1 step
+	if rank != promoRank && b.PieceAt(oneStep) == NoPiece {
+		f, s := pawnAttacks(b, color, oneStep)
+		tag := pawnCheckTag(b, f, s)
+		moves = append(moves, Move{srcSq, oneStep, NoType, tag})
+	}
+
+	// forward 2 steps
+	if rank == baseRank && b.PieceAt(oneStep) == NoPiece &&
+		b.PieceAt(twoSteps) == NoPiece {
+		f, s := pawnAttacks(b, color, twoSteps)
+		tag := pawnCheckTag(b, f, s)
+		moves = append(moves, Move{srcSq, twoSteps, NoType, tag})
+	} else if rank == promoRank && b.PieceAt(oneStep) == NoPiece {
+		// promotion
+		moves = append(moves,
+			Move{srcSq, twoSteps, Queen, queenCheckTag(b, color, oneStep)},
+			Move{srcSq, twoSteps, Rook, rookLikeCheckTag(b, color, oneStep)},
+			Move{srcSq, twoSteps, Bishop, bishopLikeCheckTag(b, color, oneStep)},
+			Move{srcSq, twoSteps, Knight, knightCheckTag(b, color, oneStep)},
+		)
+	}
+
+	// capture
+	attackF, attackS := pawnAttacks(b, color, srcSq)
+
+	fPiece := b.PieceAt(attackF)
+	sPiece := b.PieceAt(attackS)
+
+	if attackF != NoSquare && fPiece.Type() != King {
+		f, s := pawnAttacks(b, color, attackF)
+		tag := pawnCheckTag(b, f, s)
+		moves = append(moves, Move{srcSq, attackF, NoType, tag | Capture})
+	}
+
+	if attackS != NoSquare && sPiece.Type() != King {
+		f, s := pawnAttacks(b, color, attackS)
+		tag := pawnCheckTag(b, f, s)
+		moves = append(moves, Move{srcSq, attackS, NoType, tag | Capture})
+	}
+
+	// enpassant
+	if enPassant != NoSquare && enPassant.Rank() == enPassantRank &&
+		srcSq.Rank() == Rank(int(enPassantRank)+direction) {
+		f, s := pawnAttacks(b, color, enPassant)
+		tag := pawnCheckTag(b, f, s)
+		moves = append(moves, Move{srcSq, enPassant, NoType, tag | Capture | EnPassant})
+	}
+	return checkSet, moves
+}
+
+func queenCheckTag(b *Bitboard, color Color, srcSq Square) MoveTag {
+	tag := rookLikeCheckTag(b, color, srcSq)
+	if tag != Check {
+		tag = bishopLikeCheckTag(b, color, srcSq)
+	}
+	return tag
 }
 
 func rookLikeMoves(b *Bitboard, p Piece, srcSq Square,
