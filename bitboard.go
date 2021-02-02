@@ -19,143 +19,129 @@ type Bitboard struct {
 
 func (b *Bitboard) AllPieces() map[Square]Piece {
 	allPieces := make(map[Square]Piece, 32)
-	for pos := 0; pos < 64; pos++ {
-		file := File(pos % 8)
-		rank := Rank(pos / 8)
-		if b.blackPawn&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = BlackPawn
-		} else if b.whitePawn&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = WhitePawn
-		} else if b.blackKnight&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = BlackKnight
-		} else if b.whiteKnight&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = WhiteKnight
-		} else if b.blackBishop&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = BlackBishop
-		} else if b.whiteBishop&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = WhiteBishop
-		} else if b.blackRook&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = BlackRook
-		} else if b.whiteRook&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = WhiteRook
-		} else if b.blackQueen&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = BlackQueen
-		} else if b.whiteQueen&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = WhiteQueen
-		} else if b.blackKing&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = BlackKing
-		} else if b.whiteKing&(1<<pos) != 0 {
-			allPieces[SquareOf(file, rank)] = WhiteKing
+	for sq := A1; sq <= H8 && len(allPieces) <= 32; sq++ {
+		if b.blackPawn&(1<<sq) != 0 {
+			allPieces[sq] = BlackPawn
+		} else if b.whitePawn&(1<<sq) != 0 {
+			allPieces[sq] = WhitePawn
+		} else if b.blackKnight&(1<<sq) != 0 {
+			allPieces[sq] = BlackKnight
+		} else if b.whiteKnight&(1<<sq) != 0 {
+			allPieces[sq] = WhiteKnight
+		} else if b.blackBishop&(1<<sq) != 0 {
+			allPieces[sq] = BlackBishop
+		} else if b.whiteBishop&(1<<sq) != 0 {
+			allPieces[sq] = WhiteBishop
+		} else if b.blackRook&(1<<sq) != 0 {
+			allPieces[sq] = BlackRook
+		} else if b.whiteRook&(1<<sq) != 0 {
+			allPieces[sq] = WhiteRook
+		} else if b.blackQueen&(1<<sq) != 0 {
+			allPieces[sq] = BlackQueen
+		} else if b.whiteQueen&(1<<sq) != 0 {
+			allPieces[sq] = WhiteQueen
+		} else if b.blackKing&(1<<sq) != 0 {
+			allPieces[sq] = BlackKing
+		} else if b.whiteKing&(1<<sq) != 0 {
+			allPieces[sq] = WhiteKing
 		}
 	}
 	return allPieces
 }
 
-func (b *Bitboard) UpdateSquare(square *Square, piece Piece) {
-
-	pos := square.BitboardIndex()
-
+func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 	// Remove the piece from source square and add it to destination
 	switch piece {
 	case BlackPawn:
-		b.blackPawn |= (1 << pos)
-		b.blackPieces |= (1 << pos)
+		b.blackPawn |= (1 << sq)
+		b.blackPieces |= (1 << sq)
 	case BlackKnight:
-		b.blackKnight |= (1 << pos)
-		b.blackPieces |= (1 << pos)
+		b.blackKnight |= (1 << sq)
+		b.blackPieces |= (1 << sq)
 	case BlackBishop:
-		b.blackBishop |= (1 << pos)
-		b.blackPieces |= (1 << pos)
+		b.blackBishop |= (1 << sq)
+		b.blackPieces |= (1 << sq)
 	case BlackRook:
-		b.blackRook |= (1 << pos)
-		b.blackPieces |= (1 << pos)
+		b.blackRook |= (1 << sq)
+		b.blackPieces |= (1 << sq)
 	case BlackQueen:
-		b.blackQueen |= (1 << pos)
-		b.blackPieces |= (1 << pos)
+		b.blackQueen |= (1 << sq)
+		b.blackPieces |= (1 << sq)
 	case BlackKing:
-		b.blackKing |= (1 << pos)
-		b.blackPieces |= (1 << pos)
+		b.blackKing |= (1 << sq)
+		b.blackPieces |= (1 << sq)
 	case WhitePawn:
-		b.whitePawn |= (1 << pos)
-		b.whitePieces |= (1 << pos)
+		b.whitePawn |= (1 << sq)
+		b.whitePieces |= (1 << sq)
 	case WhiteKnight:
-		b.whiteKnight |= (1 << pos)
-		b.whitePieces |= (1 << pos)
+		b.whiteKnight |= (1 << sq)
+		b.whitePieces |= (1 << sq)
 	case WhiteBishop:
-		b.whiteBishop |= (1 << pos)
-		b.whitePieces |= (1 << pos)
+		b.whiteBishop |= (1 << sq)
+		b.whitePieces |= (1 << sq)
 	case WhiteRook:
-		b.whiteRook |= (1 << pos)
-		b.whitePieces |= (1 << pos)
+		b.whiteRook |= (1 << sq)
+		b.whitePieces |= (1 << sq)
 	case WhiteQueen:
-		b.whiteQueen |= (1 << pos)
-		b.whitePieces |= (1 << pos)
+		b.whiteQueen |= (1 << sq)
+		b.whitePieces |= (1 << sq)
 	case WhiteKing:
-		b.whiteKing |= (1 << pos)
-		b.whitePieces |= (1 << pos)
+		b.whiteKing |= (1 << sq)
+		b.whitePieces |= (1 << sq)
 	}
 }
 
-func (b *Bitboard) PieceAt(sq *Square) Piece {
-	pos := sq.BitboardIndex()
-	return b.PieceAtIndex(pos)
-}
-
-func (b *Bitboard) PieceAtIndex(pos int8) Piece {
-	if b.blackPawn&(1<<pos) != 0 {
+func (b *Bitboard) PieceAt(sq Square) Piece {
+	if b.blackPawn&(1<<sq) != 0 {
 		return BlackPawn
-	} else if b.whitePawn&(1<<pos) != 0 {
+	} else if b.whitePawn&(1<<sq) != 0 {
 		return WhitePawn
-	} else if b.blackKnight&(1<<pos) != 0 {
+	} else if b.blackKnight&(1<<sq) != 0 {
 		return BlackKnight
-	} else if b.whiteKnight&(1<<pos) != 0 {
+	} else if b.whiteKnight&(1<<sq) != 0 {
 		return WhiteKnight
-	} else if b.blackBishop&(1<<pos) != 0 {
+	} else if b.blackBishop&(1<<sq) != 0 {
 		return BlackBishop
-	} else if b.whiteBishop&(1<<pos) != 0 {
+	} else if b.whiteBishop&(1<<sq) != 0 {
 		return WhiteBishop
-	} else if b.blackRook&(1<<pos) != 0 {
+	} else if b.blackRook&(1<<sq) != 0 {
 		return BlackRook
-	} else if b.whiteRook&(1<<pos) != 0 {
+	} else if b.whiteRook&(1<<sq) != 0 {
 		return WhiteRook
-	} else if b.blackQueen&(1<<pos) != 0 {
+	} else if b.blackQueen&(1<<sq) != 0 {
 		return BlackQueen
-	} else if b.whiteQueen&(1<<pos) != 0 {
+	} else if b.whiteQueen&(1<<sq) != 0 {
 		return WhiteQueen
-	} else if b.blackKing&(1<<pos) != 0 {
+	} else if b.blackKing&(1<<sq) != 0 {
 		return BlackKing
-	} else if b.whiteKing&(1<<pos) != 0 {
+	} else if b.whiteKing&(1<<sq) != 0 {
 		return WhiteKing
 	}
 	return NoPiece
 }
 
-func (b *Bitboard) Clear(square *Square) {
+func (b *Bitboard) Clear(square Square) {
 
-	pos := square.BitboardIndex()
-
-	b.blackPawn &= ^(1 << pos)
-	b.blackKnight &= ^(1 << pos)
-	b.blackBishop &= ^(1 << pos)
-	b.blackRook &= ^(1 << pos)
-	b.blackQueen &= ^(1 << pos)
-	b.blackKing &= ^(1 << pos)
-	b.blackPieces &= ^(1 << pos)
-	b.whitePawn &= ^(1 << pos)
-	b.whiteKnight &= ^(1 << pos)
-	b.whiteBishop &= ^(1 << pos)
-	b.whiteRook &= ^(1 << pos)
-	b.whiteQueen &= ^(1 << pos)
-	b.whiteKing &= ^(1 << pos)
-	b.whitePieces &= ^(1 << pos)
+	b.blackPawn &= ^(1 << square)
+	b.blackKnight &= ^(1 << square)
+	b.blackBishop &= ^(1 << square)
+	b.blackRook &= ^(1 << square)
+	b.blackQueen &= ^(1 << square)
+	b.blackKing &= ^(1 << square)
+	b.blackPieces &= ^(1 << square)
+	b.whitePawn &= ^(1 << square)
+	b.whiteKnight &= ^(1 << square)
+	b.whiteBishop &= ^(1 << square)
+	b.whiteRook &= ^(1 << square)
+	b.whiteQueen &= ^(1 << square)
+	b.whiteKing &= ^(1 << square)
+	b.whitePieces &= ^(1 << square)
 }
 
-func (b *Bitboard) Move(s1 *Square, s2 *Square) {
-	src := s1.BitboardIndex()
-	dest := s2.BitboardIndex()
+func (b *Bitboard) Move(src Square, dest Square) {
 
 	// clear destination square
-	b.Clear(s2)
+	b.Clear(dest)
 
 	// Remove the piece from source square and add it to destination
 	if b.blackPawn&(1<<src) != 0 {
@@ -200,20 +186,20 @@ func (b *Bitboard) Move(s1 *Square, s2 *Square) {
 		b.whitePieces |= (1 << dest)
 	} else if b.blackKing&(1<<src) != 0 {
 		// Is it a castle?
-		if *s1 == E8 && *s2 == G8 {
-			b.Move(&H8, &F8)
-		} else if *s1 == E8 && *s2 == C8 {
-			b.Move(&A8, &D8)
+		if src == E8 && dest == G8 {
+			b.Move(H8, F8)
+		} else if src == E8 && dest == C8 {
+			b.Move(A8, D8)
 		}
 		b.blackKing &= ^(1 << src)
 		b.blackKing |= (1 << dest)
 		b.blackPieces |= (1 << dest)
 	} else if b.whiteKing&(1<<src) != 0 {
 		// Is it a castle?
-		if *s1 == E1 && *s2 == G1 {
-			b.Move(&H1, &F1)
-		} else if *s1 == E1 && *s2 == C1 {
-			b.Move(&A1, &D1)
+		if src == E1 && dest == G1 {
+			b.Move(H1, F1)
+		} else if src == E1 && dest == C1 {
+			b.Move(A1, D1)
 		}
 		b.whiteKing &= ^(1 << src)
 		b.whiteKing |= (1 << dest)
@@ -223,39 +209,41 @@ func (b *Bitboard) Move(s1 *Square, s2 *Square) {
 
 func StartingBoard() Bitboard {
 	bitboard := Bitboard{}
-	for pos := 0; pos < 16; pos++ {
-		bitboard.whitePieces |= (1 << pos)
-	}
+	bitboard.UpdateSquare(A2, WhitePawn)
+	bitboard.UpdateSquare(B2, WhitePawn)
+	bitboard.UpdateSquare(C2, WhitePawn)
+	bitboard.UpdateSquare(D2, WhitePawn)
+	bitboard.UpdateSquare(E2, WhitePawn)
+	bitboard.UpdateSquare(F2, WhitePawn)
+	bitboard.UpdateSquare(G2, WhitePawn)
+	bitboard.UpdateSquare(H2, WhitePawn)
 
-	for pos := 48; pos < 64; pos++ {
-		bitboard.blackPieces |= (1 << pos)
-	}
+	bitboard.UpdateSquare(A7, BlackPawn)
+	bitboard.UpdateSquare(B7, BlackPawn)
+	bitboard.UpdateSquare(C7, BlackPawn)
+	bitboard.UpdateSquare(D7, BlackPawn)
+	bitboard.UpdateSquare(E7, BlackPawn)
+	bitboard.UpdateSquare(F7, BlackPawn)
+	bitboard.UpdateSquare(G7, BlackPawn)
+	bitboard.UpdateSquare(H7, BlackPawn)
 
-	for pos := 8; pos < 16; pos++ {
-		bitboard.whitePawn |= (1 << pos)
-	}
+	bitboard.UpdateSquare(A1, WhiteRook)
+	bitboard.UpdateSquare(B1, WhiteKnight)
+	bitboard.UpdateSquare(C1, WhiteBishop)
+	bitboard.UpdateSquare(D1, WhiteQueen)
+	bitboard.UpdateSquare(E1, WhiteKing)
+	bitboard.UpdateSquare(F1, WhiteBishop)
+	bitboard.UpdateSquare(G1, WhiteKnight)
+	bitboard.UpdateSquare(H1, WhiteRook)
 
-	for pos := 48; pos < 56; pos++ {
-		bitboard.blackPawn |= (1 << pos)
-	}
-
-	bitboard.whiteRook |= (1 << 0)
-	bitboard.whiteRook |= (1 << 7)
-	bitboard.whiteKnight |= (1 << 1)
-	bitboard.whiteKnight |= (1 << 6)
-	bitboard.whiteBishop |= (1 << 2)
-	bitboard.whiteBishop |= (1 << 5)
-	bitboard.whiteQueen |= (1 << 3)
-	bitboard.whiteKing |= (1 << 4)
-
-	bitboard.blackRook |= (1 << 56)
-	bitboard.blackRook |= (1 << 63)
-	bitboard.blackKnight |= (1 << 57)
-	bitboard.blackKnight |= (1 << 62)
-	bitboard.blackBishop |= (1 << 58)
-	bitboard.blackBishop |= (1 << 61)
-	bitboard.blackQueen |= (1 << 59)
-	bitboard.blackKing |= (1 << 60)
+	bitboard.UpdateSquare(A8, BlackRook)
+	bitboard.UpdateSquare(B8, BlackKnight)
+	bitboard.UpdateSquare(C8, BlackBishop)
+	bitboard.UpdateSquare(D8, BlackQueen)
+	bitboard.UpdateSquare(E8, BlackKing)
+	bitboard.UpdateSquare(F8, BlackBishop)
+	bitboard.UpdateSquare(G8, BlackKnight)
+	bitboard.UpdateSquare(H8, BlackRook)
 
 	return bitboard
 }

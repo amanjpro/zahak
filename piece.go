@@ -39,6 +39,7 @@ type Color int8
 const (
 	White Color = iota
 	Black
+	NoColor
 )
 
 func (p *Piece) Type() PieceType {
@@ -89,9 +90,6 @@ func (p *Piece) Name() string {
 		return "Q"
 	case WhiteKing:
 		return "K"
-	}
-
-	switch *p {
 	case BlackPawn:
 		return "p"
 	case BlackKnight:
@@ -106,10 +104,70 @@ func (p *Piece) Name() string {
 	return "k"
 }
 
+func pieceFromName(name rune) Piece {
+	switch name {
+	case 'P':
+		return WhitePawn
+	case 'N':
+		return WhiteKnight
+	case 'B':
+		return WhiteBishop
+	case 'R':
+		return WhiteRook
+	case 'Q':
+		return WhiteQueen
+	case 'K':
+		return WhiteKing
+	case 'p':
+		return BlackPawn
+	case 'n':
+		return BlackKnight
+	case 'b':
+		return BlackBishop
+	case 'r':
+		return BlackRook
+	case 'q':
+		return BlackQueen
+	case 'k':
+		return BlackKing
+	}
+	return NoPiece
+}
+
 func (p *Piece) Color() Color {
 	switch *p {
 	case WhitePawn | WhiteKnight | WhiteBishop | WhiteRook | WhiteQueen | WhiteKing:
 		return White
+	case NoPiece:
+		return NoColor
 	}
 	return Black
+}
+
+func getPiece(pieceType PieceType, color Color) Piece {
+	if color == White {
+		switch pieceType {
+		case Queen:
+			return WhiteQueen
+		case Rook:
+			return WhiteRook
+		case Bishop:
+			return WhiteBishop
+		case Knight:
+			return WhiteKnight
+		}
+	}
+	if color == Black {
+		switch pieceType {
+		case Queen:
+			return BlackQueen
+		case Rook:
+			return BlackRook
+		case Bishop:
+			return BlackBishop
+		case Knight:
+			return BlackKnight
+		}
+	}
+	return NoPiece
 }

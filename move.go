@@ -1,8 +1,12 @@
 package main
 
+import (
+	"fmt"
+)
+
 type Move struct {
-	source      *Square
-	destination *Square
+	source      Square
+	destination Square
 	promoType   PieceType
 	moveTag     MoveTag
 }
@@ -29,3 +33,13 @@ func (m *Move) SetTag(tag MoveTag)      { m.moveTag |= tag }
 func (m *Move) ClearTag(tag MoveTag)    { m.moveTag &= ^tag }
 func (m *Move) ToggleTag(tag MoveTag)   { m.moveTag ^= tag }
 func (m *Move) HasTag(tag MoveTag) bool { return m.moveTag&tag != 0 }
+
+func (m *Move) ToString() string {
+	notation := fmt.Sprintf("%s%s", m.source.Name(), m.destination.Name())
+	if m.promoType != NoType {
+		// color doesn't matter here, I picked black as it prints lower case letters
+		piece := getPiece(m.promoType, Black)
+		notation = fmt.Sprintf(notation, piece.Name())
+	}
+	return notation
+}
