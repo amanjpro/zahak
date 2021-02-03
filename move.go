@@ -39,7 +39,7 @@ func (m *Move) ToString() string {
 	if m.promoType != NoType {
 		// color doesn't matter here, I picked black as it prints lower case letters
 		piece := getPiece(m.promoType, Black)
-		notation = fmt.Sprintf(notation, piece.Name())
+		notation = fmt.Sprintf("%s%s", notation, piece.Name())
 	}
 	return notation
 }
