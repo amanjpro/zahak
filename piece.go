@@ -7,18 +7,18 @@ import (
 type Piece int8
 
 const (
-	WhitePawn Piece = iota
-	BlackPawn
-	WhiteKnight
-	BlackKnight
-	WhiteBishop
-	BlackBishop
-	WhiteRook
-	BlackRook
+	WhiteKing Piece = iota
 	WhiteQueen
-	BlackQueen
-	WhiteKing
+	WhiteRook
+	WhiteBishop
+	WhiteKnight
+	WhitePawn
 	BlackKing
+	BlackQueen
+	BlackRook
+	BlackBishop
+	BlackKnight
+	BlackPawn
 	NoPiece
 )
 

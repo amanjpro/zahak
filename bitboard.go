@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 type Bitboard struct {
 	blackPawn   uint64
 	blackKnight uint64
@@ -249,4 +253,25 @@ func StartingBoard() Bitboard {
 	bitboard.UpdateSquare(H8, BlackRook)
 
 	return bitboard
+}
+
+// Draw returns visual representation of the board useful for debugging.
+func (b *Bitboard) Draw() string {
+	pieceUnicodes := []string{"♔", "♕", "♖", "♗", "♘", "♙", "♚", "♛", "♜", "♝", "♞", "♟"}
+	s := "\n A B C D E F G H\n"
+	for r := 7; r >= 0; r-- {
+		s += fmt.Sprint(Rank(r + 1))
+		for f := 0; f < len(files); f++ {
+			p := b.PieceAt(SquareOf(File(f), Rank(r)))
+			if p == NoPiece {
+				s += "-"
+			} else {
+				fmt.Println(p.Name(), pieceUnicodes[int(p)], int(p))
+				s += pieceUnicodes[int(p)]
+			}
+			s += " "
+		}
+		s += "\n"
+	}
+	return s
 }
