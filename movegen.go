@@ -13,17 +13,18 @@ func (p *Position) LegalMoves() []Move {
 	color := p.Turn()
 
 	if color == White {
-		bbPawnMoves(p.board.whitePawn, p.board.whitePieces, p.board.blackPieces, color, p.enPassant, add)
+		bbPawnMoves(p.board.whitePawn, p.board.whitePieces, p.board.blackPieces,
+			p.board.blackKing, color, p.enPassant, add)
 	} else if color == Black {
-		bbPawnMoves(p.board.blackPawn, p.board.blackPieces, p.board.whitePieces, color, p.enPassant, add)
+		bbPawnMoves(p.board.blackPawn, p.board.blackPieces, p.board.whitePieces,
+			p.board.whiteKing, color, p.enPassant, add)
 	}
 	fmt.Println("LEN", len(allMoves))
 	return allMoves
 }
 
-// TODO: set check flags
-func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color,
-	enPassant Square, add func(m ...Move)) {
+func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
+	color Color, enPassant Square, add func(m ...Move)) {
 	both := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		for bbPawn != 0 {
@@ -33,29 +34,43 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Colo
 			dbl := wDblPushTargets(pawn, both)
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
-				add(Move{srcSq, dest, NoType, 0})
+				var tag MoveTag = 0
+				if wPawnsAble2CaptureAny(dbl, otherKing) != 0 {
+					tag |= Check
+				}
+				add(Move{srcSq, dest, NoType, tag})
 			}
 			sngl := wSinglePushTargets(pawn, both)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
+					// TODO: set check flags
 					add(Move{srcSq, dest, Queen, 0},
 						Move{srcSq, dest, Rook, 0},
 						Move{srcSq, dest, Bishop, 0},
 						Move{srcSq, dest, Knight, 0})
 				} else {
-					add(Move{srcSq, dest, NoType, 0})
+					var tag MoveTag = 0
+					if wPawnsAble2CaptureAny(sngl, otherKing) != 0 {
+						tag |= Check
+					}
+					add(Move{srcSq, dest, NoType, tag})
 				}
 			}
-			for _, i := range getIndicesOfOnes(wPawnsAble2CaptureAny(pawn, otherPieces)) {
-				dest := Square(i)
+			for _, sq := range getIndicesOfOnes(wPawnsAble2CaptureAny(pawn, otherPieces)) {
+				dest := Square(sq)
 				if dest.Rank() == Rank8 {
+					// TODO: set check flags
 					add(Move{srcSq, dest, Queen, Capture},
 						Move{srcSq, dest, Rook, Capture},
 						Move{srcSq, dest, Bishop, Capture},
 						Move{srcSq, dest, Knight, Capture})
 				} else {
-					add(Move{srcSq, dest, NoType, Capture})
+					var tag MoveTag = Capture
+					if wPawnsAble2CaptureAny(uint64(1<<sq), otherKing) != 0 {
+						tag |= Check
+					}
+					add(Move{srcSq, dest, NoType, tag})
 				}
 			}
 			if srcSq.Rank() == Rank5 && enPassant != NoSquare && enPassant.Rank() == Rank6 {
@@ -63,7 +78,11 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Colo
 				r := wPawnsAble2CaptureAny(pawn, ep)
 				if r != 0 {
 					dest := Square(bitScanReverse(r))
-					add(Move{srcSq, dest, NoType, EnPassant | Capture})
+					var tag MoveTag = Capture | EnPassant
+					if wPawnsAble2CaptureAny(uint64(1<<r), otherKing) != 0 {
+						tag |= Check
+					}
+					add(Move{srcSq, dest, NoType, tag})
 				}
 			}
 			bbPawn ^= pawn
@@ -76,29 +95,43 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Colo
 			dbl := bDoublePushTargets(pawn, both)
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
-				add(Move{srcSq, dest, NoType, 0})
+				var tag MoveTag = Capture
+				if bPawnsAble2CaptureAny(uint64(1<<dbl), otherKing) != 0 {
+					tag |= Check
+				}
+				add(Move{srcSq, dest, NoType, tag})
 			}
 			sngl := bSinglePushTargets(pawn, both)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
+					// TODO: set check flags
 					add(Move{srcSq, dest, Queen, 0},
 						Move{srcSq, dest, Rook, 0},
 						Move{srcSq, dest, Bishop, 0},
 						Move{srcSq, dest, Knight, 0})
 				} else {
-					add(Move{srcSq, dest, NoType, 0})
+					tag := Capture
+					if bPawnsAble2CaptureAny(sngl, otherKing) != 0 {
+						tag |= Check
+					}
+					add(Move{srcSq, dest, NoType, tag})
 				}
 			}
 			for _, sq := range getIndicesOfOnes(bPawnsAble2CaptureAny(pawn, otherPieces)) {
 				dest := Square(sq)
 				if dest.Rank() == Rank1 {
+					// TODO: set check flags
 					add(Move{srcSq, dest, Queen, Capture},
 						Move{srcSq, dest, Rook, Capture},
 						Move{srcSq, dest, Bishop, Capture},
 						Move{srcSq, dest, Knight, Capture})
 				} else {
-					add(Move{srcSq, dest, NoType, Capture})
+					var tag MoveTag = Capture
+					if bPawnsAble2CaptureAny(uint64(1<<sq), otherKing) != 0 {
+						tag |= Check
+					}
+					add(Move{srcSq, dest, NoType, tag})
 				}
 			}
 			if srcSq.Rank() == Rank4 && enPassant != NoSquare && enPassant.Rank() == Rank3 {
@@ -106,7 +139,11 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Colo
 				r := bPawnsAble2CaptureAny(pawn, ep)
 				if r != 0 {
 					dest := Square(bitScanReverse(r))
-					add(Move{srcSq, dest, NoType, EnPassant | Capture})
+					var tag MoveTag = Capture | EnPassant
+					if bPawnsAble2CaptureAny(r, otherKing) != 0 {
+						tag |= Check
+					}
+					add(Move{srcSq, dest, NoType, tag})
 				}
 			}
 			bbPawn ^= pawn
