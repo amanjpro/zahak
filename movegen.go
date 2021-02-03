@@ -15,13 +15,19 @@ func (p *Position) LegalMoves() []Move {
 	if color == White {
 		bbPawnMoves(p.board.whitePawn, p.board.whitePieces, p.board.blackPieces,
 			p.board.blackKing, color, p.enPassant, add)
+		bbKnightMoves(p.board.whiteKnight, p.board.whitePieces, p.board.blackPieces,
+			p.board.blackKing, add)
 	} else if color == Black {
 		bbPawnMoves(p.board.blackPawn, p.board.blackPieces, p.board.whitePieces,
 			p.board.whiteKing, color, p.enPassant, add)
+		bbKnightMoves(p.board.blackKnight, p.board.blackPieces, p.board.whitePieces,
+			p.board.whiteKing, add)
 	}
 	fmt.Println("LEN", len(allMoves))
 	return allMoves
 }
+
+// Pawns
 
 func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
 	color Color, enPassant Square, add func(m ...Move)) {
@@ -151,6 +157,44 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 	}
 }
 
+
+// Knights
+func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
+	otherKing uint64, add func(m ...Move)) {
+	both := (otherPieces | ownPieces)
+	for bbPiece != 0 {
+		src := bitScanReverse(bbPiece)
+		srcSq := Square(src)
+		knight := uint64(1 << src)
+		moves := knightMovesNoCaptures(knight, both)
+		fmt.Println("MOVES: ", moves)
+		for moves != 0 {
+			sq := bitScanReverse(moves)
+			dest := Square(sq)
+			var tag MoveTag = 0
+			if knightCaptures(knight, otherKing) != 0 {
+				tag |= Check
+			}
+			add(Move{srcSq, dest, NoType, tag})
+			moves ^= (1 << sq)
+		}
+		captures := knightCaptures(knight, otherPieces)
+		fmt.Println("CAPTURE: ", captures)
+		for captures != 0 {
+			sq := bitScanReverse(captures)
+			dest := Square(sq)
+			var tag MoveTag = Capture
+			if knightCaptures(knight, otherKing) != 0 {
+				tag |= Check
+			}
+			add(Move{srcSq, dest, NoType, tag})
+			captures ^= (1 << sq)
+		}
+		bbPiece ^= knight
+	}
+}
+
+
 // Pawn Pushes
 
 func wSinglePushTargets(wpawns uint64, empty uint64) uint64 {
@@ -238,6 +282,47 @@ func bPawnsAble2CaptureAny(bpawns uint64, wpieces uint64) uint64 {
 	return bPawnAnyAttacks(bpawns) & wpieces
 }
 
+// The mighty knight
+
+func knightMovesNoCaptures(b uint64, other uint64) uint64 {
+	attacks := knightAttacks(b)
+	return (attacks ^ other) & attacks
+}
+
+func knightCaptures(b uint64, other uint64) uint64 {
+	return knightAttacks(b) & other
+}
+
+func knightAttacks(b uint64) uint64 {
+	return noNoEa(b) | noEaEa(b) | soEaEa(b) | soSoEa(b) |
+		noNoWe(b) | noWeWe(b) | soWeWe(b) | soSoWe(b)
+}
+
+func noNoEa(b uint64) uint64 {
+	return (b << 17) & notAFile
+}
+func noEaEa(b uint64) uint64 {
+	return (b << 10) & notABFile
+}
+func soEaEa(b uint64) uint64 {
+	return (b >> 6) & notABFile
+}
+func soSoEa(b uint64) uint64 {
+	return (b >> 15) & notAFile
+}
+func noNoWe(b uint64) uint64 {
+	return (b << 15) & notHFile
+}
+func noWeWe(b uint64) uint64 {
+	return (b << 6) & notGHFile
+}
+func soWeWe(b uint64) uint64 {
+	return (b >> 10) & notGHFile
+}
+func soSoWe(b uint64) uint64 {
+	return (b >> 17) & notHFile
+}
+
 // Utilites
 func getIndicesOfOnes(bb uint64) []uint8 {
 	indices := make([]uint8, 0, 8)
@@ -315,4 +400,8 @@ func noWeOne(b uint64) uint64 {
 const empty = uint64(0)
 const universal = uint64(0xffffffffffffffff)
 const notAFile = uint64(0xfefefefefefefefe) // ~0x0101010101010101
+const notBFile = uint64(0xbfbfbfbfbfbfbfbf)
+const notGFile = uint64(0xfdfdfdfdfdfdfdfd)
 const notHFile = uint64(0x7f7f7f7f7f7f7f7f) // ~0x8080808080808080
+const notABFile = notAFile & notBFile
+const notGHFile = notGFile & notHFile
