@@ -17,11 +17,15 @@ func (p *Position) LegalMoves() []Move {
 			p.board.blackKing, color, p.enPassant, add)
 		bbKnightMoves(p.board.whiteKnight, p.board.whitePieces, p.board.blackPieces,
 			p.board.blackKing, add)
+		bbKingMoves(p.board.whiteKing, p.board.whitePieces, p.board.blackPieces,
+			0, add)
 	} else if color == Black {
 		bbPawnMoves(p.board.blackPawn, p.board.blackPieces, p.board.whitePieces,
 			p.board.whiteKing, color, p.enPassant, add)
 		bbKnightMoves(p.board.blackKnight, p.board.blackPieces, p.board.whitePieces,
 			p.board.whiteKing, add)
+		bbKingMoves(p.board.blackKing, p.board.blackPieces, p.board.whitePieces,
+			0, add)
 	}
 	fmt.Println("LEN", len(allMoves))
 	return allMoves
@@ -363,12 +367,27 @@ func bitScanReverse(bb uint64) uint8 {
 	return index64[(bb*debruijn64)>>58]
 }
 
-func diagonal(file File, rank Rank) uint64 {
-	return (uint64(rank) - uint64(file)) & 15
+// func diagonal(file File, rank Rank) uint64 {
+// 	return (uint64(rank) - uint64(file)) & 15
+// }
+//
+// func antiDiagonal(file File, rank Rank) uint64 {
+// 	return (uint64(file) + uint64(rank)) ^ 15
+// }
+
+// King & Kingslayer
+func kingMovesNoCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
+	attacks := kingAttacks(b)
+	return (attacks ^ others) & attacks & (tabooSquares ^ universal)
 }
 
-func antiDiagonal(file File, rank Rank) uint64 {
-	return (uint64(file) + uint64(rank)) ^ 15
+func kingCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
+	return kingAttacks(b) & others & (tabooSquares ^ universal)
+}
+
+func kingAttacks(b uint64) uint64 {
+	return soutOne(b) | nortOne(b) | eastOne(b) | noEaOne(b) |
+		soEaOne(b) | westOne(b) | soWeOne(b) | noWeOne(b)
 }
 
 func soutOne(b uint64) uint64 {
