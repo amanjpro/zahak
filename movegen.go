@@ -9,6 +9,7 @@ Still to support:
 - Rook, Bishop and Queen moves and captures
 - Check if King is at check (square attacked by opponent)
 - Check pinned pieces
+- Find moves that block checks
 - Check double checks (King needs to move)
 - Check discovered checks
 - Check if promotion results in a check
