@@ -1,14 +1,9 @@
 package main
 
-import (
-	"fmt"
-)
-
 /**
 Still to support:
-- Rook, Bishop and Queen moves and captures
 - Check if King is at check (square attacked by opponent)
-- Check pinned pieces
+- Check pinned and Partially pinned pieces
 - Find moves that block checks
 - Check double checks (King needs to move)
 - Check discovered checks
@@ -31,6 +26,12 @@ func (p *Position) LegalMoves() []Move {
 			p.board.blackKing, color, p.enPassant, add)
 		bbKnightMoves(p.board.whiteKnight, p.board.whitePieces, p.board.blackPieces,
 			p.board.blackKing, add)
+		bbSlidingMoves(p.board.whiteBishop, p.board.whitePieces, p.board.blackPieces, p.board.blackKing,
+			color, bishopAttacks, add)
+		bbSlidingMoves(p.board.whiteRook, p.board.whitePieces, p.board.blackPieces, p.board.blackKing,
+			color, rookAttacks, add)
+		bbSlidingMoves(p.board.whiteQueen, p.board.whitePieces, p.board.blackPieces, p.board.blackKing,
+			color, queenAttacks, add)
 		bbKingMoves(p.board.whiteKing, p.board.whitePieces, p.board.blackPieces,
 			0, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	} else if color == Black {
@@ -38,10 +39,15 @@ func (p *Position) LegalMoves() []Move {
 			p.board.whiteKing, color, p.enPassant, add)
 		bbKnightMoves(p.board.blackKnight, p.board.blackPieces, p.board.whitePieces,
 			p.board.whiteKing, add)
+		bbSlidingMoves(p.board.blackBishop, p.board.blackPieces, p.board.whitePieces, p.board.whiteKing,
+			color, bishopAttacks, add)
+		bbSlidingMoves(p.board.blackRook, p.board.blackPieces, p.board.whitePieces, p.board.whiteKing,
+			color, rookAttacks, add)
+		bbSlidingMoves(p.board.blackQueen, p.board.blackPieces, p.board.whitePieces, p.board.whiteKing,
+			color, queenAttacks, add)
 		bbKingMoves(p.board.blackKing, p.board.blackPieces, p.board.whitePieces,
 			0, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
 	}
-	fmt.Println("LEN", len(allMoves))
 	return allMoves
 }
 
@@ -49,13 +55,13 @@ func (p *Position) LegalMoves() []Move {
 
 func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
 	color Color, enPassant Square, add func(m ...Move)) {
-	both := (otherPieces | ownPieces) ^ universal
+	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		for bbPawn != 0 {
 			src := bitScanReverse(bbPawn)
 			srcSq := Square(src)
 			pawn := uint64(1 << src)
-			dbl := wDblPushTargets(pawn, both)
+			dbl := wDblPushTargets(pawn, emptySquares)
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
 				var tag MoveTag = 0
@@ -64,7 +70,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 				}
 				add(Move{srcSq, dest, NoType, tag})
 			}
-			sngl := wSinglePushTargets(pawn, both)
+			sngl := wSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
@@ -116,7 +122,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			src := bitScanReverse(bbPawn)
 			srcSq := Square(src)
 			pawn := uint64(1 << src)
-			dbl := bDoublePushTargets(pawn, both)
+			dbl := bDoublePushTargets(pawn, emptySquares)
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
 				var tag MoveTag = Capture
@@ -125,7 +131,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 				}
 				add(Move{srcSq, dest, NoType, tag})
 			}
-			sngl := bSinglePushTargets(pawn, both)
+			sngl := bSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
@@ -175,6 +181,39 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 	}
 }
 
+// Sliding moves, for rooks, queens and bishops
+func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
+	color Color, attacks func(sq Square, occ uint64, own uint64) uint64, add func(m ...Move)) {
+	both := otherPieces | ownPieces
+	for bbPiece != 0 {
+		src := bitScanReverse(bbPiece)
+		srcSq := Square(src)
+		rayAttacks := attacks(srcSq, both, ownPieces)
+		passiveMoves := rayAttacks &^ otherPieces
+		captureMoves := rayAttacks & otherPieces
+		for passiveMoves != 0 {
+			sq := bitScanReverse(passiveMoves)
+			dest := Square(sq)
+			var tag MoveTag = 0
+			if attacks(dest, both, ownPieces)&otherKing != 0 {
+				tag |= Check
+			}
+			add(Move{srcSq, dest, NoType, tag})
+			passiveMoves ^= (1 << sq)
+		}
+		for captureMoves != 0 {
+			sq := bitScanReverse(captureMoves)
+			dest := Square(sq)
+			var tag MoveTag = Capture
+			if attacks(dest, both, ownPieces)&otherKing != 0 {
+				tag |= Check
+			}
+			add(Move{srcSq, dest, NoType, tag})
+			captureMoves ^= (1 << sq)
+		}
+		bbPiece ^= (1 << src)
+	}
+}
 
 // Knights
 func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
@@ -185,24 +224,22 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 		srcSq := Square(src)
 		knight := uint64(1 << src)
 		moves := knightMovesNoCaptures(knight, both)
-		fmt.Println("MOVES: ", moves)
 		for moves != 0 {
 			sq := bitScanReverse(moves)
 			dest := Square(sq)
 			var tag MoveTag = 0
-			if knightCaptures(knight, otherKing) != 0 {
+			if knightCaptures(moves, otherKing) != 0 {
 				tag |= Check
 			}
 			add(Move{srcSq, dest, NoType, tag})
 			moves ^= (1 << sq)
 		}
 		captures := knightCaptures(knight, otherPieces)
-		fmt.Println("CAPTURE: ", captures)
 		for captures != 0 {
 			sq := bitScanReverse(captures)
 			dest := Square(sq)
 			var tag MoveTag = Capture
-			if knightCaptures(knight, otherKing) != 0 {
+			if knightCaptures(moves, otherKing) != 0 {
 				tag |= Check
 			}
 			add(Move{srcSq, dest, NoType, tag})
@@ -268,7 +305,6 @@ func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 	}
 }
 
-
 // Pawn Pushes
 
 func wSinglePushTargets(wpawns uint64, empty uint64) uint64 {
@@ -291,76 +327,72 @@ func bDoublePushTargets(bpawns uint64, empty uint64) uint64 {
 	return soutOne(singlePushs) & empty & rank5
 }
 
-// Pawns Attacks
-// func wPawnEastAttacks(wpawns uint64) uint64 {
-// 	return noEaOne(wpawns)
-// }
-//
-// func wPawnWestAttacks(wpawns uint64) uint64 {
-// 	return noWeOne(wpawns)
-// }
-//
-// func bPawnEastAttacks(bpawns uint64) uint64 {
-// 	return soEaOne(bpawns)
-// }
-//
-// func bPawnWestAttacks(bpawns uint64) uint64 {
-// 	return soWeOne(bpawns)
-// }
-
 func wPawnAnyAttacks(wpawns uint64) uint64 {
 	return noEaOne(wpawns) | noWeOne(wpawns)
 }
-
-// func wPawnDblAttacks(wpawns uint64) uint64 {
-// 	return noEaOne(wpawns) & noWeOne(wpawns)
-// }
-
-// func wPawnSingleAttacks(wpawns uint64) uint64 {
-// 	return noEaOne(wpawns) ^ noWeOne(wpawns)
-// }
 
 func bPawnAnyAttacks(bpawns uint64) uint64 {
 	return soEaOne(bpawns) | soWeOne(bpawns)
 }
 
-// func bPawnDblAttacks(bpawns uint64) uint64 {
-// 	return soEaOne(bpawns) & soWeOne(bpawns)
-// }
-
-// func bPawnSingleAttacks(bpawns uint64) uint64 {
-// 	return soEaOne(bpawns) ^ soWeOne(bpawns)
-// }
-
-// func wPawnsAble2CaptureEast(wpawns uint64, bpieces uint64) uint64 {
-// 	return wpawns & bPawnWestAttacks(bpieces)
-// }
-//
-// func wPawnsAble2CaptureWest(wpawns uint64, bpieces uint64) uint64 {
-// 	return wpawns & bPawnEastAttacks(bpieces)
-// }
-
 func wPawnsAble2CaptureAny(wpawns uint64, bpieces uint64) uint64 {
 	return wPawnAnyAttacks(wpawns) & bpieces
 }
 
-// func bPawnsAble2CaptureEast(bpawns uint64, wpieces uint64) uint64 {
-// 	return bpawns & bPawnWestAttacks(wpieces)
-// }
-//
-// func bPawnsAble2CaptureWest(bpawns uint64, wpieces uint64) uint64 {
-// 	return bpawns & bPawnEastAttacks(wpieces)
-// }
-//
 func bPawnsAble2CaptureAny(bpawns uint64, wpieces uint64) uint64 {
 	return bPawnAnyAttacks(bpawns) & wpieces
+}
+
+// Sliding pieces
+
+func getPositiveRayAttacks(sq Square, occupied uint64, dir Direction) uint64 {
+	positiveAttacks := rayAttacksArray[dir][sq]
+	blocker := positiveAttacks & occupied
+	if blocker != 0 {
+		square := bitScanForward(blocker)
+		positiveAttacks ^= rayAttacksArray[dir][square]
+	}
+	return positiveAttacks
+}
+
+func getNegativeRayAttacks(sq Square, occupied uint64, dir Direction) uint64 {
+	negativeAttacks := rayAttacksArray[dir][sq]
+	blocker := negativeAttacks & occupied
+	if blocker != 0 {
+		square := bitScanReverse(blocker)
+		negativeAttacks ^= rayAttacksArray[dir][square]
+	}
+	return negativeAttacks
+}
+
+func rookAttacks(sq Square, occ uint64, ownPieces uint64) uint64 {
+	allAttacks := getPositiveRayAttacks(sq, occ, North) |
+		getPositiveRayAttacks(sq, occ, East) |
+		getNegativeRayAttacks(sq, occ, South) |
+		getNegativeRayAttacks(sq, occ, West)
+
+	return allAttacks &^ ownPieces
+
+}
+
+func bishopAttacks(sq Square, occ uint64, ownPieces uint64) uint64 {
+	allAttacks := getPositiveRayAttacks(sq, occ, NorthEast) |
+		getPositiveRayAttacks(sq, occ, NorthWest) |
+		getNegativeRayAttacks(sq, occ, SouthEast) |
+		getNegativeRayAttacks(sq, occ, SouthWest)
+
+	return allAttacks &^ ownPieces
+}
+
+func queenAttacks(sq Square, occ uint64, ownPieces uint64) uint64 {
+	return rookAttacks(sq, occ, ownPieces) | bishopAttacks(sq, occ, ownPieces)
 }
 
 // The mighty knight
 
 func knightMovesNoCaptures(b uint64, other uint64) uint64 {
 	attacks := knightAttacks(b)
-	return (attacks ^ other) & attacks
+	return attacks &^ other
 }
 
 func knightCaptures(b uint64, other uint64) uint64 {
@@ -372,29 +404,19 @@ func knightAttacks(b uint64) uint64 {
 		noNoWe(b) | noWeWe(b) | soWeWe(b) | soSoWe(b)
 }
 
-func noNoEa(b uint64) uint64 {
-	return (b << 17) & notAFile
+// King & Kingslayer
+func kingMovesNoCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
+	attacks := kingAttacks(b)
+	return (attacks ^ others) & attacks & (tabooSquares ^ universal)
 }
-func noEaEa(b uint64) uint64 {
-	return (b << 10) & notABFile
+
+func kingCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
+	return kingAttacks(b) & others & (tabooSquares ^ universal)
 }
-func soEaEa(b uint64) uint64 {
-	return (b >> 6) & notABFile
-}
-func soSoEa(b uint64) uint64 {
-	return (b >> 15) & notAFile
-}
-func noNoWe(b uint64) uint64 {
-	return (b << 15) & notHFile
-}
-func noWeWe(b uint64) uint64 {
-	return (b << 6) & notGHFile
-}
-func soWeWe(b uint64) uint64 {
-	return (b >> 10) & notGHFile
-}
-func soSoWe(b uint64) uint64 {
-	return (b >> 17) & notHFile
+
+func kingAttacks(b uint64) uint64 {
+	return soutOne(b) | nortOne(b) | eastOne(b) | noEaOne(b) |
+		soEaOne(b) | westOne(b) | soWeOne(b) | noWeOne(b)
 }
 
 // Utilites
@@ -408,7 +430,34 @@ func getIndicesOfOnes(bb uint64) []uint8 {
 	return indices
 }
 
-var index64 [64]uint8 = [64]uint8{
+var forwardIndex = [64]uint8{
+	0, 1, 48, 2, 57, 49, 28, 3,
+	61, 58, 50, 42, 38, 29, 17, 4,
+	62, 55, 59, 36, 53, 51, 43, 22,
+	45, 39, 33, 30, 24, 18, 12, 5,
+	63, 47, 56, 27, 60, 41, 37, 16,
+	54, 35, 52, 21, 44, 32, 23, 11,
+	46, 26, 40, 15, 34, 20, 31, 10,
+	25, 14, 19, 9, 13, 8, 7, 6,
+}
+
+/**
+ * bitScanForward
+ * @author Martin Läuter (1997)
+ *         Charles E. Leiserson
+ *         Harald Prokop
+ *         Keith H. Randall
+ * "Using de Bruijn Sequences to Index a 1 in a Computer Word"
+ * @param bb bitboard to scan
+ * @precondition bb != 0
+ * @return index (0..63) of least significant one bit
+ */
+func bitScanForward(bb uint64) uint8 {
+	const debruijn64 = uint64(0x03f79d71b4cb0a89)
+	return forwardIndex[((bb&-bb)*debruijn64)>>58]
+}
+
+var reverseIndex = [64]uint8{
 	0, 47, 1, 56, 48, 27, 2, 60,
 	57, 49, 41, 37, 28, 16, 3, 61,
 	54, 58, 35, 52, 50, 42, 21, 44,
@@ -434,30 +483,119 @@ func bitScanReverse(bb uint64) uint8 {
 	bb |= bb >> 8
 	bb |= bb >> 16
 	bb |= bb >> 32
-	return index64[(bb*debruijn64)>>58]
+	return reverseIndex[(bb*debruijn64)>>58]
 }
 
-// func diagonal(file File, rank Rank) uint64 {
-// 	return (uint64(rank) - uint64(file)) & 15
-// }
-//
-// func antiDiagonal(file File, rank Rank) uint64 {
-// 	return (uint64(file) + uint64(rank)) ^ 15
-// }
+// directions
 
-// King & Kingslayer
-func kingMovesNoCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
-	attacks := kingAttacks(b)
-	return (attacks ^ others) & attacks & (tabooSquares ^ universal)
+type Direction uint8
+
+const (
+	North Direction = iota
+	NorthEast
+	East
+	SouthEast
+	South
+	SouthWest
+	West
+	NorthWest
+)
+
+var rayAttacksArray = initializeRayAttacks()
+
+func initializeRayAttacks() [8][64]uint64 {
+	var rayAttacks = [8][64]uint64{}
+	for sq := uint64(0); sq < 64; sq++ {
+		rayAttacks[North][sq] = northRay(1 << sq)
+		rayAttacks[NorthEast][sq] = northEastRay(1 << sq)
+		rayAttacks[East][sq] = eastRay(1 << sq)
+		rayAttacks[SouthEast][sq] = southEastRay(1 << sq)
+		rayAttacks[South][sq] = southRay(1 << sq)
+		rayAttacks[SouthWest][sq] = southWestRay(1 << sq)
+		rayAttacks[West][sq] = westRay(1 << sq)
+		rayAttacks[NorthWest][sq] = northWestRay(1 << sq)
+	}
+	return rayAttacks
 }
 
-func kingCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
-	return kingAttacks(b) & others & (tabooSquares ^ universal)
+func southRay(b uint64) uint64 {
+	res := uint64(0)
+	b = soutOne(b)
+	for b != 0 {
+		res |= b
+		b = soutOne(b)
+	}
+	return res
 }
 
-func kingAttacks(b uint64) uint64 {
-	return soutOne(b) | nortOne(b) | eastOne(b) | noEaOne(b) |
-		soEaOne(b) | westOne(b) | soWeOne(b) | noWeOne(b)
+func northRay(b uint64) uint64 {
+	res := uint64(0)
+	b = nortOne(b)
+	for b != 0 {
+		res |= b
+		b = nortOne(b)
+	}
+	return res
+}
+
+func northEastRay(b uint64) uint64 {
+	res := uint64(0)
+	b = noEaOne(b)
+	for b != 0 {
+		res |= b
+		b = noEaOne(b)
+	}
+	return res
+}
+
+func northWestRay(b uint64) uint64 {
+	res := uint64(0)
+	b = noWeOne(b)
+	for b != 0 {
+		res |= b
+		b = noWeOne(b)
+	}
+	return res
+}
+
+func westRay(b uint64) uint64 {
+	res := uint64(0)
+	b = westOne(b)
+	for b != 0 {
+		res |= b
+		b = westOne(b)
+	}
+	return res
+}
+
+func eastRay(b uint64) uint64 {
+	res := uint64(0)
+	b = eastOne(b)
+	for b != 0 {
+		res |= b
+		b = eastOne(b)
+	}
+	return res
+}
+
+func southEastRay(b uint64) uint64 {
+	res := uint64(0)
+	b = soEaOne(b)
+	for b != 0 {
+		res |= b
+		b = soEaOne(b)
+	}
+	return res
+}
+
+func southWestRay(b uint64) uint64 {
+	res := uint64(0)
+	b = soWeOne(b)
+	for b != 0 {
+		res |= b
+		b = soWeOne(b)
+	}
+	return res
 }
 
 func soutOne(b uint64) uint64 {
@@ -484,6 +622,30 @@ func soWeOne(b uint64) uint64 {
 }
 func noWeOne(b uint64) uint64 {
 	return (b << 7) & notHFile
+}
+func noNoEa(b uint64) uint64 {
+	return (b << 17) & notAFile
+}
+func noEaEa(b uint64) uint64 {
+	return (b << 10) & notABFile
+}
+func soEaEa(b uint64) uint64 {
+	return (b >> 6) & notABFile
+}
+func soSoEa(b uint64) uint64 {
+	return (b >> 15) & notAFile
+}
+func noNoWe(b uint64) uint64 {
+	return (b << 15) & notHFile
+}
+func noWeWe(b uint64) uint64 {
+	return (b << 6) & notGHFile
+}
+func soWeWe(b uint64) uint64 {
+	return (b >> 10) & notGHFile
+}
+func soSoWe(b uint64) uint64 {
+	return (b >> 17) & notHFile
 }
 
 const empty = uint64(0)
