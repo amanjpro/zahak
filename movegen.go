@@ -2,7 +2,6 @@ package main
 
 /**
 Still to support:
-- Check if King is at check (square attacked by opponent)
 - Check pinned and Partially pinned pieces
 - Find moves that block checks
 - Check double checks (King needs to move)
@@ -53,11 +52,9 @@ func (p *Position) LegalMoves() []Move {
 }
 
 // Checks and Pins
-
-// func isInCheck(b *Bitboard, bbKing uint64, colorOfKing Color) bool {
-// 	return tabooSquares(b, colorOfKing)&bbKing == 0
-// }
-//
+func isInCheck(b *Bitboard, bbKing uint64, colorOfKing Color) bool {
+	return tabooSquares(b, colorOfKing)&bbKing == 0
+}
 
 func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
 	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
