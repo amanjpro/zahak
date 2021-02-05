@@ -31,7 +31,7 @@ func (p *Position) LegalMoves() []Move {
 			color, rookAttacks, add)
 		bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces, board.blackKing,
 			color, queenAttacks, add)
-		bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces,
+		bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 			taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	} else if color == Black {
 		bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
@@ -44,7 +44,7 @@ func (p *Position) LegalMoves() []Move {
 			color, rookAttacks, add)
 		bbSlidingMoves(board.blackQueen, board.blackPieces, board.whitePieces, board.whiteKing,
 			color, queenAttacks, add)
-		bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces,
+		bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 			taboo, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
 	}
 	return allMoves
@@ -344,7 +344,7 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 }
 
 // Kings
-func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
+func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
 	tabooSquares uint64, kingSideCastle bool, queenSideCastle bool,
 	add func(m ...Move)) {
 	both := (otherPieces | ownPieces)
@@ -388,13 +388,15 @@ func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 		if kingSideCastle &&
 			(ownPieces&kingSide == 0) && // are empty
 			(tabooSquares&(kingSide|1<<E) == 0) { // Not in check
-			add(Move{srcSq, G, NoType, 0})
+			tag := slidingCheckTag(F, both, ownPieces, otherKing, rookAttacks) // if rook may make a check
+			add(Move{srcSq, G, NoType, tag})
 		}
 
 		if queenSideCastle &&
 			(ownPieces&queenSide == 0) && // are empty
 			(tabooSquares&(queenSide|1<<E) == 0) { // Not in check
-			add(Move{srcSq, C, NoType, 0})
+			tag := slidingCheckTag(D, both, ownPieces, otherKing, rookAttacks) // if rook may make a check
+			add(Move{srcSq, G, NoType, tag})
 		}
 	}
 }
