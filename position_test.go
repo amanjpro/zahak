@@ -1,0 +1,140 @@
+package main
+
+import (
+	"testing"
+)
+
+func TestMakeMove(t *testing.T) {
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
+	move := Move{F3, G4, NoType, 0}
+	game.position.MakeMove(move)
+	fen := game.Fen()
+	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p1B1/6N1/PP3PPP/RNBQK2R b KQkq - 0 1"
+	if fen != expected {
+		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", expected)
+	}
+}
+
+func TestMakeMoveCapture(t *testing.T) {
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
+	move := Move{F3, E4, NoType, Capture}
+	game.position.MakeMove(move)
+	fen := game.Fen()
+	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4B3/6N1/PP3PPP/RNBQK2R b KQkq - 0 1"
+	if fen != expected {
+		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", expected)
+	}
+}
+
+func TestMakeMoveCastling(t *testing.T) {
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
+	move := Move{E1, G1, NoType, KingSideCastle}
+	game.position.MakeMove(move)
+	fen := game.Fen()
+	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQ1RK1 b kq - 0 1"
+	if fen != expected {
+		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", expected)
+	}
+}
+
+func TestMakeMoveEnPassant(t *testing.T) {
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
+	move := Move{E5, D6, NoType, EnPassant | Capture}
+	game.position.MakeMove(move)
+	fen := game.Fen()
+	expected := "rnbqkbnr/pPp1pppp/3PP3/8/4p3/5BN1/PP3PPP/RNBQK2R b KQkq - 0 1"
+	if fen != expected {
+		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", expected)
+	}
+}
+
+func TestMakeMovePromotion(t *testing.T) {
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
+	move := Move{B7, A8, Queen, Capture}
+	game.position.MakeMove(move)
+	fen := game.Fen()
+	expected := "Qnbqkbnr/p1p1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R b KQk - 0 1"
+	if fen != expected {
+		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", expected)
+	}
+}
+
+func TestUnMakeMove(t *testing.T) {
+	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
+	game := FromFen(startFen)
+	move := Move{F3, G4, NoType, 0}
+	tag := game.position.tag
+	ep := game.position.enPassant
+	cp := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp)
+	fen := game.Fen()
+	if fen != startFen {
+		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", startFen)
+	}
+}
+
+func TestUnMakeMoveCapture(t *testing.T) {
+	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
+	game := FromFen(startFen)
+	move := Move{F3, E4, NoType, Capture}
+	tag := game.position.tag
+	ep := game.position.enPassant
+	cp := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp)
+	fen := game.Fen()
+	if fen != startFen {
+		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", startFen)
+	}
+}
+
+func TestUnMakeMoveCastling(t *testing.T) {
+	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
+	game := FromFen(startFen)
+	move := Move{E1, G1, NoType, KingSideCastle}
+	tag := game.position.tag
+	ep := game.position.enPassant
+	cp := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp)
+	fen := game.Fen()
+	if fen != startFen {
+		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", startFen)
+	}
+}
+
+func TestUnMakeMoveEnPassant(t *testing.T) {
+	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
+	game := FromFen(startFen)
+	move := Move{E5, D6, Pawn, EnPassant | Capture}
+	tag := game.position.tag
+	ep := game.position.enPassant
+	cp := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp)
+	fen := game.Fen()
+	if fen != startFen {
+		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", startFen)
+	}
+}
+
+func TestUnMakeMovePromotion(t *testing.T) {
+	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
+	game := FromFen(startFen)
+	move := Move{B7, A8, Queen, Capture}
+	tag := game.position.tag
+	ep := game.position.enPassant
+	cp := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp)
+	fen := game.Fen()
+	if fen != startFen {
+		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", startFen)
+	}
+}

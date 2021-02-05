@@ -27,12 +27,11 @@ func (b *Bitboard) Fen() string {
 				}
 			}
 		}
+		if empty != 0 {
+			fen = fmt.Sprintf("%s%d", fen, empty)
+		}
 		if rank != Rank1 {
-			if empty != 0 {
-				fen = fmt.Sprintf("%s%d/", fen, empty)
-			} else {
-				fen = fmt.Sprintf("%s/", fen)
-			}
+			fen = fmt.Sprintf("%s/", fen)
 		}
 	}
 	return fen

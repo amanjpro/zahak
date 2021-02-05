@@ -117,8 +117,7 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	var computedLine []Move
 	oldTag := position.tag
 	oldEnPassant := position.enPassant
-	capturedPiece := position.board.PieceAt(move.destination)
-	position.MakeMove(move)
+	capturedPiece := position.MakeMove(move)
 	newPositionHash := position.Hash()
 	cachedEval, found := evalCache.Get(newPositionHash)
 	if found &&

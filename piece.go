@@ -100,8 +100,10 @@ func (p *Piece) Name() string {
 		return "r"
 	case BlackQueen:
 		return "q"
+	case BlackKing:
+		return "k"
 	}
-	return "k"
+	return "nothing"
 }
 
 func pieceFromName(name rune) Piece {
@@ -147,6 +149,8 @@ func (p *Piece) Color() Color {
 func getPiece(pieceType PieceType, color Color) Piece {
 	if color == White {
 		switch pieceType {
+		case King:
+			return WhiteKing
 		case Queen:
 			return WhiteQueen
 		case Rook:
@@ -155,10 +159,14 @@ func getPiece(pieceType PieceType, color Color) Piece {
 			return WhiteBishop
 		case Knight:
 			return WhiteKnight
+		case Pawn:
+			return WhitePawn
 		}
 	}
 	if color == Black {
 		switch pieceType {
+		case King:
+			return BlackKing
 		case Queen:
 			return BlackQueen
 		case Rook:
@@ -167,6 +175,8 @@ func getPiece(pieceType PieceType, color Color) Piece {
 			return BlackBishop
 		case Knight:
 			return BlackKnight
+		case Pawn:
+			return BlackPawn
 		}
 	}
 	return NoPiece

@@ -55,6 +55,7 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 
 func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 	// Remove the piece from source square and add it to destination
+	b.Clear(sq)
 	switch piece {
 	case BlackPawn:
 		b.blackPawn |= (1 << sq)
@@ -98,8 +99,7 @@ func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 func (b *Bitboard) PieceAt(sq Square) Piece {
 	if sq == NoSquare {
 		return NoPiece
-	}
-	if b.blackPawn&(1<<sq) != 0 {
+	} else if b.blackPawn&(1<<sq) != 0 {
 		return BlackPawn
 	} else if b.whitePawn&(1<<sq) != 0 {
 		return WhitePawn
