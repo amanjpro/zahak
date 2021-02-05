@@ -4,7 +4,6 @@ package main
 Still to support:
 - Check pinned and Partially pinned pieces
 - Find moves that block checks
-- Check double checks (King needs to move)
 - Check discovered checks
 - Check if draw
 - Check if checkmate
@@ -52,8 +51,54 @@ func (p *Position) LegalMoves() []Move {
 }
 
 // Checks and Pins
-func isInCheck(b *Bitboard, bbKing uint64, colorOfKing Color) bool {
+func isInCheck(b *Bitboard, colorOfKing Color) bool {
+	bbKing := b.whiteKing
+	if colorOfKing == Black {
+		bbKing = b.blackKing
+	}
 	return tabooSquares(b, colorOfKing)&bbKing == 0
+}
+
+func isDoubleCheck(b *Bitboard, colorOfKing Color) bool {
+	var opPawns, opKnights, opR, opB, opQ, opPieces, ownKing uint64
+	occupiedBB := b.whitePieces | b.blackPieces
+	if colorOfKing == White {
+		opPawns = bPawnsAble2CaptureAny(b.blackPawn, b.whitePieces)
+		opKnights = b.blackKnight
+		opR = b.blackRook
+		opB = b.blackBishop
+		opQ = b.blackQueen
+		opPieces = b.blackPieces
+		ownKing = b.whiteKing
+	} else {
+		opPawns = wPawnsAble2CaptureAny(b.whitePawn, b.blackPieces)
+		opKnights = b.whiteKnight
+		opR = b.whiteRook
+		opB = b.whiteBishop
+		opQ = b.whiteQueen
+		opPieces = b.whitePieces
+		ownKing = b.blackKing
+	}
+	taboo := opPawns ^ (knightAttacks(opKnights))
+	for opB != 0 {
+		sq := bitScanReverse(opB)
+		taboo ^= bishopAttacks(Square(sq), occupiedBB, opPieces)
+		opB ^= (1 << sq)
+	}
+
+	for opR != 0 {
+		sq := bitScanReverse(opR)
+		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
+		opR ^= (1 << sq)
+	}
+
+	for opQ != 0 {
+		sq := bitScanReverse(opQ)
+		taboo ^= queenAttacks(Square(sq), occupiedBB, opPieces)
+		opQ ^= (1 << sq)
+	}
+
+	return (ownKing & taboo) != 0
 }
 
 func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
@@ -66,7 +111,7 @@ func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
 		opB = b.blackBishop
 		opQ = b.blackQueen
 		opKing = b.blackKing
-		opPieces = b.whitePieces
+		opPieces = b.blackPieces
 	} else {
 		opPawns = wPawnsAble2CaptureAny(b.whitePawn, b.blackPieces)
 		opKnights = b.whiteKnight
@@ -74,7 +119,7 @@ func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
 		opB = b.whiteBishop
 		opQ = b.whiteQueen
 		opKing = b.whiteKing
-		opPieces = b.blackPieces
+		opPieces = b.whitePieces
 	}
 	taboo := opPawns | (knightAttacks(opKnights)) | kingMovesNoCaptures(opKing, occupiedBB, 0)
 	for opB != 0 {
