@@ -2,13 +2,11 @@ package main
 
 import (
 	"sync"
-
-	"github.com/notnil/chess"
 )
 
 type CachedEval struct {
 	eval float64
-	line []chess.Move
+	line []Move
 }
 
 type Cache struct {

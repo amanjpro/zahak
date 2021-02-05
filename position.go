@@ -71,9 +71,7 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capt
 
 	// Undo enpassant
 	if move.HasTag(EnPassant) && move.HasTag(Capture) {
-		movingPiece := p.board.PieceAt(move.destination)
-		sq := findEnPassantSquare(move, movingPiece)
-		p.board.UpdateSquare(sq, capturedPiece)
+		p.board.UpdateSquare(enPassant, capturedPiece)
 	} else if move.HasTag(Capture) { // Undo capture
 		p.board.UpdateSquare(move.destination, capturedPiece)
 	}
@@ -114,4 +112,12 @@ func findEnPassantSquare(move Move, movingPiece Piece) Square {
 		return SquareOf(move.source.File(), Rank6)
 	}
 	return NoSquare
+}
+
+func (p *Position) copy() *Position {
+	return &Position{
+		*p.board.copy(),
+		p.enPassant,
+		p.tag,
+	}
 }

@@ -1,45 +1,45 @@
 package main
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math"
 	"sort"
 	"time"
-
-	"github.com/notnil/chess"
 )
 
 var nodesVisited int64 = 0
 var nodesSearched int64 = 0
 var cacheHits int64 = 0
-var pv []chess.Move
+var pv []Move
 
 type EvalMove struct {
 	eval float64
-	move *chess.Move
-	line []chess.Move
+	move *Move
+	line []Move
 }
 
-func search(position *chess.Position, depth int8) *EvalMove {
+func search(position *Position, depth int8) *EvalMove {
 	nodesVisited = 0
 	nodesSearched = 0
 	cacheHits = 0
 	var bestEval *EvalMove
-	var isMaximizingPlayer = position.Turn() == chess.White
-	validMoves := position.ValidMoves()
+	var isMaximizingPlayer = position.Turn() == White
+	validMoves := position.LegalMoves()
 	evals := make(chan EvalMove)
 	start := time.Now()
-	for _, move := range validMoves {
-		go parallelMinimax(position.Update(move), move, depth, !isMaximizingPlayer, evals)
+	for i := 0; i < len(validMoves); i++ {
+		p := position.copy()
+		move := validMoves[i]
+		p.MakeMove(move)
+		go parallelMinimax(p, &move, depth, !isMaximizingPlayer, evals)
 	}
 	for i := 0; i < len(validMoves); i++ {
 		evalMove := <-evals
 
-		fmt.Println("Move", evalMove.move.String())
+		fmt.Println("Move", evalMove.move.ToString())
 		fmt.Println("Tree")
 		for _, mv := range evalMove.line {
-			fmt.Printf("%s ", mv.String())
+			fmt.Printf("%s ", mv.ToString())
 		}
 		fmt.Println("Eval: ", evalMove.eval)
 		if isMaximizingPlayer {
@@ -60,30 +60,32 @@ func search(position *chess.Position, depth int8) *EvalMove {
 	return bestEval
 }
 
-func parallelMinimax(position *chess.Position, move *chess.Move, depth int8,
+func parallelMinimax(position *Position, move *Move, depth int8,
 	isMaximizingPlayer bool, resultEval chan EvalMove) {
 	eval, moves := minimax(position, depth, 2, isMaximizingPlayer, math.Inf(-1),
-		math.Inf(1), []chess.Move{})
+		math.Inf(1), []Move{})
 	resultEval <- EvalMove{eval, move, moves}
 }
 
-func minimax(position *chess.Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, line []chess.Move) (float64, []chess.Move) {
+func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
+	alpha float64, beta float64, line []Move) (float64, []Move) {
 	nodesVisited += 1
 
 	if depthLeft == 0 {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
-		return eval(position), line
+		eval := eval(position)
+		fmt.Printf("%s, %f\n", position.Fen(), eval)
+		return eval, line
 	}
 
 	nodesSearched += 1
-
-	moves := orderMoves(ValidMoves{position, position.ValidMoves(), int(pvDepth)})
+	legalMoves := position.LegalMoves()
+	orderedMoves := orderMoves(ValidMoves{position, &legalMoves, int(pvDepth)})
 	newLine := line
 
-	for _, move := range moves {
+	for _, move := range *orderedMoves {
 		score, computedLine := getEval(position, depthLeft-1, pvDepth+1,
-			!isMaximizingPlayer, alpha, beta, move, line)
+			!isMaximizingPlayer, alpha, beta, &move, line)
 		if isMaximizingPlayer {
 			if score >= beta {
 				return beta, newLine
@@ -109,14 +111,15 @@ func minimax(position *chess.Position, depthLeft int8, pvDepth int8, isMaximizin
 	}
 }
 
-func getEval(position *chess.Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, move *chess.Move, line []chess.Move) (float64,
-	[]chess.Move) {
+func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
+	alpha float64, beta float64, move *Move, line []Move) (float64, []Move) {
 	var score float64
-	var computedLine []chess.Move
-	newPosition := position.Update(move)
-	newHashArray := newPosition.Hash()
-	newPositionHash := binary.BigEndian.Uint64(newHashArray[:])
+	var computedLine []Move
+	oldTag := position.tag
+	oldEnPassant := position.enPassant
+	capturedPiece := position.board.PieceAt(move.destination)
+	position.MakeMove(*move)
+	newPositionHash := position.Hash()
 	cachedEval, found := evalCache.Get(newPositionHash)
 	if found &&
 		(cachedEval.eval == math.Inf(-1) ||
@@ -126,82 +129,86 @@ func getEval(position *chess.Position, depthLeft int8, pvDepth int8, isMaximizin
 		score = cachedEval.eval
 		computedLine = append(append(line, *move), cachedEval.line...)
 	} else {
-		v, t := minimax(newPosition, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, []chess.Move{})
+		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, []Move{})
 		evalCache.Set(newPositionHash, CachedEval{v, t})
 		computedLine = append(append(line, *move), t...)
 		score = v
 	}
+	position.UnMakeMove(*move, oldTag, oldEnPassant, capturedPiece)
 	return score, computedLine
 }
 
 type ValidMoves struct {
-	position *chess.Position
-	moves    []*chess.Move
+	position *Position
+	moves    *[]Move
 	depth    int
 }
 
 func (validMoves ValidMoves) Len() int {
-	return len(validMoves.moves)
+	return len(*validMoves.moves)
 }
 
 func (validMoves ValidMoves) Swap(i, j int) {
-	validMoves.moves[i], validMoves.moves[j] = validMoves.moves[j], validMoves.moves[i]
+	moves := *validMoves.moves
+	moves[i], moves[j] = moves[j], moves[i]
 }
 
 func (validMoves ValidMoves) Less(i, j int) bool {
-	move1, move2 := validMoves.moves[i], validMoves.moves[j]
-	board := validMoves.position.Board()
+	moves := *validMoves.moves
+	move1, move2 := moves[i], moves[j]
+	board := validMoves.position.board
 	// Is in PV?
 	if pv != nil && len(pv) > validMoves.depth {
-		if pv[validMoves.depth] == *move1 {
+		if pv[validMoves.depth] == move1 {
 			return true
 		}
 	}
 
-	// Is in Transition table ???
-	pos1 := validMoves.position.Update(move1)
-	hashA1 := pos1.Hash()
-	hash1 := binary.BigEndian.Uint64(hashA1[:])
+	// FIXME
+	// // Is in Transition table ???
+	// pos1 := validMoves.position.Update(move1)
+	// hashA1 := pos1.Hash()
+	// hash1 := binary.BigEndian.Uint64(hashA1[:])
+	//
+	// pos2 := validMoves.position.Update(move2)
+	// hashA2 := pos2.Hash()
+	// hash2 := binary.BigEndian.Uint64(hashA2[:])
 
-	pos2 := validMoves.position.Update(move2)
-	hashA2 := pos2.Hash()
-	hash2 := binary.BigEndian.Uint64(hashA2[:])
-
-	if _, ok := evalCache.Get(hash1); ok {
-		return true
-	}
-
-	if _, ok := evalCache.Get(hash2); ok {
-		return false
-	}
+	// if _, ok := evalCache.Get(hash1); ok {
+	// 	return true
+	// }
+	//
+	// if _, ok := evalCache.Get(hash2); ok {
+	// 	return false
+	// }
 
 	// capture ordering
-	if move1.HasTag(chess.Capture) && move2.HasTag(chess.Capture) {
+	if move1.HasTag(Capture) && move2.HasTag(Capture) {
 		// What are we capturing?
-		piece1 := board.Piece(move1.S2())
-		piece2 := board.Piece(move2.S2())
+		piece1 := board.PieceAt(move1.destination)
+		piece2 := board.PieceAt(move2.destination)
 		if piece1.Type() > piece2.Type() {
 			return true
 		}
 		// Who is capturing?
-		piece1 = board.Piece(move1.S1())
-		piece2 = board.Piece(move2.S1())
+		piece1 = board.PieceAt(move1.source)
+		piece2 = board.PieceAt(move2.source)
 		if piece1.Type() <= piece2.Type() {
 			return true
 		}
 		return false
-	} else if move1.HasTag(chess.Capture) {
+	} else if move1.HasTag(Capture) {
 		return true
 	}
 
-	piece1 := board.Piece(move1.S1())
-	piece2 := board.Piece(move2.S1())
+	piece1 := board.PieceAt(move1.source)
+	piece2 := board.PieceAt(move2.source)
 
 	// prefer checks
-	if move1.HasTag(chess.Check) {
+	if move1.HasTag(Check) {
 		return true
 	}
-	if move2.HasTag(chess.Check) {
+	if move2.HasTag(Check) {
 		return false
 	}
 	// Prefer smaller pieces
@@ -212,7 +219,7 @@ func (validMoves ValidMoves) Less(i, j int) bool {
 	return false
 }
 
-func orderMoves(validMoves ValidMoves) []*chess.Move {
+func orderMoves(validMoves ValidMoves) *[]Move {
 	sort.Sort(validMoves)
 	return validMoves.moves
 }

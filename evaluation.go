@@ -1,28 +1,27 @@
 package main
 
-import (
-	"math"
+// import (
+// 	"math"
+// )
 
-	"github.com/notnil/chess"
-)
-
-func eval(position *chess.Position) float64 {
-	board := position.Board()
-	allPieces := board.SquareMap()
+func eval(position *Position) float64 {
+	board := position.board
+	allPieces := board.AllPieces()
 	return evaluate(position, &allPieces)
 }
 
-func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
-	if position.Status() == chess.Checkmate || position.Status() == chess.Resignation {
-		if position.Turn() == chess.Black {
-			return math.Inf(1)
-		}
-		return math.Inf(-1)
-	}
-
-	if position.Status() != chess.NoMethod {
-		return 0.0
-	}
+func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
+	// FIXME
+	// if position.Status() == chess.Checkmate || position.Status() == chess.Resignation {
+	// 	if position.Turn() == chess.Black {
+	// 		return math.Inf(1)
+	// 	}
+	// 	return math.Inf(-1)
+	// }
+	//
+	// if position.Status() != chess.NoMethod {
+	// 	return 0.0
+	// }
 
 	whiteBishops := 0.0
 	whiteKnights := 0.0
@@ -39,35 +38,35 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 		file := square.File()
 		rank := square.Rank()
 		switch piece {
-		case chess.WhiteKing:
+		case WhiteKing:
 			// This doesn't consider endgame
-			if position.CastleRights().CanCastle(chess.White, chess.KingSide) ||
-				position.CastleRights().CanCastle(chess.White, chess.QueenSide) ||
-				square == chess.A1 || square == chess.A2 ||
-				square == chess.B1 || square == chess.B2 ||
-				square == chess.C1 || square == chess.C2 ||
-				square == chess.G1 || square == chess.G2 ||
-				square == chess.H1 || square == chess.H2 {
+			if position.HasTag(WhiteCanCastleKingSide) ||
+				position.HasTag(WhiteCanCastleQueenSide) ||
+				square == A1 || square == A2 ||
+				square == B1 || square == B2 ||
+				square == C1 || square == C2 ||
+				square == G1 || square == G2 ||
+				square == H1 || square == H2 {
 				centipawn += 1
 			}
-		case chess.BlackKing:
+		case BlackKing:
 			// This doesn't consider endgame
-			if position.CastleRights().CanCastle(chess.Black, chess.KingSide) ||
-				position.CastleRights().CanCastle(chess.Black, chess.QueenSide) ||
-				square == chess.A7 || square == chess.A8 ||
-				square == chess.B7 || square == chess.B8 ||
-				square == chess.C7 || square == chess.C8 ||
-				square == chess.G7 || square == chess.G8 ||
-				square == chess.H7 || square == chess.H8 {
+			if position.HasTag(BlackCanCastleKingSide) ||
+				position.HasTag(BlackCanCastleQueenSide) ||
+				square == A7 || square == A8 ||
+				square == B7 || square == B8 ||
+				square == C7 || square == C8 ||
+				square == G7 || square == G8 ||
+				square == H7 || square == H8 {
 				centipawn -= 1
 			}
-		case chess.WhiteQueen:
+		case WhiteQueen:
 			centipawn += 9
 			centipawn += 0.025 * 9 * float64(rank) / 8
-		case chess.BlackQueen:
+		case BlackQueen:
 			centipawn -= 9
 			centipawn -= 0.025 * 9 * (9 - float64(rank)) / 8
-		case chess.WhiteRook:
+		case WhiteRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
 			bonus := 0.0
@@ -78,7 +77,7 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 			centipawn += 5 + bonus
 			centipawn += 0.025 * 5 * (float64(rank)) / 8
-		case chess.BlackRook:
+		case BlackRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
 			bonus := 0.0
@@ -89,24 +88,24 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 			centipawn -= 5 + bonus
 			centipawn -= 0.025 * 5 * (9 - float64(rank)) / 8
-		case chess.WhiteBishop:
+		case WhiteBishop:
 			whiteBishops += 1
 			centipawn += 0.025 * 3 * (float64(rank)) / 8
-		case chess.BlackBishop:
+		case BlackBishop:
 			blackBishops += 1
 			centipawn -= 0.025 * 3 * (9 - float64(rank)) / 8
-		case chess.WhiteKnight:
+		case WhiteKnight:
 			whiteKnights += 1
 			centipawn += 0.025 * 3 * (float64(rank)) / 8
-		case chess.BlackKnight:
+		case BlackKnight:
 			blackKnights += 1
 			centipawn -= 0.025 * 3 * (9 - float64(rank)) / 8
-		case chess.WhitePawn:
+		case WhitePawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
 			bonus := 0.0
 			if black == 0 { // passed pawn
-				if file != chess.FileH {
+				if file != FileH {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if white >= 1 && black == 0 { // supported passed pawn
@@ -122,33 +121,33 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 
 			// backward pawn
-			if rank != chess.Rank7 && file != chess.FileA && file != chess.FileH {
-				rPiece, rOk := (*allPieces)[toSquare(int(rank+1), int(file-1))]
-				lPiece, lOk := (*allPieces)[toSquare(int(rank+1), int(file+1))]
-				if rOk && lOk && rPiece == chess.WhitePawn && lPiece == chess.WhitePawn {
+			if rank != Rank7 && file != FileA && file != FileH {
+				rPiece, rOk := (*allPieces)[SquareOf(File(file-1), Rank(rank+1))]
+				lPiece, lOk := (*allPieces)[SquareOf(File(file+1), Rank(rank+1))]
+				if rOk && lOk && rPiece == WhitePawn && lPiece == WhitePawn {
 					centipawn -= 0.25
 				}
 			}
 
 			// fawn pawn
-			if rank == chess.Rank6 {
-				fPiece, fOk := (*allPieces)[toSquare(int(rank+1), int(file))] // pawn in front
-				if fOk && fPiece == chess.BlackPawn {
-					if file == chess.FileH {
-						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
-						if rOk && rPiece == chess.BlackPawn {
+			if rank == Rank6 {
+				fPiece, fOk := (*allPieces)[SquareOf(file, Rank(rank+1))] // pawn in front
+				if fOk && fPiece == BlackPawn {
+					if file == FileH {
+						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
+						if rOk && rPiece == BlackPawn {
 							centipawn += 0.25
 						}
-					} else if file == chess.FileA {
-						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
-						if lOk && lPiece == chess.BlackPawn {
+					} else if file == FileA {
+						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						if lOk && lPiece == BlackPawn {
 							centipawn += 0.25
 						}
 					} else {
-						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
-						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
-						if (lOk && lPiece == chess.BlackPawn) ||
-							(rOk && rPiece == chess.BlackPawn) {
+						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
+						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						if (lOk && lPiece == BlackPawn) ||
+							(rOk && rPiece == BlackPawn) {
 							centipawn += 0.25
 						}
 					}
@@ -162,12 +161,12 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			whitePawns += 1
 			centipawn += 1 + bonus
 			centipawn += 0.125 * 1 * (float64(rank)) / 8
-		case chess.BlackPawn:
+		case BlackPawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
 			bonus := 0.0
 			if white == 0 { // passed pawn
-				if file != chess.FileH {
+				if file != FileH {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if black >= 1 && white == 0 { // supported passed pawn
@@ -183,33 +182,33 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 			}
 
 			// backward pawn
-			if rank != chess.Rank2 && file != chess.FileA && file != chess.FileH {
-				rPiece, rOk := (*allPieces)[toSquare(int(rank-1), int(file-1))]
-				lPiece, lOk := (*allPieces)[toSquare(int(rank-1), int(file+1))]
-				if rOk && lOk && rPiece == chess.BlackPawn && lPiece == chess.BlackPawn {
+			if rank != Rank2 && file != FileA && file != FileH {
+				rPiece, rOk := (*allPieces)[SquareOf(File(file-1), Rank(rank-1))]
+				lPiece, lOk := (*allPieces)[SquareOf(File(file+1), Rank(rank-1))]
+				if rOk && lOk && rPiece == BlackPawn && lPiece == BlackPawn {
 					centipawn += 0.25
 				}
 			}
 
 			// fawn pawn
-			if rank == chess.Rank2 {
-				fPiece, fOk := (*allPieces)[toSquare(int(rank-1), int(file))] // pawn in front
-				if fOk && fPiece == chess.WhitePawn {
-					if file == chess.FileH {
-						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
-						if rOk && rPiece == chess.WhitePawn {
+			if rank == Rank2 {
+				fPiece, fOk := (*allPieces)[SquareOf(file, Rank(rank-1))] // pawn in front
+				if fOk && fPiece == WhitePawn {
+					if file == FileH {
+						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
+						if rOk && rPiece == WhitePawn {
 							centipawn -= 0.25
 						}
-					} else if file == chess.FileA {
-						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
-						if lOk && lPiece == chess.WhitePawn {
+					} else if file == FileA {
+						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						if lOk && lPiece == WhitePawn {
 							centipawn -= 0.25
 						}
 					} else {
-						rPiece, rOk := (*allPieces)[toSquare(int(rank), int(file-1))] // neighbour pawn
-						lPiece, lOk := (*allPieces)[toSquare(int(rank), int(file+1))] // another neighbour pawn
-						if (lOk && lPiece == chess.WhitePawn) ||
-							(rOk && rPiece == chess.WhitePawn) {
+						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
+						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						if (lOk && lPiece == WhitePawn) ||
+							(rOk && rPiece == WhitePawn) {
 							centipawn -= 0.25
 						}
 					}
@@ -240,11 +239,9 @@ func evaluate(position *chess.Position, allPieces *map[chess.Square]chess.Piece)
 	return centipawn
 }
 
-func pawnsPerFile(allPieces *map[chess.Square]chess.Piece) (map[chess.File](int8), map[chess.File](int8)) {
-	whites := make(map[chess.File]int8)
-	blacks := make(map[chess.File]int8)
-
-	files := [8]chess.File{chess.FileA, chess.FileB, chess.FileC, chess.FileD, chess.FileE, chess.FileF, chess.FileG, chess.FileH}
+func pawnsPerFile(allPieces *map[Square]Piece) (map[File](int8), map[File](int8)) {
+	whites := make(map[File]int8)
+	blacks := make(map[File]int8)
 
 	for _, file := range files {
 		white, black := pawnsInFile(file, allPieces)
@@ -255,17 +252,16 @@ func pawnsPerFile(allPieces *map[chess.Square]chess.Piece) (map[chess.File](int8
 	return whites, blacks
 }
 
-func pawnsInFile(file chess.File, allPieces *map[chess.Square]chess.Piece) (int8, int8) {
-	ranks := [8]int{0, 1, 2, 3, 4, 5, 6, 7}
+func pawnsInFile(file File, allPieces *map[Square]Piece) (int8, int8) {
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
 	for _, rank := range ranks {
-		square := toSquare(rank, int(file))
+		square := SquareOf(file, rank)
 		piece, ok := (*allPieces)[square]
 		if ok {
-			if piece == chess.BlackPawn {
+			if piece == BlackPawn {
 				blackPawn += 1
-			} else if piece == chess.WhitePawn {
+			} else if piece == WhitePawn {
 				whitePawn += 1
 			}
 		}
@@ -274,11 +270,9 @@ func pawnsInFile(file chess.File, allPieces *map[chess.Square]chess.Piece) (int8
 	return whitePawn, blackPawn
 }
 
-func pawnsPerRank(allPieces *map[chess.Square]chess.Piece) (map[chess.Rank](int8), map[chess.Rank](int8)) {
-	whites := make(map[chess.Rank]int8)
-	blacks := make(map[chess.Rank]int8)
-
-	ranks := [8]chess.Rank{chess.Rank1, chess.Rank2, chess.Rank3, chess.Rank4, chess.Rank5, chess.Rank6, chess.Rank7, chess.Rank8}
+func pawnsPerRank(allPieces *map[Square]Piece) (map[Rank](int8), map[Rank](int8)) {
+	whites := make(map[Rank]int8)
+	blacks := make(map[Rank]int8)
 
 	for _, rank := range ranks {
 		white, black := pawnsInRank(rank, allPieces)
@@ -289,21 +283,16 @@ func pawnsPerRank(allPieces *map[chess.Square]chess.Piece) (map[chess.Rank](int8
 	return whites, blacks
 }
 
-func toSquare(rank int, file int) chess.Square {
-	return chess.Square((rank * 8) + file)
-}
-
-func pawnsInRank(rank chess.Rank, allPieces *map[chess.Square]chess.Piece) (int8, int8) {
-	files := [8]int{0, 1, 2, 3, 4, 5, 6, 7}
+func pawnsInRank(rank Rank, allPieces *map[Square]Piece) (int8, int8) {
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
 	for _, file := range files {
-		square := toSquare(int(rank), file)
+		square := SquareOf(file, rank)
 		piece, ok := (*allPieces)[square]
 		if ok {
-			if piece == chess.BlackPawn {
+			if piece == BlackPawn {
 				blackPawn += 1
-			} else if piece == chess.WhitePawn {
+			} else if piece == WhitePawn {
 				whitePawn += 1
 			}
 		}
@@ -312,6 +301,6 @@ func pawnsInRank(rank chess.Rank, allPieces *map[chess.Square]chess.Piece) (int8
 	return whitePawn, blackPawn
 }
 
-func center(position *chess.Position, allPieces *map[chess.Square]chess.Piece) float64 {
+func center(position *Position, allPieces *map[Square]Piece) float64 {
 	return 0.0
 }

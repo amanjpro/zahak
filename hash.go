@@ -62,7 +62,7 @@ func generateZobristHash(pos *Position) uint64 {
 	for sq := A1; sq <= H8; sq++ {
 		p := board.PieceAt(sq)
 		if p != NoPiece {
-			hash ^= piecesZC[int8(p)-1][sq]
+			hash ^= piecesZC[int8(p)][sq]
 		}
 	}
 
