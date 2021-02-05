@@ -9,7 +9,6 @@ Still to support:
 - Check discovered checks
 - Check if draw
 - Check if checkmate
-- Populated taboo squares for king movements
 */
 
 func (p *Position) LegalMoves() []Move {
@@ -19,33 +18,36 @@ func (p *Position) LegalMoves() []Move {
 	}
 
 	color := p.Turn()
+	board := p.board
+
+	taboo := tabooSquares(&board, color)
 
 	if color == White {
-		bbPawnMoves(p.board.whitePawn, p.board.whitePieces, p.board.blackPieces,
-			p.board.blackKing, color, p.enPassant, add)
-		bbKnightMoves(p.board.whiteKnight, p.board.whitePieces, p.board.blackPieces,
-			p.board.blackKing, add)
-		bbSlidingMoves(p.board.whiteBishop, p.board.whitePieces, p.board.blackPieces, p.board.blackKing,
+		bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			board.blackKing, color, p.enPassant, add)
+		bbKnightMoves(board.whiteKnight, board.whitePieces, board.blackPieces,
+			board.blackKing, add)
+		bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces, board.blackKing,
 			color, bishopAttacks, add)
-		bbSlidingMoves(p.board.whiteRook, p.board.whitePieces, p.board.blackPieces, p.board.blackKing,
+		bbSlidingMoves(board.whiteRook, board.whitePieces, board.blackPieces, board.blackKing,
 			color, rookAttacks, add)
-		bbSlidingMoves(p.board.whiteQueen, p.board.whitePieces, p.board.blackPieces, p.board.blackKing,
+		bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces, board.blackKing,
 			color, queenAttacks, add)
-		bbKingMoves(p.board.whiteKing, p.board.whitePieces, p.board.blackPieces,
-			0, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+		bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces,
+			taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	} else if color == Black {
-		bbPawnMoves(p.board.blackPawn, p.board.blackPieces, p.board.whitePieces,
-			p.board.whiteKing, color, p.enPassant, add)
-		bbKnightMoves(p.board.blackKnight, p.board.blackPieces, p.board.whitePieces,
-			p.board.whiteKing, add)
-		bbSlidingMoves(p.board.blackBishop, p.board.blackPieces, p.board.whitePieces, p.board.whiteKing,
+		bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			board.whiteKing, color, p.enPassant, add)
+		bbKnightMoves(board.blackKnight, board.blackPieces, board.whitePieces,
+			board.whiteKing, add)
+		bbSlidingMoves(board.blackBishop, board.blackPieces, board.whitePieces, board.whiteKing,
 			color, bishopAttacks, add)
-		bbSlidingMoves(p.board.blackRook, p.board.blackPieces, p.board.whitePieces, p.board.whiteKing,
+		bbSlidingMoves(board.blackRook, board.blackPieces, board.whitePieces, board.whiteKing,
 			color, rookAttacks, add)
-		bbSlidingMoves(p.board.blackQueen, p.board.blackPieces, p.board.whitePieces, p.board.whiteKing,
+		bbSlidingMoves(board.blackQueen, board.blackPieces, board.whitePieces, board.whiteKing,
 			color, queenAttacks, add)
-		bbKingMoves(p.board.blackKing, p.board.blackPieces, p.board.whitePieces,
-			0, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
+		bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces,
+			taboo, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
 	}
 	return allMoves
 }
@@ -56,28 +58,48 @@ func (p *Position) LegalMoves() []Move {
 // 	return tabooSquares(b, colorOfKing)&bbKing == 0
 // }
 //
-// func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
-// 	var opPawns, opKnights, opR, opB, opQ uint64
-// 	occupiedBB := b.whitePieces && b.blackPieces
-// 	if colorOfKing == White {
-// 		opPawns = bPawnsAble2CaptureAny(b.blackPawn, b.whitePieces)
-// 		opKnights = b.blackKnight
-// 		opR = b.blackRook
-// 		opB = b.blackBishop
-// 		opQ = b.blackQueen
-// 	} else {
-// 		opPawns = wPawnsAble2CaptureAny(b.blackPawn, b.blackPieces)
-// 		opKnights = b.whiteKnight
-// 		opR = b.whiteRook
-// 		opB = b.whiteBishop
-// 		opQ = b.whiteQueen
-// 	}
-// 	return opPawns |
-// 		(knightAttacks(opKnights)) |
-// 		(bishopAttacks(occupiedBB, opB)) |
-// 		(rookAttacks(occupiedBB, opR)) |
-// 		(queenAttacks(occupiedBB, opQ))
-// }
+
+func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
+	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
+	occupiedBB := b.whitePieces | b.blackPieces
+	if colorOfKing == White {
+		opPawns = bPawnsAble2CaptureAny(b.blackPawn, b.whitePieces)
+		opKnights = b.blackKnight
+		opR = b.blackRook
+		opB = b.blackBishop
+		opQ = b.blackQueen
+		opKing = b.blackKing
+		opPieces = b.whitePieces
+	} else {
+		opPawns = wPawnsAble2CaptureAny(b.whitePawn, b.blackPieces)
+		opKnights = b.whiteKnight
+		opR = b.whiteRook
+		opB = b.whiteBishop
+		opQ = b.whiteQueen
+		opKing = b.whiteKing
+		opPieces = b.blackPieces
+	}
+	taboo := opPawns | (knightAttacks(opKnights)) | kingMovesNoCaptures(opKing, occupiedBB, 0)
+	for opB != 0 {
+		sq := bitScanReverse(opB)
+		taboo |= bishopAttacks(Square(sq), occupiedBB, opPieces)
+		opB ^= (1 << sq)
+	}
+
+	for opR != 0 {
+		sq := bitScanReverse(opR)
+		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
+		opR ^= (1 << sq)
+	}
+
+	for opQ != 0 {
+		sq := bitScanReverse(opQ)
+		taboo |= queenAttacks(Square(sq), occupiedBB, opPieces)
+		opQ ^= (1 << sq)
+	}
+
+	return taboo
+}
 
 // Pawns
 
