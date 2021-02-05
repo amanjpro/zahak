@@ -7,7 +7,6 @@ Still to support:
 - Find moves that block checks
 - Check double checks (King needs to move)
 - Check discovered checks
-- Check if promotion results in a check
 - Check if draw
 - Check if checkmate
 - Populated taboo squares for king movements
@@ -51,6 +50,35 @@ func (p *Position) LegalMoves() []Move {
 	return allMoves
 }
 
+// Checks and Pins
+
+// func isInCheck(b *Bitboard, bbKing uint64, colorOfKing Color) bool {
+// 	return tabooSquares(b, colorOfKing)&bbKing == 0
+// }
+//
+// func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
+// 	var opPawns, opKnights, opR, opB, opQ uint64
+// 	occupiedBB := b.whitePieces && b.blackPieces
+// 	if colorOfKing == White {
+// 		opPawns = bPawnsAble2CaptureAny(b.blackPawn, b.whitePieces)
+// 		opKnights = b.blackKnight
+// 		opR = b.blackRook
+// 		opB = b.blackBishop
+// 		opQ = b.blackQueen
+// 	} else {
+// 		opPawns = wPawnsAble2CaptureAny(b.blackPawn, b.blackPieces)
+// 		opKnights = b.whiteKnight
+// 		opR = b.whiteRook
+// 		opB = b.whiteBishop
+// 		opQ = b.whiteQueen
+// 	}
+// 	return opPawns |
+// 		(knightAttacks(opKnights)) |
+// 		(bishopAttacks(occupiedBB, opB)) |
+// 		(rookAttacks(occupiedBB, opR)) |
+// 		(queenAttacks(occupiedBB, opQ))
+// }
+
 // Pawns
 
 func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
@@ -74,11 +102,14 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
-					// TODO: set check flags
-					add(Move{srcSq, dest, Queen, 0},
-						Move{srcSq, dest, Rook, 0},
-						Move{srcSq, dest, Bishop, 0},
-						Move{srcSq, dest, Knight, 0})
+					add(
+						Move{srcSq, dest, Queen,
+							slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, queenAttacks)},
+						Move{srcSq, dest, Rook,
+							slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, rookAttacks)},
+						Move{srcSq, dest, Bishop,
+							slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, bishopAttacks)},
+						Move{srcSq, dest, Knight, knightCheckTag(1<<dest, otherKing)})
 				} else {
 					var tag MoveTag = 0
 					if wPawnsAble2CaptureAny(sngl, otherKing) != 0 {
@@ -90,11 +121,14 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			for _, sq := range getIndicesOfOnes(wPawnsAble2CaptureAny(pawn, otherPieces)) {
 				dest := Square(sq)
 				if dest.Rank() == Rank8 {
-					// TODO: set check flags
-					add(Move{srcSq, dest, Queen, Capture},
-						Move{srcSq, dest, Rook, Capture},
-						Move{srcSq, dest, Bishop, Capture},
-						Move{srcSq, dest, Knight, Capture})
+					add(
+						Move{srcSq, dest, Queen,
+							Capture | slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, queenAttacks)},
+						Move{srcSq, dest, Rook,
+							Capture | slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, rookAttacks)},
+						Move{srcSq, dest, Bishop,
+							Capture | slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, bishopAttacks)},
+						Move{srcSq, dest, Knight, knightCheckTag(1<<dest, otherKing) | Capture})
 				} else {
 					var tag MoveTag = Capture
 					if wPawnsAble2CaptureAny(uint64(1<<sq), otherKing) != 0 {
@@ -135,11 +169,14 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
-					// TODO: set check flags
-					add(Move{srcSq, dest, Queen, 0},
-						Move{srcSq, dest, Rook, 0},
-						Move{srcSq, dest, Bishop, 0},
-						Move{srcSq, dest, Knight, 0})
+					add(
+						Move{srcSq, dest, Queen,
+							slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, queenAttacks)},
+						Move{srcSq, dest, Rook,
+							slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, rookAttacks)},
+						Move{srcSq, dest, Bishop,
+							slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, bishopAttacks)},
+						Move{srcSq, dest, Knight, knightCheckTag(1<<dest, otherKing)})
 				} else {
 					tag := Capture
 					if bPawnsAble2CaptureAny(sngl, otherKing) != 0 {
@@ -151,11 +188,14 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			for _, sq := range getIndicesOfOnes(bPawnsAble2CaptureAny(pawn, otherPieces)) {
 				dest := Square(sq)
 				if dest.Rank() == Rank1 {
-					// TODO: set check flags
-					add(Move{srcSq, dest, Queen, Capture},
-						Move{srcSq, dest, Rook, Capture},
-						Move{srcSq, dest, Bishop, Capture},
-						Move{srcSq, dest, Knight, Capture})
+					add(
+						Move{srcSq, dest, Queen,
+							Capture | slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, queenAttacks)},
+						Move{srcSq, dest, Rook,
+							Capture | slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, rookAttacks)},
+						Move{srcSq, dest, Bishop,
+							Capture | slidingCheckTag(dest, ownPieces|otherPieces, ownPieces, otherKing, bishopAttacks)},
+						Move{srcSq, dest, Knight, knightCheckTag(1<<dest, otherKing) | Capture})
 				} else {
 					var tag MoveTag = Capture
 					if bPawnsAble2CaptureAny(uint64(1<<sq), otherKing) != 0 {
@@ -194,11 +234,7 @@ func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherK
 		for passiveMoves != 0 {
 			sq := bitScanReverse(passiveMoves)
 			dest := Square(sq)
-			var tag MoveTag = 0
-			if attacks(dest, both, ownPieces)&otherKing != 0 {
-				tag |= Check
-			}
-			add(Move{srcSq, dest, NoType, tag})
+			add(Move{srcSq, dest, NoType, Capture | slidingCheckTag(dest, both, ownPieces, otherKing, attacks)})
 			passiveMoves ^= (1 << sq)
 		}
 		for captureMoves != 0 {
@@ -208,7 +244,7 @@ func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherK
 			if attacks(dest, both, ownPieces)&otherKing != 0 {
 				tag |= Check
 			}
-			add(Move{srcSq, dest, NoType, tag})
+			add(Move{srcSq, dest, NoType, slidingCheckTag(dest, both, ownPieces, otherKing, attacks)})
 			captureMoves ^= (1 << sq)
 		}
 		bbPiece ^= (1 << src)
@@ -227,10 +263,7 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 		for moves != 0 {
 			sq := bitScanReverse(moves)
 			dest := Square(sq)
-			var tag MoveTag = 0
-			if knightCaptures(moves, otherKing) != 0 {
-				tag |= Check
-			}
+			tag := knightCheckTag(moves, otherKing)
 			add(Move{srcSq, dest, NoType, tag})
 			moves ^= (1 << sq)
 		}
@@ -238,10 +271,7 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 		for captures != 0 {
 			sq := bitScanReverse(captures)
 			dest := Square(sq)
-			var tag MoveTag = Capture
-			if knightCaptures(moves, otherKing) != 0 {
-				tag |= Check
-			}
+			tag := knightCheckTag(moves, otherKing) | Capture
 			add(Move{srcSq, dest, NoType, tag})
 			captures ^= (1 << sq)
 		}
@@ -388,7 +418,22 @@ func queenAttacks(sq Square, occ uint64, ownPieces uint64) uint64 {
 	return rookAttacks(sq, occ, ownPieces) | bishopAttacks(sq, occ, ownPieces)
 }
 
+func slidingCheckTag(from Square, occ uint64, ownPieces uint64, otherKing uint64,
+	attacks func(sq Square, occ uint64, own uint64) uint64) MoveTag {
+	if attacks(from, occ, ownPieces)&otherKing != 0 {
+		return Check
+	}
+	return 0
+}
+
 // The mighty knight
+
+func knightCheckTag(from uint64, otherKing uint64) MoveTag {
+	if knightCaptures(from, otherKing) != 0 {
+		return Check
+	}
+	return 0
+}
 
 func knightMovesNoCaptures(b uint64, other uint64) uint64 {
 	attacks := knightAttacks(b)
