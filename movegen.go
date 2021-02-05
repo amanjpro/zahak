@@ -79,26 +79,38 @@ func isDoubleCheck(b *Bitboard, colorOfKing Color) bool {
 		opPieces = b.whitePieces
 		ownKing = b.blackKing
 	}
-	taboo := opPawns ^ (knightAttacks(opKnights))
+	checkCounts := 0
+	if opPawns&ownKing != 0 {
+		checkCounts += 1
+	}
+	if knightAttacks(opKnights)&ownKing != 0 {
+		checkCounts += 1
+	}
 	for opB != 0 {
 		sq := bitScanReverse(opB)
-		taboo ^= bishopAttacks(Square(sq), occupiedBB, opPieces)
+		if bishopAttacks(Square(sq), occupiedBB, opPieces)&ownKing != 0 {
+			checkCounts += 1
+		}
 		opB ^= (1 << sq)
 	}
 
 	for opR != 0 {
 		sq := bitScanReverse(opR)
-		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
+		if rookAttacks(Square(sq), occupiedBB, opPieces)&ownKing != 0 {
+			checkCounts += 1
+		}
 		opR ^= (1 << sq)
 	}
 
 	for opQ != 0 {
 		sq := bitScanReverse(opQ)
-		taboo ^= queenAttacks(Square(sq), occupiedBB, opPieces)
+		if queenAttacks(Square(sq), occupiedBB, opPieces)&ownKing != 0 {
+			checkCounts += 1
+		}
 		opQ ^= (1 << sq)
 	}
 
-	return (ownKing & taboo) != 0
+	return checkCounts > 1
 }
 
 func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
