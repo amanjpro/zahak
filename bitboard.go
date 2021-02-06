@@ -59,41 +59,32 @@ func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 	switch piece {
 	case BlackPawn:
 		b.blackPawn |= (1 << sq)
-		b.blackPieces |= (1 << sq)
 	case BlackKnight:
 		b.blackKnight |= (1 << sq)
-		b.blackPieces |= (1 << sq)
 	case BlackBishop:
 		b.blackBishop |= (1 << sq)
-		b.blackPieces |= (1 << sq)
 	case BlackRook:
 		b.blackRook |= (1 << sq)
-		b.blackPieces |= (1 << sq)
 	case BlackQueen:
 		b.blackQueen |= (1 << sq)
-		b.blackPieces |= (1 << sq)
 	case BlackKing:
 		b.blackKing |= (1 << sq)
-		b.blackPieces |= (1 << sq)
 	case WhitePawn:
 		b.whitePawn |= (1 << sq)
-		b.whitePieces |= (1 << sq)
 	case WhiteKnight:
 		b.whiteKnight |= (1 << sq)
-		b.whitePieces |= (1 << sq)
 	case WhiteBishop:
 		b.whiteBishop |= (1 << sq)
-		b.whitePieces |= (1 << sq)
 	case WhiteRook:
 		b.whiteRook |= (1 << sq)
-		b.whitePieces |= (1 << sq)
 	case WhiteQueen:
 		b.whiteQueen |= (1 << sq)
-		b.whitePieces |= (1 << sq)
 	case WhiteKing:
 		b.whiteKing |= (1 << sq)
-		b.whitePieces |= (1 << sq)
 	}
+
+	b.blackPieces = b.blackPawn | b.blackKnight | b.blackBishop | b.blackRook | b.blackQueen | b.blackKing
+	b.whitePieces = b.whitePawn | b.whiteKnight | b.whiteBishop | b.whiteRook | b.whiteQueen | b.whiteKing
 }
 
 func (b *Bitboard) PieceAt(sq Square) Piece {
@@ -129,20 +120,20 @@ func (b *Bitboard) PieceAt(sq Square) Piece {
 
 func (b *Bitboard) Clear(square Square) {
 
-	b.blackPawn &= ^(1 << square)
-	b.blackKnight &= ^(1 << square)
-	b.blackBishop &= ^(1 << square)
-	b.blackRook &= ^(1 << square)
-	b.blackQueen &= ^(1 << square)
-	b.blackKing &= ^(1 << square)
-	b.blackPieces &= ^(1 << square)
-	b.whitePawn &= ^(1 << square)
-	b.whiteKnight &= ^(1 << square)
-	b.whiteBishop &= ^(1 << square)
-	b.whiteRook &= ^(1 << square)
-	b.whiteQueen &= ^(1 << square)
-	b.whiteKing &= ^(1 << square)
-	b.whitePieces &= ^(1 << square)
+	b.blackPawn &^= (1 << square)
+	b.blackKnight &^= (1 << square)
+	b.blackBishop &^= (1 << square)
+	b.blackRook &^= (1 << square)
+	b.blackQueen &^= (1 << square)
+	b.blackKing &^= (1 << square)
+	b.blackPieces &^= (1 << square)
+	b.whitePawn &^= (1 << square)
+	b.whiteKnight &^= (1 << square)
+	b.whiteBishop &^= (1 << square)
+	b.whiteRook &^= (1 << square)
+	b.whiteQueen &^= (1 << square)
+	b.whiteKing &^= (1 << square)
+	b.whitePieces &^= (1 << square)
 }
 
 func (b *Bitboard) Move(src Square, dest Square) {
@@ -154,64 +145,54 @@ func (b *Bitboard) Move(src Square, dest Square) {
 	if b.blackPawn&(1<<src) != 0 {
 		b.blackPawn &= ^(1 << src)
 		b.blackPawn |= (1 << dest)
-		b.blackPieces |= (1 << dest)
 	} else if b.whitePawn&(1<<src) != 0 {
-		b.whitePawn &= ^(1 << src)
+		b.whitePawn &^= (1 << src)
 		b.whitePawn |= (1 << dest)
-		b.whitePieces |= (1 << dest)
 	} else if b.blackKnight&(1<<src) != 0 {
-		b.blackKnight &= ^(1 << src)
+		b.blackKnight &^= (1 << src)
 		b.blackKnight |= (1 << dest)
-		b.blackPieces |= (1 << dest)
 	} else if b.whiteKnight&(1<<src) != 0 {
-		b.whiteKnight &= ^(1 << src)
+		b.whiteKnight &^= (1 << src)
 		b.whiteKnight |= (1 << dest)
-		b.whitePieces |= (1 << dest)
 	} else if b.blackBishop&(1<<src) != 0 {
-		b.blackBishop &= ^(1 << src)
+		b.blackBishop &^= (1 << src)
 		b.blackBishop |= (1 << dest)
-		b.blackPieces |= (1 << dest)
 	} else if b.whiteBishop&(1<<src) != 0 {
-		b.whiteBishop &= ^(1 << src)
+		b.whiteBishop &^= (1 << src)
 		b.whiteBishop |= (1 << dest)
-		b.whitePieces |= (1 << dest)
 	} else if b.blackRook&(1<<src) != 0 {
-		b.blackRook &= ^(1 << src)
+		b.blackRook &^= (1 << src)
 		b.blackRook |= (1 << dest)
-		b.blackPieces |= (1 << dest)
 	} else if b.whiteRook&(1<<src) != 0 {
-		b.whiteRook &= ^(1 << src)
+		b.whiteRook &^= (1 << src)
 		b.whiteRook |= (1 << dest)
-		b.whitePieces |= (1 << dest)
 	} else if b.blackQueen&(1<<src) != 0 {
-		b.blackQueen &= ^(1 << src)
+		b.blackQueen &^= (1 << src)
 		b.blackQueen |= (1 << dest)
-		b.blackPieces |= (1 << dest)
 	} else if b.whiteQueen&(1<<src) != 0 {
-		b.whiteQueen &= ^(1 << src)
+		b.whiteQueen &^= (1 << src)
 		b.whiteQueen |= (1 << dest)
-		b.whitePieces |= (1 << dest)
 	} else if b.blackKing&(1<<src) != 0 {
+		b.blackKing &^= (1 << src)
+		b.blackKing |= (1 << dest)
 		// Is it a castle?
 		if src == E8 && dest == G8 {
 			b.Move(H8, F8)
 		} else if src == E8 && dest == C8 {
 			b.Move(A8, D8)
 		}
-		b.blackKing &= ^(1 << src)
-		b.blackKing |= (1 << dest)
-		b.blackPieces |= (1 << dest)
 	} else if b.whiteKing&(1<<src) != 0 {
+		b.whiteKing &^= (1 << src)
+		b.whiteKing |= (1 << dest)
 		// Is it a castle?
 		if src == E1 && dest == G1 {
 			b.Move(H1, F1)
 		} else if src == E1 && dest == C1 {
 			b.Move(A1, D1)
 		}
-		b.whiteKing &= ^(1 << src)
-		b.whiteKing |= (1 << dest)
-		b.whitePieces |= (1 << dest)
 	}
+	b.blackPieces = b.blackPawn | b.blackKnight | b.blackBishop | b.blackRook | b.blackQueen | b.blackKing
+	b.whitePieces = b.whitePawn | b.whiteKnight | b.whiteBishop | b.whiteRook | b.whiteQueen | b.whiteKing
 }
 
 func StartingBoard() Bitboard {
