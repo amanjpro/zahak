@@ -96,14 +96,12 @@ func (p *Position) MakeMove(move Move) Piece {
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
 	p.tag = tag
 	p.enPassant = enPassant
-	p.board.Move(move.destination, move.source)
 
-	movingPiece := p.board.PieceAt(move.source)
+	movingPiece := p.board.PieceAt(move.destination)
+	p.board.Move(move.destination, move.source)
 
 	// Undo enpassant
 	if move.HasTag(EnPassant) && move.HasTag(Capture) {
-		fmt.Println(findEnPassantSquare(move, movingPiece))
-		fmt.Println(capturedPiece)
 		p.board.UpdateSquare(findEnPassantSquare(move, movingPiece), capturedPiece)
 	} else if move.HasTag(Capture) { // Undo capture
 		p.board.UpdateSquare(move.destination, capturedPiece)
@@ -144,11 +142,11 @@ func (p *Position) IsInCheck() bool {
 
 func (p *Position) Status() Status {
 	if p.IsInCheck() {
-		if len(p.LegalMoves()) != 0 {
+		if !p.HasLegalMoves() {
 			return Checkmate
 		}
 	} else {
-		if len(p.LegalMoves()) != 0 {
+		if !p.HasLegalMoves() {
 			return Draw
 		}
 	}

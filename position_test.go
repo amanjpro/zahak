@@ -16,6 +16,18 @@ func TestMakeMove(t *testing.T) {
 	}
 }
 
+func TestMakeMoveDoublePushPawn(t *testing.T) {
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
+	move := Move{H2, H4, NoType, 0}
+	game.position.MakeMove(move)
+	fen := game.Fen()
+	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p2P/5BN1/PP3PP1/RNBQK2R b KQkq h3 0 1"
+	if fen != expected {
+		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", expected)
+	}
+}
+
 func TestMakeMoveCapture(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := Move{F3, E4, NoType, Capture}
@@ -67,6 +79,7 @@ func TestMakeMovePromotion(t *testing.T) {
 func TestUnMakeMove(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen)
+	startHash := game.position.Hash()
 	move := Move{F3, G4, NoType, 0}
 	tag := game.position.tag
 	ep := game.position.enPassant
@@ -77,11 +90,38 @@ func TestUnMakeMove(t *testing.T) {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", startFen)
 	}
+	newHash := game.position.Hash()
+	if startHash != newHash {
+		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
+		t.Errorf("But expected: %d\n", startHash)
+	}
+}
+
+func TestUnMakeMoveDoublePushPawn(t *testing.T) {
+	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
+	game := FromFen(startFen)
+	startHash := game.position.Hash()
+	move := Move{H2, H4, NoType, 0}
+	tag := game.position.tag
+	ep := game.position.enPassant
+	cp := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp)
+	fen := game.Fen()
+	if fen != startFen {
+		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
+		t.Errorf("But expected: %s\n", startFen)
+	}
+	newHash := game.position.Hash()
+	if startHash != newHash {
+		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
+		t.Errorf("But expected: %d\n", startHash)
+	}
 }
 
 func TestUnMakeMoveCapture(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen)
+	startHash := game.position.Hash()
 	move := Move{F3, E4, NoType, Capture}
 	tag := game.position.tag
 	ep := game.position.enPassant
@@ -92,11 +132,17 @@ func TestUnMakeMoveCapture(t *testing.T) {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", startFen)
 	}
+	newHash := game.position.Hash()
+	if startHash != newHash {
+		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
+		t.Errorf("But expected: %d\n", startHash)
+	}
 }
 
 func TestUnMakeMoveCastling(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen)
+	startHash := game.position.Hash()
 	move := Move{E1, G1, NoType, KingSideCastle}
 	tag := game.position.tag
 	ep := game.position.enPassant
@@ -107,11 +153,17 @@ func TestUnMakeMoveCastling(t *testing.T) {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", startFen)
 	}
+	newHash := game.position.Hash()
+	if startHash != newHash {
+		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
+		t.Errorf("But expected: %d\n", startHash)
+	}
 }
 
 func TestUnMakeMoveEnPassant(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen)
+	startHash := game.position.Hash()
 	move := Move{E5, D6, Pawn, EnPassant | Capture}
 	tag := game.position.tag
 	ep := game.position.enPassant
@@ -122,11 +174,17 @@ func TestUnMakeMoveEnPassant(t *testing.T) {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", startFen)
 	}
+	newHash := game.position.Hash()
+	if startHash != newHash {
+		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
+		t.Errorf("But expected: %d\n", startHash)
+	}
 }
 
 func TestUnMakeMovePromotion(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen)
+	startHash := game.position.Hash()
 	move := Move{B7, A8, Queen, Capture}
 	tag := game.position.tag
 	ep := game.position.enPassant
@@ -136,5 +194,10 @@ func TestUnMakeMovePromotion(t *testing.T) {
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", startFen)
+	}
+	newHash := game.position.Hash()
+	if startHash != newHash {
+		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
+		t.Errorf("But expected: %d\n", startHash)
 	}
 }
