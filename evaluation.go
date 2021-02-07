@@ -10,7 +10,7 @@ func eval(position *Position) float64 {
 	return evaluate(position, allPieces)
 }
 
-func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
+func evaluate(position *Position, allPieces map[Square]Piece) float64 {
 	if position.Status() == Checkmate {
 		if position.Turn() == Black {
 			return math.Inf(1)
@@ -33,7 +33,7 @@ func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
 	whitePawnsPerFile, blackPawnsPerFile := pawnsPerFile(allPieces)
 	//whitePawnsPerRank, blackPawnsPerRank := pawnsPerRank(allPieces)
 
-	for square, piece := range *allPieces {
+	for square, piece := range allPieces {
 		file := square.File()
 		rank := square.Rank()
 		switch piece {
@@ -108,21 +108,21 @@ func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if white >= 1 && black == 0 { // supported passed pawn
-						bonus = 1 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
+						bonus = 1 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(allPieces))) / 32
 					} else if white >= 1 { // semi-supported passed pawn
-						bonus = 0.5 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
+						bonus = 0.5 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(allPieces))) / 32
 					} else {
-						bonus = 0.25 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
+						bonus = 0.25 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(allPieces))) / 32
 					}
 				} else {
-					bonus = 0.25 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(*allPieces))) / 32
+					bonus = 0.25 * ((float64(rank+1) * 9) / 8) * (32 - float64(len(allPieces))) / 32
 				}
 			}
 
 			// backward pawn
 			if rank != Rank7 && file != FileA && file != FileH {
-				rPiece, rOk := (*allPieces)[SquareOf(File(file-1), Rank(rank+1))]
-				lPiece, lOk := (*allPieces)[SquareOf(File(file+1), Rank(rank+1))]
+				rPiece, rOk := allPieces[SquareOf(File(file-1), Rank(rank+1))]
+				lPiece, lOk := allPieces[SquareOf(File(file+1), Rank(rank+1))]
 				if rOk && lOk && rPiece == WhitePawn && lPiece == WhitePawn {
 					centipawn -= 0.25
 				}
@@ -130,21 +130,21 @@ func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
 
 			// fawn pawn
 			if rank == Rank6 {
-				fPiece, fOk := (*allPieces)[SquareOf(file, Rank(rank+1))] // pawn in front
+				fPiece, fOk := allPieces[SquareOf(file, Rank(rank+1))] // pawn in front
 				if fOk && fPiece == BlackPawn {
 					if file == FileH {
-						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
+						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
 						if rOk && rPiece == BlackPawn {
 							centipawn += 0.25
 						}
 					} else if file == FileA {
-						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if lOk && lPiece == BlackPawn {
 							centipawn += 0.25
 						}
 					} else {
-						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
-						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
+						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if (lOk && lPiece == BlackPawn) ||
 							(rOk && rPiece == BlackPawn) {
 							centipawn += 0.25
@@ -169,21 +169,21 @@ func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if black >= 1 && white == 0 { // supported passed pawn
-						bonus = 1 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(*allPieces))) / 32
+						bonus = 1 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(allPieces))) / 32
 					} else if black >= 1 { // semi-supported passed pawn
-						bonus = 0.5 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(*allPieces))) / 32
+						bonus = 0.5 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(allPieces))) / 32
 					} else {
-						bonus = 0.25 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(*allPieces))) / 32
+						bonus = 0.25 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(allPieces))) / 32
 					}
 				} else {
-					bonus = 0.25 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(*allPieces))) / 32
+					bonus = 0.25 * ((9 - float64(rank+1)*9) / 8) * (32 - float64(len(allPieces))) / 32
 				}
 			}
 
 			// backward pawn
 			if rank != Rank2 && file != FileA && file != FileH {
-				rPiece, rOk := (*allPieces)[SquareOf(File(file-1), Rank(rank-1))]
-				lPiece, lOk := (*allPieces)[SquareOf(File(file+1), Rank(rank-1))]
+				rPiece, rOk := allPieces[SquareOf(File(file-1), Rank(rank-1))]
+				lPiece, lOk := allPieces[SquareOf(File(file+1), Rank(rank-1))]
 				if rOk && lOk && rPiece == BlackPawn && lPiece == BlackPawn {
 					centipawn += 0.25
 				}
@@ -191,21 +191,21 @@ func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
 
 			// fawn pawn
 			if rank == Rank2 {
-				fPiece, fOk := (*allPieces)[SquareOf(file, Rank(rank-1))] // pawn in front
+				fPiece, fOk := allPieces[SquareOf(file, Rank(rank-1))] // pawn in front
 				if fOk && fPiece == WhitePawn {
 					if file == FileH {
-						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
+						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
 						if rOk && rPiece == WhitePawn {
 							centipawn -= 0.25
 						}
 					} else if file == FileA {
-						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if lOk && lPiece == WhitePawn {
 							centipawn -= 0.25
 						}
 					} else {
-						rPiece, rOk := (*allPieces)[SquareOf(File(file-1), rank)] // neighbour pawn
-						lPiece, lOk := (*allPieces)[SquareOf(File(file+1), rank)] // another neighbour pawn
+						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
+						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if (lOk && lPiece == WhitePawn) ||
 							(rOk && rPiece == WhitePawn) {
 							centipawn -= 0.25
@@ -240,7 +240,7 @@ func evaluate(position *Position, allPieces *map[Square]Piece) float64 {
 	return centipawn
 }
 
-func pawnsPerFile(allPieces *map[Square]Piece) (map[File](int8), map[File](int8)) {
+func pawnsPerFile(allPieces map[Square]Piece) (map[File](int8), map[File](int8)) {
 	whites := make(map[File]int8)
 	blacks := make(map[File]int8)
 
@@ -253,12 +253,12 @@ func pawnsPerFile(allPieces *map[Square]Piece) (map[File](int8), map[File](int8)
 	return whites, blacks
 }
 
-func pawnsInFile(file File, allPieces *map[Square]Piece) (int8, int8) {
+func pawnsInFile(file File, allPieces map[Square]Piece) (int8, int8) {
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
 	for _, rank := range ranks {
 		square := SquareOf(file, rank)
-		piece, ok := (*allPieces)[square]
+		piece, ok := allPieces[square]
 		if ok {
 			if piece == BlackPawn {
 				blackPawn += 1
@@ -271,7 +271,7 @@ func pawnsInFile(file File, allPieces *map[Square]Piece) (int8, int8) {
 	return whitePawn, blackPawn
 }
 
-func pawnsPerRank(allPieces *map[Square]Piece) (map[Rank](int8), map[Rank](int8)) {
+func pawnsPerRank(allPieces map[Square]Piece) (map[Rank](int8), map[Rank](int8)) {
 	whites := make(map[Rank]int8)
 	blacks := make(map[Rank]int8)
 
@@ -284,12 +284,12 @@ func pawnsPerRank(allPieces *map[Square]Piece) (map[Rank](int8), map[Rank](int8)
 	return whites, blacks
 }
 
-func pawnsInRank(rank Rank, allPieces *map[Square]Piece) (int8, int8) {
+func pawnsInRank(rank Rank, allPieces map[Square]Piece) (int8, int8) {
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
 	for _, file := range files {
 		square := SquareOf(file, rank)
-		piece, ok := (*allPieces)[square]
+		piece, ok := allPieces[square]
 		if ok {
 			if piece == BlackPawn {
 				blackPawn += 1
@@ -302,6 +302,12 @@ func pawnsInRank(rank Rank, allPieces *map[Square]Piece) (int8, int8) {
 	return whitePawn, blackPawn
 }
 
-func center(position *Position, allPieces *map[Square]Piece) float64 {
+// TODO: Implement me
+func center(position *Position, allPieces map[Square]Piece) float64 {
+	return 0.0
+}
+
+// TODO: Implement me
+func mobility(position *Position) float64 {
 	return 0.0
 }

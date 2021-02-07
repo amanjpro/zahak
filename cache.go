@@ -6,7 +6,7 @@ import (
 
 type CachedEval struct {
 	eval float64
-	line *[]Move
+	line []*Move
 }
 
 type Cache struct {

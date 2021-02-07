@@ -1,11 +1,11 @@
 package main
 
-func (p *Position) LegalMoves() *[]Move {
-	allMoves := make([]Move, 0, 350)
+func (p *Position) LegalMoves() []*Move {
+	allMoves := make([]*Move, 0, 350)
 
 	color := p.Turn()
 
-	add := func(ms ...Move) {
+	add := func(ms ...*Move) {
 		for _, m := range ms {
 			// capture the position state
 			oldTag := p.tag
@@ -71,7 +71,7 @@ func (p *Position) LegalMoves() *[]Move {
 				taboo, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
 		}
 	}
-	return &allMoves
+	return allMoves
 }
 
 func (p *Position) HasLegalMoves() bool {
@@ -79,7 +79,7 @@ func (p *Position) HasLegalMoves() bool {
 
 	color := p.Turn()
 
-	add := func(ms ...Move) {
+	add := func(ms ...*Move) {
 		for _, m := range ms {
 			// capture the position state
 			oldTag := p.tag
@@ -297,7 +297,7 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 // Pawns
 
 func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
-	color Color, enPassant Square, add func(m ...Move)) {
+	color Color, enPassant Square, add func(m ...*Move)) {
 	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		for bbPawn != 0 {
@@ -308,33 +308,33 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
 				var tag MoveTag = 0
-				add(Move{srcSq, dest, NoType, tag})
+				add(&Move{srcSq, dest, NoType, tag})
 			}
 			sngl := wSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
 					add(
-						Move{srcSq, dest, Queen, 0},
-						Move{srcSq, dest, Rook, 0},
-						Move{srcSq, dest, Bishop, 0},
-						Move{srcSq, dest, Knight, 0})
+						&Move{srcSq, dest, Queen, 0},
+						&Move{srcSq, dest, Rook, 0},
+						&Move{srcSq, dest, Bishop, 0},
+						&Move{srcSq, dest, Knight, 0})
 				} else {
 					var tag MoveTag = 0
-					add(Move{srcSq, dest, NoType, tag})
+					add(&Move{srcSq, dest, NoType, tag})
 				}
 			}
 			for _, sq := range getIndicesOfOnes(wPawnsAble2CaptureAny(pawn, otherPieces)) {
 				dest := Square(sq)
 				if dest.Rank() == Rank8 {
 					add(
-						Move{srcSq, dest, Queen, Capture},
-						Move{srcSq, dest, Rook, Capture},
-						Move{srcSq, dest, Bishop, Capture},
-						Move{srcSq, dest, Knight, Capture})
+						&Move{srcSq, dest, Queen, Capture},
+						&Move{srcSq, dest, Rook, Capture},
+						&Move{srcSq, dest, Bishop, Capture},
+						&Move{srcSq, dest, Knight, Capture})
 				} else {
 					var tag MoveTag = Capture
-					add(Move{srcSq, dest, NoType, tag})
+					add(&Move{srcSq, dest, NoType, tag})
 				}
 			}
 			if srcSq.Rank() == Rank5 && enPassant != NoSquare && enPassant.Rank() == Rank6 {
@@ -343,7 +343,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 				if r != 0 {
 					dest := Square(bitScanReverse(r))
 					var tag MoveTag = Capture | EnPassant
-					add(Move{srcSq, dest, NoType, tag})
+					add(&Move{srcSq, dest, NoType, tag})
 				}
 			}
 			bbPawn ^= pawn
@@ -357,32 +357,32 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
 				var tag MoveTag = 0
-				add(Move{srcSq, dest, NoType, tag})
+				add(&Move{srcSq, dest, NoType, tag})
 			}
 			sngl := bSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
 				if dest.Rank() == Rank8 {
 					add(
-						Move{srcSq, dest, Queen, 0},
-						Move{srcSq, dest, Rook, 0},
-						Move{srcSq, dest, Bishop, 0},
-						Move{srcSq, dest, Knight, 0})
+						&Move{srcSq, dest, Queen, 0},
+						&Move{srcSq, dest, Rook, 0},
+						&Move{srcSq, dest, Bishop, 0},
+						&Move{srcSq, dest, Knight, 0})
 				} else {
-					add(Move{srcSq, dest, NoType, 0})
+					add(&Move{srcSq, dest, NoType, 0})
 				}
 			}
 			for _, sq := range getIndicesOfOnes(bPawnsAble2CaptureAny(pawn, otherPieces)) {
 				dest := Square(sq)
 				if dest.Rank() == Rank1 {
 					add(
-						Move{srcSq, dest, Queen, Capture},
-						Move{srcSq, dest, Rook, Capture},
-						Move{srcSq, dest, Bishop, Capture},
-						Move{srcSq, dest, Knight, Capture})
+						&Move{srcSq, dest, Queen, Capture},
+						&Move{srcSq, dest, Rook, Capture},
+						&Move{srcSq, dest, Bishop, Capture},
+						&Move{srcSq, dest, Knight, Capture})
 				} else {
 					var tag MoveTag = Capture
-					add(Move{srcSq, dest, NoType, tag})
+					add(&Move{srcSq, dest, NoType, tag})
 				}
 			}
 			if srcSq.Rank() == Rank4 && enPassant != NoSquare && enPassant.Rank() == Rank3 {
@@ -391,7 +391,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 				if r != 0 {
 					dest := Square(bitScanReverse(r))
 					var tag MoveTag = Capture | EnPassant
-					add(Move{srcSq, dest, NoType, tag})
+					add(&Move{srcSq, dest, NoType, tag})
 				}
 			}
 			bbPawn ^= pawn
@@ -401,7 +401,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 
 // Sliding moves, for rooks, queens and bishops
 func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
-	color Color, attacks func(sq Square, occ uint64, own uint64) uint64, add func(m ...Move)) {
+	color Color, attacks func(sq Square, occ uint64, own uint64) uint64, add func(m ...*Move)) {
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
 		src := bitScanReverse(bbPiece)
@@ -412,13 +412,13 @@ func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherK
 		for passiveMoves != 0 {
 			sq := bitScanReverse(passiveMoves)
 			dest := Square(sq)
-			add(Move{srcSq, dest, NoType, 0})
+			add(&Move{srcSq, dest, NoType, 0})
 			passiveMoves ^= (1 << sq)
 		}
 		for captureMoves != 0 {
 			sq := bitScanReverse(captureMoves)
 			dest := Square(sq)
-			add(Move{srcSq, dest, NoType, Capture})
+			add(&Move{srcSq, dest, NoType, Capture})
 			captureMoves ^= (1 << sq)
 		}
 		bbPiece ^= (1 << src)
@@ -427,7 +427,7 @@ func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherK
 
 // Knights
 func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
-	otherKing uint64, add func(m ...Move)) {
+	otherKing uint64, add func(m ...*Move)) {
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
 		src := bitScanReverse(bbPiece)
@@ -437,14 +437,14 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 		for moves != 0 {
 			sq := bitScanReverse(moves)
 			dest := Square(sq)
-			add(Move{srcSq, dest, NoType, 0})
+			add(&Move{srcSq, dest, NoType, 0})
 			moves ^= (1 << sq)
 		}
 		captures := knightCaptures(knight, otherPieces)
 		for captures != 0 {
 			sq := bitScanReverse(captures)
 			dest := Square(sq)
-			add(Move{srcSq, dest, NoType, Capture})
+			add(&Move{srcSq, dest, NoType, Capture})
 			captures ^= (1 << sq)
 		}
 		bbPiece ^= knight
@@ -454,7 +454,7 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 // Kings
 func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
 	tabooSquares uint64, kingSideCastle bool, queenSideCastle bool,
-	add func(m ...Move)) {
+	add func(m ...*Move)) {
 	both := (otherPieces | ownPieces)
 	if bbPiece != 0 {
 		src := bitScanReverse(bbPiece)
@@ -464,14 +464,14 @@ func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing
 		for moves != 0 {
 			sq := bitScanReverse(moves)
 			dest := Square(sq)
-			add(Move{srcSq, dest, NoType, 0})
+			add(&Move{srcSq, dest, NoType, 0})
 			moves ^= (1 << sq)
 		}
 		captures := kingCaptures(king, otherPieces, tabooSquares)
 		for captures != 0 {
 			sq := bitScanReverse(captures)
 			dest := Square(sq)
-			add(Move{srcSq, dest, NoType, Capture})
+			add(&Move{srcSq, dest, NoType, Capture})
 			captures ^= (1 << sq)
 		}
 
@@ -496,13 +496,13 @@ func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing
 		if kingSideCastle &&
 			(ownPieces&kingSide == 0) && // are empty
 			(tabooSquares&(kingSide|1<<E) == 0) { // Not in check
-			add(Move{srcSq, G, NoType, KingSideCastle})
+			add(&Move{srcSq, G, NoType, KingSideCastle})
 		}
 
 		if queenSideCastle &&
 			(ownPieces&queenSide == 0) && // are empty
 			(tabooSquares&(queenSide|1<<E) == 0) { // Not in check
-			add(Move{srcSq, G, NoType, QueenSideCastle})
+			add(&Move{srcSq, G, NoType, QueenSideCastle})
 		}
 	}
 }

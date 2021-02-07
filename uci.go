@@ -11,7 +11,7 @@ const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 func uci() {
 	var game Game
-	var depth = int8(5)
+	var depth = int8(8)
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		cmd, err := reader.ReadString('\n')
@@ -56,7 +56,7 @@ func uci() {
 							}
 						}
 
-						game.Move(Move{source, destination, promo, tag})
+						game.Move(&Move{source, destination, promo, tag})
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
 					game = FromFen(startFen)
@@ -85,12 +85,13 @@ func uci() {
 							}
 						}
 
-						game.Move(Move{source, destination, promo, tag})
+						game.Move(&Move{source, destination, promo, tag})
 					}
 
 				} else {
 					fmt.Println("Didn't understand", cmd)
 				}
+				fmt.Println(game.position.board.Draw())
 			}
 		}
 	}

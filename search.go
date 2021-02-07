@@ -12,12 +12,12 @@ var STOP_SEARCH_GLOBALLY = false
 var nodesVisited int64 = 0
 var nodesSearched int64 = 0
 var cacheHits int64 = 0
-var pv *[]Move
+var pv []*Move
 
 type EvalMove struct {
 	eval float64
-	move Move
-	line *[]Move
+	move *Move
+	line []*Move
 }
 
 func search(position *Position, depth int8) EvalMove {
@@ -31,7 +31,7 @@ func search(position *Position, depth int8) EvalMove {
 	if isMaximizingPlayer {
 		dir = 1
 	}
-	validMoves := *position.LegalMoves()
+	validMoves := position.LegalMoves()
 	evals := make(chan EvalMove)
 	evalIsSet := false
 	start := time.Now()
@@ -47,7 +47,7 @@ func search(position *Position, depth int8) EvalMove {
 		mvStr := evalMove.move.ToString()
 		fmt.Printf("info nodes %d score cp %d currmove %s pv %s",
 			nodesVisited, int(evalMove.eval*100*dir), mvStr, mvStr)
-		for _, mv := range *evalMove.line {
+		for _, mv := range evalMove.line {
 			fmt.Printf(" %s", mv.ToString())
 		}
 		fmt.Print("\n\n")
@@ -71,15 +71,15 @@ func search(position *Position, depth int8) EvalMove {
 	return bestEval
 }
 
-func parallelMinimax(position *Position, move Move, depth int8,
+func parallelMinimax(position *Position, move *Move, depth int8,
 	isMaximizingPlayer bool, resultEval chan EvalMove) {
 	eval, moves := minimax(position, depth, 2, isMaximizingPlayer, math.Inf(-1),
-		math.Inf(1), &[]Move{})
+		math.Inf(1), []*Move{})
 	resultEval <- EvalMove{eval, move, moves}
 }
 
 func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, line *[]Move) (float64, *[]Move) {
+	alpha float64, beta float64, line []*Move) (float64, []*Move) {
 	nodesVisited += 1
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
@@ -89,7 +89,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 
 	nodesSearched += 1
 	legalMoves := position.LegalMoves()
-	orderedMoves := *orderMoves(&ValidMoves{position, legalMoves, int(pvDepth)})
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, int(pvDepth)})
 	newLine := line
 
 	for _, move := range orderedMoves {
@@ -121,9 +121,9 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 }
 
 func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, move Move, line *[]Move) (float64, *[]Move) {
+	alpha float64, beta float64, move *Move, line []*Move) (float64, []*Move) {
 	var score float64
-	var computedLine []Move
+	var computedLine []*Move
 	oldTag := position.tag
 	oldEnPassant := position.enPassant
 	capturedPiece := position.MakeMove(move)
@@ -132,42 +132,42 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	if found &&
 		(cachedEval.eval == math.Inf(-1) ||
 			cachedEval.eval == math.Inf(1) ||
-			len(*cachedEval.line) >= int(depthLeft)) {
+			len(cachedEval.line) >= int(depthLeft)) {
 		cacheHits += 1
 		score = cachedEval.eval
-		computedLine = append(append(*line, move), *cachedEval.line...)
+		computedLine = append(append(line, move), cachedEval.line...)
 	} else {
-		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, &[]Move{})
+		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, []*Move{})
 		evalCache.Set(newPositionHash, &CachedEval{v, t})
-		computedLine = append(append(*line, move), (*t)...)
+		computedLine = append(append(line, move), (t)...)
 		score = v
 	}
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
-	return score, &computedLine
+	return score, computedLine
 }
 
 type ValidMoves struct {
 	position *Position
-	moves    *[]Move
+	moves    []*Move
 	depth    int
 }
 
 func (validMoves *ValidMoves) Len() int {
-	return len(*validMoves.moves)
+	return len(validMoves.moves)
 }
 
 func (validMoves *ValidMoves) Swap(i, j int) {
-	moves := *validMoves.moves
+	moves := validMoves.moves
 	moves[i], moves[j] = moves[j], moves[i]
 }
 
 func (validMoves *ValidMoves) Less(i, j int) bool {
-	moves := *validMoves.moves
+	moves := validMoves.moves
 	move1, move2 := moves[i], moves[j]
 	board := validMoves.position.board
 	// Is in PV?
-	if pv != nil && len(*pv) > validMoves.depth {
-		if (*pv)[validMoves.depth] == move1 {
+	if pv != nil && len(pv) > validMoves.depth {
+		if pv[validMoves.depth] == move1 {
 			return true
 		}
 	}
@@ -232,7 +232,7 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	return false
 }
 
-func orderMoves(validMoves *ValidMoves) *[]Move {
+func orderMoves(validMoves *ValidMoves) []*Move {
 	sort.Sort(validMoves)
 	return validMoves.moves
 }

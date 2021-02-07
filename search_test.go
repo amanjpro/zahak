@@ -10,32 +10,32 @@ func TestNestedMakeUnMake(t *testing.T) {
 	g := FromFen(fen)
 	p := g.position
 
-	m1 := Move{G8, E7, NoType, 0}
+	m1 := &Move{G8, E7, NoType, 0}
 	ep1 := p.enPassant
 	tg1 := p.tag
 	cp1 := p.MakeMove(m1)
 
-	m2 := Move{G2, G3, NoType, 0}
+	m2 := &Move{G2, G3, NoType, 0}
 	ep2 := p.enPassant
 	tg2 := p.tag
 	cp2 := p.MakeMove(m2)
 
-	m3 := Move{H4, G5, NoType, 0}
+	m3 := &Move{H4, G5, NoType, 0}
 	ep3 := p.enPassant
 	tg3 := p.tag
 	cp3 := p.MakeMove(m3)
 
-	m4 := Move{G3, G4, NoType, 0}
+	m4 := &Move{G3, G4, NoType, 0}
 	ep4 := p.enPassant
 	tg4 := p.tag
 	cp4 := p.MakeMove(m4)
 
-	m5 := Move{C8, B7, NoType, Capture}
+	m5 := &Move{C8, B7, NoType, Capture}
 	ep5 := p.enPassant
 	tg5 := p.tag
 	cp5 := p.MakeMove(m5)
 
-	m6 := Move{B2, B4, NoType, 0}
+	m6 := &Move{B2, B4, NoType, 0}
 	ep6 := p.enPassant
 	tg6 := p.tag
 	cp6 := p.MakeMove(m6)

@@ -7,18 +7,18 @@ import (
 type Game struct {
 	position      *Position
 	startPosition Position
-	moves         []Move
+	moves         []*Move
 	positions     map[uint64]int8
 	numberOfMoves uint16
 	halfMoveClock uint16
 }
 
 // TODO: Implement me
-func (g *Game) IsLegalMove(m Move) bool {
+func (g *Game) IsLegalMove(m *Move) bool {
 	return true
 }
 
-func (g *Game) Move(m Move) {
+func (g *Game) Move(m *Move) {
 	pos := g.position
 
 	if g.IsLegalMove(m) {

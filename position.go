@@ -34,7 +34,7 @@ func (p *Position) ToggleTurn() {
 	p.ToggleTag(WhiteToMove)
 }
 
-func (p *Position) MakeMove(move Move) Piece {
+func (p *Position) MakeMove(move *Move) Piece {
 	movingPiece := p.board.PieceAt(move.source)
 	capturedPiece := p.board.PieceAt(move.destination)
 	p.board.Move(move.source, move.destination)
@@ -93,7 +93,7 @@ func (p *Position) MakeMove(move Move) Piece {
 	return capturedPiece
 }
 
-func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
+func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
 	p.tag = tag
 	p.enPassant = enPassant
 
@@ -181,7 +181,7 @@ func (p *Position) Hash() uint64 {
 	return generateZobristHash(p)
 }
 
-func findEnPassantSquare(move Move, movingPiece Piece) Square {
+func findEnPassantSquare(move *Move, movingPiece Piece) Square {
 	rank := move.source.Rank()
 	file := move.destination.File()
 	return SquareOf(file, rank)
