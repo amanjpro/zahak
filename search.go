@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var STOP_SEARCH_GLOBALLY = false
+
 var nodesVisited int64 = 0
 var nodesSearched int64 = 0
 var cacheHits int64 = 0
@@ -19,6 +21,7 @@ type EvalMove struct {
 }
 
 func search(position *Position, depth int8) EvalMove {
+	STOP_SEARCH_GLOBALLY = false
 	nodesVisited = 0
 	nodesSearched = 0
 	cacheHits = 0
@@ -74,7 +77,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	alpha float64, beta float64, line []Move) (float64, []Move) {
 	nodesVisited += 1
 
-	if depthLeft == 0 {
+	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
 		return eval(position), line
 	}

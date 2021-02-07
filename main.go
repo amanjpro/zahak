@@ -1,13 +1,13 @@
 package main
 
 import (
-	// "bufio"
-	"fmt"
-	// "math/bits"
-	// "os"
-	// "strings"
-	//
-	// "github.com/notnil/chess"
+// "bufio"
+// "fmt"
+// "math/bits"
+// "os"
+// "strings"
+//
+// "github.com/notnil/chess"
 )
 
 func main() {
@@ -26,25 +26,26 @@ func main() {
 	// fmt.Println("HERE FEN IS: ", b.Fen())
 	// b2 := bitboardFromFen(b.Fen())
 	// fmt.Println(b2.Fen())
+	uci()
 	// g := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
-	g := FromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-	for g.Status() == Unknown {
-		evalMove := search(g.position, 5)
-		g.Move(evalMove.move)
-		fmt.Println("Played: ", evalMove.move)
-		fmt.Println("Current eval is: ", evalMove.eval)
-		fmt.Println("Current tree is: ")
-		for _, mv := range evalMove.line {
-			fmt.Printf("%s ", mv.ToString())
-		}
-		// Position currently
-		fmt.Println(g.position.board.Draw())
-	}
-	for _, mv := range g.moves {
-		fmt.Printf("%s ", mv.ToString())
-	}
-	fmt.Println(g.position.board.Draw())
-	fmt.Println(g.halfMoveClock, g.positions, g.Status())
+	// g := FromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+	// for g.Status() == Unknown {
+	// 	evalMove := search(g.position, 5)
+	// 	g.Move(evalMove.move)
+	// 	fmt.Println("Played: ", evalMove.move)
+	// 	fmt.Println("Current eval is: ", evalMove.eval)
+	// 	fmt.Println("Current tree is: ")
+	// 	for _, mv := range evalMove.line {
+	// 		fmt.Printf("%s ", mv.ToString())
+	// 	}
+	// 	// Position currently
+	// 	fmt.Println(g.position.board.Draw())
+	// }
+	// for _, mv := range g.moves {
+	// 	fmt.Printf("%s ", mv.ToString())
+	// }
+	// fmt.Println(g.position.board.Draw())
+	// fmt.Println(g.halfMoveClock, g.positions, g.Status())
 	// fmt.Println("HERE", g.position.enPassant)
 	// gFen := g.Fen()
 	// fmt.Println(gFen)
