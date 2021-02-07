@@ -356,7 +356,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			dbl := bDoublePushTargets(pawn, emptySquares)
 			if dbl != 0 {
 				dest := Square(bitScanReverse(dbl))
-				var tag MoveTag = Capture
+				var tag MoveTag = 0
 				add(Move{srcSq, dest, NoType, tag})
 			}
 			sngl := bSinglePushTargets(pawn, emptySquares)
@@ -369,8 +369,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 						Move{srcSq, dest, Bishop, 0},
 						Move{srcSq, dest, Knight, 0})
 				} else {
-					tag := Capture
-					add(Move{srcSq, dest, NoType, tag})
+					add(Move{srcSq, dest, NoType, 0})
 				}
 			}
 			for _, sq := range getIndicesOfOnes(bPawnsAble2CaptureAny(pawn, otherPieces)) {
