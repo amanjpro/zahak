@@ -17,6 +17,8 @@ func uci() {
 		cmd, err := reader.ReadString('\n')
 		if err == nil {
 			switch cmd {
+			case "quit\n":
+				os.Exit(0)
 			case "uci\n":
 				fmt.Println("id name Zahak\n")
 				fmt.Println("id author Amanj\n")
