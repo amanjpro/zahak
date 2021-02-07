@@ -1,10 +1,5 @@
 package main
 
-/**
-Still to support:
-- Check if unsufficient pieces are left
-*/
-
 func (p *Position) LegalMoves() []Move {
 	allMoves := make([]Move, 0, 350)
 

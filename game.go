@@ -20,6 +20,7 @@ func (g *Game) IsLegalMove(m Move) bool {
 
 func (g *Game) Move(m Move) {
 	pos := g.position
+
 	if g.IsLegalMove(m) {
 		board := pos.board
 		movingPiece := board.PieceAt(m.source)
