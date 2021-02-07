@@ -1,2 +1,3 @@
-# zahak
-A chess AI in Go
+# Zahak
+
+A UCI comppatible chess AI written in Go. Still work in proress.
