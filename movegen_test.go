@@ -36,7 +36,7 @@ func TestStartingPosDepth4(t *testing.T) {
 }
 
 func TestStartingPosDepth5(t *testing.T) {
-	// test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, PerftNodes{4865609, 27351 /* 27351 + 6 */, 82725, 258, 0, 0, 347})
+	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, PerftNodes{4865609, 27351 /* 27351 + 6 */, 82725, 258, 0, 0, 347})
 }
 
 func TestStartingPosDepth6(t *testing.T) {

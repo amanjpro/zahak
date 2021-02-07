@@ -9,9 +9,6 @@ func TestNestedMakeUnMake(t *testing.T) {
 	fen := "rnb1kbnr/pQpp1ppp/4p3/8/7q/2P5/PP1PPPPP/RNB1KBNR b KQkq - 0 1"
 	g := FromFen(fen)
 	p := g.position
-	// g8e7 g2g3 h4g5 g3g4 c8b7 b2b4
-	fmt.Println(p.board.Draw())
-	fmt.Println(eval(p))
 
 	m1 := Move{G8, E7, NoType, 0}
 	ep1 := p.enPassant
