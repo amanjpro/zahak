@@ -21,7 +21,7 @@ type Bitboard struct {
 	blackPieces uint64
 }
 
-func (b *Bitboard) AllPieces() map[Square]Piece {
+func (b *Bitboard) AllPieces() *map[Square]Piece {
 	allPieces := make(map[Square]Piece, 32)
 	for sq := A1; sq <= H8 && len(allPieces) <= 32; sq++ {
 		if b.blackPawn&(1<<sq) != 0 {
@@ -50,7 +50,7 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 			allPieces[sq] = WhiteKing
 		}
 	}
-	return allPieces
+	return &allPieces
 }
 
 func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {

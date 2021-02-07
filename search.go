@@ -27,7 +27,7 @@ func search(position *Position, depth int8) EvalMove {
 	cacheHits = 0
 	var bestEval EvalMove
 	var isMaximizingPlayer = position.Turn() == White
-	validMoves := position.LegalMoves()
+	validMoves := *position.LegalMoves()
 	evals := make(chan EvalMove)
 	evalIsSet := false
 	start := time.Now()
@@ -84,7 +84,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 
 	nodesSearched += 1
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(ValidMoves{position, legalMoves, int(pvDepth)})
+	orderedMoves := *orderMoves(&ValidMoves{position, legalMoves, int(pvDepth)})
 	newLine := line
 
 	for _, move := range orderedMoves {
@@ -127,13 +127,13 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	if found &&
 		(cachedEval.eval == math.Inf(-1) ||
 			cachedEval.eval == math.Inf(1) ||
-			len(cachedEval.line) >= int(depthLeft)) {
+			len(*cachedEval.line) >= int(depthLeft)) {
 		cacheHits += 1
 		score = cachedEval.eval
-		computedLine = append(append(line, move), cachedEval.line...)
+		computedLine = append(append(line, move), *cachedEval.line...)
 	} else {
 		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, []Move{})
-		evalCache.Set(newPositionHash, CachedEval{v, t})
+		evalCache.Set(newPositionHash, CachedEval{v, &t})
 		computedLine = append(append(line, move), t...)
 		score = v
 	}
@@ -143,21 +143,21 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 
 type ValidMoves struct {
 	position *Position
-	moves    []Move
+	moves    *[]Move
 	depth    int
 }
 
 func (validMoves *ValidMoves) Len() int {
-	return len(validMoves.moves)
+	return len(*validMoves.moves)
 }
 
 func (validMoves *ValidMoves) Swap(i, j int) {
-	moves := validMoves.moves
+	moves := *validMoves.moves
 	moves[i], moves[j] = moves[j], moves[i]
 }
 
 func (validMoves *ValidMoves) Less(i, j int) bool {
-	moves := validMoves.moves
+	moves := *validMoves.moves
 	move1, move2 := moves[i], moves[j]
 	board := validMoves.position.board
 	// Is in PV?
@@ -225,7 +225,7 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	return false
 }
 
-func orderMoves(validMoves ValidMoves) []Move {
-	sort.Sort(&validMoves)
+func orderMoves(validMoves *ValidMoves) *[]Move {
+	sort.Sort(validMoves)
 	return validMoves.moves
 }

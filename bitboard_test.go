@@ -43,7 +43,7 @@ func TestAllPieces(t *testing.T) {
 		C2: WhiteQueen,
 	}
 	actual := g.position.board.AllPieces()
-	if !equalMaps(actual, expected) {
+	if !equalMaps(actual, &expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Unexpected return by AllPieces: %s", err)
 	}
@@ -55,7 +55,7 @@ func TestAllPieces(t *testing.T) {
 	g.position.UnMakeMove(m, ot, ep, cp)
 
 	actual = g.position.board.AllPieces()
-	if !equalMaps(actual, expected) {
+	if !equalMaps(actual, &expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Knight make/unmake move broke all pieces: %s", err)
 	}
@@ -67,18 +67,18 @@ func TestAllPieces(t *testing.T) {
 	g.position.UnMakeMove(m, ot, ep, cp)
 
 	actual = g.position.board.AllPieces()
-	if !equalMaps(actual, expected) {
+	if !equalMaps(actual, &expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Rook make/unmake move broke all pieces: %s", err)
 	}
 }
 
-func equalMaps(ps1 map[Square]Piece, ps2 map[Square]Piece) bool {
-	if len(ps1) != len(ps2) {
+func equalMaps(ps1 *map[Square]Piece, ps2 *map[Square]Piece) bool {
+	if len(*ps1) != len(*ps2) {
 		return false
 	}
-	for sq1, p1 := range ps1 {
-		p2, ok := ps2[sq1]
+	for sq1, p1 := range *ps1 {
+		p2, ok := (*ps2)[sq1]
 		if !ok || p1 != p2 {
 			return false
 		}

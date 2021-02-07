@@ -1,6 +1,6 @@
 package main
 
-func (p *Position) LegalMoves() []Move {
+func (p *Position) LegalMoves() *[]Move {
 	allMoves := make([]Move, 0, 350)
 
 	color := p.Turn()
@@ -71,7 +71,7 @@ func (p *Position) LegalMoves() []Move {
 				taboo, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
 		}
 	}
-	return allMoves
+	return &allMoves
 }
 
 func (p *Position) HasLegalMoves() bool {

@@ -6,7 +6,7 @@ import (
 
 type CachedEval struct {
 	eval float64
-	line []Move
+	line *[]Move
 }
 
 type Cache struct {
@@ -14,7 +14,7 @@ type Cache struct {
 	items map[uint64]CachedEval
 }
 
-var evalCache = Cache{items: make(map[uint64]CachedEval)}
+var evalCache = Cache{items: make(map[uint64]CachedEval, 1000_000)}
 
 func (c *Cache) Set(key uint64, value CachedEval) {
 	// Lock so only one goroutine at a time can access the map c.v.

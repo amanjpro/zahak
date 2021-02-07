@@ -38,7 +38,7 @@ func TestStartingPosDepth2(t *testing.T) {
 }
 
 func TestStartingPosDepth3(t *testing.T) {
-	// test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, PerftNodes{8902, 12, 34, 0, 0, 0, 0})
+	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, PerftNodes{8902, 12, 34, 0, 0, 0, 0})
 }
 
 func TestStartingPosDepth4(t *testing.T) {
@@ -109,7 +109,7 @@ func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag) PerftN
 	moves := p.LegalMoves()
 	nodes := PerftNodes{0, 0, 0, 0, 0, 0, 0}
 
-	for _, move := range moves {
+	for _, move := range *moves {
 		tag := p.tag
 		ep := p.enPassant
 		cp := p.MakeMove(move)
@@ -350,17 +350,17 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 	p := g.position
 	legalMoves := p.LegalMoves()
 	move := Move{E1, G1, NoType, Check | KingSideCastle}
-	if !containsMove(legalMoves, move) {
+	if !containsMove(*legalMoves, move) {
 		fmt.Println("Got:")
-		for _, i := range legalMoves {
+		for _, i := range *legalMoves {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.moveTag))
 	}
 	move = Move{E1, D2, NoType, Check | Capture}
-	if !containsMove(legalMoves, move) {
+	if !containsMove(*legalMoves, move) {
 		fmt.Println("Got:")
-		for _, i := range legalMoves {
+		for _, i := range *legalMoves {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.moveTag))
@@ -419,9 +419,9 @@ func TestLegalMoves(t *testing.T) {
 		Move{B7, A8, Knight, Capture},
 	}
 	expectedLen := len(expectedMoves)
-	if expectedLen != len(legalMoves) || !equalMoves(expectedMoves, legalMoves) {
+	if expectedLen != len(*legalMoves) || !equalMoves(expectedMoves, *legalMoves) {
 		fmt.Println("Got:")
-		for _, i := range legalMoves {
+		for _, i := range *legalMoves {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		fmt.Println("Expected:")
@@ -429,7 +429,7 @@ func TestLegalMoves(t *testing.T) {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
-			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(legalMoves)))
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(*legalMoves)))
 	}
 }
 
@@ -451,9 +451,9 @@ func TestDoubleCheckResponses(t *testing.T) {
 		t.Errorf("Position is wrongfully considered ended: %b", p.Status())
 	}
 	expectedLen := len(expectedMoves)
-	if expectedLen != len(legalMoves) || !equalMoves(expectedMoves, legalMoves) {
+	if expectedLen != len(*legalMoves) || !equalMoves(expectedMoves, *legalMoves) {
 		fmt.Println("Got:")
-		for _, i := range legalMoves {
+		for _, i := range *legalMoves {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		fmt.Println("Expected:")
@@ -461,7 +461,7 @@ func TestDoubleCheckResponses(t *testing.T) {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
-			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(legalMoves)))
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(*legalMoves)))
 	}
 }
 
@@ -471,7 +471,7 @@ func TestHasLegalMovesCheckmate(t *testing.T) {
 	p := g.position
 	hasMoves := p.HasLegalMoves()
 	if hasMoves {
-		for _, i := range p.LegalMoves() {
+		for _, i := range *p.LegalMoves() {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Position is wrongfully considered playable, %b", p.LegalMoves())
@@ -495,13 +495,13 @@ func TestHasLegalMoves(t *testing.T) {
 	legalMoves1 := p.LegalMoves()
 	hasMoves := p.HasLegalMoves()
 	legalMoves2 := p.LegalMoves()
-	if !hasMoves || !equalMoves(legalMoves1, legalMoves2) {
+	if !hasMoves || !equalMoves(*legalMoves1, *legalMoves2) {
 		fmt.Println("First call to LegalMoves")
-		for _, i := range legalMoves1 {
+		for _, i := range *legalMoves1 {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		fmt.Println("Second call to LegalMoves")
-		for _, i := range legalMoves2 {
+		for _, i := range *legalMoves2 {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Position is wrongfully considered lost, %b", p.LegalMoves())

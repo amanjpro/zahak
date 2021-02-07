@@ -7,7 +7,7 @@ import (
 func eval(position *Position) float64 {
 	board := position.board
 	allPieces := board.AllPieces()
-	return evaluate(position, &allPieces)
+	return evaluate(position, allPieces)
 }
 
 func evaluate(position *Position, allPieces *map[Square]Piece) float64 {

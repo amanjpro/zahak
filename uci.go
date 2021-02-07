@@ -20,11 +20,11 @@ func uci() {
 			case "quit\n":
 				os.Exit(0)
 			case "uci\n":
-				fmt.Println("id name Zahak\n")
-				fmt.Println("id author Amanj\n")
-				fmt.Println("uciok\n")
+				fmt.Print("id name Zahak\n\n")
+				fmt.Print("id author Amanj\n\n")
+				fmt.Print("uciok\n\n")
 			case "isready\n":
-				fmt.Println("readyok\n")
+				fmt.Print("readyok\n\n")
 			case "ucinewgame\n":
 				game = FromFen(startFen)
 			case "stop\n":
