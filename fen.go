@@ -170,8 +170,9 @@ func FromFen(fen string) Game {
 	}
 
 	return Game{
-		p,
-		[]*Move{},
+		&p,
+		*p.copy(),
+		[]Move{},
 		make(map[uint64]int8, 200),
 		uint16(moveCount),
 		uint16(halfMoveClock),

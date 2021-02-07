@@ -44,17 +44,17 @@ const (
 
 func (p *Piece) Type() PieceType {
 	switch *p {
-	case WhitePawn | BlackPawn:
+	case WhitePawn, BlackPawn:
 		return Pawn
-	case WhiteKnight | BlackKnight:
+	case WhiteKnight, BlackKnight:
 		return Knight
-	case WhiteBishop | BlackBishop:
+	case WhiteBishop, BlackBishop:
 		return Bishop
-	case WhiteRook | BlackRook:
+	case WhiteRook, BlackRook:
 		return Rook
-	case WhiteQueen | BlackQueen:
+	case WhiteQueen, BlackQueen:
 		return Queen
-	case WhiteKing | BlackKing:
+	case WhiteKing, BlackKing:
 		return King
 	}
 	return NoType
@@ -62,18 +62,20 @@ func (p *Piece) Type() PieceType {
 
 func (p *Piece) Weight() float64 {
 	switch *p {
-	case WhitePawn | BlackPawn:
+	case WhitePawn, BlackPawn:
 		return 1
-	case WhiteKnight | BlackKnight:
+	case WhiteKnight, BlackKnight:
 		return 3
-	case WhiteBishop | BlackBishop:
+	case WhiteBishop, BlackBishop:
 		return 3
-	case WhiteRook | BlackRook:
+	case WhiteRook, BlackRook:
 		return 5
-	case WhiteQueen | BlackQueen:
+	case WhiteQueen, BlackQueen:
 		return 9
+	case WhiteKing, BlackKing:
+		return math.Inf(1)
 	}
-	return math.Inf(1)
+	return 10
 }
 
 func (p *Piece) Name() string {
@@ -138,7 +140,7 @@ func pieceFromName(name rune) Piece {
 
 func (p *Piece) Color() Color {
 	switch *p {
-	case WhitePawn | WhiteKnight | WhiteBishop | WhiteRook | WhiteQueen | WhiteKing:
+	case WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing:
 		return White
 	case NoPiece:
 		return NoColor

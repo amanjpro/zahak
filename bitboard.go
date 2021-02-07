@@ -143,7 +143,7 @@ func (b *Bitboard) Move(src Square, dest Square) {
 
 	// Remove the piece from source square and add it to destination
 	if b.blackPawn&(1<<src) != 0 {
-		b.blackPawn &= ^(1 << src)
+		b.blackPawn &^= (1 << src)
 		b.blackPawn |= (1 << dest)
 	} else if b.whitePawn&(1<<src) != 0 {
 		b.whitePawn &^= (1 << src)

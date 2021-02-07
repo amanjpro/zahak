@@ -66,7 +66,7 @@ func test(t *testing.T, fen string, depth int8, expected PerftNodes) {
 	}
 }
 
-func perft(p Position, depth int8, lastPromo PieceType, lastTag MoveTag) PerftNodes {
+func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag) PerftNodes {
 	isCheckmate := p.Status() == Checkmate
 	if depth == 0 || isCheckmate {
 		nodes := int64(1)

@@ -26,6 +26,7 @@ func search(position *Position, depth int8) EvalMove {
 	var isMaximizingPlayer = position.Turn() == White
 	validMoves := position.LegalMoves()
 	evals := make(chan EvalMove)
+	evalIsSet := false
 	start := time.Now()
 	for i := 0; i < len(validMoves); i++ {
 		p := position.copy()
@@ -43,12 +44,14 @@ func search(position *Position, depth int8) EvalMove {
 		}
 		fmt.Println("Eval: ", evalMove.eval)
 		if isMaximizingPlayer {
-			if &bestEval == nil || evalMove.eval > bestEval.eval {
+			if !evalIsSet || evalMove.eval > bestEval.eval {
 				bestEval = evalMove
+				evalIsSet = true
 			}
 		} else {
-			if &bestEval == nil || evalMove.eval < bestEval.eval {
+			if !evalIsSet || evalMove.eval < bestEval.eval {
 				bestEval = evalMove
+				evalIsSet = true
 			}
 		}
 	}
@@ -73,9 +76,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 
 	if depthLeft == 0 {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
-		eval := eval(position)
-		fmt.Printf("%s, %f\n", position.Fen(), eval)
-		return eval, line
+		return eval(position), line
 	}
 
 	nodesSearched += 1
@@ -143,16 +144,16 @@ type ValidMoves struct {
 	depth    int
 }
 
-func (validMoves ValidMoves) Len() int {
+func (validMoves *ValidMoves) Len() int {
 	return len(validMoves.moves)
 }
 
-func (validMoves ValidMoves) Swap(i, j int) {
+func (validMoves *ValidMoves) Swap(i, j int) {
 	moves := validMoves.moves
 	moves[i], moves[j] = moves[j], moves[i]
 }
 
-func (validMoves ValidMoves) Less(i, j int) bool {
+func (validMoves *ValidMoves) Less(i, j int) bool {
 	moves := validMoves.moves
 	move1, move2 := moves[i], moves[j]
 	board := validMoves.position.board
@@ -163,23 +164,26 @@ func (validMoves ValidMoves) Less(i, j int) bool {
 		}
 	}
 
-	// FIXME
-	// // Is in Transition table ???
-	// pos1 := validMoves.position.Update(move1)
-	// hashA1 := pos1.Hash()
-	// hash1 := binary.BigEndian.Uint64(hashA1[:])
-	//
-	// pos2 := validMoves.position.Update(move2)
-	// hashA2 := pos2.Hash()
-	// hash2 := binary.BigEndian.Uint64(hashA2[:])
+	// Is in Transition table ???
+	ep := validMoves.position.enPassant
+	tg := validMoves.position.tag
+	cp := validMoves.position.MakeMove(move1)
+	hash1 := validMoves.position.Hash()
+	validMoves.position.UnMakeMove(move1, tg, ep, cp)
 
-	// if _, ok := evalCache.Get(hash1); ok {
-	// 	return true
-	// }
-	//
-	// if _, ok := evalCache.Get(hash2); ok {
-	// 	return false
-	// }
+	ep = validMoves.position.enPassant
+	tg = validMoves.position.tag
+	cp = validMoves.position.MakeMove(move2)
+	hash2 := validMoves.position.Hash()
+	validMoves.position.UnMakeMove(move2, tg, ep, cp)
+
+	if _, ok := evalCache.Get(hash1); ok {
+		return true
+	}
+
+	if _, ok := evalCache.Get(hash2); ok {
+		return false
+	}
 
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
@@ -219,6 +223,6 @@ func (validMoves ValidMoves) Less(i, j int) bool {
 }
 
 func orderMoves(validMoves ValidMoves) []Move {
-	sort.Sort(validMoves)
+	sort.Sort(&validMoves)
 	return validMoves.moves
 }
