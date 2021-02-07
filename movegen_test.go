@@ -42,7 +42,7 @@ func TestStartingPosDepth3(t *testing.T) {
 }
 
 func TestStartingPosDepth4(t *testing.T) {
-	// test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, PerftNodes{197281, 469, 1576, 0, 0, 0, 8})
+	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, PerftNodes{197281, 469, 1576, 0, 0, 0, 8})
 }
 
 func TestStartingPosDepth5(t *testing.T) {
@@ -78,7 +78,8 @@ func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag) PerftN
 		checkmates := int64(0)
 		if isCheckmate {
 			checkmates = 1
-		} else if !isCheckmate && lastTag&Check != 0 {
+		}
+		if lastTag&Check != 0 {
 			checks = 1
 		}
 
@@ -505,6 +506,47 @@ func TestHasLegalMoves(t *testing.T) {
 			fmt.Println(i.ToString(), i.promoType, i.moveTag)
 		}
 		t.Errorf("Position is wrongfully considered lost, %b", p.LegalMoves())
+	}
+}
+
+func TestLegalMovesInOpenning(t *testing.T) {
+	fen := "rnbqkbnr/ppp3pp/3ppp2/1P6/6P1/N6N/P1PPPP1P/R1BQKB1R w KQkq - 0 1"
+	g := FromFen(fen)
+	p := g.position
+	legalMoves := p.LegalMoves()
+	expectedMoves := []Move{
+		Move{H1, G1, NoType, 0},
+		Move{G4, G5, NoType, 0},
+		Move{F2, F3, NoType, 0},
+		Move{F2, F4, NoType, 0},
+		Move{E2, E3, NoType, 0},
+		Move{E2, E4, NoType, 0},
+		Move{D2, D3, NoType, 0},
+		Move{D2, D4, NoType, 0},
+		Move{C2, C3, NoType, 0},
+		Move{C2, C4, NoType, 0},
+		Move{B5, B6, NoType, 0},
+		Move{A1, B1, NoType, 0},
+		Move{A3, C4, NoType, 0},
+		Move{A3, B1, NoType, 0},
+		Move{C1, B2, NoType, 0},
+		Move{F1, G2, NoType, 0},
+		Move{H3, G5, NoType, 0},
+		Move{H3, F4, NoType, 0},
+		Move{H3, G1, NoType, 0},
+	}
+	expectedLen := len(expectedMoves)
+	if expectedLen != len(*legalMoves) || !equalMoves(expectedMoves, *legalMoves) {
+		fmt.Println("Got:")
+		for _, i := range *legalMoves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		fmt.Println("Expected:")
+		for _, i := range expectedMoves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		t.Errorf("Expected different number of moves to be generated%s",
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(*legalMoves)))
 	}
 }
 

@@ -822,9 +822,6 @@ func nortOne(b uint64) uint64 {
 	return b << 8
 }
 
-func eastOne(b uint64) uint64 {
-	return (b << 1) & notAFile
-}
 func noEaOne(b uint64) uint64 {
 	return (b << 9) & notAFile
 }
@@ -840,6 +837,11 @@ func soWeOne(b uint64) uint64 {
 func noWeOne(b uint64) uint64 {
 	return (b << 7) & notHFile
 }
+
+func eastOne(b uint64) uint64 {
+	return (b << 1) & notAFile
+}
+
 func noNoEa(b uint64) uint64 {
 	return (b << 17) & notAFile
 }
@@ -865,11 +867,36 @@ func soSoWe(b uint64) uint64 {
 	return (b >> 17) & notHFile
 }
 
+// func noNoEa(b uint64) uint64 {
+// 	return (b & notHFile) << 17
+// }
+// func noEaEa(b uint64) uint64 {
+// 	return (b & notGHFile) << 10
+// }
+// func soEaEa(b uint64) uint64 {
+// 	return (b & notGHFile) >> 6
+// }
+// func soSoEa(b uint64) uint64 {
+// 	return (b & notHFile) >> 15
+// }
+// func noNoWe(b uint64) uint64 {
+// 	return (b & notAFile) << 15
+// }
+// func noWeWe(b uint64) uint64 {
+// 	return (b & notABFile) << 6
+// }
+// func soWeWe(b uint64) uint64 {
+// 	return (b & notABFile) >> 10
+// }
+// func soSoWe(b uint64) uint64 {
+// 	return (b & notAFile) >> 17
+// }
+
 const empty = uint64(0)
 const universal = uint64(0xffffffffffffffff)
 const notAFile = uint64(0xfefefefefefefefe) // ~0x0101010101010101
-const notBFile = uint64(0xbfbfbfbfbfbfbfbf)
-const notGFile = uint64(0xfdfdfdfdfdfdfdfd)
+const notBFile = uint64(0xfdfdfdfdfdfdfdfd)
+const notGFile = uint64(0xbfbfbfbfbfbfbfbf)
 const notHFile = uint64(0x7f7f7f7f7f7f7f7f) // ~0x8080808080808080
 const notABFile = notAFile & notBFile
 const notGHFile = notGFile & notHFile
