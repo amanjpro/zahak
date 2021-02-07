@@ -247,7 +247,6 @@ func (b *Bitboard) Draw() string {
 			if p == NoPiece {
 				s += "-"
 			} else {
-				fmt.Println(p.Name(), pieceUnicodes[int(p)], int(p))
 				s += pieceUnicodes[int(p)]
 			}
 			s += " "

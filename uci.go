@@ -91,7 +91,6 @@ func uci() {
 				} else {
 					fmt.Println("Didn't understand", cmd)
 				}
-				fmt.Println(game.position.board.Draw())
 			}
 		}
 	}
