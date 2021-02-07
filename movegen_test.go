@@ -9,20 +9,10 @@ type PerftNodes struct {
 	nodes      int64
 	checks     int64
 	captures   int64
-	enPassant  int64
+	enPassants int64
 	castles    int64
 	promotions int64
 	checkmates int64
-}
-
-func (this *PerftNodes) combine(that PerftNodes) {
-	this.nodes += that.nodes
-	this.checks += that.checks
-	this.captures += that.captures
-	this.enPassant += that.enPassant
-	this.castles += that.castles
-	this.promotions += that.promotions
-	this.checkmates += that.checkmates
 }
 
 func TestStartingPosDepth0(t *testing.T) {
@@ -60,64 +50,48 @@ func TestStartingPosDepth9(t *testing.T) {
 
 func test(t *testing.T, fen string, depth int8, expected PerftNodes) {
 	g := FromFen(fen)
-	nodes := perft(g.position, depth, NoType, 0)
-	if nodes != expected {
-		t.Errorf("Test failed\nExpected: %s", fmt.Sprintf("%d\nGot: %d\n", expected, nodes))
+	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
+	perft(g.position, depth, NoType, 0, &actual)
+	if actual != expected {
+		t.Errorf("Test failed\nExpected: %s", fmt.Sprintf("%d\nGot: %d\n", expected, actual))
 	}
 }
 
-func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag) PerftNodes {
+func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag, acc *PerftNodes) {
 	isCheckmate := p.Status() == Checkmate
 	if depth == 0 || isCheckmate {
-		nodes := int64(1)
-		checks := int64(0)
-		captures := int64(0)
-		enPassants := int64(0)
-		castles := int64(0)
-		promotions := int64(0)
-		checkmates := int64(0)
+		acc.nodes += 1
 		if isCheckmate {
-			checkmates = 1
+			acc.checkmates += 1
 		}
 		if lastTag&Check != 0 {
-			checks = 1
+			acc.checks += 1
 		}
 
 		if lastTag&Capture != 0 && lastTag&EnPassant == 0 {
-			captures = 1
+			acc.captures += 1
 		}
 		if lastTag&EnPassant != 0 {
-			enPassants = 1
+			acc.enPassants += 1
 		}
 		if lastTag&QueenSideCastle != 0 || lastTag&KingSideCastle != 0 {
-			castles = 1
+			acc.castles += 1
 		}
 		if lastPromo != NoType {
-			promotions = 1
+			acc.promotions += 1
 		}
-
-		return PerftNodes{
-			nodes,
-			checks,
-			captures,
-			enPassants,
-			castles,
-			promotions,
-			checkmates,
-		}
+		return
 	}
 
 	moves := p.LegalMoves()
-	nodes := PerftNodes{0, 0, 0, 0, 0, 0, 0}
 
 	for _, move := range *moves {
 		tag := p.tag
 		ep := p.enPassant
 		cp := p.MakeMove(move)
-		nodes.combine(perft(p, depth-1, move.promoType, move.moveTag))
+		perft(p, depth-1, move.promoType, move.moveTag, acc)
 		p.UnMakeMove(move, tag, ep, cp)
 	}
-	return nodes
 }
 
 func TestBishopMoves(t *testing.T) {
@@ -261,7 +235,7 @@ func TestKingMoves(t *testing.T) {
 	}
 }
 
-func TestPawnMoves(t *testing.T) {
+func TestPawnMovesForWhite(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
 	g := FromFen(fen)
 	p := g.position
@@ -292,6 +266,48 @@ func TestPawnMoves(t *testing.T) {
 		Move{B7, C8, Rook, Capture},
 		Move{B7, C8, Bishop, Capture},
 		Move{B7, C8, Knight, Capture},
+	}
+	expectedLen := len(expectedMoves)
+	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
+		fmt.Println("Got:")
+		for _, i := range moves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		fmt.Println("Expected:")
+		for _, i := range expectedMoves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		t.Errorf("Expected different number of moves to be generated%s",
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
+	}
+}
+
+func TestPawnMovesForBlack(t *testing.T) {
+	fen := "rnbqkbnr/ppp3pp/3p1p2/1P4P1/4pP2/N6N/P1PPP2P/R1BQKB1R b KQkq f3 0 1"
+	g := FromFen(fen)
+	p := g.position
+	board := g.position.board
+	moves := make([]Move, 0, 8)
+	color := Black
+	add := func(ms ...Move) {
+		moves = append(moves, ms...)
+	}
+	bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+		board.whiteKing, color, p.enPassant, add)
+	expectedMoves := []Move{
+		Move{H7, H6, NoType, 0},
+		Move{H7, H5, NoType, 0},
+		Move{G7, G6, NoType, 0},
+		Move{F6, F5, NoType, 0},
+		Move{F6, G5, NoType, Capture},
+		Move{E4, E3, NoType, 0},
+		Move{E4, F3, NoType, EnPassant | Capture},
+		Move{D6, D5, NoType, 0},
+		Move{C7, C6, NoType, 0},
+		Move{C7, C5, NoType, 0},
+		Move{B7, B6, NoType, 0},
+		Move{A7, A6, NoType, 0},
+		Move{A7, A5, NoType, 0},
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
