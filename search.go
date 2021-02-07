@@ -27,6 +27,10 @@ func search(position *Position, depth int8) EvalMove {
 	cacheHits = 0
 	var bestEval EvalMove
 	var isMaximizingPlayer = position.Turn() == White
+	var dir float64 = -1
+	if isMaximizingPlayer {
+		dir = 1
+	}
 	validMoves := *position.LegalMoves()
 	evals := make(chan EvalMove)
 	evalIsSet := false
@@ -40,12 +44,13 @@ func search(position *Position, depth int8) EvalMove {
 	for i := 0; i < len(validMoves); i++ {
 		evalMove := <-evals
 
-		fmt.Println("Move", evalMove.move.ToString())
-		fmt.Println("Tree")
+		mvStr := evalMove.move.ToString()
+		fmt.Printf("info nodes %d score cp %d currmove %s pv %s ",
+			nodesVisited, int(evalMove.eval*100*dir), mvStr, mvStr)
 		for _, mv := range evalMove.line {
-			fmt.Printf("%s ", mv.ToString())
+			fmt.Printf(" %s", mv.ToString())
 		}
-		fmt.Println("Eval: ", evalMove.eval)
+		fmt.Print("\n\n")
 		if isMaximizingPlayer {
 			if !evalIsSet || evalMove.eval > bestEval.eval {
 				bestEval = evalMove
@@ -168,26 +173,28 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	}
 
 	// Is in Transition table ???
-	ep := validMoves.position.enPassant
-	tg := validMoves.position.tag
-	cp := validMoves.position.MakeMove(move1)
-	hash1 := validMoves.position.Hash()
-	validMoves.position.UnMakeMove(move1, tg, ep, cp)
-
-	ep = validMoves.position.enPassant
-	tg = validMoves.position.tag
-	cp = validMoves.position.MakeMove(move2)
-	hash2 := validMoves.position.Hash()
-	validMoves.position.UnMakeMove(move2, tg, ep, cp)
-
-	if _, ok := evalCache.Get(hash1); ok {
-		return true
-	}
-
-	if _, ok := evalCache.Get(hash2); ok {
-		return false
-	}
-
+	// TODO: This is slow, that tells us either cache access is slow or has computation is
+	// Or maybe (unlikely) make/unmake move is slow
+	// ep := validMoves.position.enPassant
+	// tg := validMoves.position.tag
+	// cp := validMoves.position.MakeMove(move1)
+	// hash1 := validMoves.position.Hash()
+	// validMoves.position.UnMakeMove(move1, tg, ep, cp)
+	//
+	// ep = validMoves.position.enPassant
+	// tg = validMoves.position.tag
+	// cp = validMoves.position.MakeMove(move2)
+	// hash2 := validMoves.position.Hash()
+	// validMoves.position.UnMakeMove(move2, tg, ep, cp)
+	//
+	// if _, ok := evalCache.Get(hash1); ok {
+	// 	return true
+	// }
+	//
+	// if _, ok := evalCache.Get(hash2); ok {
+	// 	return false
+	// }
+	//
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
 		// What are we capturing?
