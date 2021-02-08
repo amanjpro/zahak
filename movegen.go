@@ -433,14 +433,14 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 		src := bitScanReverse(bbPiece)
 		srcSq := Square(src)
 		knight := uint64(1 << src)
-		moves := knightMovesNoCaptures(knight, both)
+		moves := knightMovesNoCaptures(srcSq, both)
 		for moves != 0 {
 			sq := bitScanReverse(moves)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, 0})
 			moves ^= (1 << sq)
 		}
-		captures := knightCaptures(knight, otherPieces)
+		captures := knightCaptures(srcSq, otherPieces)
 		for captures != 0 {
 			sq := bitScanReverse(captures)
 			dest := Square(sq)
@@ -598,20 +598,30 @@ func slidingCheckTag(from Square, occ uint64, ownPieces uint64, otherKing uint64
 
 // The mighty knight
 
-func knightCheckTag(from uint64, otherKing uint64) MoveTag {
+func knightCheckTag(from Square, otherKing uint64) MoveTag {
 	if knightCaptures(from, otherKing) != 0 {
 		return Check
 	}
 	return 0
 }
 
-func knightMovesNoCaptures(b uint64, other uint64) uint64 {
-	attacks := knightAttacks(b)
+var computedKnightAttacks = initializeKnightAttacks()
+
+func initializeKnightAttacks() [64]uint64 {
+	var attacks = [64]uint64{}
+	for sq := uint64(0); sq < 64; sq++ {
+		attacks[sq] = knightAttacks(1 << sq)
+	}
+	return attacks
+}
+
+func knightMovesNoCaptures(sq Square, other uint64) uint64 {
+	attacks := computedKnightAttacks[sq]
 	return attacks &^ other
 }
 
-func knightCaptures(b uint64, other uint64) uint64 {
-	return knightAttacks(b) & other
+func knightCaptures(sq Square, other uint64) uint64 {
+	return computedKnightAttacks[sq] & other
 }
 
 func knightAttacks(b uint64) uint64 {
