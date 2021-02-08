@@ -362,7 +362,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 			sngl := bSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanReverse(sngl))
-				if dest.Rank() == Rank8 {
+				if dest.Rank() == Rank1 {
 					add(
 						&Move{srcSq, dest, Queen, 0},
 						&Move{srcSq, dest, Rook, 0},
@@ -514,7 +514,6 @@ func wSinglePushTargets(wpawns uint64, empty uint64) uint64 {
 }
 
 func wDblPushTargets(wpawns uint64, empty uint64) uint64 {
-	const rank4 = uint64(0x00000000FF000000)
 	singlePushs := wSinglePushTargets(wpawns, empty)
 	return nortOne(singlePushs) & empty & rank4
 }
@@ -524,7 +523,6 @@ func bSinglePushTargets(bpawns uint64, empty uint64) uint64 {
 }
 
 func bDoublePushTargets(bpawns uint64, empty uint64) uint64 {
-	const rank5 = uint64(0x000000FF00000000)
 	singlePushs := bSinglePushTargets(bpawns, empty)
 	return soutOne(singlePushs) & empty & rank5
 }
@@ -900,3 +898,5 @@ const notGFile = uint64(0xbfbfbfbfbfbfbfbf)
 const notHFile = uint64(0x7f7f7f7f7f7f7f7f) // ~0x8080808080808080
 const notABFile = notAFile & notBFile
 const notGHFile = notGFile & notHFile
+const rank4 = uint64(0x00000000FF000000)
+const rank5 = uint64(0x000000FF00000000)
