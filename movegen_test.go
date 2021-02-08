@@ -49,7 +49,7 @@ func TestStartingPosDepth9(t *testing.T) {
 }
 
 func test(t *testing.T, fen string, depth int8, expected PerftNodes) {
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
 	perft(g.position, depth, NoType, 0, &actual)
 	if actual != expected {
@@ -96,7 +96,7 @@ func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag, acc *P
 
 func TestBishopMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	board := g.position.board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
@@ -136,7 +136,7 @@ func TestBishopMoves(t *testing.T) {
 
 func TestRookMoves(t *testing.T) {
 	fen := "rnkqbbnr/ppp1pppp/4P3/3pP3/3P4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	board := g.position.board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
@@ -171,7 +171,7 @@ func TestRookMoves(t *testing.T) {
 
 func TestQueenMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	board := g.position.board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
@@ -204,7 +204,7 @@ func TestQueenMoves(t *testing.T) {
 
 func TestKingMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	board := g.position.board
 	moves := make([]*Move, 0, 8)
@@ -237,7 +237,7 @@ func TestKingMoves(t *testing.T) {
 
 func TestPawnMovesForWhite(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	board := g.position.board
 	moves := make([]*Move, 0, 8)
@@ -284,7 +284,7 @@ func TestPawnMovesForWhite(t *testing.T) {
 
 func TestPawnMovesForBlack(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3p1p2/1P4P1/4pP2/N6N/P1PPP2P/R1BQKB1R b KQkq f3 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	board := g.position.board
 	moves := make([]*Move, 0, 8)
@@ -326,7 +326,7 @@ func TestPawnMovesForBlack(t *testing.T) {
 
 func TestKnightMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/1N1pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	b := p.board
 	moves := make([]*Move, 0, 8)
@@ -363,7 +363,7 @@ func TestKnightMoves(t *testing.T) {
 
 func TestCastleAndDiscoveredChecks(t *testing.T) {
 	fen := "rnbq1bn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/k3K2R w Kkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	legalMoves := p.LegalMoves()
 	move := &Move{E1, G1, NoType, Check | KingSideCastle}
@@ -386,7 +386,7 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 
 func TestLegalMoves(t *testing.T) {
 	fen := "rn1q1bn1/pPp1pppp/4P3/1N1pP2Q/3p3b/4B3/PP1rBPPP/k3K2R w Kkq d6 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	legalMoves := p.LegalMoves()
 	expectedMoves := []*Move{
@@ -452,7 +452,7 @@ func TestLegalMoves(t *testing.T) {
 
 func TestDoubleCheckResponses(t *testing.T) {
 	fen := "5Q2/8/1q5P/8/6k1/5R2/6P1/2r3K1 w - - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	legalMoves := p.LegalMoves()
 	expectedMoves := []*Move{
@@ -484,7 +484,7 @@ func TestDoubleCheckResponses(t *testing.T) {
 
 func TestHasLegalMovesCheckmate(t *testing.T) {
 	fen := "5Q2/8/1q5P/8/6k1/5R2/6PR/2r3K1 w - - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	hasMoves := p.HasLegalMoves()
 	if hasMoves {
@@ -497,7 +497,7 @@ func TestHasLegalMovesCheckmate(t *testing.T) {
 
 func TestHasLegalMovesDraw(t *testing.T) {
 	fen := "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	hasMoves := p.HasLegalMoves()
 	if hasMoves {
@@ -507,7 +507,7 @@ func TestHasLegalMovesDraw(t *testing.T) {
 
 func TestHasLegalMoves(t *testing.T) {
 	fen := "5Q2/8/1q5P/8/6k1/5R2/6P1/2r3K1 w - - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	legalMoves1 := p.LegalMoves()
 	hasMoves := p.HasLegalMoves()
@@ -527,7 +527,7 @@ func TestHasLegalMoves(t *testing.T) {
 
 func TestLegalMovesInOpenning(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3ppp2/1P6/6P1/N6N/P1PPPP1P/R1BQKB1R w KQkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 	legalMoves := p.LegalMoves()
 	expectedMoves := []*Move{

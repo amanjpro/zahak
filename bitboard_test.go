@@ -7,7 +7,7 @@ import (
 
 func TestAllPieces(t *testing.T) {
 	fen := "r1bq1bnr/pppp1p1p/n3p3/2k3p1/2P3P1/7N/PPQPPP1P/RNB1KBR1 w KQkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	expected := map[Square]Piece{
 		A8: BlackRook,
 		C8: BlackBishop,

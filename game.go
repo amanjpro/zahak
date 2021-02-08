@@ -56,3 +56,27 @@ func (g *Game) Status() Status {
 	}
 	return g.position.Status()
 }
+
+func NewGame(
+	position *Position,
+	startPosition Position,
+	moves []*Move,
+	positions map[uint64]int8,
+	numberOfMoves uint16,
+	halfMoveClock uint16,
+	clearCache bool) Game {
+
+	if clearCache {
+		InitZobrist()
+		evalCache = Cache{items: make(map[uint64]*CachedEval, 1000_000)}
+	}
+
+	return Game{
+		position,
+		startPosition,
+		moves,
+		positions,
+		numberOfMoves,
+		halfMoveClock,
+	}
+}

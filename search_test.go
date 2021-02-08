@@ -2,12 +2,28 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"testing"
 )
 
+func TestSearchOnlyMove(t *testing.T) {
+	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1", true)
+	evalMove := search(game.position, 10)
+	expected := Move{G7, G6, NoType, 0}
+	mv := *evalMove.move
+	mvStr := mv.ToString()
+	fmt.Println(game.position.board.Draw())
+	if mv != expected {
+		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
+	}
+	if evalMove.eval != math.Inf(1) {
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: +Inf\nGot: %f\n", evalMove.eval))
+	}
+}
+
 func TestNestedMakeUnMake(t *testing.T) {
 	fen := "rnb1kbnr/pQpp1ppp/4p3/8/7q/2P5/PP1PPPPP/RNB1KBNR b KQkq - 0 1"
-	g := FromFen(fen)
+	g := FromFen(fen, true)
 	p := g.position
 
 	m1 := &Move{G8, E7, NoType, 0}

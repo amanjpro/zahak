@@ -153,7 +153,7 @@ func positionFromFen(fen string) Position {
 	return p
 }
 
-func FromFen(fen string) Game {
+func FromFen(fen string, clearCache bool) Game {
 	parts := strings.Fields(fen)
 	if len(parts) != 6 {
 		panic(fmt.Sprintf("Invalid FEN notation %s, there should be 6 parts", fen))
@@ -169,12 +169,13 @@ func FromFen(fen string) Game {
 		panic(fmt.Sprintf("Invalid FEN notation %s, move count is not set correctly %s", fen, parts[5]))
 	}
 
-	return Game{
+	return NewGame(
 		&p,
 		*p.copy(),
 		[]*Move{},
 		make(map[uint64]int8, 200),
 		uint16(moveCount),
 		uint16(halfMoveClock),
-	}
+		clearCache,
+	)
 }

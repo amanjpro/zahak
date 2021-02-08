@@ -11,7 +11,7 @@ const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 func uci() {
 	var game Game
-	var depth = int8(8)
+	var depth = int8(10)
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		cmd, err := reader.ReadString('\n')
@@ -26,7 +26,7 @@ func uci() {
 			case "isready\n":
 				fmt.Print("readyok\n\n")
 			case "ucinewgame\n":
-				game = FromFen(startFen)
+				game = FromFen(startFen, true)
 			case "stop\n":
 				STOP_SEARCH_GLOBALLY = true
 			default:
@@ -34,7 +34,7 @@ func uci() {
 					go findMove(game.position, depth)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					moves := strings.Fields(cmd)
-					game = FromFen(startFen)
+					game = FromFen(startFen, true)
 					for i := 3; i < len(moves); i++ {
 						move := moves[i]
 						source := NameToSquareMap[string([]byte{move[0], move[1]})]
@@ -59,11 +59,11 @@ func uci() {
 						game.Move(&Move{source, destination, promo, tag})
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
-					game = FromFen(startFen)
+					game = FromFen(startFen, false)
 				} else if strings.HasPrefix(cmd, "position") {
 					cmd := strings.Fields(cmd)
 					fen := fmt.Sprintf("%s %s %s %s %s %s", cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6])
-					game = FromFen(fen)
+					game = FromFen(fen, false)
 					for i := 8; i < len(cmd); i++ {
 						move := cmd[i]
 						source := NameToSquareMap[fmt.Sprintf("%x%x", move[0], move[1])]
