@@ -65,11 +65,10 @@ func search(position *Position, depth int8) EvalMove {
 
 	eval, moves := minimax(position, depth, 1, isMaximizingPlayer, math.Inf(-1),
 		math.Inf(1), []*Move{})
-	fmt.Println(len(moves))
 	move := moves[0]
 	mvStr := move.ToString()
-	fmt.Printf("info nodes %d score cp %d currmove %s pv %s",
-		nodesVisited, int(eval*100*dir), mvStr, mvStr)
+	fmt.Printf("info nodes %d score cp %d currmove %s pv",
+		nodesVisited, int(eval*100*dir), mvStr)
 	for _, mv := range moves {
 		fmt.Printf(" %s", mv.ToString())
 	}
