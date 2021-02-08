@@ -31,40 +31,54 @@ func search(position *Position, depth int8) EvalMove {
 	if isMaximizingPlayer {
 		dir = 1
 	}
-	validMoves := position.LegalMoves()
-	evals := make(chan EvalMove)
-	evalIsSet := false
+	// validMoves := position.LegalMoves()
+	// evals := make(chan EvalMove)
+	// evalIsSet := false
 	start := time.Now()
-	for i := 0; i < len(validMoves); i++ {
-		p := position.copy()
-		move := validMoves[i]
-		p.MakeMove(move)
-		go parallelMinimax(p, move, depth, !isMaximizingPlayer, evals)
-	}
-	for i := 0; i < len(validMoves); i++ {
-		evalMove := <-evals
+	// for i := 0; i < len(validMoves); i++ {
+	// 	p := position.copy()
+	// 	move := validMoves[i]
+	// 	p.MakeMove(move)
+	// 	go parallelMinimax(p, move, depth, !isMaximizingPlayer, evals)
+	// }
+	// for i := 0; i < len(validMoves); i++ {
+	// 	evalMove := <-evals
+	//
+	// 	mvStr := evalMove.move.ToString()
+	// 	fmt.Printf("info nodes %d score cp %d currmove %s pv %s",
+	// 		nodesVisited, int(evalMove.eval*100*dir), mvStr, mvStr)
+	// 	for _, mv := range evalMove.line {
+	// 		fmt.Printf(" %s", mv.ToString())
+	// 	}
+	// 	fmt.Print("\n\n")
+	// 	if isMaximizingPlayer {
+	// 		if !evalIsSet || evalMove.eval > bestEval.eval {
+	// 			bestEval = evalMove
+	// 			evalIsSet = true
+	// 		}
+	// 	} else {
+	// 		if !evalIsSet || evalMove.eval < bestEval.eval {
+	// 			bestEval = evalMove
+	// 			evalIsSet = true
+	// 		}
+	// 	}
 
-		mvStr := evalMove.move.ToString()
-		fmt.Printf("info nodes %d score cp %d currmove %s pv %s",
-			nodesVisited, int(evalMove.eval*100*dir), mvStr, mvStr)
-		for _, mv := range evalMove.line {
-			fmt.Printf(" %s", mv.ToString())
-		}
-		fmt.Print("\n\n")
-		if isMaximizingPlayer {
-			if !evalIsSet || evalMove.eval > bestEval.eval {
-				bestEval = evalMove
-				evalIsSet = true
-			}
-		} else {
-			if !evalIsSet || evalMove.eval < bestEval.eval {
-				bestEval = evalMove
-				evalIsSet = true
-			}
-		}
+	eval, moves := minimax(position, depth, 1, isMaximizingPlayer, math.Inf(-1),
+		math.Inf(1), []*Move{})
+	fmt.Println(len(moves))
+	move := moves[0]
+	mvStr := move.ToString()
+	fmt.Printf("info nodes %d score cp %d currmove %s pv %s",
+		nodesVisited, int(eval*100*dir), mvStr, mvStr)
+	for _, mv := range moves {
+		fmt.Printf(" %s", mv.ToString())
 	}
+	fmt.Print("\n\n")
+
+	bestEval = EvalMove{eval, move, moves}
+	// }
 	end := time.Now()
-	close(evals)
+	// close(evals)
 	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n", nodesVisited, nodesSearched, cacheHits)
 	fmt.Printf("Took %f seconds\n", end.Sub(start).Seconds())
 	pv = bestEval.line
@@ -97,6 +111,9 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 			!isMaximizingPlayer, alpha, beta, move, line)
 		if isMaximizingPlayer {
 			if score >= beta {
+				if len(newLine) == 0 {
+					return beta, computedLine
+				}
 				return beta, newLine
 			}
 			if score > alpha {
@@ -105,6 +122,9 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 			}
 		} else {
 			if score <= alpha {
+				if len(newLine) == 0 {
+					return alpha, computedLine
+				}
 				return alpha, newLine
 			}
 			if score < beta {

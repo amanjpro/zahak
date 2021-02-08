@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sync"
+// "sync"
 )
 
 type CachedEval struct {
@@ -10,7 +10,7 @@ type CachedEval struct {
 }
 
 type Cache struct {
-	mu    sync.RWMutex
+	// mu    sync.RWMutex
 	items map[uint64]*CachedEval
 }
 
@@ -18,15 +18,15 @@ var evalCache = Cache{items: make(map[uint64]*CachedEval, 1000_000)}
 
 func (c *Cache) Set(key uint64, value *CachedEval) {
 	// Lock so only one goroutine at a time can access the map c.v.
-	evalCache.mu.Lock()
+	// evalCache.mu.Lock()
 	c.items[key] = value
-	evalCache.mu.Unlock()
+	// evalCache.mu.Unlock()
 }
 
 func (c *Cache) Get(key uint64) (*CachedEval, bool) {
 	// Lock so only one goroutine at a time can access the map c.v.
-	evalCache.mu.RLock()
+	// evalCache.mu.RLock()
 	item, found := c.items[key]
-	evalCache.mu.RUnlock()
+	// evalCache.mu.RUnlock()
 	return item, found
 }
