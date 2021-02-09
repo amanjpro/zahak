@@ -55,7 +55,7 @@ func StartPerftTest(slow bool) {
 	result += testMiddleGameDepth3()
 	result += testMiddleGameDepth4()
 
-	// Slow ones
+	// Somewhat slower ones
 	result += testMiddleGameDepth5()
 	result += testMiddleGameDepth6()
 	result += testEndGamePromotionDepth5()
@@ -109,62 +109,56 @@ func testStartingPosDepth9() int8 {
 
 func testMiddleGameDepth1() int8 {
 	return testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 1,
-		PerftNodes{48, 0, 0, 0, 0, 0, 0})
+		48)
 }
 
 func testMiddleGameDepth2() int8 {
 	return testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 2,
-		PerftNodes{2039, 0, 0, 0, 0, 0, 0})
+		2039)
 }
 
 func testMiddleGameDepth3() int8 {
 	return testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 3,
-		PerftNodes{97862, 0, 0, 0, 0, 0, 0})
+		97862)
 }
 
 func testMiddleGameDepth4() int8 {
 	return testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 4,
-		PerftNodes{4085603, 0, 0, 0, 0, 0, 0})
+		4085603)
 }
 
 func testMiddleGameDepth5() int8 {
 	return testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 5,
-		PerftNodes{193690690, 0, 0, 0, 0, 0, 0})
+		193690690)
 }
 
 func testMiddleGameDepth6() int8 {
 	return testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 6,
-		PerftNodes{8031647685, 0, 0, 0, 0, 0, 0})
+		8031647685)
 }
 
 func testEndGamePromotionDepth1() int8 {
-	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 1,
-		PerftNodes{24, 0, 0, 0, 0, 0, 0})
+	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 1, 24)
 }
 
 func testEndGamePromotionDepth2() int8 {
-	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 2,
-		PerftNodes{496, 0, 0, 0, 0, 0, 0})
+	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 2, 496)
 }
 
 func testEndGamePromotionDepth3() int8 {
-	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 3,
-		PerftNodes{9483, 0, 0, 0, 0, 0, 0})
+	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 3, 9483)
 }
 
 func testEndGamePromotionDepth4() int8 {
-	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 4,
-		PerftNodes{182838, 0, 0, 0, 0, 0, 0})
+	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 4, 182838)
 }
 
 func testEndGamePromotionDepth5() int8 {
-	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 5,
-		PerftNodes{3605103, 0, 0, 0, 0, 0, 0})
+	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 5, 3605103)
 }
 
 func testEndGamePromotionDepth6() int8 {
-	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 6,
-		PerftNodes{71179139, 0, 0, 0, 0, 0, 0})
+	return testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 6, 71179139)
 }
 
 func test(fen string, depth int, expected PerftNodes) int8 {
@@ -180,13 +174,12 @@ func test(fen string, depth int, expected PerftNodes) int8 {
 	return 0
 }
 
-func testNodesOnly(fen string, depth int, expected PerftNodes) int8 {
+func testNodesOnly(fen string, depth int, expected int64) int8 {
 	fmt.Printf("Running perft for %s depth %d\n", fen, depth)
 	g := FromFen(fen, true)
-	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
-	perft(g.position, depth, NoType, 0, &actual)
-	if actual.nodes != expected.nodes {
-		fmt.Printf("test failed\nExpected: %d\nGot: %d\n", expected.nodes, actual.nodes)
+	actual := bulkyPerft(g.position, depth)
+	if actual != expected {
+		fmt.Printf("test failed\nExpected: %d\nGot: %d\n", expected, actual)
 		return 1
 	}
 	fmt.Println("Passed")
@@ -228,4 +221,25 @@ func perft(p *Position, depth int, lastPromo PieceType, lastTag MoveTag, acc *Pe
 		perft(p, depth-1, move.promoType, move.moveTag, acc)
 		p.UnMakeMove(move, tag, ep, cp)
 	}
+}
+
+func bulkyPerft(p *Position, depth int) int64 {
+	nodes := int64(0)
+
+	moves := p.LegalMoves()
+	l := len(moves)
+
+	if depth == 1 {
+		return int64(l)
+	}
+
+	for i := 0; i < l; i++ {
+		move := moves[i]
+		tag := p.tag
+		ep := p.enPassant
+		cp := p.MakeMove(move)
+		nodes += bulkyPerft(p, depth-1)
+		p.UnMakeMove(move, tag, ep, cp)
+	}
+	return nodes
 }
