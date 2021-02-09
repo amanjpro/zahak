@@ -1,3 +1,3 @@
-module amanj.me/zahak
+module github.com/amanjpro/zahak
 
 go 1.15
