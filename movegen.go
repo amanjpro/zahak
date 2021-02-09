@@ -1,5 +1,9 @@
 package main
 
+import (
+	"math/bits"
+)
+
 func (p *Position) LegalMoves() []*Move {
 	allMoves := make([]*Move, 0, 350)
 
@@ -192,64 +196,48 @@ func (p *Position) HasLegalMoves() bool {
 
 // Checks and Pins
 func isInCheck(b Bitboard, colorOfKing Color) bool {
-	bbKing := b.whiteKing
-	if colorOfKing == Black {
-		bbKing = b.blackKing
+	return attacksToKing(b, colorOfKing) != 0
+}
+
+func attacksToKing(b Bitboard, colorOfKing Color) uint64 {
+	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ uint64
+	var squareOfKing Square
+	occupiedBB := b.whitePieces | b.blackPieces
+	if colorOfKing == White {
+		kingIndex := bitScanForward(b.whiteKing)
+		ownKing = (1 << kingIndex)
+		squareOfKing = Square(kingIndex)
+		opPawnAttacks = wPawnsAble2CaptureAny(ownKing, b.blackPawn)
+		opKnights = b.blackKnight
+		opRQ = b.blackRook | b.blackQueen
+		opBQ = b.blackBishop | b.blackQueen
+	} else {
+		kingIndex := bitScanForward(b.blackKing)
+		ownKing = (1 << kingIndex)
+		squareOfKing = Square(kingIndex)
+		opPawnAttacks = bPawnsAble2CaptureAny(ownKing, b.whitePawn)
+		opKnights = b.whiteKnight
+		opRQ = b.whiteRook | b.whiteQueen
+		opBQ = b.whiteBishop | b.whiteQueen
 	}
-	return tabooSquares(b, colorOfKing)&bbKing != 0
+	checks := opPawnAttacks
+	checks |= (knightAttacks(ownKing) & opKnights)
+	checks |= (bishopAttacks(squareOfKing, occupiedBB, empty) & opBQ)
+	checks |= (rookAttacks(squareOfKing, occupiedBB, empty) & opRQ)
+
+	return checks
 }
 
 func isDoubleCheck(b Bitboard, colorOfKing Color) bool {
-	var opPawns, opKnights, opR, opB, opQ, opPieces, ownKing uint64
-	occupiedBB := b.whitePieces | b.blackPieces
-	if colorOfKing == White {
-		opPawns = bPawnsAble2CaptureAny(b.blackPawn, b.whitePieces)
-		opKnights = b.blackKnight
-		opR = b.blackRook
-		opB = b.blackBishop
-		opQ = b.blackQueen
-		opPieces = b.blackPieces
-		ownKing = b.whiteKing
-	} else {
-		opPawns = wPawnsAble2CaptureAny(b.whitePawn, b.blackPieces)
-		opKnights = b.whiteKnight
-		opR = b.whiteRook
-		opB = b.whiteBishop
-		opQ = b.whiteQueen
-		opPieces = b.whitePieces
-		ownKing = b.blackKing
-	}
 	checkCounts := 0
-	if opPawns&ownKing != 0 {
-		checkCounts += 1
-	}
-	if knightAttacks(opKnights)&ownKing != 0 {
-		checkCounts += 1
-	}
-	for opB != 0 {
-		sq := bitScanReverse(opB)
-		if bishopAttacks(Square(sq), occupiedBB, opPieces)&ownKing != 0 {
-			checkCounts += 1
+	attacks := attacksToKing(b, colorOfKing)
+	for attacks != 0 {
+		sq := bitScanForward(attacks)
+		if checkCounts >= 1 {
+			return true
 		}
-		opB ^= (1 << sq)
+		attacks ^= (1 << sq)
 	}
-
-	for opR != 0 {
-		sq := bitScanReverse(opR)
-		if rookAttacks(Square(sq), occupiedBB, opPieces)&ownKing != 0 {
-			checkCounts += 1
-		}
-		opR ^= (1 << sq)
-	}
-
-	for opQ != 0 {
-		sq := bitScanReverse(opQ)
-		if queenAttacks(Square(sq), occupiedBB, opPieces)&ownKing != 0 {
-			checkCounts += 1
-		}
-		opQ ^= (1 << sq)
-	}
-
 	return checkCounts > 1
 }
 
@@ -275,19 +263,19 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 	}
 	taboo := opPawns | (knightAttacks(opKnights)) | kingAttacks(opKing)
 	for opB != 0 {
-		sq := bitScanReverse(opB)
+		sq := bitScanForward(opB)
 		taboo |= bishopAttacks(Square(sq), occupiedBB, opPieces)
 		opB ^= (1 << sq)
 	}
 
 	for opR != 0 {
-		sq := bitScanReverse(opR)
+		sq := bitScanForward(opR)
 		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
 		opR ^= (1 << sq)
 	}
 
 	for opQ != 0 {
-		sq := bitScanReverse(opQ)
+		sq := bitScanForward(opQ)
 		taboo |= queenAttacks(Square(sq), occupiedBB, opPieces)
 		opQ ^= (1 << sq)
 	}
@@ -302,18 +290,18 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		for bbPawn != 0 {
-			src := bitScanReverse(bbPawn)
+			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
 			pawn := uint64(1 << src)
 			dbl := wDblPushTargets(pawn, emptySquares)
 			if dbl != 0 {
-				dest := Square(bitScanReverse(dbl))
+				dest := Square(bitScanForward(dbl))
 				var tag MoveTag = 0
 				add(&Move{srcSq, dest, NoType, tag})
 			}
 			sngl := wSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
-				dest := Square(bitScanReverse(sngl))
+				dest := Square(bitScanForward(sngl))
 				if dest.Rank() == Rank8 {
 					add(
 						&Move{srcSq, dest, Queen, 0},
@@ -342,7 +330,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 				ep := uint64(1 << enPassant)
 				r := wPawnsAble2CaptureAny(pawn, ep)
 				if r != 0 {
-					dest := Square(bitScanReverse(r))
+					dest := Square(bitScanForward(r))
 					var tag MoveTag = Capture | EnPassant
 					add(&Move{srcSq, dest, NoType, tag})
 				}
@@ -351,18 +339,18 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 		}
 	} else if color == Black {
 		for bbPawn != 0 {
-			src := bitScanReverse(bbPawn)
+			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
 			pawn := uint64(1 << src)
 			dbl := bDoublePushTargets(pawn, emptySquares)
 			if dbl != 0 {
-				dest := Square(bitScanReverse(dbl))
+				dest := Square(bitScanForward(dbl))
 				var tag MoveTag = 0
 				add(&Move{srcSq, dest, NoType, tag})
 			}
 			sngl := bSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
-				dest := Square(bitScanReverse(sngl))
+				dest := Square(bitScanForward(sngl))
 				if dest.Rank() == Rank1 {
 					add(
 						&Move{srcSq, dest, Queen, 0},
@@ -390,7 +378,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 				ep := uint64(1 << enPassant)
 				r := bPawnsAble2CaptureAny(pawn, ep)
 				if r != 0 {
-					dest := Square(bitScanReverse(r))
+					dest := Square(bitScanForward(r))
 					var tag MoveTag = Capture | EnPassant
 					add(&Move{srcSq, dest, NoType, tag})
 				}
@@ -405,19 +393,19 @@ func bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherK
 	color Color, attacks func(sq Square, occ uint64, own uint64) uint64, add func(m ...*Move)) {
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
-		src := bitScanReverse(bbPiece)
+		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
 		rayAttacks := attacks(srcSq, both, ownPieces)
 		passiveMoves := rayAttacks &^ otherPieces
 		captureMoves := rayAttacks & otherPieces
 		for passiveMoves != 0 {
-			sq := bitScanReverse(passiveMoves)
+			sq := bitScanForward(passiveMoves)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, 0})
 			passiveMoves ^= (1 << sq)
 		}
 		for captureMoves != 0 {
-			sq := bitScanReverse(captureMoves)
+			sq := bitScanForward(captureMoves)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, Capture})
 			captureMoves ^= (1 << sq)
@@ -431,19 +419,19 @@ func bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 	otherKing uint64, add func(m ...*Move)) {
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
-		src := bitScanReverse(bbPiece)
+		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
 		knight := uint64(1 << src)
 		moves := knightMovesNoCaptures(srcSq, both)
 		for moves != 0 {
-			sq := bitScanReverse(moves)
+			sq := bitScanForward(moves)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, 0})
 			moves ^= (1 << sq)
 		}
 		captures := knightCaptures(srcSq, otherPieces)
 		for captures != 0 {
-			sq := bitScanReverse(captures)
+			sq := bitScanForward(captures)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, Capture})
 			captures ^= (1 << sq)
@@ -458,19 +446,18 @@ func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing
 	add func(m ...*Move)) {
 	both := (otherPieces | ownPieces)
 	if bbPiece != 0 {
-		src := bitScanReverse(bbPiece)
+		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
-		king := uint64(1 << src)
-		moves := kingMovesNoCaptures(king, both, tabooSquares)
+		moves := kingMovesNoCaptures(srcSq, both, tabooSquares)
 		for moves != 0 {
-			sq := bitScanReverse(moves)
+			sq := bitScanForward(moves)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, 0})
 			moves ^= (1 << sq)
 		}
-		captures := kingCaptures(king, otherPieces, tabooSquares)
+		captures := kingCaptures(srcSq, otherPieces, tabooSquares)
 		for captures != 0 {
-			sq := bitScanReverse(captures)
+			sq := bitScanForward(captures)
 			dest := Square(sq)
 			add(&Move{srcSq, dest, NoType, Capture})
 			captures ^= (1 << sq)
@@ -632,13 +619,14 @@ func knightAttacks(b uint64) uint64 {
 }
 
 // King & Kingslayer
-func kingMovesNoCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
-	attacks := kingAttacks(b)
+func kingMovesNoCaptures(sq Square, others uint64, tabooSquares uint64) uint64 {
+	attacks := computedKingAttacks[sq]
 	return attacks &^ (others | tabooSquares)
 }
 
-func kingCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
-	return (kingAttacks(b) & others) &^ tabooSquares
+func kingCaptures(sq Square, others uint64, tabooSquares uint64) uint64 {
+	attacks := computedKingAttacks[sq]
+	return (attacks & others) &^ tabooSquares
 }
 
 func kingAttacks(b uint64) uint64 {
@@ -646,71 +634,33 @@ func kingAttacks(b uint64) uint64 {
 		soEaOne(b) | westOne(b) | soWeOne(b) | noWeOne(b)
 }
 
+var computedKingAttacks = initializeKingAttacks()
+
+func initializeKingAttacks() [64]uint64 {
+	var attacks = [64]uint64{}
+	for sq := uint64(0); sq < 64; sq++ {
+		attacks[sq] = kingAttacks(1 << sq)
+	}
+	return attacks
+}
+
 // Utilites
 func getIndicesOfOnes(bb uint64) []uint8 {
 	indices := make([]uint8, 0, 8)
 	for bb != 0 {
-		index := bitScanReverse(bb)
+		index := bitScanForward(bb)
 		bb ^= (1 << index)
 		indices = append(indices, index)
 	}
 	return indices
 }
 
-var forwardIndex = [64]uint8{
-	0, 1, 48, 2, 57, 49, 28, 3,
-	61, 58, 50, 42, 38, 29, 17, 4,
-	62, 55, 59, 36, 53, 51, 43, 22,
-	45, 39, 33, 30, 24, 18, 12, 5,
-	63, 47, 56, 27, 60, 41, 37, 16,
-	54, 35, 52, 21, 44, 32, 23, 11,
-	46, 26, 40, 15, 34, 20, 31, 10,
-	25, 14, 19, 9, 13, 8, 7, 6,
-}
-
-/**
- * bitScanForward
- * @author Martin Läuter (1997)
- *         Charles E. Leiserson
- *         Harald Prokop
- *         Keith H. Randall
- * "Using de Bruijn Sequences to Index a 1 in a Computer Word"
- * @param bb bitboard to scan
- * @precondition bb != 0
- * @return index (0..63) of least significant one bit
- */
 func bitScanForward(bb uint64) uint8 {
-	const debruijn64 = uint64(0x03f79d71b4cb0a89)
-	return forwardIndex[((bb&-bb)*debruijn64)>>58]
+	return uint8(bits.TrailingZeros64(bb))
 }
 
-var reverseIndex = [64]uint8{
-	0, 47, 1, 56, 48, 27, 2, 60,
-	57, 49, 41, 37, 28, 16, 3, 61,
-	54, 58, 35, 52, 50, 42, 21, 44,
-	38, 32, 29, 23, 17, 11, 4, 62,
-	46, 55, 26, 59, 40, 36, 15, 53,
-	34, 51, 20, 43, 31, 22, 10, 45,
-	25, 39, 14, 33, 19, 30, 9, 24,
-	13, 18, 8, 12, 7, 6, 5, 63,
-}
-
-/**
- * bitScanReverse
- * @authors Kim Walisch, Mark Dickinson
- * @param bb bitboard to scan
- * @precondition bb != 0
- * @return index (0..63) of most significant one bit
- */
 func bitScanReverse(bb uint64) uint8 {
-	const debruijn64 = uint64(0x03f79d71b4cb0a89)
-	bb |= bb >> 1
-	bb |= bb >> 2
-	bb |= bb >> 4
-	bb |= bb >> 8
-	bb |= bb >> 16
-	bb |= bb >> 32
-	return reverseIndex[(bb*debruijn64)>>58]
+	return uint8(bits.LeadingZeros64(bb) ^ 63)
 }
 
 // directions
