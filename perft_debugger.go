@@ -1,14 +1,9 @@
-package perft
+package main
 
 import (
+	"fmt"
 	"os"
-
-	"github.com/amanjpro/zahak/cmd"
 )
-
-func main() {
-	StartPerftTest()
-}
 
 type PerftNodes struct {
 	nodes      int64
@@ -41,7 +36,7 @@ func StartPerftTest() {
 		testEndGamePromotionDepth4() &&
 		testEndGamePromotionDepth5() &&
 		testEndGamePromotionDepth6()
-	if !resutl {
+	if !result {
 		os.Exit(1)
 	}
 }
@@ -139,7 +134,7 @@ func testEndGamePromotionDepth6() bool {
 		PerftNodes{71179139, 0, 0, 0, 0, 0, 0})
 }
 
-func test(fen string, depth int8, expected PerftNodes) {
+func test(fen string, depth int8, expected PerftNodes) bool {
 	g := FromFen(fen, true)
 	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
 	perft(g.position, depth, NoType, 0, &actual)

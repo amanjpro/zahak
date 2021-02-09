@@ -1,4 +1,4 @@
-package cmd
+package main
 
 type CachedEval struct {
 	eval  float64

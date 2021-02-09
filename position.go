@@ -1,4 +1,4 @@
-package cmd
+package main
 
 type Position struct {
 	board     Bitboard
