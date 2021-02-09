@@ -125,7 +125,7 @@ func TestKingMoves(t *testing.T) {
 		moves = append(moves, ms...)
 	}
 	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	expectedMoves := []*Move{
 		&Move{E1, D2, NoType, Capture},
 		&Move{E1, F1, NoType, 0},
@@ -158,7 +158,7 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 		moves = append(moves, ms...)
 	}
 	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	expectedMoves := []*Move{
 		&Move{E1, E2, NoType, 0},
 		&Move{E1, F1, NoType, 0},
@@ -191,7 +191,7 @@ func TestKingQueenSideCastling(t *testing.T) {
 		moves = append(moves, ms...)
 	}
 	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	expectedMoves := []*Move{
 		&Move{E1, E2, NoType, 0},
 		&Move{E1, F1, NoType, 0},
@@ -375,7 +375,7 @@ func TestCastleAndPawnAttack(t *testing.T) {
 		moves = append(moves, ms...)
 	}
 	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 	expectedMoves := []*Move{
 		&Move{E1, D1, NoType, 0},
 	}
