@@ -1,4 +1,4 @@
-package main
+package cmd
 
 func (p *Position) LegalMoves() []*Move {
 	allMoves := make([]*Move, 0, 350)

@@ -1,8 +1,10 @@
-package main
+package test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/amanjpro/zahak/cmd"
 )
 
 func TestBishopMoves(t *testing.T) {

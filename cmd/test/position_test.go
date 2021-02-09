@@ -1,7 +1,9 @@
-package main
+package test
 
 import (
 	"testing"
+
+	"github.com/amanjpro/zahak/cmd"
 )
 
 func TestMakeMove(t *testing.T) {

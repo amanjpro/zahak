@@ -1,10 +1,13 @@
-package main
+package perft
 
 import (
 	"os"
+
+	"github.com/amanjpro/zahak/cmd"
 )
 
 func main() {
+	StartPerftTest()
 }
 
 type PerftNodes struct {
