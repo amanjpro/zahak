@@ -14,9 +14,10 @@ import (
 
 func main() {
 	var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
+	var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
 	flag.Parse()
 	if *perftFlag {
-		StartPerftTest()
+		StartPerftTest(*slowFlag)
 	} else if flag.NArg() >= 2 {
 		depth, _ := strconv.Atoi(flag.Arg(0))
 		fen := flag.Arg(1)

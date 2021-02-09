@@ -39,7 +39,7 @@ func PerftTree(game Game, depth int, moves []*Move) {
 	fmt.Printf("\n%d\n", sum)
 }
 
-func StartPerftTest() {
+func StartPerftTest(slow bool) {
 	result := testStartingPosDepth0()
 	result += testStartingPosDepth1()
 	result += testStartingPosDepth2()
@@ -59,9 +59,12 @@ func StartPerftTest() {
 	result += testMiddleGameDepth5()
 	result += testMiddleGameDepth6()
 	result += testEndGamePromotionDepth5()
-	result += testEndGamePromotionDepth6()
-	result += testStartingPosDepth6()
-	result += testStartingPosDepth9()
+
+	if slow {
+		result += testEndGamePromotionDepth6()
+		result += testStartingPosDepth6()
+		result += testStartingPosDepth9()
+	}
 
 	if result > 0 {
 		fmt.Printf("%d perft tests failed... hard luck\n", result)
@@ -92,7 +95,7 @@ func testStartingPosDepth4() int8 {
 }
 
 func testStartingPosDepth5() int8 {
-	return test("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, PerftNodes{4865609, 27351 /* 27351 + 6 */, 82725, 258, 0, 0, 347})
+	return test("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, PerftNodes{4865609, 27351 /* 27351 + 6 */, 82719, 258, 0, 0, 347})
 }
 
 func testStartingPosDepth6() int8 {
@@ -191,8 +194,8 @@ func testNodesOnly(fen string, depth int, expected PerftNodes) int8 {
 }
 
 func perft(p *Position, depth int, lastPromo PieceType, lastTag MoveTag, acc *PerftNodes) {
-	isCheckmate := p.Status() == Checkmate
-	if depth == 0 || isCheckmate {
+	if depth == 0 {
+		isCheckmate := p.Status() == Checkmate
 		acc.nodes += 1
 		if isCheckmate {
 			acc.checkmates += 1
@@ -201,7 +204,7 @@ func perft(p *Position, depth int, lastPromo PieceType, lastTag MoveTag, acc *Pe
 			acc.checks += 1
 		}
 
-		if lastTag&Capture != 0 && lastTag&EnPassant == 0 {
+		if lastTag&Capture != 0 {
 			acc.captures += 1
 		}
 		if lastTag&EnPassant != 0 {
