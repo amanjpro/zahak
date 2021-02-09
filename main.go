@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"os"
+	"runtime/pprof"
 	"strconv"
 	// "bufio"
 	// "fmt"
@@ -15,14 +17,21 @@ import (
 func main() {
 	var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
 	var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
+	var perftTreeFlag = flag.Bool("perft-tree", false, "Run the engine in prefttree mode")
+	var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
 	flag.Parse()
+	if *profileFlag {
+		f, _ := os.Create("zahak-engine-profile")
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 	if *perftFlag {
 		StartPerftTest(*slowFlag)
-	} else if flag.NArg() >= 2 {
-		depth, _ := strconv.Atoi(flag.Arg(0))
-		fen := flag.Arg(1)
+	} else if *perftTreeFlag {
+		depth, _ := strconv.Atoi(flag.Arg(1))
+		fen := flag.Arg(2)
 		game := FromFen(fen, true)
-		moves := game.position.ParseMoves(flag.Args()[2:])
+		moves := game.position.ParseMoves(flag.Args()[3:])
 		PerftTree(game, depth, moves)
 	} else {
 		uci()

@@ -1,0 +1,1 @@
+./zahak -perft-tree "$@"
