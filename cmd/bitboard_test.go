@@ -1,10 +1,8 @@
-package test
+package cmd
 
 import (
 	"fmt"
 	"testing"
-
-	"github.com/amanjpro/zahak/cmd"
 )
 
 func TestAllPieces(t *testing.T) {
