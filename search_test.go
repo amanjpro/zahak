@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"testing"
 )
 
 func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1", true)
-	evalMove := search(game.position, 10)
+	fmt.Println(game.position.board.Draw())
+	evalMove := search(game.position, 8)
 	expected := Move{G7, G6, NoType, 0}
 	mv := *evalMove.move
 	mvStr := mv.ToString()
@@ -16,8 +16,8 @@ func TestSearchOnlyMove(t *testing.T) {
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	if evalMove.eval != math.Inf(1) {
-		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: +Inf\nGot: %f\n", evalMove.eval))
+	if evalMove.eval != CHECKMATE_EVAL {
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %f\nGot: %f\n", CHECKMATE_EVAL, evalMove.eval))
 	}
 }
 

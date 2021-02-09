@@ -11,7 +11,7 @@ const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 func uci() {
 	var game Game
-	var depth = int8(10)
+	var depth = int8(7)
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		cmd, err := reader.ReadString('\n')

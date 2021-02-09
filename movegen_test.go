@@ -5,95 +5,6 @@ import (
 	"testing"
 )
 
-type PerftNodes struct {
-	nodes      int64
-	checks     int64
-	captures   int64
-	enPassants int64
-	castles    int64
-	promotions int64
-	checkmates int64
-}
-
-func TestStartingPosDepth0(t *testing.T) {
-	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 0, PerftNodes{1, 0, 0, 0, 0, 0, 0})
-}
-
-func TestStartingPosDepth1(t *testing.T) {
-	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, PerftNodes{20, 0, 0, 0, 0, 0, 0})
-}
-
-func TestStartingPosDepth2(t *testing.T) {
-	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 2, PerftNodes{400, 0, 0, 0, 0, 0, 0})
-}
-
-func TestStartingPosDepth3(t *testing.T) {
-	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 3, PerftNodes{8902, 12, 34, 0, 0, 0, 0})
-}
-
-func TestStartingPosDepth4(t *testing.T) {
-	test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 4, PerftNodes{197281, 469, 1576, 0, 0, 0, 8})
-}
-
-func TestStartingPosDepth5(t *testing.T) {
-	// test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, PerftNodes{4865609, 27351 /* 27351 + 6 */, 82725, 258, 0, 0, 347})
-}
-
-func TestStartingPosDepth6(t *testing.T) {
-	// test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, PerftNodes{119060324, 809099 /* 329 + 46? */, 2812008, 5248, 0, 0, 10828})
-}
-
-func TestStartingPosDepth9(t *testing.T) {
-	// test(t, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 9, PerftNodes{2439530234167, 36095901903, /* 37101713	+ 5547231	 ? */
-	// 	125208536153, 319496827, 1784356000, 17334376, 400191963})
-}
-
-func test(t *testing.T, fen string, depth int8, expected PerftNodes) {
-	g := FromFen(fen, true)
-	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
-	perft(g.position, depth, NoType, 0, &actual)
-	if actual != expected {
-		t.Errorf("Test failed\nExpected: %s", fmt.Sprintf("%d\nGot: %d\n", expected, actual))
-	}
-}
-
-func perft(p *Position, depth int8, lastPromo PieceType, lastTag MoveTag, acc *PerftNodes) {
-	isCheckmate := p.Status() == Checkmate
-	if depth == 0 || isCheckmate {
-		acc.nodes += 1
-		if isCheckmate {
-			acc.checkmates += 1
-		}
-		if lastTag&Check != 0 {
-			acc.checks += 1
-		}
-
-		if lastTag&Capture != 0 && lastTag&EnPassant == 0 {
-			acc.captures += 1
-		}
-		if lastTag&EnPassant != 0 {
-			acc.enPassants += 1
-		}
-		if lastTag&QueenSideCastle != 0 || lastTag&KingSideCastle != 0 {
-			acc.castles += 1
-		}
-		if lastPromo != NoType {
-			acc.promotions += 1
-		}
-		return
-	}
-
-	moves := p.LegalMoves()
-
-	for _, move := range moves {
-		tag := p.tag
-		ep := p.enPassant
-		cp := p.MakeMove(move)
-		perft(p, depth-1, move.promoType, move.moveTag, acc)
-		p.UnMakeMove(move, tag, ep, cp)
-	}
-}
-
 func TestBishopMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen, true)
@@ -219,6 +130,73 @@ func TestKingMoves(t *testing.T) {
 		&Move{E1, D2, NoType, Capture},
 		&Move{E1, F1, NoType, 0},
 		&Move{E1, G1, NoType, KingSideCastle},
+	}
+	expectedLen := len(expectedMoves)
+	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
+		fmt.Println("Got:")
+		for _, i := range moves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		fmt.Println("Expected:")
+		for _, i := range expectedMoves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		t.Errorf("Expected different number of moves to be generated%s",
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
+	}
+}
+
+func TestKingCastlingWithOccupiedSquares(t *testing.T) {
+	fen := "rnbqkbnr/1p6/p1p3Pp/1B1pp2Q/1P6/B7/P1PP1PPP/RN2K1NR w KQkq - 0 1"
+	g := FromFen(fen, true)
+	p := g.position
+	board := g.position.board
+	moves := make([]*Move, 0, 8)
+	color := White
+	taboo := tabooSquares(board, color)
+	add := func(ms ...*Move) {
+		moves = append(moves, ms...)
+	}
+	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+	expectedMoves := []*Move{
+		&Move{E1, E2, NoType, 0},
+		&Move{E1, F1, NoType, 0},
+		&Move{E1, D1, NoType, 0},
+	}
+	expectedLen := len(expectedMoves)
+	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
+		fmt.Println("Got:")
+		for _, i := range moves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		fmt.Println("Expected:")
+		for _, i := range expectedMoves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		t.Errorf("Expected different number of moves to be generated%s",
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
+	}
+}
+
+func TestKingQueenSideCastling(t *testing.T) {
+	fen := "rnbqkbnr/1p6/p1p3Pp/1B1pp2Q/1P6/B7/P1PP1PPP/R3K1NR w KQkq - 0 1"
+	g := FromFen(fen, true)
+	p := g.position
+	board := g.position.board
+	moves := make([]*Move, 0, 8)
+	color := White
+	taboo := tabooSquares(board, color)
+	add := func(ms ...*Move) {
+		moves = append(moves, ms...)
+	}
+	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+	expectedMoves := []*Move{
+		&Move{E1, E2, NoType, 0},
+		&Move{E1, F1, NoType, 0},
+		&Move{E1, D1, NoType, 0},
+		&Move{E1, C1, NoType, QueenSideCastle},
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {

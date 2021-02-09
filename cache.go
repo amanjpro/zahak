@@ -1,32 +1,34 @@
 package main
 
-import (
-// "sync"
-)
-
 type CachedEval struct {
-	eval float64
-	line []*Move
+	eval  float64
+	depth int8
 }
 
 type Cache struct {
-	// mu    sync.RWMutex
-	items map[uint64]*CachedEval
+	itemss  [5]map[uint64]*CachedEval
+	current int
 }
 
 var evalCache Cache
 
+func (c *Cache) Rotate() {
+	nextCurrent := (c.current + 1) % len(c.itemss)
+	c.itemss[nextCurrent] = make(map[uint64]*CachedEval, 1000_000)
+	c.current = nextCurrent
+}
+
 func (c *Cache) Set(key uint64, value *CachedEval) {
-	// Lock so only one goroutine at a time can access the map c.v.
-	// evalCache.mu.Lock()
-	c.items[key] = value
-	// evalCache.mu.Unlock()
+	c.itemss[c.current][key] = value
 }
 
 func (c *Cache) Get(key uint64) (*CachedEval, bool) {
-	// Lock so only one goroutine at a time can access the map c.v.
-	// evalCache.mu.RLock()
-	item, found := c.items[key]
-	// evalCache.mu.RUnlock()
-	return item, found
+	for i, j := 0, c.current; i <= len(c.itemss); i++ {
+		item, found := c.itemss[j%len(c.itemss)][key]
+		if found {
+			return item, found
+		}
+		j++
+	}
+	return nil, false
 }

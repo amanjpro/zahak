@@ -24,13 +24,10 @@ const (
 	EnPassant
 	// Check indicates that the move puts the opposing player in check.
 	Check
-	// inCheck indicates that the move puts the moving player in check and
-	// is therefore invalid.
-	InCheck
 )
 
 func (m *Move) SetTag(tag MoveTag)      { m.moveTag |= tag }
-func (m *Move) ClearTag(tag MoveTag)    { m.moveTag &= ^tag }
+func (m *Move) ClearTag(tag MoveTag)    { m.moveTag &^= tag }
 func (m *Move) ToggleTag(tag MoveTag)   { m.moveTag ^= tag }
 func (m *Move) HasTag(tag MoveTag) bool { return m.moveTag&tag != 0 }
 

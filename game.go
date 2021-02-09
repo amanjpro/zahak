@@ -68,7 +68,11 @@ func NewGame(
 
 	if clearCache {
 		InitZobrist()
-		evalCache = Cache{items: make(map[uint64]*CachedEval, 1000_000)}
+		var itemss [5]map[uint64]*CachedEval
+		for i := 0; i < len(itemss); i++ {
+			itemss[i] = make(map[uint64]*CachedEval, 1000_000)
+		}
+		evalCache = Cache{itemss: itemss, current: 0}
 	}
 
 	return Game{

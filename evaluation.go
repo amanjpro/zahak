@@ -1,27 +1,18 @@
 package main
 
-import (
-	"math"
-)
-
+// import (
+// 	"math"
+// )
+//
 func eval(position *Position) float64 {
 	board := position.board
 	allPieces := board.AllPieces()
 	return evaluate(position, allPieces)
 }
 
+const CHECKMATE_EVAL = float64(9000)
+
 func evaluate(position *Position, allPieces map[Square]Piece) float64 {
-	if position.Status() == Checkmate {
-		if position.Turn() == Black {
-			return math.Inf(1)
-		}
-		return math.Inf(-1)
-	}
-
-	if position.Status() == Draw {
-		return 0.0
-	}
-
 	whiteBishops := 0.0
 	whiteKnights := 0.0
 	blackBishops := 0.0

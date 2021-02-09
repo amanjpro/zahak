@@ -63,12 +63,14 @@ func search(position *Position, depth int8) EvalMove {
 	// 		}
 	// 	}
 
-	eval, move, moves := minimax(position, depth, 1, isMaximizingPlayer, math.Inf(-1),
-		math.Inf(1), nil, []*Move{})
+	eval, moves := minimax(position, depth, 1, isMaximizingPlayer, math.Inf(-1),
+		math.Inf(1), []*Move{})
+	move := moves[0]
 	mvStr := move.ToString()
 	fmt.Printf("info nodes %d score cp %d currmove %s pv",
 		nodesVisited, int(eval*100*dir), mvStr)
-	for _, mv := range moves {
+	for i := 1; i < len(moves); i++ {
+		mv := moves[i]
 		fmt.Printf(" %s", mv.ToString())
 	}
 	fmt.Print("\n\n")
@@ -80,6 +82,7 @@ func search(position *Position, depth int8) EvalMove {
 	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n", nodesVisited, nodesSearched, cacheHits)
 	fmt.Printf("Took %f seconds\n", end.Sub(start).Seconds())
 	pv = bestEval.line
+	evalCache.Rotate()
 	return bestEval
 }
 
@@ -91,50 +94,60 @@ func search(position *Position, depth int8) EvalMove {
 // }
 
 func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, baseMove *Move, line []*Move) (float64, *Move, []*Move) {
+	alpha float64, beta float64, line []*Move) (float64, []*Move) {
 	nodesVisited += 1
 
-	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
+	if position.Status() == Checkmate {
+		return -CHECKMATE_EVAL, line
+	} else if position.Status() == Draw {
+		return 0.0, line
+	} else if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
-		return eval(position), baseMove, line
+		// var dir float64 = -1
+		// if isMaximizingPlayer {
+		// 	dir = 1
+		// }
+		evl := eval(position)
+		// fmt.Printf("info nodes %d score cp %d currmove %s pv",
+		// 	nodesVisited, int(evl*100*dir), baseMove.ToString())
+		// for _, mv := range line {
+		// 	fmt.Printf(" %s", mv.ToString())
+		// }
+		// fmt.Print("\n\n")
+
+		return evl, line
 	}
 
 	nodesSearched += 1
 	legalMoves := position.LegalMoves()
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, int(pvDepth)})
 	newLine := line
-	newMove := baseMove
 
 	for _, move := range orderedMoves {
-		if newMove == nil {
-			newMove = move
-		}
 		score, computedLine := getEval(position, depthLeft-1, pvDepth+1,
 			!isMaximizingPlayer, alpha, beta, move, line)
 		if isMaximizingPlayer {
 			if score >= beta {
-				return beta, move, newLine
+				return beta, newLine
 			}
 			if score > alpha {
 				newLine = computedLine
 				alpha = score
-				newMove = move
 			}
 		} else {
 			if score <= alpha {
-				return alpha, move, newLine
+				return alpha, newLine
 			}
 			if score < beta {
 				newLine = computedLine
 				beta = score
-				newMove = move
 			}
 		}
 	}
 	if isMaximizingPlayer {
-		return alpha, newMove, newLine
+		return alpha, newLine
 	} else {
-		return beta, newMove, newLine
+		return beta, newLine
 	}
 }
 
@@ -148,16 +161,16 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	newPositionHash := position.Hash()
 	cachedEval, found := evalCache.Get(newPositionHash)
 	if found &&
-		(cachedEval.eval == math.Inf(-1) ||
-			cachedEval.eval == math.Inf(1) ||
-			len(cachedEval.line) >= int(depthLeft)) {
+		(cachedEval.eval == CHECKMATE_EVAL ||
+			cachedEval.eval == -CHECKMATE_EVAL ||
+			cachedEval.depth >= depthLeft) {
 		cacheHits += 1
 		score = cachedEval.eval
-		computedLine = append(append(line, move), cachedEval.line...)
+		computedLine = append(line, move)
 	} else {
-		v, _, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, move, []*Move{})
-		evalCache.Set(newPositionHash, &CachedEval{v, t})
-		computedLine = append(append(line, move), t...)
+		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, append(line, move))
+		evalCache.Set(newPositionHash, &CachedEval{v, int8(len(t))})
+		computedLine = t
 		score = v
 	}
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)

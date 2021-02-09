@@ -101,8 +101,9 @@ func (p *Position) HasLegalMoves() bool {
 				hasMoves = true
 				p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 				break
+			} else {
+				p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 			}
-			p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 		}
 	}
 
@@ -491,18 +492,19 @@ func bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing
 		}
 
 		kingSide := uint64(1<<F | 1<<G)
-		queenSide := uint64(1<<D | 1<<C | 1<<B)
+		queenSide := uint64(1<<D | 1<<C)
 
 		if kingSideCastle &&
-			(ownPieces&kingSide == 0) && // are empty
+			((ownPieces|otherPieces)&kingSide == 0) && // are empty
 			(tabooSquares&(kingSide|1<<E) == 0) { // Not in check
-			add(&Move{srcSq, G, NoType, KingSideCastle})
+			mv := &Move{srcSq, G, NoType, KingSideCastle}
+			add(mv)
 		}
 
 		if queenSideCastle &&
-			(ownPieces&queenSide == 0) && // are empty
+			((ownPieces|otherPieces)&(queenSide|(1<<B)) == 0) && // are empty
 			(tabooSquares&(queenSide|1<<E) == 0) { // Not in check
-			add(&Move{srcSq, G, NoType, QueenSideCastle})
+			add(&Move{srcSq, C, NoType, QueenSideCastle})
 		}
 	}
 }
