@@ -257,7 +257,7 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
 	occupiedBB := b.whitePieces | b.blackPieces
 	if colorOfKing == White {
-		opPawns = bPawnsAble2CaptureAny(b.blackPawn, b.whitePieces)
+		opPawns = bPawnsAble2CaptureAny(b.blackPawn, universal)
 		opKnights = b.blackKnight
 		opR = b.blackRook
 		opB = b.blackBishop
@@ -265,7 +265,7 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 		opKing = b.blackKing
 		opPieces = b.blackPieces
 	} else {
-		opPawns = wPawnsAble2CaptureAny(b.whitePawn, b.blackPieces)
+		opPawns = wPawnsAble2CaptureAny(b.whitePawn, universal)
 		opKnights = b.whiteKnight
 		opR = b.whiteRook
 		opB = b.whiteBishop
@@ -634,11 +634,11 @@ func knightAttacks(b uint64) uint64 {
 // King & Kingslayer
 func kingMovesNoCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
 	attacks := kingAttacks(b)
-	return (attacks ^ others) & attacks & (tabooSquares ^ universal)
+	return attacks &^ (others | tabooSquares)
 }
 
 func kingCaptures(b uint64, others uint64, tabooSquares uint64) uint64 {
-	return kingAttacks(b) & others & (tabooSquares ^ universal)
+	return (kingAttacks(b) & others) &^ tabooSquares
 }
 
 func kingAttacks(b uint64) uint64 {

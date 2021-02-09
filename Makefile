@@ -4,7 +4,7 @@ build:
 
 perft:
 	go build
-	./zahak --perft
+	./zahak -perft
 
 run:
 	go build

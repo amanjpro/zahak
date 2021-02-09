@@ -362,6 +362,39 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 	}
 }
 
+func TestCastleAndPawnAttack(t *testing.T) {
+	fen := "r3k2r/p1ppqpb1/1n2pnp1/1b1PN3/1p2P3/P1N2Q2/1PPBBPpP/1R2K2R w Kkq - 0 1"
+	g := FromFen(fen, true)
+	p := g.position
+	board := g.position.board
+	moves := make([]*Move, 0, 8)
+	color := White
+	taboo := tabooSquares(board, color)
+	fmt.Printf("%b\n", taboo)
+	add := func(ms ...*Move) {
+		moves = append(moves, ms...)
+	}
+	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
+	expectedMoves := []*Move{
+		&Move{E1, D1, NoType, 0},
+	}
+	expectedLen := len(expectedMoves)
+	if !equalMoves(expectedMoves, moves) {
+		fmt.Println(g.position.board.Draw())
+		fmt.Println("Got:")
+		for _, i := range moves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		fmt.Println("Expected:")
+		for _, i := range expectedMoves {
+			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+		}
+		t.Errorf("Expected different number of moves to be generated%s",
+			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
+	}
+}
+
 func TestLegalMoves(t *testing.T) {
 	fen := "rn1q1bn1/pPp1pppp/4P3/1N1pP2Q/3p3b/4B3/PP1rBPPP/k3K2R w Kkq d6 0 1"
 	g := FromFen(fen, true)

@@ -1,16 +1,31 @@
 package main
 
 import (
-// "bufio"
-// "fmt"
-// "math/bits"
-// "os"
-// "strings"
-//
-// "github.com/notnil/chess"
+	"flag"
+	"strconv"
+	// "bufio"
+	// "fmt"
+	// "math/bits"
+	// "os"
+	// "strings"
+	//
+	// "github.com/notnil/chess"
 )
 
 func main() {
+	var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
+	flag.Parse()
+	if *perftFlag {
+		StartPerftTest()
+	} else if flag.NArg() >= 2 {
+		depth, _ := strconv.Atoi(flag.Arg(0))
+		fen := flag.Arg(1)
+		game := FromFen(fen, true)
+		moves := game.position.ParseMoves(flag.Args()[2:])
+		PerftTree(game, depth, moves)
+	} else {
+		uci()
+	}
 	// for i := 0; i < 8; i++ {
 	// 	for j := 0; j < 8; j++ {
 	// 		sq := SquareOf(File(j), Rank(i))
@@ -26,7 +41,6 @@ func main() {
 	// fmt.Println("HERE FEN IS: ", b.Fen())
 	// b2 := bitboardFromFen(b.Fen())
 	// fmt.Println(b2.Fen())
-	uci()
 	// g := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	// g := FromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 	// for g.Status() == Unknown {

@@ -33,61 +33,21 @@ func uci() {
 				if strings.HasPrefix(cmd, "go") {
 					go findMove(game.position, depth)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
-					moves := strings.Fields(cmd)
+					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen, true)
-					for i := 3; i < len(moves); i++ {
-						move := moves[i]
-						source := NameToSquareMap[string([]byte{move[0], move[1]})]
-						destination := NameToSquareMap[string([]byte{move[2], move[3]})]
-						promo := NoType
-						if len(move) == 5 {
-							p := pieceFromName(rune(move[4]))
-							promo = p.Type()
-						}
-
-						var tag MoveTag = 0
-						if destination.File() != source.File() {
-							pos := game.position
-							board := pos.board
-							movingPiece := board.PieceAt(source)
-							destPiece := board.PieceAt(destination)
-							if movingPiece.Type() == Pawn && destPiece == NoPiece {
-								tag = EnPassant
-							}
-						}
-
-						game.Move(&Move{source, destination, promo, tag})
+					for _, move := range game.position.ParseMoves(moves) {
+						game.Move(move)
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
 					game = FromFen(startFen, false)
 				} else if strings.HasPrefix(cmd, "position") {
 					cmd := strings.Fields(cmd)
+					moves := cmd[8:]
 					fen := fmt.Sprintf("%s %s %s %s %s %s", cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6])
 					game = FromFen(fen, false)
-					for i := 8; i < len(cmd); i++ {
-						move := cmd[i]
-						source := NameToSquareMap[fmt.Sprintf("%x%x", move[0], move[1])]
-						destination := NameToSquareMap[fmt.Sprintf("%x%x", move[2], move[3])]
-						promo := NoType
-						if len(move) == 5 {
-							p := pieceFromName(rune(move[4]))
-							promo = p.Type()
-						}
-
-						var tag MoveTag = 0
-						if destination.File() != source.File() {
-							pos := game.position
-							board := pos.board
-							movingPiece := board.PieceAt(source)
-							destPiece := board.PieceAt(destination)
-							if movingPiece.Type() == Pawn && destPiece == NoPiece {
-								tag = EnPassant
-							}
-						}
-
-						game.Move(&Move{source, destination, promo, tag})
+					for _, move := range game.position.ParseMoves(moves) {
+						game.Move(move)
 					}
-
 				} else {
 					fmt.Println("Didn't understand", cmd)
 				}
