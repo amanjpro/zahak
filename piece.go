@@ -1,9 +1,5 @@
 package main
 
-import (
-	"math"
-)
-
 type Piece int8
 
 const (
@@ -60,22 +56,24 @@ func (p *Piece) Type() PieceType {
 	return NoType
 }
 
-func (p *Piece) Weight() float64 {
+const MAX_INT = int((^uint(0)) >> 1)
+
+func (p *Piece) Weight() int {
 	switch *p {
 	case WhitePawn, BlackPawn:
-		return 1
+		return 100
 	case WhiteKnight, BlackKnight:
-		return 3
+		return 300
 	case WhiteBishop, BlackBishop:
-		return 3
+		return 300
 	case WhiteRook, BlackRook:
-		return 5
+		return 500
 	case WhiteQueen, BlackQueen:
-		return 9
+		return 900
 	case WhiteKing, BlackKing:
-		return math.Inf(1)
+		return MAX_INT
 	}
-	return 10
+	return 0
 }
 
 func (p *Piece) Name() string {

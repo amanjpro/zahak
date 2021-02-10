@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"sort"
 	"time"
 )
@@ -15,7 +14,7 @@ var cacheHits int64 = 0
 var pv []*Move
 
 type EvalMove struct {
-	eval float64
+	eval int
 	move *Move
 	line []*Move
 }
@@ -27,7 +26,7 @@ func search(position *Position, depth int8) EvalMove {
 	cacheHits = 0
 	var bestEval EvalMove
 	var isMaximizingPlayer = position.Turn() == White
-	var dir float64 = -1
+	var dir = -1
 	if isMaximizingPlayer {
 		dir = 1
 	}
@@ -63,12 +62,12 @@ func search(position *Position, depth int8) EvalMove {
 	// 		}
 	// 	}
 
-	eval, moves := minimax(position, depth, 1, isMaximizingPlayer, math.Inf(-1),
-		math.Inf(1), []*Move{})
+	eval, moves := minimax(position, depth, 1, isMaximizingPlayer, -MAX_INT,
+		MAX_INT, []*Move{})
 	move := moves[0]
 	mvStr := move.ToString()
 	fmt.Printf("info nodes %d score cp %d currmove %s pv",
-		nodesVisited, int(eval*100*dir), mvStr)
+		nodesVisited, int(eval*dir), mvStr)
 	for i := 1; i < len(moves); i++ {
 		mv := moves[i]
 		fmt.Printf(" %s", mv.ToString())
@@ -94,7 +93,7 @@ func search(position *Position, depth int8) EvalMove {
 // }
 
 func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, line []*Move) (float64, []*Move) {
+	alpha int, beta int, line []*Move) (int, []*Move) {
 	nodesVisited += 1
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
@@ -151,8 +150,8 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 }
 
 func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha float64, beta float64, move *Move, line []*Move) (float64, []*Move) {
-	var score float64
+	alpha int, beta int, move *Move, line []*Move) (int, []*Move) {
+	var score int
 	computedLine := []*Move{}
 	oldTag := position.tag
 	oldEnPassant := position.enPassant

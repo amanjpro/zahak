@@ -1,7 +1,7 @@
 package main
 
 type CachedEval struct {
-	eval  float64
+	eval  int
 	depth int8
 }
 

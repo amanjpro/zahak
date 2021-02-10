@@ -15,7 +15,7 @@ func TestSearchOnlyMove(t *testing.T) {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
 	if evalMove.eval != CHECKMATE_EVAL {
-		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %f\nGot: %f\n", CHECKMATE_EVAL, evalMove.eval))
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", CHECKMATE_EVAL, evalMove.eval))
 	}
 }
 
