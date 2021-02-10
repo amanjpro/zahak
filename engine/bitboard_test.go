@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -42,31 +42,27 @@ func TestAllPieces(t *testing.T) {
 		H3: WhiteKnight,
 		C2: WhiteQueen,
 	}
-	actual := g.position.board.AllPieces()
+	actual := g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Unexpected return by AllPieces: %s", err)
 	}
 
 	m := &Move{H3, G5, NoType, Capture}
-	ot := g.position.tag
-	ep := g.position.enPassant
-	cp := g.position.MakeMove(m)
+	cp, ep, ot := g.position.MakeMove(m)
 	g.position.UnMakeMove(m, ot, ep, cp)
 
-	actual = g.position.board.AllPieces()
+	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Knight make/unmake move broke all pieces: %s", err)
 	}
 
 	m = &Move{G1, G3, NoType, 0}
-	ot = g.position.tag
-	ep = g.position.enPassant
-	cp = g.position.MakeMove(m)
+	cp, ep, ot = g.position.MakeMove(m)
 	g.position.UnMakeMove(m, ot, ep, cp)
 
-	actual = g.position.board.AllPieces()
+	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Rook make/unmake move broke all pieces: %s", err)

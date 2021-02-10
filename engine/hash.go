@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"math/rand"
@@ -9,7 +9,7 @@ var castleRightsZC [4]uint64
 var enPassantZC [16]uint64
 var whiteTurnZC uint64
 
-func InitZobrist() {
+func initZobrist() {
 	whiteTurnZC = rand.Uint64()
 	for i := 0; i < 12; i++ {
 		for j := 0; j < 64; j++ {
@@ -46,7 +46,7 @@ func generateZobristHash(pos *Position) uint64 {
 	}
 
 	/* En passant */
-	enPassant := pos.enPassant
+	enPassant := pos.EnPassant
 	if enPassant != NoSquare {
 		if pos.Turn() == Black {
 			/* Next mov Black -> Current pos White -> White en passant square */
@@ -58,7 +58,7 @@ func generateZobristHash(pos *Position) uint64 {
 	}
 
 	/* Board */
-	board := pos.board
+	board := pos.Board
 	for sq := A1; sq <= H8; sq++ {
 		p := board.PieceAt(sq)
 		if p != NoPiece {

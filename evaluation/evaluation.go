@@ -1,7 +1,11 @@
-package main
+package evaluation
 
-func eval(position *Position) int {
-	board := position.board
+import (
+	. "github.com/amanjpro/zahak/engine"
+)
+
+func Evaluate(position *Position) int {
+	board := position.Board
 	allPieces := board.AllPieces()
 	return evaluate(position, allPieces)
 }
@@ -243,7 +247,7 @@ func pawnsPerFile(allPieces map[Square]Piece) (map[File](int8), map[File](int8))
 	whites := make(map[File]int8)
 	blacks := make(map[File]int8)
 
-	for _, file := range files {
+	for _, file := range Files {
 		white, black := pawnsInFile(file, allPieces)
 		whites[file] = white
 		blacks[file] = black
@@ -255,7 +259,7 @@ func pawnsPerFile(allPieces map[Square]Piece) (map[File](int8), map[File](int8))
 func pawnsInFile(file File, allPieces map[Square]Piece) (int8, int8) {
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
-	for _, rank := range ranks {
+	for _, rank := range Ranks {
 		square := SquareOf(file, rank)
 		piece, ok := allPieces[square]
 		if ok {
@@ -274,7 +278,7 @@ func pawnsPerRank(allPieces map[Square]Piece) (map[Rank](int8), map[Rank](int8))
 	whites := make(map[Rank]int8)
 	blacks := make(map[Rank]int8)
 
-	for _, rank := range ranks {
+	for _, rank := range Ranks {
 		white, black := pawnsInRank(rank, allPieces)
 		whites[rank] = white
 		blacks[rank] = black
@@ -286,7 +290,7 @@ func pawnsPerRank(allPieces map[Square]Piece) (map[Rank](int8), map[Rank](int8))
 func pawnsInRank(rank Rank, allPieces map[Square]Piece) (int8, int8) {
 	var blackPawn int8 = 0
 	var whitePawn int8 = 0
-	for _, file := range files {
+	for _, file := range Files {
 		square := SquareOf(file, rank)
 		piece, ok := allPieces[square]
 		if ok {

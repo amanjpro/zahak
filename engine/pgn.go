@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -23,9 +23,7 @@ func (p *Position) ParseMoves(moveStr []string) []*Move {
 		if parsed == nil {
 			panic(fmt.Sprintf("Expectd a valid move, %s is not valid", currentMove))
 		}
-		tg := p.tag
-		ep := p.enPassant
-		cp := p.MakeMove(parsed)
+		cp, ep, tg := p.MakeMove(parsed)
 		otherMoves := p.ParseMoves(moveStr[1:])
 		p.UnMakeMove(parsed, tg, ep, cp)
 		return append(append([]*Move{}, parsed), otherMoves...)

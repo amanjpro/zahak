@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 func TestBishopMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen, true)
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
@@ -34,11 +34,11 @@ func TestBishopMoves(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -48,7 +48,7 @@ func TestBishopMoves(t *testing.T) {
 func TestRookMoves(t *testing.T) {
 	fen := "rnkqbbnr/ppp1pppp/4P3/3pP3/3P4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen, true)
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
@@ -69,11 +69,11 @@ func TestRookMoves(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -83,7 +83,7 @@ func TestRookMoves(t *testing.T) {
 func TestQueenMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen, true)
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
@@ -102,11 +102,11 @@ func TestQueenMoves(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -117,7 +117,7 @@ func TestKingMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
@@ -135,11 +135,11 @@ func TestKingMoves(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -150,7 +150,7 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	fen := "rnbqkbnr/1p6/p1p3Pp/1B1pp2Q/1P6/B7/P1PP1PPP/RN2K1NR w KQkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
@@ -168,11 +168,11 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -183,7 +183,7 @@ func TestKingQueenSideCastling(t *testing.T) {
 	fen := "rnbqkbnr/1p6/p1p3Pp/1B1pp2Q/1P6/B7/P1PP1PPP/R3K1NR w KQkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
@@ -202,11 +202,11 @@ func TestKingQueenSideCastling(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -217,14 +217,14 @@ func TestPawnMovesForWhite(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := White
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
 	}
 	bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-		board.blackKing, color, p.enPassant, add)
+		board.blackKing, color, p.EnPassant, add)
 	expectedMoves := []*Move{
 		&Move{H2, H4, NoType, 0},
 		&Move{H2, H3, NoType, 0},
@@ -249,11 +249,11 @@ func TestPawnMovesForWhite(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -264,14 +264,14 @@ func TestPawnMovesForBlack(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3p1p2/1P4P1/4pP2/N6N/P1PPP2P/R1BQKB1R b KQkq f3 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := Black
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
 	}
 	bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-		board.whiteKing, color, p.enPassant, add)
+		board.whiteKing, color, p.EnPassant, add)
 	expectedMoves := []*Move{
 		&Move{H7, H6, NoType, 0},
 		&Move{H7, H5, NoType, 0},
@@ -291,11 +291,11 @@ func TestPawnMovesForBlack(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -306,7 +306,7 @@ func TestKnightMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/1N1pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	b := p.board
+	b := p.Board
 	moves := make([]*Move, 0, 8)
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
@@ -328,11 +328,11 @@ func TestKnightMoves(t *testing.T) {
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -348,17 +348,17 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 	if !containsMove(legalMoves, move) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
-		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.moveTag))
+		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.Tag))
 	}
 	move = &Move{E1, D2, NoType, Check | Capture}
 	if !containsMove(legalMoves, move) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
-		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.moveTag))
+		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.Tag))
 	}
 }
 
@@ -366,7 +366,7 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	fen := "r3k2r/p1ppqpb1/1n2pnp1/1b1PN3/1p2P3/P1N2Q2/1PPBBPpP/1R2K2R w Kkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	board := g.position.board
+	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
@@ -380,14 +380,14 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	}
 	expectedLen := len(expectedMoves)
 	if !equalMoves(expectedMoves, moves) {
-		fmt.Println(g.position.board.Draw())
+		fmt.Println(g.position.Board.Draw())
 		fmt.Println("Got:")
 		for _, i := range moves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(moves)))
@@ -449,11 +449,11 @@ func TestLegalMoves(t *testing.T) {
 	if expectedLen != len(legalMoves) || !equalMoves(expectedMoves, legalMoves) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(legalMoves)))
@@ -471,7 +471,7 @@ func TestDoubleCheckResponses(t *testing.T) {
 	if !p.IsInCheck() {
 		t.Errorf("Position is wrongfully considered not check for: %s", fen)
 	}
-	if !isDoubleCheck(p.board, White) {
+	if !isDoubleCheck(p.Board, White) {
 		t.Errorf("Position is wrongfully considered not double-check for: %s", fen)
 	}
 	if p.Status() != Unknown {
@@ -481,11 +481,11 @@ func TestDoubleCheckResponses(t *testing.T) {
 	if expectedLen != len(legalMoves) || !equalMoves(expectedMoves, legalMoves) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(legalMoves)))
@@ -499,7 +499,7 @@ func TestHasLegalMovesCheckmate(t *testing.T) {
 	hasMoves := p.HasLegalMoves()
 	if hasMoves {
 		for _, i := range p.LegalMoves() {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Position is wrongfully considered playable, %p", p.LegalMoves())
 	}
@@ -525,11 +525,11 @@ func TestHasLegalMoves(t *testing.T) {
 	if !hasMoves || !equalMoves(legalMoves1, legalMoves2) {
 		fmt.Println("First call to LegalMoves")
 		for _, i := range legalMoves1 {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Second call to LegalMoves")
 		for _, i := range legalMoves2 {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Position is wrongfully considered lost, %p", p.LegalMoves())
 	}
@@ -565,11 +565,11 @@ func TestLegalMovesInOpenning(t *testing.T) {
 	if expectedLen != len(legalMoves) || !equalMoves(expectedMoves, legalMoves) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range expectedMoves {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(legalMoves)))
@@ -589,7 +589,7 @@ func equalMoves(moves1 []*Move, moves2 []*Move) bool {
 			}
 		}
 		if !exists {
-			fmt.Println("Missing", m1.ToString(), m1.moveTag)
+			fmt.Println("Missing", m1.ToString(), m1.Tag)
 			return false
 		}
 	}

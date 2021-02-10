@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -17,11 +17,11 @@ func TestPGNParsing(t *testing.T) {
 	if !equalMoves(expected, actual) {
 		fmt.Println("Got:")
 		for _, i := range expected {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		fmt.Println("Expected:")
 		for _, i := range actual {
-			fmt.Println(i.ToString(), i.promoType, i.moveTag)
+			fmt.Println(i.ToString(), i.PromoType, i.Tag)
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", len(expected), len(actual)))

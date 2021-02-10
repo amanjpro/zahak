@@ -1,9 +1,13 @@
-package main
+package search
 
 import (
 	"fmt"
 	"sort"
 	"time"
+
+	. "github.com/amanjpro/zahak/cache"
+	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/evaluation"
 )
 
 var STOP_SEARCH_GLOBALLY = false
@@ -19,7 +23,15 @@ type EvalMove struct {
 	line []*Move
 }
 
-func search(position *Position, depth int8) EvalMove {
+func (e *EvalMove) Move() *Move {
+	return e.move
+}
+
+func (e *EvalMove) Eval() int {
+	return e.eval
+}
+
+func Search(position *Position, depth int8) EvalMove {
 	STOP_SEARCH_GLOBALLY = false
 	nodesVisited = 0
 	nodesSearched = 0
@@ -81,7 +93,7 @@ func search(position *Position, depth int8) EvalMove {
 	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n", nodesVisited, nodesSearched, cacheHits)
 	fmt.Printf("Took %f seconds\n", end.Sub(start).Seconds())
 	pv = bestEval.line
-	evalCache.Rotate()
+	TranspositionTable.Rotate()
 	return bestEval
 }
 
@@ -102,7 +114,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 		// if isMaximizingPlayer {
 		// 	dir = 1
 		// }
-		evl := eval(position)
+		evl := Evaluate(position)
 		// fmt.Printf("info nodes %d score cp %d currmove %s pv",
 		// 	nodesVisited, int(evl*100*dir), baseMove.ToString())
 		// for _, mv := range line {
@@ -141,7 +153,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	}
 
 	if len(orderedMoves) == 0 {
-		return eval(position), line
+		return Evaluate(position), line
 	} else if isMaximizingPlayer {
 		return alpha, newLine
 	} else {
@@ -153,21 +165,19 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	alpha int, beta int, move *Move, line []*Move) (int, []*Move) {
 	var score int
 	computedLine := []*Move{}
-	oldTag := position.tag
-	oldEnPassant := position.enPassant
-	capturedPiece := position.MakeMove(move)
+	capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
 	newPositionHash := position.Hash()
-	cachedEval, found := evalCache.Get(newPositionHash)
+	cachedEval, found := TranspositionTable.Get(newPositionHash)
 	if found &&
-		(cachedEval.eval == CHECKMATE_EVAL ||
-			cachedEval.eval == -CHECKMATE_EVAL ||
-			cachedEval.depth >= depthLeft) {
+		(cachedEval.Eval == CHECKMATE_EVAL ||
+			cachedEval.Eval == -CHECKMATE_EVAL ||
+			cachedEval.Depth >= depthLeft) {
 		cacheHits += 1
-		score = cachedEval.eval
+		score = cachedEval.Eval
 		computedLine = append(line, move)
 	} else {
 		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, append(line, move))
-		evalCache.Set(newPositionHash, &CachedEval{v, int8(len(t))})
+		TranspositionTable.Set(newPositionHash, &CachedEval{v, int8(len(t))})
 		computedLine = t
 		score = v
 	}
@@ -193,7 +203,7 @@ func (validMoves *ValidMoves) Swap(i, j int) {
 func (validMoves *ValidMoves) Less(i, j int) bool {
 	moves := validMoves.moves
 	move1, move2 := moves[i], moves[j]
-	board := validMoves.position.board
+	board := validMoves.position.Board
 	// Is in PV?
 	if pv != nil && len(pv) > validMoves.depth {
 		if pv[validMoves.depth] == move1 {
@@ -216,25 +226,25 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	// hash2 := validMoves.position.Hash()
 	// validMoves.position.UnMakeMove(move2, tg, ep, cp)
 	//
-	// if _, ok := evalCache.Get(hash1); ok {
+	// if _, ok := TranspositionTable.Get(hash1); ok {
 	// 	return true
 	// }
 	//
-	// if _, ok := evalCache.Get(hash2); ok {
+	// if _, ok := TranspositionTable.Get(hash2); ok {
 	// 	return false
 	// }
 	//
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
 		// What are we capturing?
-		piece1 := board.PieceAt(move1.destination)
-		piece2 := board.PieceAt(move2.destination)
+		piece1 := board.PieceAt(move1.Destination)
+		piece2 := board.PieceAt(move2.Destination)
 		if piece1.Type() > piece2.Type() {
 			return true
 		}
 		// Who is capturing?
-		piece1 = board.PieceAt(move1.source)
-		piece2 = board.PieceAt(move2.source)
+		piece1 = board.PieceAt(move1.Source)
+		piece2 = board.PieceAt(move2.Source)
 		if piece1.Type() <= piece2.Type() {
 			return true
 		}
@@ -243,8 +253,8 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		return true
 	}
 
-	piece1 := board.PieceAt(move1.source)
-	piece2 := board.PieceAt(move2.source)
+	piece1 := board.PieceAt(move1.Source)
+	piece2 := board.PieceAt(move2.Source)
 
 	// prefer checks
 	if move1.HasTag(Check) {

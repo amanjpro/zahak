@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"math/bits"
@@ -11,17 +11,13 @@ func (p *Position) LegalMoves() []*Move {
 
 	add := func(ms ...*Move) {
 		for _, m := range ms {
-			// capture the position state
-			oldTag := p.tag
-			oldEnPassant := p.enPassant
-
 			// make the move
-			capturedPiece := p.MakeMove(m)
+			capturedPiece, oldEnPassant, oldTag := p.MakeMove(m)
 
 			// Does the move puts the moving player in check
-			pNotInCheck := !isInCheck(p.board, color)
+			pNotInCheck := !isInCheck(p.Board, color)
 
-			if pNotInCheck && isInCheck(p.board, p.Turn()) { // We put opponent in check
+			if pNotInCheck && isInCheck(p.Board, p.Turn()) { // We put opponent in check
 				m.SetTag(Check)
 				allMoves = append(allMoves, m)
 			} else if pNotInCheck { // The move does not put us in check
@@ -32,7 +28,7 @@ func (p *Position) LegalMoves() []*Move {
 		}
 	}
 
-	board := p.board
+	board := p.Board
 
 	taboo := tabooSquares(board, color)
 
@@ -49,7 +45,7 @@ func (p *Position) LegalMoves() []*Move {
 
 		if color == White {
 			bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-				board.blackKing, color, p.enPassant, add)
+				board.blackKing, color, p.EnPassant, add)
 			bbKnightMoves(board.whiteKnight, board.whitePieces, board.blackPieces,
 				board.blackKing, add)
 			bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces, board.blackKing,
@@ -62,7 +58,7 @@ func (p *Position) LegalMoves() []*Move {
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), add)
 		} else if color == Black {
 			bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-				board.whiteKing, color, p.enPassant, add)
+				board.whiteKing, color, p.EnPassant, add)
 			bbKnightMoves(board.blackKnight, board.blackPieces, board.whitePieces,
 				board.whiteKing, add)
 			bbSlidingMoves(board.blackBishop, board.blackPieces, board.whitePieces, board.whiteKing,
@@ -85,17 +81,13 @@ func (p *Position) HasLegalMoves() bool {
 
 	add := func(ms ...*Move) {
 		for _, m := range ms {
-			// capture the position state
-			oldTag := p.tag
-			oldEnPassant := p.enPassant
-
 			// make the move
-			capturedPiece := p.MakeMove(m)
+			capturedPiece, oldEnPassant, oldTag := p.MakeMove(m)
 
 			// Does the move puts the moving player in check
-			pNotInCheck := !isInCheck(p.board, color)
+			pNotInCheck := !isInCheck(p.Board, color)
 
-			if pNotInCheck && isInCheck(p.board, p.Turn()) { // We put opponent in check
+			if pNotInCheck && isInCheck(p.Board, p.Turn()) { // We put opponent in check
 				m.SetTag(Check)
 				hasMoves = true
 				p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
@@ -111,7 +103,7 @@ func (p *Position) HasLegalMoves() bool {
 		}
 	}
 
-	board := p.board
+	board := p.Board
 
 	taboo := tabooSquares(board, color)
 
@@ -129,7 +121,7 @@ func (p *Position) HasLegalMoves() bool {
 
 		if color == White {
 			bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-				board.blackKing, color, p.enPassant, add)
+				board.blackKing, color, p.EnPassant, add)
 			if hasMoves {
 				return hasMoves
 			}
@@ -160,7 +152,7 @@ func (p *Position) HasLegalMoves() bool {
 			}
 		} else if color == Black {
 			bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-				board.whiteKing, color, p.enPassant, add)
+				board.whiteKing, color, p.EnPassant, add)
 			if hasMoves {
 				return hasMoves
 			}

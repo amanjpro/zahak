@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -30,8 +30,8 @@ const (
 	FileH
 )
 
-var ranks = []Rank{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8}
-var files = []File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}
+var Ranks = []Rank{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8}
+var Files = []File{FileA, FileB, FileC, FileD, FileE, FileF, FileG, FileH}
 
 type Square int8
 

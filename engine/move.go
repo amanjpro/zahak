@@ -1,14 +1,14 @@
-package main
+package engine
 
 import (
 	"fmt"
 )
 
 type Move struct {
-	source      Square
-	destination Square
-	promoType   PieceType
-	moveTag     MoveTag
+	Source      Square
+	Destination Square
+	PromoType   PieceType
+	Tag         MoveTag
 }
 
 type MoveTag uint8
@@ -26,16 +26,16 @@ const (
 	Check
 )
 
-func (m *Move) SetTag(tag MoveTag)      { m.moveTag |= tag }
-func (m *Move) ClearTag(tag MoveTag)    { m.moveTag &^= tag }
-func (m *Move) ToggleTag(tag MoveTag)   { m.moveTag ^= tag }
-func (m *Move) HasTag(tag MoveTag) bool { return m.moveTag&tag != 0 }
+func (m *Move) SetTag(tag MoveTag)      { m.Tag |= tag }
+func (m *Move) ClearTag(tag MoveTag)    { m.Tag &^= tag }
+func (m *Move) ToggleTag(tag MoveTag)   { m.Tag ^= tag }
+func (m *Move) HasTag(tag MoveTag) bool { return m.Tag&tag != 0 }
 
 func (m *Move) ToString() string {
-	notation := fmt.Sprintf("%s%s", m.source.Name(), m.destination.Name())
-	if m.promoType != NoType {
+	notation := fmt.Sprintf("%s%s", m.Source.Name(), m.Destination.Name())
+	if m.PromoType != NoType {
 		// color doesn't matter here, I picked black as it prints lower case letters
-		piece := getPiece(m.promoType, Black)
+		piece := getPiece(m.PromoType, Black)
 		notation = fmt.Sprintf("%s%s", notation, piece.Name())
 	}
 	return notation

@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -9,11 +9,11 @@ import (
 
 func (b *Bitboard) Fen() string {
 	fen := ""
-	for i := len(ranks) - 1; i >= 0; i-- {
-		rank := ranks[i]
+	for i := len(Ranks) - 1; i >= 0; i-- {
+		rank := Ranks[i]
 		empty := 0
-		for j := 0; j < len(files); j++ {
-			file := files[j]
+		for j := 0; j < len(Files); j++ {
+			file := Files[j]
 			sq := SquareOf(file, rank)
 			piece := b.PieceAt(sq)
 			if piece == NoPiece {
@@ -38,7 +38,7 @@ func (b *Bitboard) Fen() string {
 }
 
 func (p *Position) Fen() string {
-	fen := p.board.Fen()
+	fen := p.Board.Fen()
 	if p.Turn() == Black {
 		fen = fmt.Sprintf("%s b ", fen)
 	} else {
@@ -65,8 +65,8 @@ func (p *Position) Fen() string {
 	if nocastle {
 		fen = fmt.Sprintf("%s-", fen)
 	}
-	if p.enPassant != NoSquare {
-		fen = fmt.Sprintf("%s %s", fen, p.enPassant.Name())
+	if p.EnPassant != NoSquare {
+		fen = fmt.Sprintf("%s %s", fen, p.EnPassant.Name())
 	} else {
 		fen = fmt.Sprintf("%s -", fen)
 	}
@@ -148,7 +148,7 @@ func positionFromFen(fen string) Position {
 	} else if rank == Rank5 && p.Turn() == Black {
 		panic(fmt.Sprintf("Invalid FEN notation %s, en-passant part is not on the right rank %s", fen, parts[3]))
 	} else if ok {
-		p.enPassant = sq
+		p.EnPassant = sq
 	}
 	return p
 }

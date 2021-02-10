@@ -1,9 +1,9 @@
-package main
+package engine
 
 type Position struct {
-	board     Bitboard
-	enPassant Square
-	tag       PositionTag
+	Board     Bitboard
+	EnPassant Square
+	Tag       PositionTag
 }
 
 type PositionTag uint8
@@ -17,10 +17,10 @@ const (
 	WhiteToMove
 )
 
-func (p *Position) SetTag(tag PositionTag)      { p.tag |= tag }
-func (p *Position) ClearTag(tag PositionTag)    { p.tag &= ^tag }
-func (p *Position) ToggleTag(tag PositionTag)   { p.tag ^= tag }
-func (p *Position) HasTag(tag PositionTag) bool { return p.tag&tag != 0 }
+func (p *Position) SetTag(tag PositionTag)      { p.Tag |= tag }
+func (p *Position) ClearTag(tag PositionTag)    { p.Tag &= ^tag }
+func (p *Position) ToggleTag(tag PositionTag)   { p.Tag ^= tag }
+func (p *Position) HasTag(tag PositionTag) bool { return p.Tag&tag != 0 }
 
 func (p *Position) Turn() Color {
 	if p.HasTag(WhiteToMove) {
@@ -34,32 +34,34 @@ func (p *Position) ToggleTurn() {
 	p.ToggleTag(WhiteToMove)
 }
 
-func (p *Position) MakeMove(move *Move) Piece {
-	movingPiece := p.board.PieceAt(move.source)
-	capturedPiece := p.board.PieceAt(move.destination)
-	p.board.Move(move.source, move.destination)
+func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
+	ep := p.EnPassant
+	tag := p.Tag
+	movingPiece := p.Board.PieceAt(move.Source)
+	capturedPiece := p.Board.PieceAt(move.Destination)
+	p.Board.Move(move.Source, move.Destination)
 
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance
 	if move.HasTag(EnPassant) {
-		p.enPassant = NoSquare
+		p.EnPassant = NoSquare
 		ep := findEnPassantSquare(move, movingPiece)
-		capturedPiece = p.board.PieceAt(ep)
-		p.board.Clear(ep)
+		capturedPiece = p.Board.PieceAt(ep)
+		p.Board.Clear(ep)
 	} else {
 		if movingPiece == WhitePawn &&
-			move.source.Rank() == Rank2 && move.destination.Rank() == Rank4 {
-			p.enPassant = SquareOf(move.source.File(), Rank3)
+			move.Source.Rank() == Rank2 && move.Destination.Rank() == Rank4 {
+			p.EnPassant = SquareOf(move.Source.File(), Rank3)
 		} else if movingPiece == BlackPawn &&
-			move.source.Rank() == Rank7 && move.destination.Rank() == Rank5 {
-			p.enPassant = SquareOf(move.source.File(), Rank6)
+			move.Source.Rank() == Rank7 && move.Destination.Rank() == Rank5 {
+			p.EnPassant = SquareOf(move.Source.File(), Rank6)
 		} else {
-			p.enPassant = NoSquare
+			p.EnPassant = NoSquare
 		}
 	}
 
 	// Do promotion
-	if move.promoType != NoType {
-		p.board.UpdateSquare(move.destination, getPiece(move.promoType, p.Turn()))
+	if move.PromoType != NoType {
+		p.Board.UpdateSquare(move.Destination, getPiece(move.PromoType, p.Turn()))
 	}
 
 	if movingPiece == BlackKing {
@@ -68,62 +70,62 @@ func (p *Position) MakeMove(move *Move) Piece {
 	} else if movingPiece == WhiteKing {
 		p.ClearTag(WhiteCanCastleKingSide)
 		p.ClearTag(WhiteCanCastleQueenSide)
-	} else if movingPiece == BlackRook && move.source == A8 {
+	} else if movingPiece == BlackRook && move.Source == A8 {
 		p.ClearTag(BlackCanCastleQueenSide)
-	} else if movingPiece == BlackRook && move.source == H8 {
+	} else if movingPiece == BlackRook && move.Source == H8 {
 		p.ClearTag(BlackCanCastleKingSide)
-	} else if movingPiece == WhiteRook && move.source == A1 {
+	} else if movingPiece == WhiteRook && move.Source == A1 {
 		p.ClearTag(WhiteCanCastleQueenSide)
-	} else if movingPiece == WhiteRook && move.source == H1 {
+	} else if movingPiece == WhiteRook && move.Source == H1 {
 		p.ClearTag(WhiteCanCastleKingSide)
 	}
 
 	// capturing rook nullifies castling right for the opponent on the rooks side
-	if move.destination == A8 && p.Turn() == White {
+	if move.Destination == A8 && p.Turn() == White {
 		p.ClearTag(BlackCanCastleQueenSide)
-	} else if move.destination == H8 && p.Turn() == White {
+	} else if move.Destination == H8 && p.Turn() == White {
 		p.ClearTag(BlackCanCastleKingSide)
-	} else if move.destination == A1 && p.Turn() == Black {
+	} else if move.Destination == A1 && p.Turn() == Black {
 		p.ClearTag(WhiteCanCastleQueenSide)
-	} else if move.destination == H1 && p.Turn() == Black {
+	} else if move.Destination == H1 && p.Turn() == Black {
 		p.ClearTag(WhiteCanCastleKingSide)
 	}
 
 	p.ToggleTurn()
-	return capturedPiece
+	return capturedPiece, ep, tag
 }
 
 func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
-	p.tag = tag
-	p.enPassant = enPassant
+	p.Tag = tag
+	p.EnPassant = enPassant
 
-	movingPiece := p.board.PieceAt(move.destination)
-	p.board.Move(move.destination, move.source)
+	movingPiece := p.Board.PieceAt(move.Destination)
+	p.Board.Move(move.Destination, move.Source)
 
 	// Undo enpassant
 	if move.HasTag(EnPassant) && move.HasTag(Capture) {
-		p.board.UpdateSquare(findEnPassantSquare(move, movingPiece), capturedPiece)
+		p.Board.UpdateSquare(findEnPassantSquare(move, movingPiece), capturedPiece)
 	} else if move.HasTag(Capture) { // Undo capture
-		p.board.UpdateSquare(move.destination, capturedPiece)
+		p.Board.UpdateSquare(move.Destination, capturedPiece)
 	}
 
 	// Undo promotion
-	if move.promoType != NoType {
-		p.board.UpdateSquare(move.source, getPiece(Pawn, p.Turn()))
+	if move.PromoType != NoType {
+		p.Board.UpdateSquare(move.Source, getPiece(Pawn, p.Turn()))
 	}
 	if move.HasTag(QueenSideCastle) {
 		// white
-		if move.destination == C1 {
-			p.board.Move(D1, A1)
+		if move.Destination == C1 {
+			p.Board.Move(D1, A1)
 		} else { // black
-			p.board.Move(D8, A8)
+			p.Board.Move(D8, A8)
 		}
 	} else if move.HasTag(KingSideCastle) {
 		// white
-		if move.destination == G1 {
-			p.board.Move(F1, H1)
+		if move.Destination == G1 {
+			p.Board.Move(F1, H1)
 		} else { // black
-			p.board.Move(F8, H8)
+			p.Board.Move(F8, H8)
 		}
 	}
 }
@@ -137,7 +139,7 @@ const (
 )
 
 func (p *Position) IsInCheck() bool {
-	return isInCheck(p.board, p.Turn())
+	return isInCheck(p.Board, p.Turn())
 }
 
 func (p *Position) Status() Status {
@@ -148,15 +150,15 @@ func (p *Position) Status() Status {
 	} else {
 		if !p.HasLegalMoves() {
 			return Draw
-		} else if p.board.blackPawn != 0 || p.board.whitePawn != 0 ||
-			p.board.blackRook != 0 || p.board.whiteRook != 0 ||
-			p.board.blackQueen != 0 || p.board.whiteQueen != 0 {
+		} else if p.Board.blackPawn != 0 || p.Board.whitePawn != 0 ||
+			p.Board.blackRook != 0 || p.Board.whiteRook != 0 ||
+			p.Board.blackQueen != 0 || p.Board.whiteQueen != 0 {
 			return Unknown
 		} else {
-			whiteKnights := getIndicesOfOnes(p.board.whiteKnight)
-			blackKnights := getIndicesOfOnes(p.board.blackKnight)
-			whiteBishops := getIndicesOfOnes(p.board.whiteBishop)
-			blackBishops := getIndicesOfOnes(p.board.blackBishop)
+			whiteKnights := getIndicesOfOnes(p.Board.whiteKnight)
+			blackKnights := getIndicesOfOnes(p.Board.blackKnight)
+			whiteBishops := getIndicesOfOnes(p.Board.whiteBishop)
+			blackBishops := getIndicesOfOnes(p.Board.blackBishop)
 			all := len(whiteKnights) + len(blackKnights) + len(whiteBishops) + len(blackBishops)
 			// both sides have a bare king
 			// one side has a king and a minor piece against a bare king
@@ -165,7 +167,7 @@ func (p *Position) Status() Status {
 				return Draw
 			}
 			// both sides have a king and a bishop, the bishops being the same color
-			if p.board.whiteKnight == 0 && p.board.blackKnight == 0 {
+			if p.Board.whiteKnight == 0 && p.Board.blackKnight == 0 {
 				if len(blackBishops) == 1 && len(whiteBishops) == 1 &&
 					Square(blackBishops[0]).GetColor() == Square(whiteBishops[0]).GetColor() {
 					return Draw
@@ -182,15 +184,15 @@ func (p *Position) Hash() uint64 {
 }
 
 func findEnPassantSquare(move *Move, movingPiece Piece) Square {
-	rank := move.source.Rank()
-	file := move.destination.File()
+	rank := move.Source.Rank()
+	file := move.Destination.File()
 	return SquareOf(file, rank)
 }
 
 func (p *Position) copy() *Position {
 	return &Position{
-		*p.board.copy(),
-		p.enPassant,
-		p.tag,
+		*p.Board.copy(),
+		p.EnPassant,
+		p.Tag,
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"testing"
@@ -81,9 +81,7 @@ func TestUnMakeMove(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{F3, G4, NoType, 0}
-	tag := game.position.tag
-	ep := game.position.enPassant
-	cp := game.position.MakeMove(move)
+	cp, ep, tag := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, cp)
 	fen := game.Fen()
 	if fen != startFen {
@@ -102,9 +100,7 @@ func TestUnMakeMoveDoublePushPawn(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{H2, H4, NoType, 0}
-	tag := game.position.tag
-	ep := game.position.enPassant
-	cp := game.position.MakeMove(move)
+	cp, ep, tag := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, cp)
 	fen := game.Fen()
 	if fen != startFen {
@@ -123,9 +119,7 @@ func TestUnMakeMoveCapture(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{F3, E4, NoType, Capture}
-	tag := game.position.tag
-	ep := game.position.enPassant
-	cp := game.position.MakeMove(move)
+	cp, ep, tag := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, cp)
 	fen := game.Fen()
 	if fen != startFen {
@@ -144,9 +138,7 @@ func TestUnMakeMoveCastling(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{E1, G1, NoType, KingSideCastle}
-	tag := game.position.tag
-	ep := game.position.enPassant
-	cp := game.position.MakeMove(move)
+	cp, ep, tag := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, cp)
 	fen := game.Fen()
 	if fen != startFen {
@@ -165,9 +157,7 @@ func TestUnMakeMoveEnPassant(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{E5, D6, Pawn, EnPassant | Capture}
-	tag := game.position.tag
-	ep := game.position.enPassant
-	cp := game.position.MakeMove(move)
+	cp, ep, tag := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, cp)
 	fen := game.Fen()
 	if fen != startFen {
@@ -186,9 +176,7 @@ func TestUnMakeMovePromotion(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{B7, A8, Queen, Capture}
-	tag := game.position.tag
-	ep := game.position.enPassant
-	cp := game.position.MakeMove(move)
+	cp, ep, tag := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, cp)
 	fen := game.Fen()
 	if fen != startFen {

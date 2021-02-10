@@ -1,7 +1,9 @@
-package main
+package engine
 
 import (
 	"fmt"
+
+	. "github.com/amanjpro/zahak/cache"
 )
 
 type Game struct {
@@ -22,8 +24,8 @@ func (g *Game) Move(m *Move) {
 	pos := g.position
 
 	if g.IsLegalMove(m) {
-		board := pos.board
-		movingPiece := board.PieceAt(m.source)
+		board := pos.Board
+		movingPiece := board.PieceAt(m.Source)
 		if m.HasTag(Capture) || movingPiece.Type() == Pawn {
 			g.halfMoveClock = 0
 		} else {
@@ -40,7 +42,7 @@ func (g *Game) Move(m *Move) {
 			g.positions[hash] = 0
 		}
 	} else {
-		fmt.Printf("Illegal move, please try again: %s\n%s\n", m.ToString(), pos.board.Draw())
+		fmt.Printf("Illegal move, please try again: %s\n%s\n", m.ToString(), pos.Board.Draw())
 	}
 }
 
@@ -57,6 +59,10 @@ func (g *Game) Status() Status {
 	return g.position.Status()
 }
 
+func (g *Game) Position() *Position {
+	return g.position
+}
+
 func NewGame(
 	position *Position,
 	startPosition Position,
@@ -67,12 +73,8 @@ func NewGame(
 	clearCache bool) Game {
 
 	if clearCache {
-		InitZobrist()
-		var itemss [5]map[uint64]*CachedEval
-		for i := 0; i < len(itemss); i++ {
-			itemss[i] = make(map[uint64]*CachedEval, 1000_000)
-		}
-		evalCache = Cache{itemss: itemss, current: 0}
+		initZobrist()
+		ResetCache()
 	}
 
 	return Game{

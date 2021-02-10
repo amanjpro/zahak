@@ -1,21 +1,24 @@
 build:
-	go build
+	mkdir -p bin
+	go build -o bin ./...
 
-
-perft:
-	go build
-	./zahak -perft
+run_perft:
+	mkdir -p bin
+	go build -o bin ./...
+	bin/zahak -perft
 
 run:
-	go build
-	./zahak
+	mkdir -p bin
+	go build -o bin ./...
+	bin/zahak
 
 test:
-	go test
+	go test ./...
 
 clean:
-	go clean
-	rm zahak
+	go clean ./...
+	rm -rf bin
+
 # compile:
 # 	echo "Compiling for every OS and Platform"
 # 	GOOS=linux GOARCH=arm go build -o bin/main-linux-arm main.go

@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"fmt"
@@ -242,7 +242,7 @@ func (b *Bitboard) Draw() string {
 	s := "\n A B C D E F G H\n"
 	for r := 7; r >= 0; r-- {
 		s += fmt.Sprint(Rank(r + 1))
-		for f := 0; f < len(files); f++ {
+		for f := 0; f < len(Files); f++ {
 			p := b.PieceAt(SquareOf(File(f), Rank(r)))
 			if p == NoPiece {
 				s += "-"
