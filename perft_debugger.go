@@ -20,6 +20,10 @@ func PerftTree(game Game, depth int, moves []*Move) {
 	for _, move := range moves {
 		game.position.MakeMove(move)
 	}
+	cache = make([]map[uint64]int64, depth)
+	for i := 0; i < depth; i++ {
+		cache[i] = make(map[uint64]int64, 1000_000)
+	}
 	moves = game.position.LegalMoves()
 	depth -= 1
 	for _, move := range moves {
@@ -29,10 +33,9 @@ func PerftTree(game Game, depth int, moves []*Move) {
 		tg := game.position.tag
 		ep := game.position.enPassant
 		cp := game.position.MakeMove(move)
-		acc := PerftNodes{0, 0, 0, 0, 0, 0, 0}
-		perft(game.position, depth, NoType, 0, &acc)
-		fmt.Printf("%s %d\n", move.ToString(), acc.nodes)
-		sum += acc.nodes
+		nodes := bulkyPerft(game.position, depth)
+		fmt.Printf("%s %d\n", move.ToString(), nodes)
+		sum += nodes
 		game.position.UnMakeMove(move, tg, ep, cp)
 	}
 
@@ -68,7 +71,6 @@ func StartPerftTest(slow bool) {
 	// initial position
 	result += testNodesOnly("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119060324)
 
-	result += testNodesOnly("rnb1kbnr/ppp1pppp/8/3p4/1P6/P2P3q/2P1PPP1/RNBQKBNR b KQkq - 0 4", 7, 44950307154)
 	result += testNodesOnly("rnb1kbnr/pp1pp1pp/1qp2p2/8/Q1P5/N7/PP1PPPPP/1RB1KBNR b Kkq - 2 4", 7, 14794751816)
 
 	// old positions
@@ -166,6 +168,7 @@ func StartPerftTest(slow bool) {
 	result += testNodesOnly("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 6,
 		8031647685)
 	result += testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 5, 3605103)
+	result += testNodesOnly("rnb1kbnr/ppp1pppp/8/3p4/1P6/P2P3q/2P1PPP1/RNBQKBNR b KQkq - 0 4", 7, 44950307154)
 	if slow {
 		result += testNodesOnly("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 7, 3195901860)
 		result += testNodesOnly("n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", 6, 71179139)
@@ -197,9 +200,15 @@ func test(fen string, depth int, expected PerftNodes) int8 {
 	return 0
 }
 
+var cache []map[uint64]int64
+
 func testNodesOnly(fen string, depth int, expected int64) int8 {
 	fmt.Printf("Running perft for %s depth %d\n", fen, depth)
 	g := FromFen(fen, true)
+	cache = make([]map[uint64]int64, depth)
+	for i := 0; i < depth; i++ {
+		cache[i] = make(map[uint64]int64, 1000_000)
+	}
 	actual := bulkyPerft(g.position, depth)
 	if actual != expected {
 		fmt.Printf("test failed\nExpected: %d\nGot: %d\n", expected, actual)
@@ -261,7 +270,15 @@ func bulkyPerft(p *Position, depth int) int64 {
 		tag := p.tag
 		ep := p.enPassant
 		cp := p.MakeMove(move)
-		nodes += bulkyPerft(p, depth-1)
+		hash := p.Hash()
+		n, ok := cache[depth-1][hash]
+		if ok {
+			nodes += n
+		} else {
+			n := bulkyPerft(p, depth-1)
+			cache[depth-1][hash] = n
+			nodes += n
+		}
 		p.UnMakeMove(move, tag, ep, cp)
 	}
 	return nodes
