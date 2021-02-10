@@ -233,7 +233,8 @@ func isDoubleCheck(b Bitboard, colorOfKing Color) bool {
 	attacks := attacksToKing(b, colorOfKing)
 	for attacks != 0 {
 		sq := bitScanForward(attacks)
-		if checkCounts >= 1 {
+		checkCounts += 1
+		if checkCounts > 1 {
 			return true
 		}
 		attacks ^= (1 << sq)
