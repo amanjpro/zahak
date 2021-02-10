@@ -370,7 +370,6 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
-	fmt.Printf("%b\n", taboo)
 	add := func(ms ...*Move) {
 		moves = append(moves, ms...)
 	}

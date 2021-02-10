@@ -7,12 +7,10 @@ import (
 
 func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1", true)
-	fmt.Println(game.position.board.Draw())
-	evalMove := search(game.position, 10)
+	evalMove := search(game.position, 7)
 	expected := Move{G7, G6, NoType, 0}
 	mv := *evalMove.move
 	mvStr := mv.ToString()
-	fmt.Println(game.position.board.Draw())
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}

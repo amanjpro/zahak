@@ -1,9 +1,5 @@
 package main
 
-// import (
-// 	"math"
-// )
-//
 func eval(position *Position) float64 {
 	board := position.board
 	allPieces := board.AllPieces()
@@ -13,6 +9,18 @@ func eval(position *Position) float64 {
 const CHECKMATE_EVAL = float64(9000)
 
 func evaluate(position *Position, allPieces map[Square]Piece) float64 {
+
+	dir := 1.0
+	if position.Turn() == White {
+		dir = -1
+	}
+
+	if position.Status() == Checkmate {
+		return dir * CHECKMATE_EVAL
+	} else if position.Status() == Draw {
+		return 0.0
+	}
+
 	whiteBishops := 0.0
 	whiteKnights := 0.0
 	blackBishops := 0.0

@@ -97,11 +97,7 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 	alpha float64, beta float64, line []*Move) (float64, []*Move) {
 	nodesVisited += 1
 
-	if position.Status() == Checkmate {
-		return -CHECKMATE_EVAL, line
-	} else if position.Status() == Draw {
-		return 0.0, line
-	} else if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
+	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
 		// TODO: Perform all captures before giving up, to avoid the horizon effect
 		// var dir float64 = -1
 		// if isMaximizingPlayer {
@@ -144,7 +140,10 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 			}
 		}
 	}
-	if isMaximizingPlayer {
+
+	if len(orderedMoves) == 0 {
+		return eval(position), line
+	} else if isMaximizingPlayer {
 		return alpha, newLine
 	} else {
 		return beta, newLine
