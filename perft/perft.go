@@ -3,6 +3,7 @@ package perft
 import (
 	"fmt"
 	"os"
+	"time"
 
 	. "github.com/amanjpro/zahak/engine"
 )
@@ -211,7 +212,10 @@ func testNodesOnly(fen string, depth int, expected int64) int8 {
 	for i := 0; i < depth; i++ {
 		cache[i] = make(map[uint64]int64, 1000_000)
 	}
+	start := time.Now()
 	actual := bulkyPerft(g.Position(), depth)
+	end := time.Now()
+	fmt.Printf("mnsp is %f\n", float64(actual)/(1000_000*(end.Sub(start).Seconds())))
 	if actual != expected {
 		fmt.Printf("test failed\nExpected: %d\nGot: %d\n", expected, actual)
 		return 1
