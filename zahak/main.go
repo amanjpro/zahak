@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strconv"
+	"strings"
 
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/perft"
@@ -32,7 +33,7 @@ func main() {
 		depth, _ := strconv.Atoi(flag.Arg(0))
 		fen := flag.Arg(1)
 		game := FromFen(fen, true)
-		moves := game.Position().ParseMoves(flag.Args()[2:])
+		moves := game.Position().ParseMoves(strings.Fields(flag.Args()[2]))
 		PerftTree(game, depth, moves)
 	} else {
 		UCI()

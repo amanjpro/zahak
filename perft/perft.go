@@ -23,21 +23,20 @@ func PerftTree(game Game, depth int, moves []*Move) {
 	for _, move := range moves {
 		game.Position().MakeMove(move)
 	}
-	cache = make([]map[uint64]int64, depth)
-	for i := 0; i < depth; i++ {
-		cache[i] = make(map[uint64]int64, 1000_000)
-	}
-	moves = game.Position().LegalMoves()
-	depth -= 1
-	for _, move := range moves {
-		if move.HasTag(EnPassant) {
-			fmt.Println(move.HasTag(EnPassant))
+	if depth > 0 {
+		depth -= 1
+		cache = make([]map[uint64]int64, depth)
+		for i := 0; i < depth; i++ {
+			cache[i] = make(map[uint64]int64, 1000_000)
 		}
-		cp, ep, tg := game.Position().MakeMove(move)
-		nodes := bulkyPerft(game.Position(), depth)
-		fmt.Printf("%s %d\n", move.ToString(), nodes)
-		sum += nodes
-		game.Position().UnMakeMove(move, tg, ep, cp)
+		moves = game.Position().LegalMoves()
+		for _, move := range moves {
+			cp, ep, tg := game.Position().MakeMove(move)
+			nodes := bulkyPerft(game.Position(), depth)
+			fmt.Printf("%s %d\n", move.ToString(), nodes)
+			sum += nodes
+			game.Position().UnMakeMove(move, tg, ep, cp)
+		}
 	}
 
 	fmt.Printf("\n%d\n", sum)
@@ -264,6 +263,10 @@ func bulkyPerft(p *Position, depth int) int64 {
 
 	moves := p.LegalMoves()
 	l := len(moves)
+
+	if depth == 0 {
+		return 1
+	}
 
 	if depth == 1 {
 		return int64(l)
