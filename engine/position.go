@@ -4,6 +4,7 @@ type Position struct {
 	Board     Bitboard
 	EnPassant Square
 	Tag       PositionTag
+	hash      uint64
 }
 
 type PositionTag uint8
@@ -40,12 +41,15 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
 	movingPiece := p.Board.PieceAt(move.Source)
 	capturedPiece := p.Board.PieceAt(move.Destination)
 	p.Board.Move(move.Source, move.Destination)
+	captureSquare := NoSquare
+	promoPiece := NoPiece
 
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance
 	if move.HasTag(EnPassant) {
 		p.EnPassant = NoSquare
-		ep := findEnPassantSquare(move, movingPiece)
+		ep := findEnPassantCaptureSquare(move)
 		capturedPiece = p.Board.PieceAt(ep)
+		captureSquare = ep
 		p.Board.Clear(ep)
 	} else {
 		if movingPiece == WhitePawn &&
@@ -59,9 +63,14 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
 		}
 	}
 
+	if move.HasTag(Capture) && !move.HasTag(EnPassant) {
+		captureSquare = move.Destination
+	}
+
 	// Do promotion
 	if move.PromoType != NoType {
-		p.Board.UpdateSquare(move.Destination, getPiece(move.PromoType, p.Turn()))
+		promoPiece = getPiece(move.PromoType, p.Turn())
+		p.Board.UpdateSquare(move.Destination, promoPiece)
 	}
 
 	if movingPiece == BlackKing {
@@ -92,26 +101,35 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
 	}
 
 	p.ToggleTurn()
+	updateHash(p, move, movingPiece, capturedPiece, captureSquare, p.EnPassant, ep, promoPiece, tag)
 	return capturedPiece, ep, tag
 }
 
 func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
+	oldTag := p.Tag
+	oldEnPassant := p.EnPassant
+	movingPiece := p.Board.PieceAt(move.Destination)
+	promoPiece := movingPiece
 	p.Tag = tag
 	p.EnPassant = enPassant
 
-	movingPiece := p.Board.PieceAt(move.Destination)
+	captureSquare := NoSquare
 	p.Board.Move(move.Destination, move.Source)
 
 	// Undo enpassant
 	if move.HasTag(EnPassant) && move.HasTag(Capture) {
-		p.Board.UpdateSquare(findEnPassantSquare(move, movingPiece), capturedPiece)
+		cp := findEnPassantCaptureSquare(move)
+		captureSquare = cp
+		p.Board.UpdateSquare(cp, capturedPiece)
 	} else if move.HasTag(Capture) { // Undo capture
 		p.Board.UpdateSquare(move.Destination, capturedPiece)
+		captureSquare = move.Destination
 	}
 
 	// Undo promotion
 	if move.PromoType != NoType {
-		p.Board.UpdateSquare(move.Source, getPiece(Pawn, p.Turn()))
+		movingPiece = getPiece(Pawn, p.Turn())
+		p.Board.UpdateSquare(move.Source, movingPiece)
 	}
 	if move.HasTag(QueenSideCastle) {
 		// white
@@ -128,6 +146,7 @@ func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, cap
 			p.Board.Move(F8, H8)
 		}
 	}
+	updateHash(p, move, movingPiece, capturedPiece, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
 }
 
 type Status uint8
@@ -180,10 +199,14 @@ func (p *Position) Status() Status {
 }
 
 func (p *Position) Hash() uint64 {
-	return generateZobristHash(p)
+	if p.hash == 0 {
+		hash := generateZobristHash(p)
+		p.hash = hash
+	}
+	return p.hash
 }
 
-func findEnPassantSquare(move *Move, movingPiece Piece) Square {
+func findEnPassantCaptureSquare(move *Move) Square {
 	rank := move.Source.Rank()
 	file := move.Destination.File()
 	return SquareOf(file, rank)
@@ -194,5 +217,6 @@ func (p *Position) copy() *Position {
 		*p.Board.copy(),
 		p.EnPassant,
 		p.Tag,
+		p.hash,
 	}
 }

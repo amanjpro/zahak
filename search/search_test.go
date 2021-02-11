@@ -26,6 +26,7 @@ func TestNestedMakeUnMake(t *testing.T) {
 	fen := "rnb1kbnr/pQpp1ppp/4p3/8/7q/2P5/PP1PPPPP/RNB1KBNR b KQkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.Position()
+	originalHash := p.Hash()
 
 	m1 := &Move{G8, E7, NoType, 0}
 	cp1, ep1, tg1 := p.MakeMove(m1)
@@ -58,9 +59,13 @@ func TestNestedMakeUnMake(t *testing.T) {
 	p.UnMakeMove(m2, tg2, ep2, cp2)
 	p.UnMakeMove(m1, tg1, ep1, cp1)
 
+	endHash := p.Hash()
 	actualFen = g.Fen()
 	expectedFen = fen
 	if actualFen != expectedFen {
 		t.Errorf("Unexected Fen after unmaking the moves:\n%s", fmt.Sprintf("Got: %s\nExpected: %s\n", actualFen, expectedFen))
+	}
+	if originalHash != endHash {
+		t.Errorf("Nested Make/UnMake broke hashing %s", fmt.Sprintf("Got: %d\nExpected: %d\n", endHash, originalHash))
 	}
 }

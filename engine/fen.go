@@ -113,6 +113,7 @@ func positionFromFen(fen string) Position {
 		bitboardFromFen(fen),
 		NoSquare,
 		0,
+		0,
 	}
 
 	if parts[1] == "b" {

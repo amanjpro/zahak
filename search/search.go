@@ -214,26 +214,25 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	// Is in Transition table ???
 	// TODO: This is slow, that tells us either cache access is slow or has computation is
 	// Or maybe (unlikely) make/unmake move is slow
-	// ep := validMoves.position.enPassant
-	// tg := validMoves.position.tag
-	// cp := validMoves.position.MakeMove(move1)
-	// hash1 := validMoves.position.Hash()
-	// validMoves.position.UnMakeMove(move1, tg, ep, cp)
-	//
-	// ep = validMoves.position.enPassant
-	// tg = validMoves.position.tag
-	// cp = validMoves.position.MakeMove(move2)
-	// hash2 := validMoves.position.Hash()
-	// validMoves.position.UnMakeMove(move2, tg, ep, cp)
-	//
-	// if _, ok := TranspositionTable.Get(hash1); ok {
-	// 	return true
-	// }
-	//
-	// if _, ok := TranspositionTable.Get(hash2); ok {
-	// 	return false
-	// }
-	//
+	cp1, ep1, tg1 := validMoves.position.MakeMove(move1)
+	hash1 := validMoves.position.Hash()
+	validMoves.position.UnMakeMove(move1, tg1, ep1, cp1)
+	eval1, ok1 := TranspositionTable.Get(hash1)
+
+	cp2, ep2, tg2 := validMoves.position.MakeMove(move2)
+	hash2 := validMoves.position.Hash()
+	validMoves.position.UnMakeMove(move2, tg2, ep2, cp2)
+	eval2, ok2 := TranspositionTable.Get(hash2)
+
+	if ok1 && ok2 {
+		if eval1.Eval > eval2.Eval ||
+			(eval1.Eval == eval2.Eval && eval1.Depth >= eval2.Depth) {
+			return true
+		} else if eval1.Eval < eval2.Eval {
+			return false
+		}
+	}
+
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
 		// What are we capturing?
