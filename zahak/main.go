@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 	"os"
-	"runtime"
+	// "runtime"
+	"fmt"
 	"runtime/pprof"
 	"strconv"
 	"strings"
@@ -20,12 +21,23 @@ func main() {
 	var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
 	flag.Parse()
 	if *profileFlag {
-		cpu, _ := os.Create("zahak-engine-cpu-profile")
-		mem, _ := os.Create("zahak-engine-memory-profile")
-		pprof.StartCPUProfile(cpu)
-		runtime.GC()
+		fmt.Println("I AM HERE")
+		cpu, err := os.Create("zahak-engine-cpu-profile")
+		if err != nil {
+			fmt.Println("could not create CPU profile: ", err)
+			os.Exit(1)
+		}
+		if err := pprof.StartCPUProfile(cpu); err != nil {
+			fmt.Println("could not start CPU profile: ", err)
+			os.Exit(1)
+		}
+
+		// mem, _ := os.Create("zahak-engine-memory-profile")
+		// runtime.GC()
+		// pprof.WriteHeapProfile(mem)
+		defer cpu.Close()
 		defer pprof.StopCPUProfile()
-		defer mem.Close() // error handling omitted for example
+		// defer mem.Close() // error handling omitted for example
 	}
 	if *perftFlag {
 		StartPerftTest(*slowFlag)

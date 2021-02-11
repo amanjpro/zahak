@@ -14,14 +14,14 @@ const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 func UCI() {
 	var game Game
-	var depth = int8(6)
+	var depth = int8(7)
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		cmd, err := reader.ReadString('\n')
 		if err == nil {
 			switch cmd {
 			case "quit\n":
-				os.Exit(0)
+				return
 			case "uci\n":
 				fmt.Print("id name Zahak\n\n")
 				fmt.Print("id author Amanj\n\n")
