@@ -94,10 +94,10 @@ func Search(position *Position, depth int8, ply uint16) EvalMove {
 
 func startMinimax(position *Position, depth int8,
 	isMaximizingPlayer bool, ply uint16) (*Move, int) {
+	legalMoves := position.LegalMoves()
+	iterationEvals := make([]int, len(legalMoves))
 	alpha := -MAX_INT
 	beta := MAX_INT
-	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
 	bestScore := beta
 	var bestMove *Move
 	if isMaximizingPlayer {
@@ -107,33 +107,60 @@ func startMinimax(position *Position, depth int8,
 	if isMaximizingPlayer {
 		dir = 1
 	}
-	for _, move := range orderedMoves {
-		cp, ep, tg := position.MakeMove(move)
-		score, a, b := minimax(position, depth, !isMaximizingPlayer, alpha, beta)
-		position.UnMakeMove(move, tg, ep, cp)
+
+	timeForSearch := 5 * time.Minute
+	start := time.Now()
+
+	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
+		iterAlpha := alpha
+		iterBeta := beta
+		iterBestScore := beta
+		var iterBestMove *Move
 		if isMaximizingPlayer {
-			if score > bestScore {
-				bestScore = score
-				bestMove = move
-			}
-			if a > alpha {
-				alpha = a
-			} else if score > alpha {
-				alpha = score
-			}
-		} else {
-			if score < bestScore {
-				bestScore = score
-				bestMove = move
-			}
-			if score < beta {
-				beta = score
-			} else if b < beta {
-				beta = b
-			}
+			iterBestScore = alpha
 		}
-		fmt.Printf("info nodes %d score cp %d currmove %s\n\n",
-			nodesVisited, int(bestScore*dir), bestMove.ToString())
+		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
+		for index, move := range orderedMoves {
+			if time.Now().Sub(start) > timeForSearch {
+				return bestMove, bestScore
+			}
+			cp, ep, tg := position.MakeMove(move)
+			score, a, b := minimax(position, iterationDepth, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
+			iterationEvals[index] = score
+			position.UnMakeMove(move, tg, ep, cp)
+			if isMaximizingPlayer {
+				if score > iterBestScore {
+					iterBestScore = score
+					iterBestMove = move
+				}
+				if a > iterAlpha {
+					iterAlpha = a
+				} else if score > iterAlpha {
+					iterAlpha = score
+				}
+				if score == CHECKMATE_EVAL {
+					return move, CHECKMATE_EVAL
+				}
+			} else {
+				if score < iterBestScore {
+					iterBestScore = score
+					iterBestMove = move
+				}
+				if score < iterBeta {
+					iterBeta = score
+				} else if b < iterBeta {
+					iterBeta = b
+				}
+				if score == -CHECKMATE_EVAL {
+					return move, -CHECKMATE_EVAL
+				}
+			}
+			fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d currmove %s\n\n",
+				iterationDepth, nodesVisited/1000*int64(time.Now().Sub(start).Seconds()),
+				cacheHits, nodesVisited, int(bestScore*dir), iterBestMove.ToString())
+		}
+		bestScore = iterBestScore
+		bestMove = iterBestMove
 	}
 	return bestMove, bestScore
 }
@@ -319,4 +346,30 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 func orderMoves(validMoves *ValidMoves) []*Move {
 	sort.Sort(validMoves)
 	return validMoves.moves
+}
+
+type IterationMoves struct {
+	moves []*Move
+	evals []int
+}
+
+func (iter *IterationMoves) Len() int {
+	return len(iter.moves)
+}
+
+func (iter *IterationMoves) Swap(i, j int) {
+	evals := iter.evals
+	moves := iter.moves
+	moves[i], moves[j] = moves[j], moves[i]
+	evals[i], evals[j] = evals[j], evals[i]
+}
+
+func (iter *IterationMoves) Less(i, j int) bool {
+	evals := iter.evals
+	return evals[i] <= evals[j]
+}
+
+func orderIterationMoves(iter *IterationMoves) []*Move {
+	sort.Sort(iter)
+	return iter.moves
 }
