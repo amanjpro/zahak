@@ -20,7 +20,6 @@ var pv []*Move
 type EvalMove struct {
 	eval int
 	move *Move
-	line []*Move
 }
 
 func (e *EvalMove) Move() *Move {
@@ -74,38 +73,73 @@ func Search(position *Position, depth int8) EvalMove {
 	// 		}
 	// 	}
 
-	eval, moves := minimax(position, depth, 1, isMaximizingPlayer, -MAX_INT,
-		MAX_INT, []*Move{})
-	move := moves[0]
-	mvStr := move.ToString()
-	fmt.Printf("info nodes %d score cp %d currmove %s pv",
-		nodesVisited, int(eval*dir), mvStr)
-	for i := 1; i < len(moves); i++ {
-		mv := moves[i]
-		fmt.Printf(" %s", mv.ToString())
-	}
+	bestMove, score := startMinimax(position, depth, isMaximizingPlayer)
+	fmt.Printf("info nodes %d score cp %d currmove %s",
+		nodesVisited, int(score*dir), bestMove.ToString())
+	// for i := 1; i < len(moves); i++ {
+	// 	mv := moves[i]
+	// 	fmt.Printf(" %s", mv.ToString())
+	// }
 	fmt.Print("\n\n")
 
-	bestEval = EvalMove{eval, move, moves}
+	bestEval = EvalMove{score, bestMove}
 	// }
 	end := time.Now()
 	// close(evals)
-	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n", nodesVisited, nodesSearched, cacheHits)
-	fmt.Printf("Took %f seconds\n", end.Sub(start).Seconds())
-	pv = bestEval.line
-	TranspositionTable.Rotate()
+	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n\n", nodesVisited, nodesSearched, cacheHits)
+	fmt.Printf("Took %f seconds\n\n", end.Sub(start).Seconds())
+	// pv = bestEval.line
 	return bestEval
 }
 
-// func parallelMinimax(position *Position, move *Move, depth int8,
-// 	isMaximizingPlayer bool, resultEval chan EvalMove) {
-// 	eval, moves := minimax(position, depth, 2, isMaximizingPlayer, math.Inf(-1),
-// 		math.Inf(1), move, []*Move{})
-// 	resultEval <- EvalMove{eval, move, moves}
-// }
+func startMinimax(position *Position, depth int8,
+	isMaximizingPlayer bool) (*Move, int) {
+	alpha := -MAX_INT
+	beta := MAX_INT
+	legalMoves := position.LegalMoves()
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
+	bestScore := beta
+	var bestMove *Move
+	if isMaximizingPlayer {
+		bestScore = alpha
+	}
+	var dir = -1
+	if isMaximizingPlayer {
+		dir = 1
+	}
+	for _, move := range orderedMoves {
+		cp, ep, tg := position.MakeMove(move)
+		score, a, b := minimax(position, depth, !isMaximizingPlayer, alpha, beta)
+		position.UnMakeMove(move, tg, ep, cp)
+		if isMaximizingPlayer {
+			if score > bestScore {
+				bestScore = score
+				bestMove = move
+			}
+			if a > alpha {
+				alpha = a
+			} else if score > alpha {
+				alpha = score
+			}
+		} else {
+			if score < bestScore {
+				bestScore = score
+				bestMove = move
+			}
+			if score < beta {
+				beta = score
+			} else if b < beta {
+				beta = b
+			}
+		}
+		fmt.Printf("info nodes %d score cp %d currmove %s\n\n",
+			nodesVisited, int(bestScore*dir), bestMove.ToString())
+	}
+	return bestMove, bestScore
+}
 
-func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha int, beta int, line []*Move) (int, []*Move) {
+func minimax(position *Position, depthLeft int8, isMaximizingPlayer bool,
+	alpha int, beta int) (int, int, int) {
 	nodesVisited += 1
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
@@ -122,49 +156,44 @@ func minimax(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 		// }
 		// fmt.Print("\n\n")
 
-		return evl, line
+		return evl, alpha, beta
 	}
 
 	nodesSearched += 1
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, int(pvDepth)})
-	newLine := line
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
 
 	for _, move := range orderedMoves {
-		score, computedLine := getEval(position, depthLeft-1, pvDepth+1,
-			!isMaximizingPlayer, alpha, beta, move, line)
+		score := getEval(position, depthLeft-1, !isMaximizingPlayer, alpha, beta, move)
 		if isMaximizingPlayer {
 			if score >= beta {
-				return beta, newLine
+				return beta, alpha, beta
 			}
 			if score > alpha {
-				newLine = computedLine
 				alpha = score
 			}
 		} else {
 			if score <= alpha {
-				return alpha, newLine
+				return alpha, alpha, beta
 			}
 			if score < beta {
-				newLine = computedLine
 				beta = score
 			}
 		}
 	}
 
 	if len(orderedMoves) == 0 {
-		return Evaluate(position), line
+		return Evaluate(position), alpha, beta
 	} else if isMaximizingPlayer {
-		return alpha, newLine
+		return alpha, alpha, beta
 	} else {
-		return beta, newLine
+		return beta, alpha, beta
 	}
 }
 
-func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlayer bool,
-	alpha int, beta int, move *Move, line []*Move) (int, []*Move) {
+func getEval(position *Position, depthLeft int8, isMaximizingPlayer bool,
+	alpha int, beta int, move *Move) int {
 	var score int
-	computedLine := []*Move{}
 	capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
 	newPositionHash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(newPositionHash)
@@ -174,21 +203,18 @@ func getEval(position *Position, depthLeft int8, pvDepth int8, isMaximizingPlaye
 			cachedEval.Depth >= depthLeft) {
 		cacheHits += 1
 		score = cachedEval.Eval
-		computedLine = append(line, move)
 	} else {
-		v, t := minimax(position, depthLeft, pvDepth, isMaximizingPlayer, alpha, beta, append(line, move))
-		TranspositionTable.Set(newPositionHash, &CachedEval{v, int8(len(t))})
-		computedLine = t
+		v, _, _ := minimax(position, depthLeft, isMaximizingPlayer, alpha, beta)
+		TranspositionTable.Set(newPositionHash, &CachedEval{v, depthLeft})
 		score = v
 	}
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
-	return score, computedLine
+	return score
 }
 
 type ValidMoves struct {
 	position *Position
 	moves    []*Move
-	depth    int
 }
 
 func (validMoves *ValidMoves) Len() int {
@@ -204,12 +230,12 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	moves := validMoves.moves
 	move1, move2 := moves[i], moves[j]
 	board := validMoves.position.Board
-	// Is in PV?
-	if pv != nil && len(pv) > validMoves.depth {
-		if pv[validMoves.depth] == move1 {
-			return true
-		}
-	}
+	// // Is in PV?
+	// if pv != nil && len(pv) > validMoves.depth {
+	// 	if pv[validMoves.depth] == move1 {
+	// 		return true
+	// 	}
+	// }
 
 	// Is in Transition table ???
 	// TODO: This is slow, that tells us either cache access is slow or has computation is
@@ -231,8 +257,12 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		} else if eval1.Eval < eval2.Eval {
 			return false
 		}
+	} else if ok1 {
+		return true
+	} else if ok2 {
+		return false
 	}
-
+	//
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
 		// What are we capturing?
