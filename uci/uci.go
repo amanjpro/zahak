@@ -34,7 +34,7 @@ func UCI() {
 				STOP_SEARCH_GLOBALLY = true
 			default:
 				if strings.HasPrefix(cmd, "go") {
-					go findMove(game.Position(), depth)
+					go findMove(game.Position(), depth, game.MoveClock())
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen, true)
@@ -59,8 +59,8 @@ func UCI() {
 	}
 }
 
-func findMove(pos *Position, depth int8) {
-	evalMove := Search(pos, depth)
+func findMove(pos *Position, depth int8, ply uint16) {
+	evalMove := Search(pos, depth, ply)
 	pos.MakeMove(evalMove.Move())
 	fmt.Printf("bestmove %s\n", evalMove.Move().ToString())
 }

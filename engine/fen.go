@@ -176,7 +176,7 @@ func FromFen(fen string, clearCache bool) Game {
 		[]*Move{},
 		make(map[uint64]int8, 200),
 		uint16(moveCount),
-		uint16(halfMoveClock),
+		uint8(halfMoveClock),
 		clearCache,
 	)
 }

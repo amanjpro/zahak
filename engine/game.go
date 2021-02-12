@@ -12,7 +12,7 @@ type Game struct {
 	moves         []*Move
 	positions     map[uint64]int8
 	numberOfMoves uint16
-	halfMoveClock uint16
+	halfMoveClock uint8
 }
 
 // TODO: Implement me
@@ -63,13 +63,24 @@ func (g *Game) Position() *Position {
 	return g.position
 }
 
+func (g *Game) HalfMoveClock() uint8 {
+	return g.halfMoveClock
+}
+
+func (g *Game) MoveClock() uint16 {
+	if g.position.Turn() == Black {
+		return g.numberOfMoves + 1
+	}
+	return g.numberOfMoves
+}
+
 func NewGame(
 	position *Position,
 	startPosition Position,
 	moves []*Move,
 	positions map[uint64]int8,
 	numberOfMoves uint16,
-	halfMoveClock uint16,
+	halfMoveClock uint8,
 	clearCache bool) Game {
 
 	if clearCache {

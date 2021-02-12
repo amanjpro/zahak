@@ -30,7 +30,7 @@ func (e *EvalMove) Eval() int {
 	return e.eval
 }
 
-func Search(position *Position, depth int8) EvalMove {
+func Search(position *Position, depth int8, ply uint16) EvalMove {
 	STOP_SEARCH_GLOBALLY = false
 	nodesVisited = 0
 	nodesSearched = 0
@@ -73,7 +73,7 @@ func Search(position *Position, depth int8) EvalMove {
 	// 		}
 	// 	}
 
-	bestMove, score := startMinimax(position, depth, isMaximizingPlayer)
+	bestMove, score := startMinimax(position, depth, isMaximizingPlayer, ply)
 	fmt.Printf("info nodes %d score cp %d currmove %s",
 		nodesVisited, int(score*dir), bestMove.ToString())
 	// for i := 1; i < len(moves); i++ {
@@ -93,7 +93,7 @@ func Search(position *Position, depth int8) EvalMove {
 }
 
 func startMinimax(position *Position, depth int8,
-	isMaximizingPlayer bool) (*Move, int) {
+	isMaximizingPlayer bool, ply uint16) (*Move, int) {
 	alpha := -MAX_INT
 	beta := MAX_INT
 	legalMoves := position.LegalMoves()
@@ -139,7 +139,7 @@ func startMinimax(position *Position, depth int8,
 }
 
 func minimax(position *Position, depthLeft int8, isMaximizingPlayer bool,
-	alpha int, beta int) (int, int, int) {
+	alpha int, beta int, ply uint16) (int, int, int) {
 	nodesVisited += 1
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
@@ -164,7 +164,7 @@ func minimax(position *Position, depthLeft int8, isMaximizingPlayer bool,
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
 
 	for _, move := range orderedMoves {
-		score := getEval(position, depthLeft-1, !isMaximizingPlayer, alpha, beta, move)
+		score := getEval(position, depthLeft-1, !isMaximizingPlayer, alpha, beta, move, ply)
 		if isMaximizingPlayer {
 			if score >= beta {
 				return beta, alpha, beta
@@ -192,7 +192,7 @@ func minimax(position *Position, depthLeft int8, isMaximizingPlayer bool,
 }
 
 func getEval(position *Position, depthLeft int8, isMaximizingPlayer bool,
-	alpha int, beta int, move *Move) int {
+	alpha int, beta int, move *Move, ply uint16) int {
 	var score int
 	capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
 	newPositionHash := position.Hash()
@@ -204,8 +204,24 @@ func getEval(position *Position, depthLeft int8, isMaximizingPlayer bool,
 		cacheHits += 1
 		score = cachedEval.Eval
 	} else {
-		v, _, _ := minimax(position, depthLeft, isMaximizingPlayer, alpha, beta)
-		TranspositionTable.Set(newPositionHash, &CachedEval{v, depthLeft})
+		v, _, _ := minimax(position, depthLeft, isMaximizingPlayer, alpha, beta, ply)
+		var tpe NodeType
+		if isMaximizingPlayer {
+			if v >= beta {
+				tpe = LowerBound
+			}
+			if score > alpha {
+				tpe = Exact
+			}
+		} else {
+			if v <= alpha {
+				tpe = UpperBound
+			}
+			if v < beta {
+				tpe = Exact
+			}
+		}
+		TranspositionTable.Set(newPositionHash, &CachedEval{position.Hash(), v, depthLeft, tpe, ply})
 		score = v
 	}
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
