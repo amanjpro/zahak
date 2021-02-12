@@ -188,10 +188,10 @@ func (p *Position) HasLegalMoves() bool {
 
 // Checks and Pins
 func isInCheck(b Bitboard, colorOfKing Color) bool {
-	return attacksToKing(b, colorOfKing) != 0
+	return isKingAttacked(b, colorOfKing, false)
 }
 
-func attacksToKing(b Bitboard, colorOfKing Color) uint64 {
+func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ uint64
 	var squareOfKing Square
 	occupiedBB := b.whitePieces | b.blackPieces
@@ -212,26 +212,46 @@ func attacksToKing(b Bitboard, colorOfKing Color) uint64 {
 		opRQ = b.whiteRook | b.whiteQueen
 		opBQ = b.whiteBishop | b.whiteQueen
 	}
-	checks := opPawnAttacks
-	checks |= (knightAttacks(ownKing) & opKnights)
-	checks |= (bishopAttacks(squareOfKing, occupiedBB, empty) & opBQ)
-	checks |= (rookAttacks(squareOfKing, occupiedBB, empty) & opRQ)
+	acc := 0
+	pawnChecks := opPawnAttacks
+	if pawnChecks != 0 {
+		if !doubleCheck {
+			return true
+		} else {
+			acc++
+		}
+	}
 
-	return checks
+	knightChecks := (knightAttacks(ownKing) & opKnights)
+	if knightChecks != 0 {
+		if !doubleCheck || acc == 1 {
+			return true
+		} else {
+			acc += 1
+		}
+	}
+	// Knights and pawns cannot discover each other
+	slidingChecks := (bishopAttacks(squareOfKing, occupiedBB, empty) & opBQ) |
+		(rookAttacks(squareOfKing, occupiedBB, empty) & opRQ)
+
+	if slidingChecks != 0 && !doubleCheck {
+		return true
+	} else {
+		for slidingChecks != 0 {
+			sq := bitScanForward(slidingChecks)
+			acc += 1
+			if (!doubleCheck && acc >= 1) || acc > 1 {
+				return true
+			}
+			slidingChecks ^= (1 << sq)
+		}
+	}
+
+	return false
 }
 
 func isDoubleCheck(b Bitboard, colorOfKing Color) bool {
-	checkCounts := 0
-	attacks := attacksToKing(b, colorOfKing)
-	for attacks != 0 {
-		sq := bitScanForward(attacks)
-		checkCounts += 1
-		if checkCounts > 1 {
-			return true
-		}
-		attacks ^= (1 << sq)
-	}
-	return checkCounts > 1
+	return isKingAttacked(b, colorOfKing, true)
 }
 
 func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
