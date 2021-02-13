@@ -98,20 +98,42 @@ func startMinimax(position *Position, depth int8,
 	}
 
 	timeForSearch := 5 * time.Minute
+	wp := WhitePawn
+	aspirationWindow := wp.Weight()
 	start := time.Now()
+	alpha := -MAX_INT
+	beta := MAX_INT
+	iterAlpha := alpha
+	iterBeta := beta
 
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
-		alpha := -MAX_INT
-		beta := MAX_INT
 		bestScore = -1 * dir * MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		for index, move := range orderedMoves {
+			fmt.Printf("info currmove %s\n\n", move.ToString())
 			sendPv := false
 			if time.Now().Sub(start) > timeForSearch {
 				return bestMove, bestScore
 			}
 			cp, ep, tg := position.MakeMove(move)
-			score := minimax(position, iterationDepth, 0, !isMaximizingPlayer, alpha, beta, ply)
+			score := minimax(position, iterationDepth, 0, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
+			trials := 0
+			for true && trials < 3 {
+				if score <= iterAlpha {
+					iterAlpha -= aspirationWindow
+					score = minimax(position, iterationDepth, 0, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
+				} else if score >= iterBeta {
+					iterBeta += aspirationWindow
+					score = minimax(position, iterationDepth, 0, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
+				} else {
+					break
+				}
+				trials++
+				if trials == 2 {
+					iterAlpha = alpha
+					iterBeta = beta
+				}
+			}
 			iterationEvals[index] = score
 			position.UnMakeMove(move, tg, ep, cp)
 			if isMaximizingPlayer {
@@ -120,8 +142,8 @@ func startMinimax(position *Position, depth int8,
 					bestScore = score
 					bestMove = move
 				}
-				if score > alpha {
-					alpha = score
+				if score > iterAlpha {
+					iterAlpha = score
 				}
 				if score == CHECKMATE_EVAL {
 					return move, CHECKMATE_EVAL
@@ -132,14 +154,13 @@ func startMinimax(position *Position, depth int8,
 					bestScore = score
 					bestMove = move
 				}
-				if score < beta {
-					beta = score
+				if score < iterBeta {
+					iterBeta = score
 				}
 				if score == -CHECKMATE_EVAL {
 					return move, -CHECKMATE_EVAL
 				}
 			}
-			fmt.Printf("info currmove %s\n\n", bestMove.ToString())
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s",
@@ -159,6 +180,8 @@ func startMinimax(position *Position, depth int8,
 			}
 			fmt.Printf("\n\n")
 		}
+		iterAlpha = bestScore - aspirationWindow
+		iterBeta = bestScore + aspirationWindow
 	}
 	return bestMove, bestScore
 }
