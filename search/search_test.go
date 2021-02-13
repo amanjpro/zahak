@@ -8,6 +8,28 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+func TestBlackCanFindASimpleTactic(t *testing.T) {
+	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/2r4n/3K4 b - - 0 1", true)
+	evalMove := Search(game.Position(), 4, 1)
+	expected := Move{C2, D2, NoType, Check}
+	mv := *evalMove.move
+	mvStr := mv.ToString()
+	if mv != expected {
+		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
+	}
+}
+
+func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
+	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/3K4 w - - 0 1", true)
+	evalMove := Search(game.Position(), 4, 1)
+	expected := Move{D1, C1, NoType, 0}
+	mv := *evalMove.move
+	mvStr := mv.ToString()
+	if mv != expected {
+		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
+	}
+}
+
 func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1", true)
 	evalMove := Search(game.Position(), 7, 1)

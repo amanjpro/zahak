@@ -118,12 +118,12 @@ func startMinimax(position *Position, depth int8,
 			cp, ep, tg := position.MakeMove(move)
 			score := minimax(position, iterationDepth, 0, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
 			trials := 0
-			for true && trials < 3 {
+			for trials <= 3 {
 				if score <= iterAlpha {
-					iterAlpha -= aspirationWindow
+					iterAlpha = score
 					score = minimax(position, iterationDepth, 0, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
 				} else if score >= iterBeta {
-					iterBeta += aspirationWindow
+					iterBeta = score
 					score = minimax(position, iterationDepth, 0, !isMaximizingPlayer, iterAlpha, iterBeta, ply)
 				} else {
 					break
