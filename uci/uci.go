@@ -37,17 +37,22 @@ func UCI() {
 					go findMove(game.Position(), depth, game.MoveClock())
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					moves := strings.Fields(cmd)[3:]
-					game = FromFen(startFen, true)
+					game = FromFen(startFen, false)
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
-					game = FromFen(startFen, false)
-				} else if strings.HasPrefix(cmd, "position") {
+					game = FromFen(startFen, true)
+				} else if strings.HasPrefix(cmd, "position fen") {
 					cmd := strings.Fields(cmd)
-					moves := cmd[8:]
-					fen := fmt.Sprintf("%s %s %s %s %s %s", cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], cmd[6])
-					game = FromFen(fen, false)
+					fen := fmt.Sprintf("%s %s %s %s %s %s", cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7])
+					moves := []string{}
+					if len(cmd) > 9 {
+						moves = cmd[9:]
+						game = FromFen(fen, false)
+					} else {
+						game = FromFen(fen, true)
+					}
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
 					}
