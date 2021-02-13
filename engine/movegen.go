@@ -28,6 +28,43 @@ func (p *Position) LegalMoves() []*Move {
 		}
 	}
 
+	p.generateMoves(add)
+
+	return allMoves
+}
+
+func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
+	allMoves := make([]*Move, 0, 350)
+
+	color := p.Turn()
+
+	add := func(ms ...*Move) {
+		for _, m := range ms {
+			// make the move
+			capturedPiece, oldEnPassant, oldTag := p.MakeMove(m)
+
+			// Does the move puts the moving player in check
+			pNotInCheck := !isInCheck(p.Board, color)
+
+			if pNotInCheck && withChecks && isInCheck(p.Board, p.Turn()) { // We put opponent in check
+				m.SetTag(Check)
+				allMoves = append(allMoves, m)
+			} else if pNotInCheck && capturedPiece != NoPiece { // The move is a capture
+				// do nothing
+				allMoves = append(allMoves, m)
+			}
+			p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
+		}
+	}
+
+	p.generateMoves(add)
+
+	return allMoves
+}
+
+func (p *Position) generateMoves(add func(ms ...*Move)) {
+
+	color := p.Turn()
 	board := p.Board
 
 	taboo := tabooSquares(board, color)
@@ -71,7 +108,6 @@ func (p *Position) LegalMoves() []*Move {
 				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), add)
 		}
 	}
-	return allMoves
 }
 
 func (p *Position) HasLegalMoves() bool {

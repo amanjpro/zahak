@@ -165,7 +165,7 @@ func startMinimax(position *Position, depth int8,
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, int(bestScore*dir), timeSpent.Milliseconds(), bestMove.ToString())
+					cacheHits, nodesVisited, int(bestScore*dir/100), timeSpent.Milliseconds(), bestMove.ToString())
 				for i, move := range pv {
 					if move == nil {
 						break
@@ -176,7 +176,7 @@ func startMinimax(position *Position, depth int8,
 			} else {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, int(bestScore*dir), timeSpent.Milliseconds())
+					cacheHits, nodesVisited, int(bestScore*dir/100), timeSpent.Milliseconds())
 			}
 			fmt.Printf("\n\n")
 		}
@@ -191,19 +191,14 @@ func minimax(position *Position, depthLeft int8, searchHeight int8,
 	nodesVisited += 1
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
-		// TODO: Perform all captures before giving up, to avoid the horizon effect
-		// var dir float64 = -1
-		// if isMaximizingPlayer {
-		// 	dir = 1
-		// }
 		evl := Evaluate(position)
-		// fmt.Printf("info nodes %d score cp %d currmove %s pv",
-		// 	nodesVisited, int(evl*100*dir), baseMove.ToString())
-		// for _, mv := range line {
-		// 	fmt.Printf(" %s", mv.ToString())
-		// }
-		// fmt.Print("\n\n")
-
+		if !STOP_SEARCH_GLOBALLY {
+			if isMaximizingPlayer {
+				evl = quescence(position, isMaximizingPlayer, evl, beta, ply)
+			} else {
+				evl = quescence(position, isMaximizingPlayer, alpha, evl, ply)
+			}
+		}
 		return evl
 	}
 
