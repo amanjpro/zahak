@@ -174,11 +174,34 @@ func (p *Position) Status() Status {
 			p.Board.blackQueen != 0 || p.Board.whiteQueen != 0 {
 			return Unknown
 		} else {
-			whiteKnights := getIndicesOfOnes(p.Board.whiteKnight)
-			blackKnights := getIndicesOfOnes(p.Board.blackKnight)
-			whiteBishops := getIndicesOfOnes(p.Board.whiteBishop)
-			blackBishops := getIndicesOfOnes(p.Board.blackBishop)
-			all := len(whiteKnights) + len(blackKnights) + len(whiteBishops) + len(blackBishops)
+			wKnights := bitScanForward(p.Board.whiteKnight)
+			bKnights := bitScanForward(p.Board.blackKnight)
+			wBishops := bitScanForward(p.Board.blackBishop)
+			bBishops := bitScanForward(p.Board.blackBishop)
+
+			wKnightsNum := 0
+			bKnightsNum := 0
+			wBishopsNum := 0
+			bBishopsNum := 0
+
+			if wKnights != 64 {
+				wKnightsNum = 1
+			}
+
+			if bKnights != 64 {
+				bKnightsNum = 1
+			}
+
+			if wBishops != 64 {
+				wBishopsNum = 1
+			}
+
+			if bBishops != 64 {
+				bBishopsNum = 1
+			}
+
+			all := wKnightsNum + bKnightsNum + wBishopsNum + bBishopsNum
+
 			// both sides have a bare king
 			// one side has a king and a minor piece against a bare king
 
@@ -186,9 +209,11 @@ func (p *Position) Status() Status {
 				return Draw
 			}
 			// both sides have a king and a bishop, the bishops being the same color
-			if p.Board.whiteKnight == 0 && p.Board.blackKnight == 0 {
-				if len(blackBishops) == 1 && len(whiteBishops) == 1 &&
-					Square(blackBishops[0]).GetColor() == Square(whiteBishops[0]).GetColor() {
+			if wKnightsNum == 0 && bKnightsNum == 0 {
+				otherWB := wBishops ^ (1 << wBishops)
+				otherBB := bBishops ^ (1 << bBishops)
+				if otherWB == 0 && otherBB == 0 &&
+					Square(1<<bBishops).GetColor() == Square(1<<wBishops).GetColor() {
 					return Draw
 				}
 			}

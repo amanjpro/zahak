@@ -366,7 +366,9 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 					add(&Move{srcSq, dest, NoType, tag})
 				}
 			}
-			for _, sq := range getIndicesOfOnes(wPawnsAble2CaptureAny(pawn, otherPieces)) {
+			attacks := wPawnsAble2CaptureAny(pawn, otherPieces)
+			for attacks != 0 {
+				sq := bitScanForward(attacks)
 				dest := Square(sq)
 				if dest.Rank() == Rank8 {
 					add(
@@ -378,6 +380,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 					var tag MoveTag = Capture
 					add(&Move{srcSq, dest, NoType, tag})
 				}
+				attacks ^= (1 << sq)
 			}
 			if srcSq.Rank() == Rank5 && enPassant != NoSquare && enPassant.Rank() == Rank6 {
 				ep := uint64(1 << enPassant)
@@ -414,7 +417,9 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 					add(&Move{srcSq, dest, NoType, 0})
 				}
 			}
-			for _, sq := range getIndicesOfOnes(bPawnsAble2CaptureAny(pawn, otherPieces)) {
+			attacks := bPawnsAble2CaptureAny(pawn, otherPieces)
+			for attacks != 0 {
+				sq := bitScanForward(attacks)
 				dest := Square(sq)
 				if dest.Rank() == Rank1 {
 					add(
@@ -426,6 +431,7 @@ func bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, otherKing 
 					var tag MoveTag = Capture
 					add(&Move{srcSq, dest, NoType, tag})
 				}
+				attacks ^= (1 << sq)
 			}
 			if srcSq.Rank() == Rank4 && enPassant != NoSquare && enPassant.Rank() == Rank3 {
 				ep := uint64(1 << enPassant)
@@ -698,16 +704,6 @@ func initializeKingAttacks() [64]uint64 {
 }
 
 // Utilites
-func getIndicesOfOnes(bb uint64) []uint8 {
-	indices := make([]uint8, 0, 8)
-	for bb != 0 {
-		index := bitScanForward(bb)
-		bb ^= (1 << index)
-		indices = append(indices, index)
-	}
-	return indices
-}
-
 func bitScanForward(bb uint64) uint8 {
 	return uint8(bits.TrailingZeros64(bb))
 }
