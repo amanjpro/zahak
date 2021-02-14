@@ -38,6 +38,8 @@ func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
 
 	color := p.Turn()
 
+	isChecked := isInCheck(p.Board, color)
+
 	add := func(ms ...*Move) {
 		for _, m := range ms {
 			// make the move
@@ -51,6 +53,8 @@ func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
 				allMoves = append(allMoves, m)
 			} else if pNotInCheck && capturedPiece != NoPiece { // The move is a capture
 				// do nothing
+				allMoves = append(allMoves, m)
+			} else if isChecked && pNotInCheck { // Check replies are also considered
 				allMoves = append(allMoves, m)
 			}
 			p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
