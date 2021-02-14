@@ -11,19 +11,9 @@ func Evaluate(position *Position) int {
 }
 
 const CHECKMATE_EVAL = 9000_000_000_000
+const DIVIDER = 800
 
 func evaluate(position *Position, allPieces map[Square]Piece) int {
-
-	dir := 1
-	if position.Turn() == White {
-		dir = -1
-	}
-
-	if position.Status() == Checkmate {
-		return dir * CHECKMATE_EVAL
-	} else if position.Status() == Draw {
-		return 0
-	}
 
 	whiteBishops := 0
 	whiteKnights := 0
@@ -31,7 +21,9 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 	blackKnights := 0
 	blackPawns := 0
 	whitePawns := 0
-	centipawn := 0
+
+	blackCentipawn := 0
+	whiteCentipawn := 0
 
 	whitePawnsPerFile, blackPawnsPerFile := pawnsPerFile(allPieces)
 	//whitePawnsPerRank, blackPawnsPerRank := pawnsPerRank(allPieces)
@@ -49,7 +41,7 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 				square == C1 || square == C2 ||
 				square == G1 || square == G2 ||
 				square == H1 || square == H2 {
-				centipawn += 10
+				whiteCentipawn += 10
 			}
 		case BlackKing:
 			// This doesn't consider endgame
@@ -60,14 +52,14 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 				square == C7 || square == C8 ||
 				square == G7 || square == G8 ||
 				square == H7 || square == H8 {
-				centipawn -= 10
+				blackCentipawn += 10
 			}
 		case WhiteQueen:
-			centipawn += piece.Weight()
-			centipawn += 5 * piece.Weight() * int(rank+1) / 8
+			whiteCentipawn += piece.Weight()
+			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
 		case BlackQueen:
-			centipawn -= piece.Weight()
-			centipawn -= 5 * piece.Weight() * (9 - int(rank+1)) / 8
+			blackCentipawn += piece.Weight()
+			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
 		case WhiteRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -77,8 +69,8 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 			} else if white == 0 { // semi-open file
 				bonus = 5
 			}
-			centipawn += piece.Weight() + bonus
-			centipawn += 5 * piece.Weight() * int(rank+1) / 8
+			whiteCentipawn += piece.Weight() + bonus
+			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
 		case BlackRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -88,20 +80,20 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 			} else if black == 0 { // semi-open file
 				bonus = 5
 			}
-			centipawn -= piece.Weight() + bonus
-			centipawn -= 5 * piece.Weight() * (9 - int(rank+1)) / 8
+			blackCentipawn += piece.Weight() + bonus
+			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
 		case WhiteBishop:
 			whiteBishops += 1
-			centipawn += 5 * piece.Weight() * int(rank+1) / 8
+			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
 		case BlackBishop:
 			blackBishops += 1
-			centipawn -= 5 * piece.Weight() * (9 - int(rank+1)) / 8
+			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
 		case WhiteKnight:
 			whiteKnights += 1
-			centipawn += 5 * piece.Weight() * int(rank+1) / 8
+			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
 		case BlackKnight:
 			blackKnights += 1
-			centipawn -= 5 * piece.Weight() * (9 - int(rank+1)) / 8
+			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
 		case WhitePawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -111,14 +103,14 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if white >= 1 && black == 0 { // supported passed pawn
-						bonus = 10 * ((int(rank+1) * 9) / 8) * (32 - len(allPieces)) / 32
+						bonus = 10 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
 					} else if white >= 1 { // semi-supported passed pawn
-						bonus = 5 * ((int(rank+1) * 9) / 8) * (32 - len(allPieces)) / 32
+						bonus = 5 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
 					} else {
-						bonus = 2 * ((int(rank+1) * 9) / 8) * (32 - len(allPieces)) / 32
+						bonus = 2 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
 					}
 				} else {
-					bonus = 2 * ((int(rank+1) * 9) / 8) * (32 - len(allPieces)) / 32
+					bonus = 2 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
 				}
 			}
 
@@ -127,7 +119,7 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 				rPiece, rOk := allPieces[SquareOf(File(file-1), Rank(rank+1))]
 				lPiece, lOk := allPieces[SquareOf(File(file+1), Rank(rank+1))]
 				if rOk && lOk && rPiece == WhitePawn && lPiece == WhitePawn {
-					centipawn -= 3
+					whiteCentipawn -= 3
 				}
 			}
 
@@ -138,19 +130,19 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 					if file == FileH {
 						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
 						if rOk && rPiece == BlackPawn {
-							centipawn += 5
+							whiteCentipawn += 5
 						}
 					} else if file == FileA {
 						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if lOk && lPiece == BlackPawn {
-							centipawn += 5
+							whiteCentipawn += 5
 						}
 					} else {
 						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
 						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if (lOk && lPiece == BlackPawn) ||
 							(rOk && rPiece == BlackPawn) {
-							centipawn += 5
+							whiteCentipawn += 5
 						}
 					}
 				}
@@ -161,8 +153,8 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 				bonus -= 3
 			}
 			whitePawns += 1
-			centipawn += piece.Weight() + bonus
-			centipawn += 2 * piece.Weight() * (int(rank + 1)) / 8
+			whiteCentipawn += piece.Weight() + bonus
+			whiteCentipawn += 2 * piece.Weight() * (int(rank + 1)) / DIVIDER
 		case BlackPawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
@@ -172,14 +164,14 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if black >= 1 && white == 0 { // supported passed pawn
-						bonus = 10 * ((9 - int(rank+1)*9) / 8) * (32 - len(allPieces)) / 32
+						bonus = 10 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
 					} else if black >= 1 { // semi-supported passed pawn
-						bonus = 5 * ((9 - int(rank+1)*9) / 8) * (32 - len(allPieces)) / 32
+						bonus = 5 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
 					} else {
-						bonus = 3 * ((9 - int(rank+1)*9) / 8) * (32 - len(allPieces)) / 32
+						bonus = 3 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
 					}
 				} else {
-					bonus = 3 * ((9 - int(rank+1)*9) / 8) * (32 - len(allPieces)) / 32
+					bonus = 3 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
 				}
 			}
 
@@ -188,7 +180,7 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 				rPiece, rOk := allPieces[SquareOf(File(file-1), Rank(rank-1))]
 				lPiece, lOk := allPieces[SquareOf(File(file+1), Rank(rank-1))]
 				if rOk && lOk && rPiece == BlackPawn && lPiece == BlackPawn {
-					centipawn += 3
+					blackCentipawn -= 3
 				}
 			}
 
@@ -199,19 +191,19 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 					if file == FileH {
 						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
 						if rOk && rPiece == WhitePawn {
-							centipawn -= 5
+							blackCentipawn += 5
 						}
 					} else if file == FileA {
 						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if lOk && lPiece == WhitePawn {
-							centipawn -= 5
+							blackCentipawn += 5
 						}
 					} else {
 						rPiece, rOk := allPieces[SquareOf(File(file-1), rank)] // neighbour pawn
 						lPiece, lOk := allPieces[SquareOf(File(file+1), rank)] // another neighbour pawn
 						if (lOk && lPiece == WhitePawn) ||
 							(rOk && rPiece == WhitePawn) {
-							centipawn -= 5
+							blackCentipawn += 5
 						}
 					}
 				}
@@ -222,25 +214,29 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 				bonus -= 3
 			}
 			blackPawns += 1
-			centipawn -= piece.Weight() + bonus
-			centipawn += 2 * piece.Weight() * (9 - int(rank+1)) / 8
+			blackCentipawn += piece.Weight() + bonus
+			blackCentipawn += 2 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
 		}
 	}
 	pawns := blackPawns + whitePawns
 	N := WhiteKnight
 	B := WhiteBishop
-	centipawn += whiteBishops * B.Weight() * (1 + (16-pawns)/64)
-	centipawn -= blackBishops * B.Weight() * (1 + (16-pawns)/64)
-	centipawn += whiteKnights * N.Weight() * (1 - (16-pawns)/64)
-	centipawn -= blackKnights * N.Weight() * (1 - (16-pawns)/64)
+	whiteCentipawn += whiteBishops * B.Weight() * (1 + (16-pawns)/64)
+	whiteCentipawn += whiteKnights * N.Weight() * (1 - (16-pawns)/64)
+	blackCentipawn += blackBishops * B.Weight() * (1 + (16-pawns)/64)
+	blackCentipawn += blackKnights * N.Weight() * (1 - (16-pawns)/64)
 
 	if whiteBishops >= 2 && blackBishops < 2 {
-		centipawn += 3 + (8-blackPawns)/64
+		whiteCentipawn += 3 + (8-blackPawns)/64
 	}
 	if whiteBishops < 2 && blackBishops >= 2 {
-		centipawn -= 3 + (8-whitePawns)/64
+		blackCentipawn += 3 + (8-whitePawns)/64
 	}
-	return centipawn
+	if position.Turn() == White {
+		return whiteCentipawn - blackCentipawn
+	} else {
+		return blackCentipawn - whiteCentipawn
+	}
 }
 
 func pawnsPerFile(allPieces map[Square]Piece) (map[File](int8), map[File](int8)) {
