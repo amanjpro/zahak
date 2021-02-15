@@ -134,7 +134,7 @@ func (iter *IterationMoves) Swap(i, j int) {
 
 func (iter *IterationMoves) Less(i, j int) bool {
 	evals := iter.evals
-	return evals[i] <= evals[j]
+	return evals[i] >= evals[j]
 }
 
 func orderIterationMoves(iter *IterationMoves) []*Move {
