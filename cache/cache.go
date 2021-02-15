@@ -29,16 +29,19 @@ func (c *Cache) Set(hash uint64, value *CachedEval) {
 	key := uint32(hash>>32) % c.size
 	oldValue := c.items[key]
 	if oldValue != nil {
+		if value.Hash == oldValue.Hash {
+			c.items[key] = value
+		}
 		if value.Age-oldValue.Age >= oldAge {
 			c.items[key] = value
+		}
+		if oldValue.Depth > value.Depth {
+			return
 		}
 		if oldValue.Type == Exact || value.Type != Exact {
 			return
 		} else if value.Type == Exact {
 			c.items[key] = value
-		}
-		if oldValue.Depth > value.Depth {
-			return
 		}
 		c.items[key] = value
 	} else {
