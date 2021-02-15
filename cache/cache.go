@@ -19,15 +19,16 @@ const (
 var oldAge = uint16(5)
 
 type Cache struct {
-	items map[uint32]*CachedEval
+	items []*CachedEval
+	size  uint32
 }
 
 var TranspositionTable Cache
 
 func (c *Cache) Set(hash uint64, value *CachedEval) {
-	key := uint32(hash)
-	oldValue, ok := c.items[key]
-	if ok {
+	key := uint32(hash>>32) % c.size
+	oldValue := c.items[key]
+	if oldValue != nil {
 		if value.Age-oldValue.Age >= oldAge {
 			c.items[key] = value
 		}
@@ -46,15 +47,22 @@ func (c *Cache) Set(hash uint64, value *CachedEval) {
 }
 
 func (c *Cache) Get(hash uint64) (*CachedEval, bool) {
-	key := uint32(hash)
-	item, found := c.items[key]
-	if found && item.Hash == hash {
-		return item, found
+	key := uint32(hash>>32) % c.size
+	item := c.items[key]
+	if item != nil && item.Hash == hash {
+		return item, true
 	}
 	return nil, false
 }
 
+func NewCache(megabytes uint32) {
+	dummySize := uint32(1)
+	size := megabytes * 1024 * 1024 / dummySize
+	items := make([]*CachedEval, size)
+	TranspositionTable = Cache{items, size} //s, current: 0}
+}
+
 func ResetCache() {
-	items := make(map[uint32]*CachedEval, 100_000_000)
-	TranspositionTable = Cache{items: items} //s, current: 0}
+	items := make([]*CachedEval, 100_000_000)
+	TranspositionTable = Cache{items, 100_000_000} //s, current: 0}
 }
