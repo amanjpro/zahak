@@ -48,44 +48,51 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 
 	// Collect evaluation for moves per iteration to help us order moves for the next iteration
 	legalMoves := position.LegalMoves()
+	var line []*Move
 	iterationEvals := make([]int, len(legalMoves))
 
 	var bestMove *Move
 	var previousBestMove *Move
 
-	fruitlessIterations := 0
 	bestScore := -MAX_INT
 
 	timeForSearch := 2 * time.Minute // TODO: with time management this should go
+	fruitlessIterations := 0
 
 	alpha := -MAX_INT
 	beta := MAX_INT
 
+	wp := WhitePawn
+	aspirationWindow := wp.Weight() / 4
 	start := time.Now()
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
+		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
-		bestScore = -MAX_INT
+		line = make([]*Move, iterationDepth)
 		for index, move := range orderedMoves {
 			if time.Now().Sub(start) > timeForSearch {
 				if index != 0 {
-					return previousBestMove, bestScore
-				} else {
 					return bestMove, bestScore
+				} else {
+					return previousBestMove, bestScore
 				}
 			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
 			cp, ep, tg := position.MakeMove(move)
-			score := withAspirationWindow(position, iterationDepth, alpha, beta, ply)
+			score, newAlpha, newBeta, set := withAspirationWindow(position, iterationDepth, alpha, beta, ply, aspirationWindow, line)
+			if set && iterationDepth >= 4 {
+				alpha = newAlpha
+				beta = newBeta
+			}
 			iterationEvals[index] = score
 			position.UnMakeMove(move, tg, ep, cp)
-			if score > bestScore {
+			if score > currentBestScore && score < beta && score > alpha {
 				sendPv = true
-				bestScore = score
+				pv = line
+				currentBestScore = score
 				bestMove = move
-			}
-			if score > beta {
-				alpha = score
+				bestScore = currentBestScore
 			}
 			if score == CHECKMATE_EVAL {
 				return move, score
@@ -94,138 +101,114 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, int(bestScore/100), timeSpent.Milliseconds(), bestMove.ToString())
-				for i, move := range pv {
+					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), bestMove.ToString())
+				for _, move := range pv {
 					if move == nil {
 						break
 					}
-					fmt.Printf(" %s", move.ToString())
-					pv[i] = nil
 				}
+				fmt.Printf(" %s", move.ToString())
 			} else {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, int(bestScore/100), timeSpent.Milliseconds())
+					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds())
 			}
 			fmt.Printf("\n\n")
 		}
-		if iterationDepth > 3 && *previousBestMove == *bestMove {
-			fruitlessIterations++
-			if fruitlessIterations > 3 {
-				return bestMove, bestScore
+		if iterationDepth >= 5 && *previousBestMove == *bestMove {
+			if fruitlessIterations <= 3 {
+				fruitlessIterations++
+			} else {
+				break
 			}
 		} else {
 			fruitlessIterations = 0
 		}
 		previousBestMove = bestMove
+		if true && iterationDepth >= 4 {
+			alpha = currentBestScore
+			beta = currentBestScore
+		}
+		currentBestScore = -MAX_INT
 	}
 	return bestMove, bestScore
 }
 
-func withAspirationWindow(position *Position, depth int8, alpha int, beta int, ply uint16) int {
+func withAspirationWindow(position *Position, depth int8, alpha int, beta int, ply uint16, window int, line []*Move) (int, int, int, bool) {
 
-	wp := WhitePawn
-	aspirationWindow := wp.Weight() / 25
-	alpha -= aspirationWindow
-	alpha += aspirationWindow
 	for trials := 1; trials <= 3; trials++ {
-		score := minimax(position, depth, 0, false, alpha, beta, ply)
+		score := -alphaBeta(position, depth, 0, -beta, -alpha, ply, line)
+		currentWindow := trials * window
 		if score <= alpha {
-			alpha -= aspirationWindow * trials
+			alpha -= currentWindow
 		} else if score >= beta {
-			beta += aspirationWindow * trials
+			beta += currentWindow
 		} else {
-			return score
+			return score, alpha, beta, true
 		}
 	}
-	return minimax(position, depth, 0, false, -MAX_INT, MAX_INT, ply)
+	return -alphaBeta(position, depth, 0, MAX_INT, -MAX_INT, ply, line), -MAX_INT, MAX_INT, false
 }
 
-func minimax(position *Position, depthLeft int8, searchHeight int8,
-	isMaximizingPlayer bool, alpha int, beta int, ply uint16) int {
+func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, line []*Move) int {
 	nodesVisited += 1
-
-	if position.Status() == Checkmate {
-		if isMaximizingPlayer {
-			return -CHECKMATE_EVAL
-		}
-		return CHECKMATE_EVAL
-	} else if position.Status() == Draw {
+	outcome := position.Status()
+	if outcome == Checkmate {
+		return -CHECKMATE_EVAL
+	} else if outcome == Draw {
 		return 0
 	}
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
-		return Evaluate(position)
-		// return quescence(position, isMaximizingPlayer, alpha, beta, 0)
+		// return Evaluate(position)
+		return quiescence(position, alpha, beta, 0)
 	}
 
 	nodesSearched += 1
+
 	legalMoves := position.LegalMoves()
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
-	var bestMove *Move
 
-	for _, move := range orderedMoves {
-		score := getEval(position, depthLeft, searchHeight, isMaximizingPlayer, alpha, beta, move, ply)
-		if isMaximizingPlayer {
-			if score >= beta {
-				return beta
-			}
-			if score > alpha {
-				bestMove = move
-				alpha = score
-			}
-		} else {
-			if score <= alpha {
-				return alpha
-			}
-			if score < beta {
-				bestMove = move
-				beta = score
-			}
-		}
-	}
-	if isMaximizingPlayer {
-		pv[searchHeight] = bestMove
-		return alpha
-	} else {
-		pv[searchHeight] = bestMove
-		return beta
-	}
-}
-
-func getEval(position *Position, depthLeft int8, searchHeight int8, isMaximizingPlayer bool,
-	alpha int, beta int, move *Move, ply uint16) int {
-	var score int
-	capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
-	newPositionHash := position.Hash()
-	cachedEval, found := TranspositionTable.Get(newPositionHash)
+	hash := position.Hash()
+	cachedEval, found := TranspositionTable.Get(hash)
 	if found &&
 		(cachedEval.Eval == CHECKMATE_EVAL ||
 			cachedEval.Eval == -CHECKMATE_EVAL ||
 			cachedEval.Depth >= depthLeft) {
 		cacheHits += 1
-		score = cachedEval.Eval
-	} else {
-		v := minimax(position, depthLeft-1, searchHeight+1, !isMaximizingPlayer, alpha, beta, ply)
-		var tpe NodeType
-		if isMaximizingPlayer {
-			if v >= beta {
-				tpe = LowerBound
-			}
-			if score > alpha {
-				tpe = Exact
-			}
-		} else {
-			if v <= alpha {
-				tpe = UpperBound
-			}
-			if v < beta {
-				tpe = Exact
-			}
+		score := cachedEval.Eval
+		if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
+			return cachedEval.Eval
 		}
-		TranspositionTable.Set(newPositionHash, &CachedEval{position.Hash(), v, depthLeft, tpe, ply})
-		score = v
+		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+			return beta
+		}
+		if score <= alpha && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+			return alpha
+		}
+		if cachedEval.Type == Exact && score < beta && score > alpha {
+			return score
+		}
 	}
-	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
-	return score
+
+	foundExact := false
+	for _, move := range orderedMoves {
+		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
+		score := -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
+		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
+		if score >= beta {
+			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
+			return score
+		}
+		if score > alpha {
+			TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
+			line[searchHeight] = move
+			foundExact = true
+			alpha = score
+		}
+	}
+	if foundExact {
+		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
+	}
+	return alpha
 }
