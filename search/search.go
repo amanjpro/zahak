@@ -85,7 +85,13 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 				alpha = newAlpha
 				beta = newBeta
 			}
-			iterationEvals[index] = score
+			// This only works, because checkmate eval is clearly distinguished from
+			// maximum/minimum beta/alpha
+			if score != MAX_INT && score != -MAX_INT { // no very hard alpha-beta cutoff
+				iterationEvals[index] = score
+			} else {
+				iterationEvals[index] = -MAX_INT // if it is, then too bad, that is a bad move
+			}
 			position.UnMakeMove(move, tg, ep, cp)
 			if score > currentBestScore && score < beta && score > alpha {
 				sendPv = true
