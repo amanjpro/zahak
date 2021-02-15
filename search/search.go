@@ -72,9 +72,9 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 		for index, move := range orderedMoves {
 			if time.Now().Sub(start) > timeForSearch {
 				if index != 0 {
-					return bestMove, bestScore
+					return bestMove, currentBestScore
 				} else {
-					return previousBestMove, bestScore
+					return bestMove, bestScore
 				}
 			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
