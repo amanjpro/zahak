@@ -60,7 +60,7 @@ func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
 		}
 	}
 
-	p.generateMoves(add, !withChecks)
+	p.generateMoves(add, !(withChecks || isChecked))
 
 	return allMoves
 }
