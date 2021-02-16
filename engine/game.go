@@ -86,7 +86,6 @@ func NewGame(
 	if clearCache {
 		initZobrist()
 		ResetCache()
-		NewQCache(2)
 	}
 
 	return Game{

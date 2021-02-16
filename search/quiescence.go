@@ -1,19 +1,11 @@
 package search
 
 import (
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
 func quiescence(position *Position, alpha int, beta int, ply int) int {
-
-	hash := position.Hash()
-
-	item, found := QCache.Get(hash)
-	if found {
-		return item.Eval
-	}
 
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -57,6 +49,5 @@ func quiescence(position *Position, alpha int, beta int, ply int) int {
 			alpha = score
 		}
 	}
-	QCache.Set(hash, &QuiescenceEval{hash, alpha})
 	return alpha
 }
