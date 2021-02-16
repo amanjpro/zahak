@@ -63,8 +63,8 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	alpha := -MAX_INT
 	beta := MAX_INT
 
-	wp := WhitePawn
-	aspirationWindow := wp.Weight() / 4
+	// wp := WhitePawn
+	// aspirationWindow := wp.Weight() / 4
 	start := time.Now()
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		currentBestScore := -MAX_INT
@@ -81,11 +81,12 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
 			cp, ep, tg := position.MakeMove(move)
-			score, newAlpha, newBeta, set := withAspirationWindow(position, iterationDepth, alpha, beta, ply, aspirationWindow, line)
-			if set && iterationDepth >= 4 {
-				alpha = newAlpha
-				beta = newBeta
-			}
+			// score, newAlpha, newBeta, set := withAspirationWindow(position, iterationDepth, alpha, beta, ply, aspirationWindow, line)
+			// if set && iterationDepth >= 4 {
+			// 	alpha = newAlpha
+			// 	beta = newBeta
+			// }
+			score := -pvSearch(position, iterationDepth, 1, -beta, -alpha, ply, line)
 			// This only works, because checkmate eval is clearly distinguished from
 			// maximum/minimum beta/alpha
 			if score != MAX_INT && score != -MAX_INT { // no very hard alpha-beta cutoff
@@ -127,10 +128,10 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			fruitlessIterations = 0
 		}
 		previousBestMove = bestMove
-		if true && iterationDepth >= 4 {
-			alpha = currentBestScore
-			beta = currentBestScore
-		}
+		// if true && iterationDepth >= 4 {
+		// 	alpha = currentBestScore
+		// 	beta = currentBestScore
+		// }
 		currentBestScore = -MAX_INT
 	}
 	return bestMove, bestScore
@@ -149,7 +150,7 @@ func withAspirationWindow(position *Position, depth int8, alpha int, beta int, p
 			return score, alpha, beta, true
 		}
 	}
-	return -alphaBeta(position, depth, 0, MAX_INT, -MAX_INT, ply, pvline), -MAX_INT, MAX_INT, false
+	return -alphaBeta(position, depth, 1, MAX_INT, -MAX_INT, ply, pvline), -MAX_INT, MAX_INT, false
 }
 
 func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, pvline *PVLine) int {
@@ -162,7 +163,9 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	}
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
-		// return Evaluate(position)
+		// if searchHeight >= 4 {
+		// 	return Evaluate(position)
+		// }
 		return quiescence(position, alpha, beta, 0)
 	}
 
@@ -216,4 +219,138 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
 	}
 	return alpha
+}
+
+func pvSearch(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, pvline *PVLine) int {
+	nodesVisited += 1
+	outcome := position.Status()
+	if outcome == Checkmate {
+		return -CHECKMATE_EVAL
+	} else if outcome == Draw {
+		return 0
+	}
+
+	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
+		// if searchHeight >= 4 {
+		// 	return Evaluate(position)
+		// }
+		return quiescence(position, alpha, beta, 0)
+	}
+
+	nodesSearched += 1
+
+	legalMoves := position.LegalMoves()
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight})
+
+	hash := position.Hash()
+	cachedEval, found := TranspositionTable.Get(hash)
+	if found &&
+		(cachedEval.Eval == CHECKMATE_EVAL ||
+			cachedEval.Eval == -CHECKMATE_EVAL ||
+			cachedEval.Depth >= depthLeft) {
+		cacheHits += 1
+		score := cachedEval.Eval
+		if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
+			return cachedEval.Eval
+		}
+		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+			return beta
+		}
+		if score <= alpha && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+			return alpha
+		}
+		if cachedEval.Type == Exact && score < beta && score > alpha {
+			return score
+		}
+	}
+
+	searchPv := false
+
+	foundExact := false
+	for _, move := range orderedMoves {
+		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
+		line := NewPVLine(depthLeft - 1)
+		score := -MAX_INT
+		if searchPv {
+			score = -pvSearch(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
+		} else {
+			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply)
+			if score > alpha { // in fail-soft ... && score < beta ) is common
+				score = -pvSearch(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
+			}
+		}
+		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
+		if score >= beta {
+			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
+			return score
+		}
+		if score > alpha {
+			TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
+			// Potential PV move, lets copy it to the current pv-line
+			pvline.AddFirst(move)
+			pvline.ReplaceLine(line)
+			foundExact = true
+			searchPv = false
+			alpha = score
+		}
+	}
+	if foundExact {
+		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
+	}
+	return alpha
+}
+
+func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16) int {
+	nodesVisited += 1
+	outcome := position.Status()
+	if outcome == Checkmate {
+		return -CHECKMATE_EVAL
+	} else if outcome == Draw {
+		return 0
+	}
+
+	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
+		// return quiescence(p, beta-1, beta, 0)
+		// if searchHeight >= 4 {
+		// 	return Evaluate(position)
+		// }
+		return quiescence(position, beta-1, beta, 0)
+	}
+
+	nodesSearched += 1
+
+	legalMoves := position.LegalMoves()
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight})
+
+	hash := position.Hash()
+	cachedEval, found := TranspositionTable.Get(hash)
+	if found &&
+		(cachedEval.Eval == CHECKMATE_EVAL ||
+			cachedEval.Eval == -CHECKMATE_EVAL ||
+			cachedEval.Depth >= depthLeft) {
+		cacheHits += 1
+		score := cachedEval.Eval
+		if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
+			return cachedEval.Eval
+		}
+		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+			return beta
+		}
+		// if score <= alpha && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+		// 	return alpha
+		// }
+		if cachedEval.Type == Exact && score < beta {
+			return score
+		}
+	}
+
+	for _, move := range orderedMoves {
+		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
+		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply)
+		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
+		if score >= beta {
+			return beta // fail-hard beta-cutoff
+		}
+	}
+	return beta - 1 // fail-hard, return alpha
 }
