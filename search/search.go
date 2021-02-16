@@ -53,12 +53,12 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	iterationEvals := make([]int, len(legalMoves))
 
 	var bestMove *Move
-	var previousBestMove *Move
+	// var previousBestMove *Move
 
 	bestScore := -MAX_INT
 
-	timeForSearch := 2 * time.Minute // TODO: with time management this should go
-	fruitlessIterations := 0
+	timeForSearch := 3 * time.Minute // TODO: with time management this should go
+	// fruitlessIterations := 0
 
 	alpha := -MAX_INT
 	beta := MAX_INT
@@ -70,6 +70,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
+		searchPv := true
 		for index, move := range orderedMoves {
 			if time.Now().Sub(start) > timeForSearch {
 				if index != 0 {
@@ -86,54 +87,85 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			// 	alpha = newAlpha
 			// 	beta = newBeta
 			// }
-			score := -pvSearch(position, iterationDepth, 1, -beta, -alpha, ply, line)
+			// score := -MAX_INT
+			// if iterationDepth == 1 {
+			// 	score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
+			// } else {
+
+			score := -MAX_INT
+			// if index == 0 { // First move of the iteration? establish the aspiration window
+			// 	   score = -pvSearch(position, iterationDepth, 1, -beta, -alfa, ply, line)
+			// 		 bestScore = score
+			// 	 if( bestScore > alfa ) {
+			// 			if( bestscore >= beta )
+			// 				 return bestscore;
+			// 			alfa = bestscore;
+			// 	 }
+			//
+			// }
+			if searchPv {
+				score = -alphaBetaPVS(position, iterationDepth, 1, -beta, -alpha, ply, line)
+			} else {
+				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply)
+				if score > alpha { // in fail-soft ... && score < beta ) is common
+					score = -alphaBetaPVS(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
+				}
+			}
+			// }
 			// This only works, because checkmate eval is clearly distinguished from
 			// maximum/minimum beta/alpha
-			if score != MAX_INT && score != -MAX_INT { // no very hard alpha-beta cutoff
+			if score > alpha && score < beta { // no very hard alpha-beta cutoff
 				iterationEvals[index] = score
+				alpha = score
+				if score > currentBestScore {
+					currentBestScore = score
+					sendPv = true
+					pv.AddFirst(move)
+					pv.ReplaceLine(line)
+					bestMove = move
+					bestScore = currentBestScore
+					searchPv = false
+
+				}
 			} else {
 				iterationEvals[index] = -MAX_INT // if it is, then too bad, that is a bad move
 			}
 			position.UnMakeMove(move, tg, ep, cp)
-			if score > currentBestScore && score < beta && score > alpha {
-				sendPv = true
-				pv.AddFirst(move)
-				pv.ReplaceLine(line)
-				currentBestScore = score
-				bestMove = move
-				bestScore = currentBestScore
-			}
+
 			if score == CHECKMATE_EVAL {
 				return move, score
 			}
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
-				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s",
+				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
 					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
-			} else {
-				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d",
-					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds())
+				// } else {
+				// 	fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d",
+				// 		iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+				// 		cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds())
 			}
-			fmt.Printf("\n\n")
 		}
-		if iterationDepth >= 5 && *previousBestMove == *bestMove {
-			if fruitlessIterations <= 3 {
-				fruitlessIterations++
-			} else {
-				break
-			}
-		} else {
-			fruitlessIterations = 0
-		}
-		previousBestMove = bestMove
-		// if true && iterationDepth >= 4 {
-		// 	alpha = currentBestScore
-		// 	beta = currentBestScore
+		// if iterationDepth >= 5 && *previousBestMove == *bestMove {
+		// 	if fruitlessIterations <= 3 {
+		// 		fruitlessIterations++
+		// 	} else {
+		// 		break
+		// 	}
+		// } else {
+		// 	fruitlessIterations = 0
 		// }
+		// previousBestMove = bestMove
+
+		timeSpent := time.Now().Sub(start)
+		fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+			iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+			cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
+		alpha = -MAX_INT
+		beta = MAX_INT
 		currentBestScore = -MAX_INT
 	}
+
 	return bestMove, bestScore
 }
 
@@ -166,13 +198,13 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		// if searchHeight >= 4 {
 		// 	return Evaluate(position)
 		// }
-		return quiescence(position, alpha, beta, 0)
+		return quiescence(position, alpha, beta, 0, Evaluate(position))
 	}
 
 	nodesSearched += 1
 
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight})
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
 
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
@@ -207,12 +239,12 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 			return score
 		}
 		if score > alpha {
-			TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
+			alpha = score
+			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
 			pvline.AddFirst(move)
 			pvline.ReplaceLine(line)
 			// Potential PV move, lets copy it to the current pv-line
 			foundExact = true
-			alpha = score
 		}
 	}
 	if foundExact {
@@ -221,7 +253,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	return alpha
 }
 
-func pvSearch(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, pvline *PVLine) int {
+func alphaBetaPVS(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, pvline *PVLine) int {
 	nodesVisited += 1
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -232,15 +264,15 @@ func pvSearch(position *Position, depthLeft int8, searchHeight int8, alpha int, 
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
 		// if searchHeight >= 4 {
-		// 	return Evaluate(position)
+		// return Evaluate(position)
 		// }
-		return quiescence(position, alpha, beta, 0)
+		return quiescence(position, alpha, beta, 0, Evaluate(position))
 	}
 
 	nodesSearched += 1
 
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight})
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
 
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
@@ -253,18 +285,18 @@ func pvSearch(position *Position, depthLeft int8, searchHeight int8, alpha int, 
 		if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
 			return cachedEval.Eval
 		}
-		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+		if score >= beta && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
 			return beta
 		}
-		if score <= alpha && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+		if score <= alpha && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
 			return alpha
 		}
-		if cachedEval.Type == Exact && score < beta && score > alpha {
+		if cachedEval.Type == Exact {
 			return score
 		}
 	}
 
-	searchPv := false
+	searchPv := true
 
 	foundExact := false
 	for _, move := range orderedMoves {
@@ -272,74 +304,76 @@ func pvSearch(position *Position, depthLeft int8, searchHeight int8, alpha int, 
 		line := NewPVLine(depthLeft - 1)
 		score := -MAX_INT
 		if searchPv {
-			score = -pvSearch(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
+			score = -alphaBetaPVS(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
 		} else {
 			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply)
 			if score > alpha { // in fail-soft ... && score < beta ) is common
-				score = -pvSearch(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
+				score = -alphaBetaPVS(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
 			}
 		}
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
 		if score >= beta {
-			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
-			return score
+			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
+			return beta
 		}
 		if score > alpha {
-			TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
+			alpha = score
+			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, Exact, ply})
 			// Potential PV move, lets copy it to the current pv-line
 			pvline.AddFirst(move)
 			pvline.ReplaceLine(line)
 			foundExact = true
 			searchPv = false
-			alpha = score
 		}
 	}
-	if foundExact {
-		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
+	if !foundExact {
+		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, UpperBound, ply})
 	}
 	return alpha
 }
 
 func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16) int {
 	nodesVisited += 1
-	outcome := position.Status()
-	if outcome == Checkmate {
-		return -CHECKMATE_EVAL
-	} else if outcome == Draw {
-		return 0
-	}
+	// outcome := position.Status()
+	// if outcome == Checkmate {
+	// 	return -CHECKMATE_EVAL
+	// } else if outcome == Draw {
+	// 	return 0
+	// }
 
 	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
 		// return quiescence(p, beta-1, beta, 0)
 		// if searchHeight >= 4 {
-		// 	return Evaluate(position)
+		// return Evaluate(position)
 		// }
-		return quiescence(position, beta-1, beta, 0)
+		return quiescence(position, beta-1, beta, 0, Evaluate(position))
 	}
 
 	nodesSearched += 1
 
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight})
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
 
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
 	if found &&
-		(cachedEval.Eval == CHECKMATE_EVAL ||
-			cachedEval.Eval == -CHECKMATE_EVAL ||
-			cachedEval.Depth >= depthLeft) {
+		// (cachedEval.Eval == CHECKMATE_EVAL ||
+		// 	cachedEval.Eval == -CHECKMATE_EVAL ||
+		cachedEval.Depth >= depthLeft {
 		cacheHits += 1
 		score := cachedEval.Eval
-		if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
-			return cachedEval.Eval
-		}
+		// return cachedEval.Eval
+		// }
+		// if cachedEval.Type != Exact {
+		// 	return score
+		// }
 		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
 			return beta
 		}
-		// if score <= alpha && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
-		// 	return alpha
-		// }
-		if cachedEval.Type == Exact && score < beta {
+		if score <= beta-1 && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+			return beta - 1
+		}
+		if cachedEval.Type == Exact {
 			return score
 		}
 	}
