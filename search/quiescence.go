@@ -23,7 +23,7 @@ func quiescence(position *Position, alpha int, beta int, ply int) int {
 	}
 
 	legalMoves := position.QuiesceneMoves(ply <= 4)
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, 125})
 
 	standPat := Evaluate(position)
 	if standPat >= beta {

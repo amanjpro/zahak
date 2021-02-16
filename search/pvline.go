@@ -7,31 +7,57 @@ import (
 )
 
 type PVLine struct {
-	moveCount uint16  // Number of moves in the line.
+	moveCount int8    // Number of moves in the line.
 	line      []*Move // The line.
+	hasFirst  bool
 }
 
 func NewPVLine(initialSize int8) *PVLine {
 	return &PVLine{
 		0,
 		make([]*Move, initialSize),
+		false,
 	}
 }
 
 func (thisLine *PVLine) ReplaceLine(otherLine *PVLine) {
-	thisLine.moveCount += otherLine.moveCount
-	copy(thisLine.line[1:], otherLine.line)
+	otherLineLen := int(otherLine.moveCount)
+	if thisLine.hasFirst {
+		thisLine.moveCount = 1
+	} else {
+		thisLine.moveCount = 0
+	}
+	for i := 0; i < otherLineLen; i++ {
+		thisLine.moveCount += 1
+		thisLine.line[i+1] = otherLine.line[i]
+	}
 }
 
 func (thisLine *PVLine) AddFirst(move *Move) {
-	thisLine.moveCount++
+	if !thisLine.hasFirst {
+		thisLine.moveCount += 1
+		thisLine.hasFirst = true
+	}
 	thisLine.line[0] = move
+}
+
+func (thisLine *PVLine) MoveAt(index int8) *Move {
+	return thisLine.line[index]
+}
+
+func (pv *PVLine) Pop() *Move {
+	emptySlice := make([]*Move, len(pv.line))
+	toReturn, newSlice := pv.line[0], pv.line[1:]
+	copy(emptySlice, newSlice)
+	pv.line = emptySlice
+	pv.moveCount -= 1
+	return toReturn
 }
 
 func (pv *PVLine) ToString() string {
 	var buffer bytes.Buffer
 
-	for i := uint16(0); i < pv.moveCount; i++ {
+	for i := int8(0); i < pv.moveCount; i++ {
 		if i != 0 {
 			buffer.WriteString(" ")
 		}

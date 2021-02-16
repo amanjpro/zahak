@@ -14,7 +14,7 @@ var STOP_SEARCH_GLOBALLY = false
 var nodesVisited int64 = 0
 var nodesSearched int64 = 0
 var cacheHits int64 = 0
-var pv = make([]*Move, 100)
+var pv = NewPVLine(100)
 
 type EvalMove struct {
 	eval int
@@ -41,6 +41,8 @@ func Search(position *Position, depth int8, ply uint16) EvalMove {
 	end := time.Now()
 	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n\n", nodesVisited, nodesSearched, cacheHits)
 	fmt.Printf("Took %f seconds\n\n", end.Sub(start).Seconds())
+	pv.Pop() // pop our move
+	pv.Pop() // pop our opponent's move
 	return bestEval
 }
 
@@ -48,7 +50,6 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 
 	// Collect evaluation for moves per iteration to help us order moves for the next iteration
 	legalMoves := position.LegalMoves()
-	var line []*Move
 	iterationEvals := make([]int, len(legalMoves))
 
 	var bestMove *Move
@@ -68,7 +69,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
-		line = make([]*Move, iterationDepth)
+		line := NewPVLine(iterationDepth + 1)
 		for index, move := range orderedMoves {
 			if time.Now().Sub(start) > timeForSearch {
 				if index != 0 {
@@ -95,7 +96,8 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			position.UnMakeMove(move, tg, ep, cp)
 			if score > currentBestScore && score < beta && score > alpha {
 				sendPv = true
-				pv = line
+				pv.AddFirst(move)
+				pv.ReplaceLine(line)
 				currentBestScore = score
 				bestMove = move
 				bestScore = currentBestScore
@@ -107,13 +109,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), bestMove.ToString())
-				for _, move := range pv {
-					if move == nil {
-						break
-					}
-				}
-				fmt.Printf(" %s", move.ToString())
+					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 			} else {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d",
 					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
@@ -140,10 +136,10 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	return bestMove, bestScore
 }
 
-func withAspirationWindow(position *Position, depth int8, alpha int, beta int, ply uint16, window int, line []*Move) (int, int, int, bool) {
+func withAspirationWindow(position *Position, depth int8, alpha int, beta int, ply uint16, window int, pvline *PVLine) (int, int, int, bool) {
 
 	for trials := 1; trials <= 3; trials++ {
-		score := -alphaBeta(position, depth, 0, -beta, -alpha, ply, line)
+		score := -alphaBeta(position, depth, 1, -beta, -alpha, ply, pvline)
 		currentWindow := trials * window
 		if score <= alpha {
 			alpha -= currentWindow
@@ -153,10 +149,10 @@ func withAspirationWindow(position *Position, depth int8, alpha int, beta int, p
 			return score, alpha, beta, true
 		}
 	}
-	return -alphaBeta(position, depth, 0, MAX_INT, -MAX_INT, ply, line), -MAX_INT, MAX_INT, false
+	return -alphaBeta(position, depth, 0, MAX_INT, -MAX_INT, ply, pvline), -MAX_INT, MAX_INT, false
 }
 
-func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, line []*Move) int {
+func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, pvline *PVLine) int {
 	nodesVisited += 1
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -173,7 +169,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	nodesSearched += 1
 
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves})
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight})
 
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
@@ -200,6 +196,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	foundExact := false
 	for _, move := range orderedMoves {
 		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
+		line := NewPVLine(depthLeft - 1)
 		score := -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
 		if score >= beta {
@@ -208,7 +205,9 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		}
 		if score > alpha {
 			TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
-			line[searchHeight] = move
+			pvline.AddFirst(move)
+			pvline.ReplaceLine(line)
+			// Potential PV move, lets copy it to the current pv-line
 			foundExact = true
 			alpha = score
 		}

@@ -8,8 +8,9 @@ import (
 )
 
 type ValidMoves struct {
-	position *Position
-	moves    []*Move
+	position  *Position
+	moves     []*Move
+	moveOrder int8
 }
 
 func (validMoves *ValidMoves) Len() int {
@@ -25,12 +26,16 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	moves := validMoves.moves
 	move1, move2 := moves[i], moves[j]
 	board := validMoves.position.Board
-	// // Is in PV?
-	// if pv != nil && len(pv) > validMoves.depth {
-	// 	if pv[validMoves.depth] == move1 {
-	// 		return true
-	// 	}
-	// }
+	// Is in PV?
+	if pv != nil && pv.moveCount > validMoves.moveOrder {
+		mv := pv.MoveAt(validMoves.moveOrder)
+		if mv == move1 {
+			return true
+		}
+		if mv == move2 {
+			return false
+		}
+	}
 
 	// Is in Transition table ???
 	// TODO: This is slow, that tells us either cache access is slow or has computation is
@@ -133,8 +138,22 @@ func (iter *IterationMoves) Swap(i, j int) {
 }
 
 func (iter *IterationMoves) Less(i, j int) bool {
-	evals := iter.evals
-	return evals[i] >= evals[j]
+	eval1, eval2 := iter.evals[i], iter.evals[j]
+	equal := eval1 == eval2
+	if equal {
+		move1, move2 := iter.moves[i], iter.moves[j]
+		// Is in PV?
+		if pv != nil && pv.moveCount > 0 {
+			mv := pv.MoveAt(0)
+			if mv == move1 {
+				return true
+			}
+			if mv == move2 {
+				return false
+			}
+		}
+	}
+	return eval1 < eval2
 }
 
 func orderIterationMoves(iter *IterationMoves) []*Move {
