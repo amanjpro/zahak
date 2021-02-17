@@ -69,6 +69,17 @@ func generateZobristHash(pos *Position) uint64 {
 	return hash
 }
 
+func updateHashForNullMove(pos *Position) {
+	var hash uint64 = pos.hash
+	if hash == 0 {
+		pos.Hash()
+		return
+	}
+	/* Turn */
+	hash ^= whiteTurnZC
+
+}
+
 // capture square is provided for the case of enpassant
 func updateHash(pos *Position, move *Move, movingPiece Piece, capturedPiece Piece,
 	captureSquare Square, newEnPassant Square, oldEnPassant Square, promoPiece Piece,

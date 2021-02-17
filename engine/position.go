@@ -30,6 +30,11 @@ func (p *Position) Turn() Color {
 	return Black
 }
 
+func (p *Position) NullMove() {
+	p.Turn()
+	updateHashForNullMove(p)
+}
+
 func (p *Position) ToggleTurn() {
 	p.ToggleTag(BlackToMove)
 	p.ToggleTag(WhiteToMove)
