@@ -155,7 +155,7 @@ func (iter *IterationMoves) Less(i, j int) bool {
 			}
 		}
 	}
-	return eval1 < eval2
+	return eval1 > eval2
 }
 
 func orderIterationMoves(iter *IterationMoves) []*Move {

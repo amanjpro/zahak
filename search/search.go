@@ -291,9 +291,9 @@ func alphaBetaPVS(position *Position, depthLeft int8, searchHeight int8, alpha i
 		if score <= alpha && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
 			return alpha
 		}
-		if cachedEval.Type == Exact {
-			return score
-		}
+		// if cachedEval.Type == Exact {
+		// 	return score
+		// }
 	}
 
 	searchPv := true
@@ -373,9 +373,9 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		if score <= beta-1 && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
 			return beta - 1
 		}
-		if cachedEval.Type == Exact {
-			return score
-		}
+		// if cachedEval.Type == Exact {
+		// 	return score
+		// }
 	}
 
 	for _, move := range orderedMoves {
