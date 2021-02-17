@@ -1,5 +1,8 @@
 # Zahak
 
+[![Actions Status](https://github.com/amanjpro/zahak/workflows/./.github/workflows/badge.svg)](https://github.com/amanjpro/zahak/actions)
+
+
 A UCI comppatible chess AI written in Go. Still work in proress.
 
 
