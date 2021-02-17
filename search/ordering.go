@@ -29,10 +29,10 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	// Is in PV?
 	if pv != nil && pv.moveCount > validMoves.moveOrder {
 		mv := pv.MoveAt(validMoves.moveOrder)
-		if mv == move1 {
+		if *mv == *move1 {
 			return true
 		}
-		if mv == move2 {
+		if *mv == *move2 {
 			return false
 		}
 	}
@@ -51,13 +51,17 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	eval2, ok2 := TranspositionTable.Get(hash2)
 
 	if ok1 && ok2 {
+		if eval1.Depth > eval2.Depth {
+			return true
+		} else if eval1.Depth < eval2.Depth {
+			return false
+		}
 		if eval1.Type == Exact && eval2.Type != Exact {
 			return true
 		} else if eval2.Type == Exact && eval1.Type != Exact {
 			return false
 		}
-		if eval1.Eval > eval2.Eval ||
-			(eval1.Eval == eval2.Eval && eval1.Depth >= eval2.Depth) {
+		if eval1.Eval > eval2.Eval {
 			return true
 		} else if eval1.Eval < eval2.Eval {
 			return false
@@ -78,28 +82,26 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		return false
 	}
 
+	piece1 := board.PieceAt(move1.Source)
+	piece2 := board.PieceAt(move2.Source)
 	//
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
 		// What are we capturing?
-		piece1 := board.PieceAt(move1.Destination)
-		piece2 := board.PieceAt(move2.Destination)
-		if piece1.Type() > piece2.Type() {
+		capPiece1 := board.PieceAt(move1.Destination)
+		capPiece2 := board.PieceAt(move2.Destination)
+		if capPiece1.Type() > capPiece2.Type() {
 			return true
 		}
 		// Who is capturing?
-		piece1 = board.PieceAt(move1.Source)
-		piece2 = board.PieceAt(move2.Source)
 		if piece1.Type() <= piece2.Type() {
 			return true
 		}
-		return false
 	} else if move1.HasTag(Capture) {
 		return true
+	} else if move2.HasTag(Capture) {
+		return false
 	}
-
-	piece1 := board.PieceAt(move1.Source)
-	piece2 := board.PieceAt(move2.Source)
 
 	// prefer checks
 	if move1.HasTag(Check) {
@@ -145,10 +147,10 @@ func (iter *IterationMoves) Less(i, j int) bool {
 		// Is in PV?
 		if pv != nil && pv.moveCount > 0 {
 			mv := pv.MoveAt(0)
-			if mv == move1 {
+			if *mv == *move1 {
 				return true
 			}
-			if mv == move2 {
+			if *mv == *move2 {
 				return false
 			}
 		}

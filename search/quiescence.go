@@ -1,19 +1,11 @@
 package search
 
 import (
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func quiescence(position *Position, alpha int, beta int, ply int) int {
-
-	hash := position.Hash()
-
-	item, found := QCache.Get(hash)
-	if found {
-		return item.Eval
-	}
+func quiescence(position *Position, alpha int, beta int, ply int, standPat int) int {
 
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -22,21 +14,13 @@ func quiescence(position *Position, alpha int, beta int, ply int) int {
 		return 0
 	}
 
-	legalMoves := position.QuiesceneMoves(ply <= 4)
+	withChecks := ply <= 4
+	legalMoves := position.QuiesceneMoves(withChecks)
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, 125})
 
-	standPat := Evaluate(position)
 	if standPat >= beta {
-		return standPat
+		return beta // fail hard
 	}
-
-	// Delta pruning
-	// w := WhitePawn
-	// deltaMargin := w.Weight() * 2 // 200 centipawns
-	//
-	// if standPat < alpha-deltaMargin {
-	// 	return alpha
-	// }
 
 	if alpha < standPat {
 		alpha = standPat
@@ -46,9 +30,17 @@ func quiescence(position *Position, alpha int, beta int, ply int) int {
 		return standPat
 	}
 
+	w := WhitePawn
+	deltaMargin := w.Weight() * 2 // 200 centipawns
 	for _, move := range orderedMoves {
 		cp, ep, tg := position.MakeMove(move)
-		score := -quiescence(position, -beta, -alpha, ply+1)
+		sp := Evaluate(position)
+		if cp != NoPiece && standPat < alpha-deltaMargin { // is capture
+			// Delta pruning meaningless captures
+			position.UnMakeMove(move, tg, ep, cp)
+			return alpha
+		}
+		score := -quiescence(position, -beta, -alpha, ply+1, sp)
 		position.UnMakeMove(move, tg, ep, cp)
 		if score >= beta {
 			return beta
@@ -57,6 +49,5 @@ func quiescence(position *Position, alpha int, beta int, ply int) int {
 			alpha = score
 		}
 	}
-	QCache.Set(hash, &QuiescenceEval{hash, alpha})
 	return alpha
 }
