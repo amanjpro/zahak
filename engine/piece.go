@@ -146,7 +146,7 @@ func (p *Piece) Color() Color {
 	return Black
 }
 
-func getPiece(pieceType PieceType, color Color) Piece {
+func GetPiece(pieceType PieceType, color Color) Piece {
 	if color == White {
 		switch pieceType {
 		case King:
