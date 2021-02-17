@@ -9,7 +9,7 @@ A UCI comppatible chess AI written in Go. Still work in proress.
 - UCI Support
 - Bitboards
 - Alpha-Beta search
-- Quiescene Search
+- Quiescence Search
 - Iterative Deepining
 - PV Search and PV
 - Zero Windows
