@@ -385,7 +385,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 
 	for _, move := range orderedMoves {
-		if isNullMoveAllowed && depthLeft >= 5 {
+		if isNullMoveAllowed && depthLeft >= 5 && !position.IsInCheck() {
 			bound := beta
 			if inNullMoveSearch == 0 {
 				tempo := 20    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
