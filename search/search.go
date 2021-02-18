@@ -106,7 +106,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			if searchPv {
 				score = -alphaBetaPVS(position, iterationDepth, 1, -beta, -alpha, ply, line)
 			} else {
-				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, 0)
+				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply)
 				if score > alpha { // in fail-soft ... && score < beta ) is common
 					score = -alphaBetaPVS(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
 				}
@@ -296,6 +296,24 @@ func alphaBetaPVS(position *Position, depthLeft int8, searchHeight int8, alpha i
 		// }
 	}
 
+	// NullMove pruning
+	isNullMoveAllowed := depthLeft >= 5 && !position.IsEndGame() && !position.IsInCheck()
+	R := int8(3)
+	if searchHeight > 6 {
+		R = 2
+	}
+
+	if isNullMoveAllowed {
+		tempo := 20           // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
+		bound := beta - tempo // variable bound
+		position.NullMove()
+		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply)
+		position.NullMove()
+		if score >= bound {
+			return beta // null move pruning
+		}
+	}
+
 	searchPv := true
 
 	foundExact := false
@@ -306,7 +324,7 @@ func alphaBetaPVS(position *Position, depthLeft int8, searchHeight int8, alpha i
 		if searchPv {
 			score = -alphaBetaPVS(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
 		} else {
-			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply, 0)
+			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply)
 			if score > alpha { // in fail-soft ... && score < beta ) is common
 				score = -alphaBetaPVS(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
 			}
@@ -332,7 +350,7 @@ func alphaBetaPVS(position *Position, depthLeft int8, searchHeight int8, alpha i
 	return alpha
 }
 
-func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16, inNullMoveSearch int) int {
+func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16) int {
 	nodesVisited += 1
 	// outcome := position.Status()
 	// if outcome == Checkmate {
@@ -378,30 +396,9 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		// }
 	}
 
-	isNullMoveAllowed := depthLeft >= 5 && !position.IsEndGame() && !position.IsInCheck()
-	R := int8(3)
-	if searchHeight > 6 {
-		R = 2
-	}
-
 	for _, move := range orderedMoves {
-		if isNullMoveAllowed {
-			bound := beta
-			if inNullMoveSearch == 0 {
-				tempo := 20    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
-				bound -= tempo // variable bound
-			}
-			position.NullMove()
-			inNullMoveSearch++
-			score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, inNullMoveSearch)
-			position.NullMove()
-			inNullMoveSearch--
-			if score >= bound {
-				return beta // null move pruning
-			}
-		}
 		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
-		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply, inNullMoveSearch)
+		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
 		if score >= beta {
 			return beta // fail-hard beta-cutoff
