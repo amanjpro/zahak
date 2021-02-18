@@ -162,6 +162,10 @@ const (
 	Unknown
 )
 
+func (p *Position) IsEndGame() bool {
+	return p.Board.CountPieces() <= 10
+}
+
 func (p *Position) IsInCheck() bool {
 	return isInCheck(p.Board, p.Turn())
 }
