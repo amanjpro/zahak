@@ -30,6 +30,11 @@ func (p *Position) Turn() Color {
 	return Black
 }
 
+func (p *Position) NullMove() {
+	p.Turn()
+	updateHashForNullMove(p)
+}
+
 func (p *Position) ToggleTurn() {
 	p.ToggleTag(BlackToMove)
 	p.ToggleTag(WhiteToMove)
@@ -69,7 +74,7 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
 
 	// Do promotion
 	if move.PromoType != NoType {
-		promoPiece = getPiece(move.PromoType, p.Turn())
+		promoPiece = GetPiece(move.PromoType, p.Turn())
 		p.Board.UpdateSquare(move.Destination, promoPiece)
 	}
 
@@ -128,7 +133,7 @@ func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, cap
 
 	// Undo promotion
 	if move.PromoType != NoType {
-		movingPiece = getPiece(Pawn, p.Turn())
+		movingPiece = GetPiece(Pawn, p.Turn())
 		p.Board.UpdateSquare(move.Source, movingPiece)
 	}
 	if move.HasTag(QueenSideCastle) {
@@ -156,6 +161,10 @@ const (
 	Draw
 	Unknown
 )
+
+func (p *Position) IsEndGame() bool {
+	return p.Board.CountPieces() <= 10
+}
 
 func (p *Position) IsInCheck() bool {
 	return isInCheck(p.Board, p.Turn())

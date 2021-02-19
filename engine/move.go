@@ -35,7 +35,7 @@ func (m *Move) ToString() string {
 	notation := fmt.Sprintf("%s%s", m.Source.Name(), m.Destination.Name())
 	if m.PromoType != NoType {
 		// color doesn't matter here, I picked black as it prints lower case letters
-		piece := getPiece(m.PromoType, Black)
+		piece := GetPiece(m.PromoType, Black)
 		notation = fmt.Sprintf("%s%s", notation, piece.Name())
 	}
 	return notation

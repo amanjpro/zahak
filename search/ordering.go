@@ -115,6 +115,16 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		return true
 	}
 
+	if move1.PromoType != NoType && move2.PromoType == NoType {
+		return true
+	} else if move2.PromoType != NoType && move1.PromoType == NoType {
+		return false
+	} else if move2.PromoType != NoType && move1.PromoType != NoType {
+		p1 := GetPiece(move1.PromoType, White)
+		p2 := GetPiece(move2.PromoType, White)
+		return p1.Weight() > p2.Weight()
+	}
+
 	return false
 }
 

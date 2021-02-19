@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/bits"
 )
 
 type Bitboard struct {
@@ -234,6 +235,10 @@ func StartingBoard() Bitboard {
 	bitboard.UpdateSquare(H8, BlackRook)
 
 	return bitboard
+}
+
+func (b *Bitboard) CountPieces() int {
+	return bits.OnesCount64(b.whitePieces | b.whitePieces)
 }
 
 // Draw returns visual representation of the board useful for debugging.
