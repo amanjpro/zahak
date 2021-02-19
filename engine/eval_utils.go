@@ -23,18 +23,16 @@ func (b *Bitboard) attacksTo(occupied uint64, sq Square) uint64 {
 }
 
 func (b *Bitboard) getLeastValuablePiece(attacks uint64, color Color) (uint64, Piece) {
-	shift := uint8(0)
-
-	if attacks == 0 {
-		return 0, NoPiece
-	}
-
+	shift := int8(0)
 	if color == Black {
-		shift = uint8(6)
+		shift = int8(6)
 	}
+	start := int8(WhitePawn) + shift
+	finish := int8(WhiteKing) + shift
 
-	for piece := uint8(WhitePawn) + shift; piece >= uint8(WhiteKing)+shift; piece-- {
-		subset := attacks & b.GetBitboardOf(Piece(piece))
+	for piece := start; piece >= finish; piece-- {
+		bb := b.GetBitboardOf(Piece(piece))
+		subset := attacks & bb
 		if subset != 0 {
 			return subset & -subset, Piece(piece) // The piece and its location on the board
 		}
@@ -63,20 +61,20 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	gain[d] = target.Weight()
 
 	for fromSet != 0 {
-		d++                                   // next depth and side
+		d++ // next depth and side
+		color := aPiece.Color()
 		gain[d] = aPiece.Weight() - gain[d-1] // speculative store, if defended
 		if max(-gain[d-1], gain[d]) < 0 {
 			break // pruning does not influence the result
 		}
-		attacks ^= fromSet       // reset bit in set to traverse
-		occupied ^= fromSet      // reset bit in temporary occupancy (for x-Rays)
-		bishopsQueens ^= fromSet // reset bit in temporary occupancy for bishops/queens
-		rooksQueens ^= fromSet   // reset bit in temporary occupancy for rooks/queens
+		attacks ^= fromSet  // reset bit in set to traverse
+		occupied ^= fromSet // reset bit in temporary occupancy (for x-Rays)
 		if fromSet&mayXray != 0 {
+			bishopsQueens &^= fromSet // reset bit in temporary occupancy for bishops/queens
+			rooksQueens &^= fromSet   // reset bit in temporary occupancy for rooks/queens
 			attacks |= (bishopAttacks(toSq, occupied, empty) & bishopsQueens)
 			attacks |= (rookAttacks(toSq, occupied, empty) & rooksQueens)
 		}
-		color := aPiece.Color()
 		fromSet, aPiece = b.getLeastValuablePiece(attacks, color.Other())
 	}
 	for d--; d > 0; d-- {
