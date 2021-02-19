@@ -16,7 +16,7 @@ A UCI comppatible chess AI written in Go. Still work in proress.
 - Delta Pruning
 - Null-Move Pruning
 - Transposition Table
-
+- Static Exchange Evaluation
 
 # Building
 

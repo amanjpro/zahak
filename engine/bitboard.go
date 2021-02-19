@@ -22,34 +22,69 @@ type Bitboard struct {
 	blackPieces uint64
 }
 
+func (b *Bitboard) GetBitboardOf(piece Piece) uint64 {
+	switch piece {
+	case BlackPawn:
+		return b.blackPawn
+	case BlackKnight:
+		return b.blackKnight
+	case BlackBishop:
+		return b.blackBishop
+	case BlackRook:
+		return b.blackRook
+	case BlackQueen:
+		return b.blackQueen
+	case BlackKing:
+		return b.blackKing
+	case WhitePawn:
+		return b.whitePawn
+	case WhiteKnight:
+		return b.whiteKnight
+	case WhiteBishop:
+		return b.whiteBishop
+	case WhiteRook:
+		return b.whiteRook
+	case WhiteQueen:
+		return b.whiteQueen
+	case WhiteKing:
+		return b.whiteKing
+	}
+	return 0
+}
+
 func (b *Bitboard) AllPieces() map[Square]Piece {
 	allPieces := make(map[Square]Piece, 32)
-	for sq := A1; sq <= H8 && len(allPieces) <= 32; sq++ {
-		if b.blackPawn&(1<<sq) != 0 {
+	allBits := b.whitePieces | b.blackPieces
+	for allBits != 0 {
+		index := bitScanForward(allBits)
+		mask := uint64(1 << index)
+		sq := Square(index)
+		if b.blackPawn&(mask) != 0 {
 			allPieces[sq] = BlackPawn
-		} else if b.whitePawn&(1<<sq) != 0 {
+		} else if b.whitePawn&(mask) != 0 {
 			allPieces[sq] = WhitePawn
-		} else if b.blackKnight&(1<<sq) != 0 {
+		} else if b.blackKnight&(mask) != 0 {
 			allPieces[sq] = BlackKnight
-		} else if b.whiteKnight&(1<<sq) != 0 {
+		} else if b.whiteKnight&(mask) != 0 {
 			allPieces[sq] = WhiteKnight
-		} else if b.blackBishop&(1<<sq) != 0 {
+		} else if b.blackBishop&(mask) != 0 {
 			allPieces[sq] = BlackBishop
-		} else if b.whiteBishop&(1<<sq) != 0 {
+		} else if b.whiteBishop&(mask) != 0 {
 			allPieces[sq] = WhiteBishop
-		} else if b.blackRook&(1<<sq) != 0 {
+		} else if b.blackRook&(mask) != 0 {
 			allPieces[sq] = BlackRook
-		} else if b.whiteRook&(1<<sq) != 0 {
+		} else if b.whiteRook&(mask) != 0 {
 			allPieces[sq] = WhiteRook
-		} else if b.blackQueen&(1<<sq) != 0 {
+		} else if b.blackQueen&(mask) != 0 {
 			allPieces[sq] = BlackQueen
-		} else if b.whiteQueen&(1<<sq) != 0 {
+		} else if b.whiteQueen&(mask) != 0 {
 			allPieces[sq] = WhiteQueen
-		} else if b.blackKing&(1<<sq) != 0 {
+		} else if b.blackKing&(mask) != 0 {
 			allPieces[sq] = BlackKing
-		} else if b.whiteKing&(1<<sq) != 0 {
+		} else if b.whiteKing&(mask) != 0 {
 			allPieces[sq] = WhiteKing
 		}
+		allBits ^= mask
 	}
 	return allPieces
 }

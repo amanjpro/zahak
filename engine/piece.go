@@ -38,6 +38,15 @@ const (
 	NoColor
 )
 
+func (c *Color) Other() Color {
+	if *c == White {
+		return Black
+	} else if *c == Black {
+		return White
+	}
+	return NoColor
+}
+
 func (p *Piece) Type() PieceType {
 	switch *p {
 	case WhitePawn, BlackPawn:
