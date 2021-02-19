@@ -194,10 +194,16 @@ func (p *Position) IsInCheck() bool {
 }
 
 func (p *Position) Status() Status {
+	value, ok := p.Positions[p.Hash()]
+	if ok && value >= 3 {
+		return Draw
+	}
 	if p.IsInCheck() {
 		if !p.HasLegalMoves() {
 			return Checkmate
 		}
+	} else if p.HalfMoveClock == 100 {
+		return Draw
 	} else {
 		if !p.HasLegalMoves() {
 			return Draw
