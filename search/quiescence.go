@@ -40,7 +40,7 @@ func quiescence(position *Position, alpha int, beta int, ply int, standPat int) 
 			capturedPiece := board.PieceAt(move.Destination)
 			gain := position.Board.StaticExchangeEval(move.Destination, capturedPiece, move.Source, movingPiece)
 			if gain <= 0 {
-				return alpha
+				continue
 			}
 		}
 		cp, ep, tg, hc := position.MakeMove(move)
@@ -48,7 +48,7 @@ func quiescence(position *Position, alpha int, beta int, ply int, standPat int) 
 		if cp != NoPiece && standPat < alpha-deltaMargin { // is capture
 			// Delta pruning meaningless captures
 			position.UnMakeMove(move, tg, ep, cp, hc)
-			return alpha
+			continue
 		}
 		score := -quiescence(position, -beta, -alpha, ply+1, sp)
 		position.UnMakeMove(move, tg, ep, cp, hc)
