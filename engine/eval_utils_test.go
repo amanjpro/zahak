@@ -32,12 +32,24 @@ func TestComplicatedStaticExchangeEval(t *testing.T) {
 }
 
 func TestSlidingPiecesStaticExchangeEval(t *testing.T) {
-	fen := "k3r3/pp2r3/2b5/3p4/4P3/5P2/PP2R3/K3R2B w - - 0 1"
+	fen := "k3r3/pp2r3/2b5/3p4/4P3/5P2/PP2R3/K3R2B b - - 0 1"
 	game := FromFen(fen, true)
 	board := game.position.Board
 
-	actual := board.StaticExchangeEval(E5, BlackPawn, D3, WhiteKnight)
-	expected := -200
+	actual := board.StaticExchangeEval(E4, WhitePawn, D5, BlackPawn)
+
+	if actual > 0 {
+		t.Error(fmt.Sprintf("Expected: a non-positive number\n, Got: %d\n", actual))
+	}
+}
+
+func TestSlidingPiecesStaticExchangeEvalPositive(t *testing.T) {
+	fen := "k3r3/pp2r3/2b5/3p4/4P3/8/PP2R3/K3R2B b - - 0 1"
+	game := FromFen(fen, true)
+	board := game.position.Board
+
+	actual := board.StaticExchangeEval(E4, WhitePawn, D5, BlackPawn)
+	expected := 100
 
 	if actual != expected {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
