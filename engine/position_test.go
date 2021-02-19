@@ -81,8 +81,8 @@ func TestUnMakeMove(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{F3, G4, NoType, 0}
-	cp, ep, tag := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp)
+	cp, ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -100,8 +100,8 @@ func TestUnMakeMoveDoublePushPawn(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{H2, H4, NoType, 0}
-	cp, ep, tag := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp)
+	cp, ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -119,8 +119,8 @@ func TestUnMakeMoveCapture(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{F3, E4, NoType, Capture}
-	cp, ep, tag := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp)
+	cp, ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -138,8 +138,8 @@ func TestUnMakeMoveCastling(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{E1, G1, NoType, KingSideCastle}
-	cp, ep, tag := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp)
+	cp, ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -157,8 +157,8 @@ func TestUnMakeMoveEnPassant(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{E5, D6, Pawn, EnPassant | Capture}
-	cp, ep, tag := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp)
+	cp, ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -176,8 +176,8 @@ func TestUnMakeMovePromotion(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := &Move{B7, A8, Queen, Capture}
-	cp, ep, tag := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp)
+	cp, ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, cp, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)

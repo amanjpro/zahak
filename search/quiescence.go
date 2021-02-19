@@ -33,15 +33,15 @@ func quiescence(position *Position, alpha int, beta int, ply int, standPat int) 
 	w := WhitePawn
 	deltaMargin := w.Weight() * 2 // 200 centipawns
 	for _, move := range orderedMoves {
-		cp, ep, tg := position.MakeMove(move)
+		cp, ep, tg, hc := position.MakeMove(move)
 		sp := Evaluate(position)
 		if cp != NoPiece && standPat < alpha-deltaMargin { // is capture
 			// Delta pruning meaningless captures
-			position.UnMakeMove(move, tg, ep, cp)
+			position.UnMakeMove(move, tg, ep, cp, hc)
 			return alpha
 		}
 		score := -quiescence(position, -beta, -alpha, ply+1, sp)
-		position.UnMakeMove(move, tg, ep, cp)
+		position.UnMakeMove(move, tg, ep, cp, hc)
 		if score >= beta {
 			return beta
 		}

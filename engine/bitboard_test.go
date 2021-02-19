@@ -49,8 +49,8 @@ func TestAllPieces(t *testing.T) {
 	}
 
 	m := &Move{H3, G5, NoType, Capture}
-	cp, ep, ot := g.position.MakeMove(m)
-	g.position.UnMakeMove(m, ot, ep, cp)
+	cp, ep, ot, hc := g.position.MakeMove(m)
+	g.position.UnMakeMove(m, ot, ep, cp, hc)
 
 	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
@@ -59,8 +59,8 @@ func TestAllPieces(t *testing.T) {
 	}
 
 	m = &Move{G1, G3, NoType, 0}
-	cp, ep, ot = g.position.MakeMove(m)
-	g.position.UnMakeMove(m, ot, ep, cp)
+	cp, ep, ot, hc = g.position.MakeMove(m)
+	g.position.UnMakeMove(m, ot, ep, cp, hc)
 
 	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {

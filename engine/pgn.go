@@ -23,9 +23,9 @@ func (p *Position) ParseMoves(moveStr []string) []*Move {
 		if parsed == nil {
 			panic(fmt.Sprintf("Expectd a valid move, %s is not valid", currentMove))
 		}
-		cp, ep, tg := p.MakeMove(parsed)
+		cp, ep, tg, hc := p.MakeMove(parsed)
 		otherMoves := p.ParseMoves(moveStr[1:])
-		p.UnMakeMove(parsed, tg, ep, cp)
+		p.UnMakeMove(parsed, tg, ep, cp, hc)
 		return append(append([]*Move{}, parsed), otherMoves...)
 	}
 }

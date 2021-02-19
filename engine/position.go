@@ -1,10 +1,12 @@
 package engine
 
 type Position struct {
-	Board     Bitboard
-	EnPassant Square
-	Tag       PositionTag
-	hash      uint64
+	Board         Bitboard
+	EnPassant     Square
+	Tag           PositionTag
+	hash          uint64
+	Positions     map[uint64]int8
+	HalfMoveClock uint8
 }
 
 type PositionTag uint8
@@ -40,7 +42,8 @@ func (p *Position) ToggleTurn() {
 	p.ToggleTag(WhiteToMove)
 }
 
-func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
+func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag, uint8) {
+	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
 	movingPiece := p.Board.PieceAt(move.Source)
@@ -48,6 +51,10 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
 	p.Board.Move(move.Source, move.Destination)
 	captureSquare := NoSquare
 	promoPiece := NoPiece
+
+	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
+		p.HalfMoveClock = 0
+	}
 
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance
 	if move.HasTag(EnPassant) {
@@ -107,20 +114,36 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag) {
 
 	p.ToggleTurn()
 	updateHash(p, move, movingPiece, capturedPiece, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	return capturedPiece, ep, tag
+	_, ok := p.Positions[p.Hash()]
+	if ok {
+		p.Positions[p.Hash()] += 1
+	} else {
+		p.Positions[p.Hash()] = 1
+	}
+	return capturedPiece, ep, tag, hc
 }
 
-func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
+func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece,
+	halfClock uint8) {
 	oldTag := p.Tag
 	oldEnPassant := p.EnPassant
 	movingPiece := p.Board.PieceAt(move.Destination)
 	promoPiece := movingPiece
 	p.Tag = tag
+	p.HalfMoveClock = halfClock
 	p.EnPassant = enPassant
+
+	v, ok := p.Positions[p.Hash()]
+	if ok {
+		if v == 1 {
+			delete(p.Positions, p.Hash())
+		} else {
+			p.Positions[p.Hash()] -= 1
+		}
+	}
 
 	captureSquare := NoSquare
 	p.Board.Move(move.Destination, move.Source)
-
 	// Undo enpassant
 	if move.HasTag(EnPassant) && move.HasTag(Capture) {
 		cp := findEnPassantCaptureSquare(move)
@@ -252,5 +275,7 @@ func (p *Position) copy() *Position {
 		p.EnPassant,
 		p.Tag,
 		p.hash,
+		p.Positions,
+		p.HalfMoveClock,
 	}
 }

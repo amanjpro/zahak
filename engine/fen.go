@@ -70,11 +70,12 @@ func (p *Position) Fen() string {
 	} else {
 		fen = fmt.Sprintf("%s -", fen)
 	}
+	fen = fmt.Sprintf("%s %d", fen, p.HalfMoveClock)
 	return fen
 }
 
 func (g *Game) Fen() string {
-	fen := fmt.Sprintf("%s %d %d", g.position.Fen(), g.halfMoveClock, g.numberOfMoves)
+	fen := fmt.Sprintf("%s %d", g.position.Fen(), g.numberOfMoves)
 	return fen
 }
 
@@ -109,11 +110,17 @@ func positionFromFen(fen string) Position {
 	if len(parts) != 6 {
 		panic(fmt.Sprintf("Invalid FEN notation %s, there should be 6 parts", fen))
 	}
+	halfMoveClock, err := strconv.Atoi(parts[4])
+	if err != nil {
+		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
+	}
 	p := Position{
 		bitboardFromFen(fen),
 		NoSquare,
 		0,
 		0,
+		make(map[uint64]int8, 200),
+		uint8(halfMoveClock),
 	}
 
 	if parts[1] == "b" {
@@ -161,12 +168,8 @@ func FromFen(fen string, clearCache bool) Game {
 	}
 	p := positionFromFen(fen)
 
-	halfMoveClock, e1 := strconv.Atoi(parts[4])
-	moveCount, e2 := strconv.Atoi(parts[5])
-	if e1 != nil {
-		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
-	}
-	if e2 != nil {
+	moveCount, err := strconv.Atoi(parts[5])
+	if err != nil {
 		panic(fmt.Sprintf("Invalid FEN notation %s, move count is not set correctly %s", fen, parts[5]))
 	}
 
@@ -174,9 +177,7 @@ func FromFen(fen string, clearCache bool) Game {
 		&p,
 		*p.copy(),
 		[]*Move{},
-		make(map[uint64]int8, 200),
 		uint16(moveCount),
-		uint8(halfMoveClock),
 		clearCache,
 	)
 }

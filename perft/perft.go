@@ -31,11 +31,11 @@ func PerftTree(game Game, depth int, moves []*Move) {
 		}
 		moves = game.Position().LegalMoves()
 		for _, move := range moves {
-			cp, ep, tg := game.Position().MakeMove(move)
+			cp, ep, tg, hc := game.Position().MakeMove(move)
 			nodes := bulkyPerft(game.Position(), depth)
 			fmt.Printf("%s %d\n", move.ToString(), nodes)
 			sum += nodes
-			game.Position().UnMakeMove(move, tg, ep, cp)
+			game.Position().UnMakeMove(move, tg, ep, cp, hc)
 		}
 	}
 
@@ -252,9 +252,9 @@ func perft(p *Position, depth int, lastPromo PieceType, lastTag MoveTag, acc *Pe
 	moves := p.LegalMoves()
 
 	for _, move := range moves {
-		cp, ep, tag := p.MakeMove(move)
+		cp, ep, tag, hc := p.MakeMove(move)
 		perft(p, depth-1, move.PromoType, move.Tag, acc)
-		p.UnMakeMove(move, tag, ep, cp)
+		p.UnMakeMove(move, tag, ep, cp, hc)
 	}
 }
 
@@ -274,7 +274,7 @@ func bulkyPerft(p *Position, depth int) int64 {
 
 	for i := 0; i < l; i++ {
 		move := moves[i]
-		cp, ep, tag := p.MakeMove(move)
+		cp, ep, tag, hc := p.MakeMove(move)
 		hash := p.Hash()
 		n, ok := cache[depth-1][hash]
 		if ok {
@@ -284,7 +284,7 @@ func bulkyPerft(p *Position, depth int) int64 {
 			cache[depth-1][hash] = n
 			nodes += n
 		}
-		p.UnMakeMove(move, tag, ep, cp)
+		p.UnMakeMove(move, tag, ep, cp, hc)
 	}
 	return nodes
 }

@@ -78,7 +78,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
-			cp, ep, tg := position.MakeMove(move)
+			cp, ep, tg, hc := position.MakeMove(move)
 			score := -MAX_INT
 			if searchPv {
 				score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
@@ -106,7 +106,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			} else {
 				iterationEvals[index] = -MAX_INT // if it is, then too bad, that is a bad move
 			}
-			position.UnMakeMove(move, tg, ep, cp)
+			position.UnMakeMove(move, tg, ep, cp, hc)
 
 			if score == CHECKMATE_EVAL {
 				return move, score
@@ -189,7 +189,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 
 	foundExact := false
 	for _, move := range orderedMoves {
-		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
+		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		line := NewPVLine(depthLeft - 1)
 		score := -MAX_INT
 		if searchPv {
@@ -200,7 +200,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 				score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
 			}
 		}
-		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
+		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
 			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
 			return beta
@@ -247,9 +247,9 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 
 	for _, move := range orderedMoves {
-		capturedPiece, oldEnPassant, oldTag := position.MakeMove(move)
+		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply)
-		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece)
+		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
 			return beta // fail-hard beta-cutoff
 		}
