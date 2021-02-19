@@ -77,7 +77,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			if searchPv {
 				score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
 			} else {
-				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply)
+				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, true)
 				if score > alpha { // in fail-soft ... && score < beta ) is common
 					score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
 				}
@@ -186,7 +186,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		tempo := 20           // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
 		bound := beta - tempo // variable bound
 		position.NullMove()
-		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply)
+		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, true)
 		position.NullMove()
 		if score >= bound {
 			return beta // null move pruning
@@ -203,7 +203,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		if searchPv {
 			score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
 		} else {
-			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply)
+			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply, true)
 			if score > alpha { // in fail-soft ... && score < beta ) is common
 				score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
 			}
@@ -229,7 +229,8 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	return alpha
 }
 
-func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16) int {
+func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16,
+	multiCutFlag bool) int {
 	nodesVisited += 1
 
 	if STOP_SEARCH_GLOBALLY {
@@ -244,6 +245,26 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 
 	legalMoves := position.LegalMoves()
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
+
+	// Multi-Cut Pruning
+	R := int8(3)
+	M := 6
+	C := 3
+	if depthLeft >= 5 && multiCutFlag && len(legalMoves) > M {
+		cutNodeCounter := 0
+		for i := 0; i < M; i++ {
+			move := legalMoves[i]
+			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+			score := -zeroWindowSearch(position, depthLeft-1-R, searchHeight+1, 1-beta, ply, !multiCutFlag)
+			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+			if score >= beta {
+				cutNodeCounter++
+				if cutNodeCounter == C {
+					return beta // mc-prune
+				}
+			}
+		}
+	}
 
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
@@ -261,7 +282,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 
 	for _, move := range orderedMoves {
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply)
+		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply, !multiCutFlag)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
 			return beta // fail-hard beta-cutoff
