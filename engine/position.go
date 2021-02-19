@@ -54,6 +54,8 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag, uint8) {
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
 		p.HalfMoveClock = 0
+	} else {
+		p.HalfMoveClock += 1
 	}
 
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance

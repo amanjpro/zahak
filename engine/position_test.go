@@ -9,7 +9,7 @@ func TestMakeMove(t *testing.T) {
 	move := &Move{F3, G4, NoType, 0}
 	game.position.MakeMove(move)
 	fen := game.Fen()
-	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p1B1/6N1/PP3PPP/RNBQK2R b KQkq - 0 1"
+	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p1B1/6N1/PP3PPP/RNBQK2R b KQkq - 1 1"
 	if fen != expected {
 		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", expected)
@@ -45,7 +45,7 @@ func TestMakeMoveCastling(t *testing.T) {
 	move := &Move{E1, G1, NoType, KingSideCastle}
 	game.position.MakeMove(move)
 	fen := game.Fen()
-	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQ1RK1 b kq - 0 1"
+	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQ1RK1 b kq - 1 1"
 	if fen != expected {
 		t.Errorf("Move was not generated properly\nGot: %s\n", fen)
 		t.Errorf("But expected: %s\n", expected)
