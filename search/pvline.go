@@ -47,7 +47,7 @@ func (thisLine *PVLine) MoveAt(index int8) *Move {
 
 func (pv *PVLine) Pop() *Move {
 	var toReturn *Move
-	if pv.line.moveCount >= 0 {
+	if pv.moveCount >= 0 {
 		emptySlice := make([]*Move, len(pv.line))
 		mv, newSlice := pv.line[0], pv.line[1:]
 		toReturn = mv
