@@ -46,11 +46,15 @@ func (thisLine *PVLine) MoveAt(index int8) *Move {
 }
 
 func (pv *PVLine) Pop() *Move {
-	emptySlice := make([]*Move, len(pv.line))
-	toReturn, newSlice := pv.line[0], pv.line[1:]
-	copy(emptySlice, newSlice)
-	pv.line = emptySlice
-	pv.moveCount -= 1
+	var toReturn *Move
+	if pv.line.moveCount >= 0 {
+		emptySlice := make([]*Move, len(pv.line))
+		mv, newSlice := pv.line[0], pv.line[1:]
+		toReturn = mv
+		copy(emptySlice, newSlice)
+		pv.line = emptySlice
+		pv.moveCount -= 1
+	}
 	return toReturn
 }
 
