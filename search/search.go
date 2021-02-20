@@ -112,16 +112,18 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 
 			if score == CHECKMATE_EVAL {
 				timeSpent := time.Now().Sub(start)
-				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+				fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
 					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
+					cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
+					timeSpent.Milliseconds(), pv.ToString())
 				return move, score
 			}
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
-				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+				fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
 					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
+					cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
+					timeSpent.Milliseconds(), pv.ToString())
 			}
 		}
 
@@ -135,18 +137,20 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 		}
 		previousBestMove = bestMove
 		timeSpent := time.Now().Sub(start)
-		fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+		fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
 			iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
-			cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
+			cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
+			timeSpent.Milliseconds(), pv.ToString())
 		alpha = -MAX_INT
 		beta = MAX_INT
 		currentBestScore = -MAX_INT
 	}
 
 	timeSpent := time.Now().Sub(start)
-	fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
-		lastDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
-		cacheHits, nodesVisited, bestScore, timeSpent.Milliseconds(), pv.ToString())
+	fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
+		lastDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
+		cacheHits, TranspositionTable.Consumed(), nodesVisited, bestScore,
+		timeSpent.Milliseconds(), pv.ToString())
 	return bestMove, bestScore
 }
 

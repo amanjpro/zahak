@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/search"
 )
@@ -39,7 +40,12 @@ func UCI() {
 					timerHalter <- true
 				}
 			default:
-				if strings.HasPrefix(cmd, "go") {
+				if strings.HasPrefix(cmd, "setoption name Hash value") {
+					options := strings.Fields(cmd)
+					mg := options[len(options)-1]
+					hashSize, _ := strconv.Atoi(mg)
+					NewCache(uint32(hashSize))
+				} else if strings.HasPrefix(cmd, "go") {
 					go findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					moves := strings.Fields(cmd)[3:]

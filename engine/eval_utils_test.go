@@ -11,7 +11,7 @@ func TestSimpleStaticExchangeEval(t *testing.T) {
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E5, BlackPawn, E1, WhiteRook)
-	expected := 100
+	expected := int16(100)
 
 	if actual != expected {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
@@ -24,7 +24,7 @@ func TestComplicatedStaticExchangeEval(t *testing.T) {
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E5, BlackPawn, D3, WhiteKnight)
-	expected := -200
+	expected := int16(-200)
 
 	if actual != expected {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
@@ -49,7 +49,7 @@ func TestSlidingPiecesStaticExchangeEvalPositive(t *testing.T) {
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E4, WhitePawn, D5, BlackPawn)
-	expected := 100
+	expected := int16(100)
 
 	if actual != expected {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
