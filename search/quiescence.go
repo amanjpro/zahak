@@ -5,11 +5,11 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func quiescence(position *Position, alpha int16, beta int16, ply uint16, standPat int16) int16 {
+func quiescence(position *Position, alpha int16, beta int16, lastDepth int8, ply int8, standPat int16) int16 {
 
 	outcome := position.Status()
 	if outcome == Checkmate {
-		return -CHECKMATE_EVAL
+		return (-CHECKMATE_EVAL + int16(lastDepth+ply))
 	} else if outcome == Draw {
 		return 0
 	}
@@ -50,7 +50,7 @@ func quiescence(position *Position, alpha int16, beta int16, ply uint16, standPa
 			position.UnMakeMove(move, tg, ep, cp, hc)
 			continue
 		}
-		score := -quiescence(position, -beta, -alpha, ply+1, sp)
+		score := -quiescence(position, -beta, -alpha, lastDepth, ply+1, sp)
 		position.UnMakeMove(move, tg, ep, cp, hc)
 		if score >= beta {
 			return beta

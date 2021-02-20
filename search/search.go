@@ -110,14 +110,6 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 			}
 			position.UnMakeMove(move, tg, ep, cp, hc)
 
-			if score == CHECKMATE_EVAL {
-				timeSpent := time.Now().Sub(start)
-				fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
-					cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
-					timeSpent.Milliseconds(), pv.ToString())
-				return move, score
-			}
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
@@ -158,7 +150,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	nodesVisited += 1
 	outcome := position.Status()
 	if outcome == Checkmate {
-		return -CHECKMATE_EVAL
+		return -(CHECKMATE_EVAL + int16(ply)) // shortest checkmates win
 	} else if outcome == Draw {
 		return 0
 	}
@@ -168,7 +160,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	}
 
 	if depthLeft == 0 {
-		return quiescence(position, alpha, beta, 0, Evaluate(position))
+		return quiescence(position, alpha, beta, depthLeft, 0, Evaluate(position))
 	}
 
 	nodesSearched += 1
@@ -178,15 +170,9 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
-	if found &&
-		(cachedEval.Eval == CHECKMATE_EVAL ||
-			cachedEval.Eval == -CHECKMATE_EVAL ||
-			cachedEval.Depth >= depthLeft) {
+	if found && cachedEval.Depth >= depthLeft {
 		cacheHits += 1
 		score := cachedEval.Eval
-		if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
-			return cachedEval.Eval
-		}
 		if score >= beta && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
 			return beta
 		}
@@ -258,7 +244,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 
 	if depthLeft <= 0 {
-		return quiescence(position, beta-1, beta, 0, Evaluate(position))
+		return quiescence(position, beta-1, beta, depthLeft, 0, Evaluate(position))
 	}
 
 	nodesSearched += 1
@@ -309,7 +295,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 
 	// Razoring
 	if depthLeft < 2 && eval+margin < beta-1 {
-		return quiescence(position, beta-1, beta, 0, eval)
+		return quiescence(position, beta-1, beta, depthLeft, 0, eval)
 	}
 
 	// Reverse Futility Pruning
