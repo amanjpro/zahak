@@ -64,12 +64,20 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	fruitelessIterations := 0
 
 	start := time.Now()
+	var lastDepth int8
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
+		lastDepth = iterationDepth
+		if STOP_SEARCH_GLOBALLY {
+			break
+		}
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
 		searchPv := true
 		for index, move := range orderedMoves {
+			if STOP_SEARCH_GLOBALLY {
+				break
+			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
 			cp, ep, tg, hc := position.MakeMove(move)
@@ -77,7 +85,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			if searchPv {
 				score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
 			} else {
-				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply)
+				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, true)
 				if score > alpha { // in fail-soft ... && score < beta ) is common
 					score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
 				}
@@ -103,12 +111,16 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			position.UnMakeMove(move, tg, ep, cp, hc)
 
 			if score == CHECKMATE_EVAL {
+				timeSpent := time.Now().Sub(start)
+				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
+					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 				return move, score
 			}
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
-					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
 					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 			}
 		}
@@ -124,13 +136,17 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 		previousBestMove = bestMove
 		timeSpent := time.Now().Sub(start)
 		fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
-			iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+			iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
 			cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 		alpha = -MAX_INT
 		beta = MAX_INT
 		currentBestScore = -MAX_INT
 	}
 
+	timeSpent := time.Now().Sub(start)
+	fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+		lastDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+		cacheHits, nodesVisited, bestScore, timeSpent.Milliseconds(), pv.ToString())
 	return bestMove, bestScore
 }
 
@@ -186,7 +202,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		tempo := 20           // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
 		bound := beta - tempo // variable bound
 		position.NullMove()
-		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply)
+		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, true)
 		position.NullMove()
 		if score >= bound {
 			return beta // null move pruning
@@ -203,7 +219,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		if searchPv {
 			score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
 		} else {
-			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply)
+			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply, true)
 			if score > alpha { // in fail-soft ... && score < beta ) is common
 				score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
 			}
@@ -229,7 +245,8 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	return alpha
 }
 
-func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16) int {
+func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16,
+	multiCutFlag bool) int {
 	nodesVisited += 1
 
 	if STOP_SEARCH_GLOBALLY {
@@ -258,10 +275,73 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 			return beta - 1
 		}
 	}
+	// Multi-Cut Pruning
+	R := int8(3)
+	M := 6
+	C := 3
 
-	for _, move := range orderedMoves {
+	if depthLeft >= 5 && multiCutFlag && len(legalMoves) > M {
+		cutNodeCounter := 0
+		for i := 0; i < M; i++ {
+			move := legalMoves[i]
+			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+			score := -zeroWindowSearch(position, depthLeft-1-R, searchHeight+1, 1-beta, ply, !multiCutFlag)
+			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+			if score >= beta {
+				cutNodeCounter++
+				if cutNodeCounter == C {
+					return beta // mc-prune
+				}
+			}
+		}
+	}
+
+	eval := Evaluate(position)
+
+	rook := WhiteRook
+	pawn := WhitePawn
+	margin := pawn.Weight() + rook.Weight() // Rook + Pawn
+	futility := eval + rook.Weight()
+
+	// Razoring
+	if depthLeft < 2 && eval+margin < beta-1 {
+		return quiescence(position, beta-1, beta, 0, eval)
+	}
+
+	// Reverse Futility Pruning
+	if depthLeft < 5 && eval-margin >= beta {
+		return eval - margin /* fail soft */
+	}
+
+	// Extended Futility Pruning
+	isInCheck := position.IsInCheck()
+	lastRank := Rank7
+	if position.Turn() == Black {
+		lastRank = Rank2
+	}
+
+	for i, move := range orderedMoves {
+		LMR := int8(0)
+		if !isInCheck && searchHeight >= 4 && depthLeft == 2 {
+			board := position.Board
+			movingPiece := board.PieceAt(move.Source)
+			capturedPiece := board.PieceAt(move.Destination)
+			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
+
+			// Extended Futility Pruning
+			if !move.HasTag(Check) && futility+capturedPiece.Weight() <= beta-1 &&
+				move.PromoType == NoType && !isPromoting {
+				continue
+			}
+
+			// Late Move Reduction
+			if i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
+				LMR = 1
+			}
+		}
+
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply)
+		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, !multiCutFlag)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
 			return beta // fail-hard beta-cutoff

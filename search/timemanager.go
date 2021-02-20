@@ -13,15 +13,15 @@ func InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
 		maximumTimeToThink = availableTimeInMillis - 10 + increment
 	} else {
 		if movesToTimeControl == 0 {
-			mlh := 30
+			mlh := 60 // We assume that there are 60 more moves to go
 			timeInMinute := time.Duration(availableTimeInMillis).Minutes()
 			if timeInMinute <= 15 {
-				mlh = 20
+				mlh = 50 // shorter games have shorter moves, hopefully
 			}
 			if game.Position().IsEndGame() {
-				movesToTimeControl = abs(mlh - int(game.MoveClock()))
+				movesToTimeControl = abs(mlh)
 			} else {
-				movesToTimeControl = abs(mlh + 10 - int(game.MoveClock()))
+				movesToTimeControl = abs(mlh + 10) // add 10 more moves in the early stage
 			}
 		}
 		if game.Position().IsEndGame() {
