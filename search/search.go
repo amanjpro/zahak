@@ -64,12 +64,20 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	fruitelessIterations := 0
 
 	start := time.Now()
+	var lastDepth int8
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
+		lastDepth = iterationDepth
+		if STOP_SEARCH_GLOBALLY {
+			break
+		}
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
 		searchPv := true
 		for index, move := range orderedMoves {
+			if STOP_SEARCH_GLOBALLY {
+				break
+			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
 			cp, ep, tg, hc := position.MakeMove(move)
@@ -103,12 +111,16 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 			position.UnMakeMove(move, tg, ep, cp, hc)
 
 			if score == CHECKMATE_EVAL {
+				timeSpent := time.Now().Sub(start)
+				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
+					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 				return move, score
 			}
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
-					iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
 					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 			}
 		}
@@ -124,13 +136,17 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 		previousBestMove = bestMove
 		timeSpent := time.Now().Sub(start)
 		fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
-			iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+			iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
 			cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 		alpha = -MAX_INT
 		beta = MAX_INT
 		currentBestScore = -MAX_INT
 	}
 
+	timeSpent := time.Now().Sub(start)
+	fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
+		lastDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
+		cacheHits, nodesVisited, bestScore, timeSpent.Milliseconds(), pv.ToString())
 	return bestMove, bestScore
 }
 
