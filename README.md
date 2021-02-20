@@ -19,6 +19,7 @@ A UCI comppatible chess AI written in Go. Still work in proress.
 - Static Exchange Evaluation
 - Mult-Cut Pruning
 - Reverse Futility Pruning
+- Extended Futility Pruning
 - Razoring
 
 # Building

@@ -281,7 +281,11 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 
 	eval := Evaluate(position)
-	margin := 600 // Rook + Pawn
+
+	rook := WhiteRook
+	pawn := WhitePawn
+	margin := pawn.Weight() + rook.Weight() // Rook + Pawn
+	futility := eval + rook.Weight()
 
 	// Razoring
 	if depthLeft < 2 && eval+margin < beta-1 {
@@ -293,7 +297,25 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		return eval - margin /* fail soft */
 	}
 
+	// Extended Futility Pruning
+	isInCheck := position.IsInCheck()
+	lastRank := Rank7
+	if position.Turn() == Black {
+		lastRank = Rank2
+	}
+
 	for _, move := range orderedMoves {
+		// Extended Futility Pruning
+		if !isInCheck && searchHeight >= 4 && depthLeft == 2 {
+			board := position.Board
+			movingPiece := board.PieceAt(move.Source)
+			capturedPiece := board.PieceAt(move.Destination)
+			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
+			if !move.HasTag(Check) && futility+capturedPiece.Weight() <= beta-1 &&
+				move.PromoType == NoType && !isPromoting {
+				continue
+			}
+		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply, !multiCutFlag)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
