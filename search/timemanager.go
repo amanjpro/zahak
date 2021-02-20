@@ -19,9 +19,9 @@ func InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
 				mlh = 50 // shorter games have shorter moves, hopefully
 			}
 			if game.Position().IsEndGame() {
-				movesToTimeControl = abs(mlh - int(game.MoveClock()))
+				movesToTimeControl = abs(mlh)
 			} else {
-				movesToTimeControl = abs(mlh + 10 - int(game.MoveClock())) // add 10 more moves in the early stage
+				movesToTimeControl = abs(mlh + 10) // add 10 more moves in the early stage
 			}
 		}
 		if game.Position().IsEndGame() {
