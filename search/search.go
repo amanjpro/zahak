@@ -12,7 +12,6 @@ import (
 var STOP_SEARCH_GLOBALLY = false
 
 var nodesVisited int64 = 0
-var nodesSearched int64 = 0
 var cacheHits int64 = 0
 var pv = NewPVLine(100)
 
@@ -32,15 +31,10 @@ func (e *EvalMove) Eval() int16 {
 func Search(position *Position, depth int8, ply uint16) EvalMove {
 	STOP_SEARCH_GLOBALLY = false
 	nodesVisited = 0
-	nodesSearched = 0
 	cacheHits = 0
 	var bestEval EvalMove
-	start := time.Now()
 	bestMove, score := startMinimax(position, depth, ply)
 	bestEval = EvalMove{score, bestMove}
-	end := time.Now()
-	fmt.Printf("Visited: %d, Selected: %d, Cache-hit: %d\n\n", nodesVisited, nodesSearched, cacheHits)
-	fmt.Printf("Took %f seconds\n\n", end.Sub(start).Seconds())
 	pv.Pop() // pop our move
 	pv.Pop() // pop our opponent's move
 	return bestEval
@@ -65,18 +59,19 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 
 	start := time.Now()
 	var lastDepth int8
+END_LOOP:
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
-		lastDepth = iterationDepth
 		if STOP_SEARCH_GLOBALLY {
-			break
+			break END_LOOP
 		}
+		lastDepth = iterationDepth
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
 		searchPv := true
 		for index, move := range orderedMoves {
 			if STOP_SEARCH_GLOBALLY {
-				break
+				break END_LOOP
 			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
@@ -163,11 +158,6 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		return quiescence(position, alpha, beta, depthLeft, 0, Evaluate(position))
 	}
 
-	nodesSearched += 1
-
-	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
-
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
 	if found && cachedEval.Depth >= depthLeft {
@@ -200,6 +190,9 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	}
 
 	searchPv := true
+
+	legalMoves := position.LegalMoves()
+	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
 
 	foundExact := false
 	for _, move := range orderedMoves {
@@ -246,8 +239,6 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	if depthLeft <= 0 {
 		return quiescence(position, beta-1, beta, depthLeft, 0, Evaluate(position))
 	}
-
-	nodesSearched += 1
 
 	legalMoves := position.LegalMoves()
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
