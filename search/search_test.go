@@ -8,6 +8,17 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+func TestBlackShouldFindEscape(t *testing.T) {
+	game := FromFen("3rbbn1/BQ1kp3/2p1q2p/N4p2/8/3P4/P1P2PPP/5RK1 b - - 0 27", true)
+	evalMove := Search(game.Position(), 7, 27)
+	expected := Move{D7, D6, NoType, 0}
+	mv := *evalMove.move
+	mvStr := mv.ToString()
+	if mv != expected {
+		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
+	}
+}
+
 func TestBlackCanFindASimpleTactic(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/2r4n/3K4 b - - 0 1", true)
 	evalMove := Search(game.Position(), 7, 1)
