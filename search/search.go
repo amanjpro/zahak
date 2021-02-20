@@ -17,7 +17,7 @@ var cacheHits int64 = 0
 var pv = NewPVLine(100)
 
 type EvalMove struct {
-	eval int
+	eval int16
 	move *Move
 }
 
@@ -25,7 +25,7 @@ func (e *EvalMove) Move() *Move {
 	return e.move
 }
 
-func (e *EvalMove) Eval() int {
+func (e *EvalMove) Eval() int16 {
 	return e.eval
 }
 
@@ -46,12 +46,12 @@ func Search(position *Position, depth int8, ply uint16) EvalMove {
 	return bestEval
 }
 
-func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
+func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 
 	// Collect evaluation for moves per iteration to help us order moves for the
 	// next iteration
 	legalMoves := position.LegalMoves()
-	iterationEvals := make([]int, len(legalMoves))
+	iterationEvals := make([]int16, len(legalMoves))
 
 	var bestMove *Move
 	var previousBestMove *Move
@@ -150,7 +150,7 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	return bestMove, bestScore
 }
 
-func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int, beta int, ply uint16, pvline *PVLine) int {
+func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, pvline *PVLine) int16 {
 	nodesVisited += 1
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -199,7 +199,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	}
 
 	if isNullMoveAllowed {
-		tempo := 20           // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
+		tempo := int16(20)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
 		bound := beta - tempo // variable bound
 		position.NullMove()
 		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, true)
@@ -245,8 +245,8 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 	return alpha
 }
 
-func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16,
-	multiCutFlag bool) int {
+func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int16, ply uint16,
+	multiCutFlag bool) int16 {
 	nodesVisited += 1
 
 	if STOP_SEARCH_GLOBALLY {

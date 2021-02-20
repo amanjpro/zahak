@@ -65,9 +65,9 @@ func (p *Piece) Type() PieceType {
 	return NoType
 }
 
-const MAX_INT = int((^uint(0)) >> 1)
+const MAX_INT = int16(32767)
 
-func (p *Piece) Weight() int {
+func (p *Piece) Weight() int16 {
 	switch *p {
 	case WhitePawn, BlackPawn:
 		return 100

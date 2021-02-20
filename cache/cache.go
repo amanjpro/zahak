@@ -2,7 +2,7 @@ package cache
 
 type CachedEval struct {
 	Hash  uint64
-	Eval  int
+	Eval  int16
 	Depth int8
 	Type  NodeType
 	Age   uint16

@@ -5,7 +5,7 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func quiescence(position *Position, alpha int, beta int, ply int, standPat int) int {
+func quiescence(position *Position, alpha int16, beta int16, ply uint16, standPat int16) int16 {
 
 	outcome := position.Status()
 	if outcome == Checkmate {

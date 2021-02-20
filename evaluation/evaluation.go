@@ -4,26 +4,26 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-func Evaluate(position *Position) int {
+func Evaluate(position *Position) int16 {
 	board := position.Board
 	allPieces := board.AllPieces()
 	return evaluate(position, allPieces)
 }
 
-const CHECKMATE_EVAL = 9000_000_000_000
-const DIVIDER = 800
+const CHECKMATE_EVAL int16 = 3100
+const DIVIDER int16 = 800
 
-func evaluate(position *Position, allPieces map[Square]Piece) int {
+func evaluate(position *Position, allPieces map[Square]Piece) int16 {
 
-	whiteBishops := 0
-	whiteKnights := 0
-	blackBishops := 0
-	blackKnights := 0
-	blackPawns := 0
-	whitePawns := 0
+	whiteBishops := int16(0)
+	whiteKnights := int16(0)
+	blackBishops := int16(0)
+	blackKnights := int16(0)
+	blackPawns := int16(0)
+	whitePawns := int16(0)
 
-	blackCentipawn := 0
-	whiteCentipawn := 0
+	blackCentipawn := int16(0)
+	whiteCentipawn := int16(0)
 
 	whitePawnsPerFile, blackPawnsPerFile := pawnsPerFile(allPieces)
 	//whitePawnsPerRank, blackPawnsPerRank := pawnsPerRank(allPieces)
@@ -56,61 +56,61 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 			}
 		case WhiteQueen:
 			whiteCentipawn += piece.Weight()
-			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
+			whiteCentipawn += 5 * piece.Weight() * int16(rank+1) / DIVIDER
 		case BlackQueen:
 			blackCentipawn += piece.Weight()
-			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
+			blackCentipawn += 5 * piece.Weight() * (9 - int16(rank+1)) / DIVIDER
 		case WhiteRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
-			bonus := 0
+			bonus := int16(0)
 			if white == 0 && black == 0 { // open file
 				bonus = 1
 			} else if white == 0 { // semi-open file
 				bonus = 5
 			}
 			whiteCentipawn += piece.Weight() + bonus
-			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
+			whiteCentipawn += 5 * piece.Weight() * int16(rank+1) / DIVIDER
 		case BlackRook:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
-			bonus := 0
+			bonus := int16(0)
 			if white == 0 && black == 0 { // open file
 				bonus = 1
 			} else if black == 0 { // semi-open file
 				bonus = 5
 			}
 			blackCentipawn += piece.Weight() + bonus
-			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
+			blackCentipawn += 5 * piece.Weight() * (9 - int16(rank+1)) / DIVIDER
 		case WhiteBishop:
 			whiteBishops += 1
-			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
+			whiteCentipawn += 5 * piece.Weight() * int16(rank+1) / DIVIDER
 		case BlackBishop:
 			blackBishops += 1
-			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
+			blackCentipawn += 5 * piece.Weight() * (9 - int16(rank+1)) / DIVIDER
 		case WhiteKnight:
 			whiteKnights += 1
-			whiteCentipawn += 5 * piece.Weight() * int(rank+1) / DIVIDER
+			whiteCentipawn += 5 * piece.Weight() * int16(rank+1) / DIVIDER
 		case BlackKnight:
 			blackKnights += 1
-			blackCentipawn += 5 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
+			blackCentipawn += 5 * piece.Weight() * (9 - int16(rank+1)) / DIVIDER
 		case WhitePawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
-			bonus := 0
+			bonus := int16(0)
 			if black == 0 { // passed pawn
 				if file != FileH {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if white >= 1 && black == 0 { // supported passed pawn
-						bonus = 10 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
+						bonus = 10 * ((int16(rank+1) * 9) / DIVIDER) * int16(32-len(allPieces)) / 32
 					} else if white >= 1 { // semi-supported passed pawn
-						bonus = 5 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
+						bonus = 5 * ((int16(rank+1) * 9) / DIVIDER) * int16(32-len(allPieces)) / 32
 					} else {
-						bonus = 2 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
+						bonus = 2 * ((int16(rank+1) * 9) / DIVIDER) * int16(32-len(allPieces)) / 32
 					}
 				} else {
-					bonus = 2 * ((int(rank+1) * 9) / DIVIDER) * (32 - len(allPieces)) / 32
+					bonus = 2 * ((int16(rank+1) * 9) / DIVIDER) * int16(32-len(allPieces)) / 32
 				}
 			}
 
@@ -154,24 +154,24 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 			}
 			whitePawns += 1
 			whiteCentipawn += piece.Weight() + bonus
-			whiteCentipawn += 2 * piece.Weight() * (int(rank + 1)) / DIVIDER
+			whiteCentipawn += 2 * piece.Weight() * (int16(rank + 1)) / DIVIDER
 		case BlackPawn:
 			white := whitePawnsPerFile[file]
 			black := blackPawnsPerFile[file]
-			bonus := 0
+			bonus := int16(0)
 			if white == 0 { // passed pawn
 				if file != FileH {
 					white := whitePawnsPerFile[file+1]
 					black := blackPawnsPerFile[file+1]
 					if black >= 1 && white == 0 { // supported passed pawn
-						bonus = 10 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
+						bonus = 10 * ((9 - int16(rank+1)*9) / DIVIDER) * int16(32-len(allPieces)) / 32
 					} else if black >= 1 { // semi-supported passed pawn
-						bonus = 5 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
+						bonus = 5 * ((9 - int16(rank+1)*9) / DIVIDER) * int16(32-len(allPieces)) / 32
 					} else {
-						bonus = 3 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
+						bonus = 3 * ((9 - int16(rank+1)*9) / DIVIDER) * int16(32-len(allPieces)) / 32
 					}
 				} else {
-					bonus = 3 * ((9 - int(rank+1)*9) / DIVIDER) * (32 - len(allPieces)) / 32
+					bonus = 3 * ((9 - int16(rank+1)*9) / DIVIDER) * int16(32-len(allPieces)) / 32
 				}
 			}
 
@@ -215,16 +215,16 @@ func evaluate(position *Position, allPieces map[Square]Piece) int {
 			}
 			blackPawns += 1
 			blackCentipawn += piece.Weight() + bonus
-			blackCentipawn += 2 * piece.Weight() * (9 - int(rank+1)) / DIVIDER
+			blackCentipawn += 2 * piece.Weight() * (9 - int16(rank+1)) / DIVIDER
 		}
 	}
 	pawns := blackPawns + whitePawns
 	N := WhiteKnight
 	B := WhiteBishop
-	whiteCentipawn += whiteBishops * B.Weight() * (1 + (16-pawns)/64)
-	whiteCentipawn += whiteKnights * N.Weight() * (1 - (16-pawns)/64)
-	blackCentipawn += blackBishops * B.Weight() * (1 + (16-pawns)/64)
-	blackCentipawn += blackKnights * N.Weight() * (1 - (16-pawns)/64)
+	whiteCentipawn += whiteBishops * B.Weight() * int16(1+(16-pawns)/64)
+	whiteCentipawn += whiteKnights * N.Weight() * int16(1-(16-pawns)/64)
+	blackCentipawn += blackBishops * B.Weight() * int16(1+(16-pawns)/64)
+	blackCentipawn += blackKnights * N.Weight() * int16(1-(16-pawns)/64)
 
 	if whiteBishops >= 2 && blackBishops < 2 {
 		whiteCentipawn += 3 + (8-blackPawns)/64

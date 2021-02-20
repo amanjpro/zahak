@@ -135,7 +135,7 @@ func orderMoves(validMoves *ValidMoves) []*Move {
 
 type IterationMoves struct {
 	moves []*Move
-	evals []int
+	evals []int16
 }
 
 func (iter *IterationMoves) Len() int {
