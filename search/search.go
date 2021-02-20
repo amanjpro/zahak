@@ -246,10 +246,24 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	legalMoves := position.LegalMoves()
 	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, searchHeight + 1})
 
+	hash := position.Hash()
+	cachedEval, found := TranspositionTable.Get(hash)
+	if found &&
+		cachedEval.Depth >= depthLeft {
+		cacheHits += 1
+		score := cachedEval.Eval
+		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+			return beta
+		}
+		if score <= beta-1 && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+			return beta - 1
+		}
+	}
 	// Multi-Cut Pruning
 	R := int8(3)
 	M := 6
 	C := 3
+
 	if depthLeft >= 5 && multiCutFlag && len(legalMoves) > M {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
@@ -266,18 +280,17 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		}
 	}
 
-	hash := position.Hash()
-	cachedEval, found := TranspositionTable.Get(hash)
-	if found &&
-		cachedEval.Depth >= depthLeft {
-		cacheHits += 1
-		score := cachedEval.Eval
-		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
-			return beta
-		}
-		if score <= beta-1 && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
-			return beta - 1
-		}
+	eval := Evaluate(position)
+	margin := 600 // Rook + Pawn
+
+	// Razoring
+	if depthLeft < 2 && eval+margin < beta-1 {
+		return quiescence(position, beta-1, beta, 0, eval)
+	}
+
+	// Reverse Futility Pruning
+	if depthLeft < 5 && eval-margin >= beta {
+		return eval - margin /* fail soft */
 	}
 
 	for _, move := range orderedMoves {
