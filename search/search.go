@@ -304,20 +304,28 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		lastRank = Rank2
 	}
 
-	for _, move := range orderedMoves {
-		// Extended Futility Pruning
+	for i, move := range orderedMoves {
+		LMR := int8(0)
 		if !isInCheck && searchHeight >= 4 && depthLeft == 2 {
 			board := position.Board
 			movingPiece := board.PieceAt(move.Source)
 			capturedPiece := board.PieceAt(move.Destination)
 			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
+
+			// Extended Futility Pruning
 			if !move.HasTag(Check) && futility+capturedPiece.Weight() <= beta-1 &&
 				move.PromoType == NoType && !isPromoting {
 				continue
 			}
+
+			// Late Move Reduction
+			if i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
+				LMR = 1
+			}
 		}
+
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-		score := -zeroWindowSearch(position, depthLeft-1, searchHeight+1, 1-beta, ply, !multiCutFlag)
+		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, !multiCutFlag)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
 			return beta // fail-hard beta-cutoff
