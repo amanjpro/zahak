@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -11,6 +12,8 @@ import (
 )
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+var timerHalter chan bool
 
 func UCI() {
 	var game Game
@@ -32,9 +35,12 @@ func UCI() {
 				game = FromFen(startFen, true)
 			case "stop\n":
 				STOP_SEARCH_GLOBALLY = true
+				if timerHalter != nil {
+					timerHalter <- true
+				}
 			default:
 				if strings.HasPrefix(cmd, "go") {
-					go findMove(game.Position(), depth, game.MoveClock())
+					go findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen, false)
@@ -64,8 +70,61 @@ func UCI() {
 	}
 }
 
-func findMove(pos *Position, depth int8, ply uint16) {
-	evalMove := Search(pos, depth, ply)
-	pos.MakeMove(evalMove.Move())
-	fmt.Printf("bestmove %s\n", evalMove.Move().ToString())
+func findMove(game Game, depth int8, ply uint16, cmd string) {
+	fields := strings.Fields(cmd)
+
+	pos := game.Position()
+	noTC := false
+	timeToThink := 0
+	inc := 0
+	movesToGo := 0
+	perMove := false
+	for i := 0; i < len(fields); i++ {
+		switch fields[i] {
+		case "wtime":
+			if pos.Turn() == White {
+				timeToThink, _ = strconv.Atoi(fields[i+1])
+				i++
+			}
+		case "btime":
+			if pos.Turn() == Black {
+				timeToThink, _ = strconv.Atoi(fields[i+1])
+				i++
+			}
+		case "winc":
+			if pos.Turn() == White {
+				inc, _ = strconv.Atoi(fields[i+1])
+				i++
+			}
+		case "binc":
+			if pos.Turn() == Black {
+				inc, _ = strconv.Atoi(fields[i+1])
+				i++
+			}
+		case "movestogo":
+			movesToGo, _ = strconv.Atoi(fields[i+1])
+			i++
+		case "depth":
+			newPly, _ := strconv.Atoi(fields[i+1])
+			ply = uint16(newPly)
+			i++
+		case "movetime":
+			timeToThink, _ = strconv.Atoi(fields[i+1])
+			perMove = true
+			i++
+		case "infinite":
+			noTC = true
+		}
+	}
+
+	if !noTC {
+		timerHalter = make(chan bool)
+		go InitiateTimer(&game, timeToThink, perMove, inc, movesToGo, timerHalter)
+		evalMove := Search(game.Position(), depth, ply)
+		fmt.Printf("bestmove %s\n", evalMove.Move().ToString())
+		timerHalter <- true
+	} else {
+		evalMove := Search(game.Position(), depth, ply)
+		fmt.Printf("bestmove %s\n", evalMove.Move().ToString())
+	}
 }

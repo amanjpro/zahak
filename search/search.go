@@ -54,13 +54,14 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 	iterationEvals := make([]int, len(legalMoves))
 
 	var bestMove *Move
+	var previousBestMove *Move
 
 	bestScore := -MAX_INT
 
-	timeForSearch := 3 * time.Minute // TODO: with time management this should go
-
 	alpha := -MAX_INT
 	beta := MAX_INT
+
+	fruitelessIterations := 0
 
 	start := time.Now()
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
@@ -69,13 +70,6 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 		line := NewPVLine(iterationDepth + 1)
 		searchPv := true
 		for index, move := range orderedMoves {
-			if time.Now().Sub(start) > timeForSearch {
-				if index != 0 {
-					return bestMove, currentBestScore
-				} else {
-					return bestMove, bestScore
-				}
-			}
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), index+1)
 			sendPv := false
 			cp, ep, tg, hc := position.MakeMove(move)
@@ -118,6 +112,16 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int) {
 					cacheHits, nodesVisited, currentBestScore, timeSpent.Milliseconds(), pv.ToString())
 			}
 		}
+
+		if iterationDepth >= 6 && *bestMove == *previousBestMove {
+			fruitelessIterations++
+			if fruitelessIterations > 4 {
+				break
+			}
+		} else {
+			fruitelessIterations = 0
+		}
+		previousBestMove = bestMove
 		timeSpent := time.Now().Sub(start)
 		fmt.Printf("info depth %d nps %d tbhits %d nodes %d score cp %d time %d pv %s\n\n",
 			iterationDepth, nodesVisited/1000*int64(timeSpent.Seconds()),
@@ -139,7 +143,11 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 		return 0
 	}
 
-	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
+	if STOP_SEARCH_GLOBALLY {
+		return alpha
+	}
+
+	if depthLeft == 0 {
 		return quiescence(position, alpha, beta, 0, Evaluate(position))
 	}
 
@@ -223,7 +231,12 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int,
 
 func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int, ply uint16) int {
 	nodesVisited += 1
-	if depthLeft == 0 || STOP_SEARCH_GLOBALLY {
+
+	if STOP_SEARCH_GLOBALLY {
+		return beta - 1
+	}
+
+	if depthLeft <= 0 {
 		return quiescence(position, beta-1, beta, 0, Evaluate(position))
 	}
 
