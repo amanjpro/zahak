@@ -98,7 +98,6 @@ END_LOOP:
 					bestMove = move
 					bestScore = currentBestScore
 					searchPv = false
-
 				}
 			} else {
 				iterationEvals[index] = -MAX_INT // if it is, then too bad, that is a bad move
@@ -209,7 +208,10 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		}
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
-			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
+			// Those scores are never useufl
+			if score != -MAX_INT && score != MAX_INT {
+				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
+			}
 			return beta
 		}
 		if score > alpha {
@@ -325,8 +327,13 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, !multiCutFlag)
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
+			// Those scores are never useufl
+			if score != -MAX_INT && score != MAX_INT {
+				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
+			}
 			return beta // fail-hard beta-cutoff
 		}
 	}
+	TranspositionTable.Set(hash, &CachedEval{hash, beta - 1, depthLeft, UpperBound, ply})
 	return beta - 1 // fail-hard, return alpha
 }
