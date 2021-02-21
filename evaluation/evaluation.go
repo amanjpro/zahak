@@ -159,36 +159,102 @@ func middlegameEval(position *Position) int16 {
 	// blacks := board.GetBlackPieces()
 	// all := whites | blacks
 
-	for index := 0; index < 64; index++ {
-		// index := bits.TrailingZeros64(all)
+	// PST for black pieces
+	pieceIter := bbBlackPawn
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
+		blackCentipawns += pawnPst[flip[index]]
+		pieceIter ^= mask
+	}
 
-		if bbBlackPawn&(mask) != 0 {
-			blackCentipawns += pawnPst[flip[index]]
-		} else if bbWhitePawn&(mask) != 0 {
-			whiteCentipawns += pawnPst[index]
-		} else if bbBlackKnight&(mask) != 0 {
-			blackCentipawns += knightPst[flip[index]]
-		} else if bbWhiteKnight&(mask) != 0 {
-			whiteCentipawns += knightPst[index]
-		} else if bbBlackBishop&(mask) != 0 {
-			blackCentipawns += bishopPst[flip[index]]
-		} else if bbWhiteBishop&(mask) != 0 {
-			whiteCentipawns += bishopPst[index]
-		} else if bbBlackRook&(mask) != 0 {
-			blackCentipawns += rookPst[flip[index]]
-		} else if bbWhiteRook&(mask) != 0 {
-			whiteCentipawns += rookPst[index]
-		} else if bbBlackQueen&(mask) != 0 {
-			blackCentipawns += queenPst[flip[index]]
-		} else if bbWhiteQueen&(mask) != 0 {
-			whiteCentipawns += queenPst[index]
-		} else if bbBlackKing&(mask) != 0 {
-			blackCentipawns += kingPst[flip[index]]
-		} else if bbWhiteKing&(mask) != 0 {
-			whiteCentipawns += kingPst[index]
-		}
-		// all ^= mask
+	pieceIter = bbBlackKnight
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		blackCentipawns += knightPst[flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbBlackBishop
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		blackCentipawns += bishopPst[flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbBlackRook
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		blackCentipawns += rookPst[flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbBlackQueen
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		blackCentipawns += queenPst[flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbBlackKing
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		blackCentipawns += kingPst[flip[index]]
+		pieceIter ^= mask
+	}
+
+	// PST for white pieces
+	pieceIter = bbWhitePawn
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		whiteCentipawns += pawnPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbWhiteKnight
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		whiteCentipawns += knightPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbWhiteBishop
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		whiteCentipawns += bishopPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbWhiteRook
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		whiteCentipawns += rookPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbWhiteQueen
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		whiteCentipawns += queenPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = bbWhiteKing
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		whiteCentipawns += kingPst[index]
+		pieceIter ^= mask
 	}
 
 	if position.Turn() == White {
