@@ -22,6 +22,14 @@ type Bitboard struct {
 	blackPieces uint64
 }
 
+func (b *Bitboard) GetWhitePieces() uint64 {
+	return b.whitePieces
+}
+
+func (b *Bitboard) GetBlackPieces() uint64 {
+	return b.blackPieces
+}
+
 func (b *Bitboard) GetBitboardOf(piece Piece) uint64 {
 	switch piece {
 	case BlackPawn:

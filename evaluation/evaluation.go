@@ -1,17 +1,202 @@
 package evaluation
 
 import (
+	"math/bits"
+
 	. "github.com/amanjpro/zahak/engine"
 )
 
 func Evaluate(position *Position) int16 {
-	board := position.Board
-	allPieces := board.AllPieces()
-	return evaluate(position, allPieces)
+	// board := position.Board
+	// allPieces := board.AllPieces()
+	return middlegameEval(position)
 }
 
 const CHECKMATE_EVAL int16 = 3100
 const DIVIDER int16 = 800
+
+// Piece Square Tables
+var pawnPst = []int16{
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 15, 15, 0, 0, 0,
+	0, 0, 0, 10, 10, 0, 0, 0,
+	0, 0, 0, 5, 5, 0, 0, 0,
+	0, 0, 0, -25, -25, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+}
+
+var knightPst = []int16{
+	-40, -25, -25, -25, -25, -25, -25, -40,
+	-30, 0, 0, 0, 0, 0, 0, -30,
+	-30, 0, 0, 0, 0, 0, 0, -30,
+	-30, 0, 0, 15, 15, 0, 0, -30,
+	-30, 0, 0, 15, 15, 0, 0, -30,
+	-30, 0, 10, 0, 0, 10, 0, -30,
+	-30, 0, 0, 5, 5, 0, 0, -30,
+	-40, -30, -25, -25, -25, -25, -30, -40,
+}
+
+var bishopPst = []int16{
+	-10, 0, 0, 0, 0, 0, 0, -10,
+	-10, 5, 0, 0, 0, 0, 5, -10,
+	-10, 0, 5, 0, 0, 5, 0, -10,
+	-10, 0, 0, 10, 10, 0, 0, -10,
+	-10, 0, 5, 10, 10, 5, 0, -10,
+	-10, 0, 5, 0, 0, 5, 0, -10,
+	-10, 5, 0, 0, 0, 0, 5, -10,
+	-10, -20, -20, -20, -20, -20, -20, -10,
+}
+
+var rookPst = []int16{
+	0, 0, 0, 0, 0, 0, 0, 0,
+	10, 10, 10, 10, 10, 10, 10, 10,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 5, 5, 0, 0, 0,
+}
+
+var queenPst = []int16{
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	5, 5, 10, 10, 10, 15, 5, 5,
+	5, 5, 10, 15, 15, 10, 5, 5,
+}
+
+var kingPst = []int16{
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	-25, -25, -25, -25, -25, -25, -25, -25,
+	10, 15, 10, -15, -15, 15, 15, 10,
+}
+
+var flip = []int16{
+	56, 57, 58, 59, 60, 61, 62, 63,
+	48, 49, 50, 51, 52, 53, 54, 55,
+	40, 41, 42, 43, 44, 45, 46, 47,
+	32, 33, 34, 35, 36, 37, 38, 39,
+	24, 25, 26, 27, 28, 29, 30, 31,
+	16, 17, 18, 19, 20, 21, 22, 23,
+	8, 9, 10, 11, 12, 13, 14, 15,
+	0, 1, 2, 3, 4, 5, 6, 7,
+}
+
+func middlegameEval(position *Position) int16 {
+	board := position.Board
+	p := BlackPawn
+	n := BlackKnight
+	b := BlackBishop
+	r := BlackRook
+	q := BlackQueen
+
+	// Compute material balance
+	bbBlackPawn := board.GetBitboardOf(BlackPawn)
+	bbBlackKnight := board.GetBitboardOf(BlackKnight)
+	bbBlackBishop := board.GetBitboardOf(BlackBishop)
+	bbBlackRook := board.GetBitboardOf(BlackRook)
+	bbBlackQueen := board.GetBitboardOf(BlackQueen)
+	bbBlackKing := board.GetBitboardOf(BlackKing)
+
+	bbWhitePawn := board.GetBitboardOf(WhitePawn)
+	bbWhiteKnight := board.GetBitboardOf(WhiteKnight)
+	bbWhiteBishop := board.GetBitboardOf(WhiteBishop)
+	bbWhiteRook := board.GetBitboardOf(WhiteRook)
+	bbWhiteQueen := board.GetBitboardOf(WhiteQueen)
+	bbWhiteKing := board.GetBitboardOf(WhiteKing)
+
+	blackPawnsCount := int16(bits.OnesCount64(bbBlackPawn))
+	blackKnightsCount := int16(bits.OnesCount64(bbBlackKnight))
+	blackBishopsCount := int16(bits.OnesCount64(bbBlackBishop))
+	blackRooksCount := int16(bits.OnesCount64(bbBlackRook))
+	blackQueensCount := int16(bits.OnesCount64(bbBlackQueen))
+
+	whitePawnsCount := int16(bits.OnesCount64(bbWhitePawn))
+	whiteKnightsCount := int16(bits.OnesCount64(bbWhiteKnight))
+	whiteBishopsCount := int16(bits.OnesCount64(bbWhiteBishop))
+	whiteRooksCount := int16(bits.OnesCount64(bbWhiteRook))
+	whiteQueensCount := int16(bits.OnesCount64(bbWhiteQueen))
+
+	blackCentipawns := blackPawnsCount * p.Weight()
+	blackCentipawns += blackKnightsCount * n.Weight()
+	blackCentipawns += blackBishopsCount * b.Weight()
+	blackCentipawns += blackRooksCount * r.Weight()
+	blackCentipawns += blackQueensCount * q.Weight()
+
+	whiteCentipawns := whitePawnsCount * p.Weight()
+	whiteCentipawns += whiteKnightsCount * n.Weight()
+	whiteCentipawns += whiteBishopsCount * b.Weight()
+	whiteCentipawns += whiteRooksCount * r.Weight()
+	whiteCentipawns += whiteQueensCount * q.Weight()
+
+	// pawns := blackPawnsCount + whitePawnsCount
+	// This is not correct
+	// whiteCentipawns += whiteBishopsCount * b.Weight() * int16(1+(16-pawns)/64)
+	// whiteCentipawns += whiteKnightsCount * n.Weight() * int16(1-(16-pawns)/64)
+	// blackCentipawns += blackBishopsCount * b.Weight() * int16(1+(16-pawns)/64)
+	// blackCentipawns += blackKnightsCount * n.Weight() * int16(1-(16-pawns)/64)
+	//
+	// 2 Bishops vs 2 Knights
+	if whiteBishopsCount >= 2 && blackBishopsCount < 2 {
+		whiteCentipawns += 25
+	}
+	if whiteBishopsCount < 2 && blackBishopsCount >= 2 {
+		blackCentipawns += 25
+	}
+
+	// whites := board.GetWhitePieces()
+	// blacks := board.GetBlackPieces()
+	// all := whites | blacks
+
+	for index := 0; index < 64; index++ {
+		// index := bits.TrailingZeros64(all)
+		mask := uint64(1 << index)
+
+		if bbBlackPawn&(mask) != 0 {
+			blackCentipawns += pawnPst[flip[index]]
+		} else if bbWhitePawn&(mask) != 0 {
+			whiteCentipawns += pawnPst[index]
+		} else if bbBlackKnight&(mask) != 0 {
+			blackCentipawns += knightPst[flip[index]]
+		} else if bbWhiteKnight&(mask) != 0 {
+			whiteCentipawns += knightPst[index]
+		} else if bbBlackBishop&(mask) != 0 {
+			blackCentipawns += bishopPst[flip[index]]
+		} else if bbWhiteBishop&(mask) != 0 {
+			whiteCentipawns += bishopPst[index]
+		} else if bbBlackRook&(mask) != 0 {
+			blackCentipawns += rookPst[flip[index]]
+		} else if bbWhiteRook&(mask) != 0 {
+			whiteCentipawns += rookPst[index]
+		} else if bbBlackQueen&(mask) != 0 {
+			blackCentipawns += queenPst[flip[index]]
+		} else if bbWhiteQueen&(mask) != 0 {
+			whiteCentipawns += queenPst[index]
+		} else if bbBlackKing&(mask) != 0 {
+			blackCentipawns += kingPst[flip[index]]
+		} else if bbWhiteKing&(mask) != 0 {
+			whiteCentipawns += kingPst[index]
+		}
+		// all ^= mask
+	}
+
+	if position.Turn() == White {
+		return whiteCentipawns - blackCentipawns
+	} else {
+		return blackCentipawns - whiteCentipawns
+	}
+}
 
 func evaluate(position *Position, allPieces map[Square]Piece) int16 {
 
