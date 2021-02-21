@@ -77,6 +77,6 @@ func ResetCache() {
 		TranspositionTable.items = make([]*CachedEval, TranspositionTable.size)
 		TranspositionTable.consumed = 0
 	} else {
-		NewCache(4)
+		NewCache(40)
 	}
 }
