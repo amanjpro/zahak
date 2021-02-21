@@ -1,11 +1,15 @@
 package engine
 
+import (
+	"github.com/brentp/intintmap"
+)
+
 type Position struct {
 	Board         Bitboard
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
-	Positions     map[uint64]int8
+	Positions     *intintmap.Map
 	HalfMoveClock uint8
 }
 
@@ -116,11 +120,11 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag, uint8) {
 
 	p.ToggleTurn()
 	updateHash(p, move, movingPiece, capturedPiece, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	_, ok := p.Positions[p.Hash()]
+	v, ok := p.Positions.Get(int64(p.Hash()))
 	if ok {
-		p.Positions[p.Hash()] += 1
+		p.Positions.Put(int64(p.Hash()), v+1)
 	} else {
-		p.Positions[p.Hash()] = 1
+		p.Positions.Put(int64(p.Hash()), 1)
 	}
 	return capturedPiece, ep, tag, hc
 }
@@ -135,12 +139,12 @@ func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, cap
 	p.HalfMoveClock = halfClock
 	p.EnPassant = enPassant
 
-	v, ok := p.Positions[p.Hash()]
+	v, ok := p.Positions.Get(int64(p.Hash()))
 	if ok {
 		if v == 1 {
-			delete(p.Positions, p.Hash())
+			p.Positions.Del(int64(p.Hash()))
 		} else {
-			p.Positions[p.Hash()] -= 1
+			p.Positions.Put(int64(p.Hash()), v-1)
 		}
 	}
 
@@ -196,7 +200,7 @@ func (p *Position) IsInCheck() bool {
 }
 
 func (p *Position) Status() Status {
-	value, ok := p.Positions[p.Hash()]
+	value, ok := p.Positions.Get(int64(p.Hash()))
 	if ok && value >= 3 {
 		return Draw
 	}
