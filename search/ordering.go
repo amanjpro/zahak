@@ -93,9 +93,15 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		if capPiece1.Type() > capPiece2.Type() {
 			return true
 		}
+		if capPiece2.Type() > capPiece1.Type() {
+			return false
+		}
 		// Who is capturing?
-		if piece1.Type() <= piece2.Type() {
+		if piece1.Type() < piece2.Type() {
 			return true
+		}
+		if piece2.Type() < piece1.Type() {
+			return false
 		}
 	} else if move1.HasTag(Capture) {
 		return true
@@ -111,7 +117,7 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		return false
 	}
 	// Prefer smaller pieces
-	if piece1.Type() <= piece2.Type() {
+	if piece1.Type() < piece2.Type() {
 		return true
 	}
 
