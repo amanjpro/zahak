@@ -105,6 +105,10 @@ func (b *Bitboard) IsVerticalDoubleRook(sq Square, otherRooks uint64, occupied u
 	return (horizontalAttacks & otherRooks) != 0
 }
 
+func (b *Bitboard) AllAttacks(color Color) uint64 {
+	return tabooSquares(*b, color)
+}
+
 func max(x int16, y int16) int16 {
 	if x > y {
 		return x

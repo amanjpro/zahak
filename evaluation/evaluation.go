@@ -100,6 +100,7 @@ func middlegameEval(position *Position) int16 {
 	b := BlackBishop
 	r := BlackRook
 	q := BlackQueen
+	turn := position.Turn()
 
 	// Compute material balance
 	bbBlackPawn := board.GetBitboardOf(BlackPawn)
@@ -422,7 +423,22 @@ func middlegameEval(position *Position) int16 {
 		blackCentipawns += 25
 	}
 
-	if position.Turn() == White {
+	// mobility and attacks
+	whiteAttacks := board.AllAttacks(White)
+	blackAttacks := board.AllAttacks(Black)
+	wAttackCounts := bits.OnesCount64(whiteAttacks)
+	bAttackCounts := bits.OnesCount64(blackAttacks)
+
+	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32)
+	blackAggressivity := bits.OnesCount64(blackAttacks << 32)
+
+	whiteCentipawns += int16(2 * (wAttackCounts - bAttackCounts))
+	blackCentipawns += int16(2 * (bAttackCounts - wAttackCounts))
+
+	whiteCentipawns += int16(3 * (whiteAggressivity - blackAggressivity))
+	blackCentipawns += int16(3 * (blackAggressivity - whiteAggressivity))
+
+	if turn == White {
 		return whiteCentipawns - blackCentipawns
 	} else {
 		return blackCentipawns - whiteCentipawns
