@@ -66,7 +66,6 @@ END_LOOP:
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
-		searchPv := true
 		for index, move := range orderedMoves {
 			if STOP_SEARCH_GLOBALLY {
 				break END_LOOP
@@ -75,14 +74,7 @@ END_LOOP:
 			sendPv := false
 			cp, ep, tg, hc := position.MakeMove(move)
 			score := -MAX_INT
-			if searchPv {
-				score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
-			} else {
-				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, true)
-				if score > alpha { // in fail-soft ... && score < beta ) is common
-					score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
-				}
-			}
+			score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
 			// This only works, because checkmate eval is clearly distinguished from
 			// maximum/minimum beta/alpha
 			if score == CHECKMATE_EVAL {
@@ -95,7 +87,6 @@ END_LOOP:
 					pv.ReplaceLine(line)
 					bestMove = move
 					bestScore = currentBestScore
-					// searchPv = false
 				}
 			} else if score > alpha && score < beta { // no very hard alpha-beta cutoff
 				iterationEvals[index] = score
