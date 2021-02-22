@@ -83,6 +83,32 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	return gain[0]
 }
 
+func (b *Bitboard) IsBackwardPawn(pawn uint64, bb uint64, color Color) bool {
+	if color == White {
+		return (noEaOne(pawn)&bb) != 0 && (noWeOne(pawn)&bb) != 0
+	}
+	if color == Black {
+		return (soEaOne(pawn)&bb) != 0 && (soWeOne(pawn)&bb) != 0
+	}
+	return false
+}
+
+func (b *Bitboard) IsHorizontalDoubleRook(sq Square, otherRooks uint64, occupied uint64) bool {
+	horizontalAttacks := getPositiveRayAttacks(sq, occupied, North) |
+		getNegativeRayAttacks(sq, occupied, South)
+	return (horizontalAttacks & otherRooks) != 0
+}
+
+func (b *Bitboard) IsVerticalDoubleRook(sq Square, otherRooks uint64, occupied uint64) bool {
+	horizontalAttacks := getPositiveRayAttacks(sq, occupied, East) |
+		getNegativeRayAttacks(sq, occupied, West)
+	return (horizontalAttacks & otherRooks) != 0
+}
+
+func (b *Bitboard) AllAttacks(color Color) uint64 {
+	return tabooSquares(*b, color)
+}
+
 func max(x int16, y int16) int16 {
 	if x > y {
 		return x

@@ -22,6 +22,14 @@ type Bitboard struct {
 	blackPieces uint64
 }
 
+func (b *Bitboard) GetWhitePieces() uint64 {
+	return b.whitePieces
+}
+
+func (b *Bitboard) GetBlackPieces() uint64 {
+	return b.blackPieces
+}
+
 func (b *Bitboard) GetBitboardOf(piece Piece) uint64 {
 	switch piece {
 	case BlackPawn:
@@ -92,31 +100,32 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 	// Remove the piece from source square and add it to destination
 	b.Clear(sq)
+	mask := uint64(1 << sq)
 	switch piece {
 	case BlackPawn:
-		b.blackPawn |= (1 << sq)
+		b.blackPawn |= mask
 	case BlackKnight:
-		b.blackKnight |= (1 << sq)
+		b.blackKnight |= mask
 	case BlackBishop:
-		b.blackBishop |= (1 << sq)
+		b.blackBishop |= mask
 	case BlackRook:
-		b.blackRook |= (1 << sq)
+		b.blackRook |= mask
 	case BlackQueen:
-		b.blackQueen |= (1 << sq)
+		b.blackQueen |= mask
 	case BlackKing:
-		b.blackKing |= (1 << sq)
+		b.blackKing |= mask
 	case WhitePawn:
-		b.whitePawn |= (1 << sq)
+		b.whitePawn |= mask
 	case WhiteKnight:
-		b.whiteKnight |= (1 << sq)
+		b.whiteKnight |= mask
 	case WhiteBishop:
-		b.whiteBishop |= (1 << sq)
+		b.whiteBishop |= mask
 	case WhiteRook:
-		b.whiteRook |= (1 << sq)
+		b.whiteRook |= mask
 	case WhiteQueen:
-		b.whiteQueen |= (1 << sq)
+		b.whiteQueen |= mask
 	case WhiteKing:
-		b.whiteKing |= (1 << sq)
+		b.whiteKing |= mask
 	}
 
 	b.blackPieces = b.blackPawn | b.blackKnight | b.blackBishop | b.blackRook | b.blackQueen | b.blackKing
@@ -124,31 +133,38 @@ func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 }
 
 func (b *Bitboard) PieceAt(sq Square) Piece {
+	mask := uint64(1 << sq)
 	if sq == NoSquare {
 		return NoPiece
-	} else if b.blackPawn&(1<<sq) != 0 {
-		return BlackPawn
-	} else if b.whitePawn&(1<<sq) != 0 {
+	}
+	if b.blackPieces&mask != 0 {
+		if b.blackPawn&mask != 0 {
+			return BlackPawn
+		} else if b.blackKnight&mask != 0 {
+			return BlackKnight
+		} else if b.blackBishop&mask != 0 {
+			return BlackBishop
+		} else if b.blackRook&mask != 0 {
+			return BlackRook
+		} else if b.blackQueen&mask != 0 {
+			return BlackQueen
+		} else if b.blackKing&mask != 0 {
+			return BlackKing
+		}
+	}
+
+	// It is not black? then it is white
+	if b.whitePawn&mask != 0 {
 		return WhitePawn
-	} else if b.blackKnight&(1<<sq) != 0 {
-		return BlackKnight
-	} else if b.whiteKnight&(1<<sq) != 0 {
+	} else if b.whiteKnight&mask != 0 {
 		return WhiteKnight
-	} else if b.blackBishop&(1<<sq) != 0 {
-		return BlackBishop
-	} else if b.whiteBishop&(1<<sq) != 0 {
+	} else if b.whiteBishop&mask != 0 {
 		return WhiteBishop
-	} else if b.blackRook&(1<<sq) != 0 {
-		return BlackRook
-	} else if b.whiteRook&(1<<sq) != 0 {
+	} else if b.whiteRook&mask != 0 {
 		return WhiteRook
-	} else if b.blackQueen&(1<<sq) != 0 {
-		return BlackQueen
-	} else if b.whiteQueen&(1<<sq) != 0 {
+	} else if b.whiteQueen&mask != 0 {
 		return WhiteQueen
-	} else if b.blackKing&(1<<sq) != 0 {
-		return BlackKing
-	} else if b.whiteKing&(1<<sq) != 0 {
+	} else if b.whiteKing&mask != 0 {
 		return WhiteKing
 	}
 	return NoPiece
@@ -156,70 +172,78 @@ func (b *Bitboard) PieceAt(sq Square) Piece {
 
 func (b *Bitboard) Clear(square Square) {
 
-	b.blackPawn &^= (1 << square)
-	b.blackKnight &^= (1 << square)
-	b.blackBishop &^= (1 << square)
-	b.blackRook &^= (1 << square)
-	b.blackQueen &^= (1 << square)
-	b.blackKing &^= (1 << square)
-	b.blackPieces &^= (1 << square)
-	b.whitePawn &^= (1 << square)
-	b.whiteKnight &^= (1 << square)
-	b.whiteBishop &^= (1 << square)
-	b.whiteRook &^= (1 << square)
-	b.whiteQueen &^= (1 << square)
-	b.whiteKing &^= (1 << square)
-	b.whitePieces &^= (1 << square)
+	mask := uint64(1 << square)
+	b.blackPawn &^= mask
+	b.blackKnight &^= mask
+	b.blackBishop &^= mask
+	b.blackRook &^= mask
+	b.blackQueen &^= mask
+	b.blackKing &^= mask
+	b.blackPieces &^= mask
+	b.whitePawn &^= mask
+	b.whiteKnight &^= mask
+	b.whiteBishop &^= mask
+	b.whiteRook &^= mask
+	b.whiteQueen &^= mask
+	b.whiteKing &^= mask
+	b.whitePieces &^= mask
 }
 
 func (b *Bitboard) Move(src Square, dest Square) {
 
 	// clear destination square
 	b.Clear(dest)
+	maskSrc := uint64(1 << src)
+	maskDest := uint64(1 << dest)
 
 	// Remove the piece from source square and add it to destination
-	if b.blackPawn&(1<<src) != 0 {
-		b.blackPawn &^= (1 << src)
-		b.blackPawn |= (1 << dest)
-	} else if b.whitePawn&(1<<src) != 0 {
-		b.whitePawn &^= (1 << src)
-		b.whitePawn |= (1 << dest)
-	} else if b.blackKnight&(1<<src) != 0 {
-		b.blackKnight &^= (1 << src)
-		b.blackKnight |= (1 << dest)
-	} else if b.whiteKnight&(1<<src) != 0 {
-		b.whiteKnight &^= (1 << src)
-		b.whiteKnight |= (1 << dest)
-	} else if b.blackBishop&(1<<src) != 0 {
-		b.blackBishop &^= (1 << src)
-		b.blackBishop |= (1 << dest)
-	} else if b.whiteBishop&(1<<src) != 0 {
-		b.whiteBishop &^= (1 << src)
-		b.whiteBishop |= (1 << dest)
-	} else if b.blackRook&(1<<src) != 0 {
-		b.blackRook &^= (1 << src)
-		b.blackRook |= (1 << dest)
-	} else if b.whiteRook&(1<<src) != 0 {
-		b.whiteRook &^= (1 << src)
-		b.whiteRook |= (1 << dest)
-	} else if b.blackQueen&(1<<src) != 0 {
-		b.blackQueen &^= (1 << src)
-		b.blackQueen |= (1 << dest)
-	} else if b.whiteQueen&(1<<src) != 0 {
-		b.whiteQueen &^= (1 << src)
-		b.whiteQueen |= (1 << dest)
-	} else if b.blackKing&(1<<src) != 0 {
-		b.blackKing &^= (1 << src)
-		b.blackKing |= (1 << dest)
-		// Is it a castle?
-		if src == E8 && dest == G8 {
-			b.Move(H8, F8)
-		} else if src == E8 && dest == C8 {
-			b.Move(A8, D8)
+	// is black?
+	if b.blackPieces&maskSrc != 0 {
+		if b.blackPawn&maskSrc != 0 {
+			b.blackPawn &^= maskSrc
+			b.blackPawn |= maskDest
+		} else if b.blackKnight&maskSrc != 0 {
+			b.blackKnight &^= maskSrc
+			b.blackKnight |= maskDest
+		} else if b.blackBishop&maskSrc != 0 {
+			b.blackBishop &^= maskSrc
+			b.blackBishop |= maskDest
+		} else if b.blackRook&maskSrc != 0 {
+			b.blackRook &^= maskSrc
+			b.blackRook |= maskDest
+		} else if b.blackQueen&maskSrc != 0 {
+			b.blackQueen &^= maskSrc
+			b.blackQueen |= maskDest
+		} else if b.blackKing&maskSrc != 0 {
+			b.blackKing &^= maskSrc
+			b.blackKing |= maskDest
+			// Is it a castle?
+			if src == E8 && dest == G8 {
+				b.Move(H8, F8)
+			} else if src == E8 && dest == C8 {
+				b.Move(A8, D8)
+			}
 		}
-	} else if b.whiteKing&(1<<src) != 0 {
-		b.whiteKing &^= (1 << src)
-		b.whiteKing |= (1 << dest)
+	}
+	// Then it is white
+	if b.whitePawn&maskSrc != 0 {
+		b.whitePawn &^= maskSrc
+		b.whitePawn |= maskDest
+	} else if b.whiteKnight&maskSrc != 0 {
+		b.whiteKnight &^= maskSrc
+		b.whiteKnight |= maskDest
+	} else if b.whiteBishop&maskSrc != 0 {
+		b.whiteBishop &^= maskSrc
+		b.whiteBishop |= maskDest
+	} else if b.whiteRook&maskSrc != 0 {
+		b.whiteRook &^= maskSrc
+		b.whiteRook |= maskDest
+	} else if b.whiteQueen&maskSrc != 0 {
+		b.whiteQueen &^= maskSrc
+		b.whiteQueen |= maskDest
+	} else if b.whiteKing&maskSrc != 0 {
+		b.whiteKing &^= maskSrc
+		b.whiteKing |= maskDest
 		// Is it a castle?
 		if src == E1 && dest == G1 {
 			b.Move(H1, F1)

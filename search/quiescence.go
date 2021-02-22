@@ -5,11 +5,11 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func quiescence(position *Position, alpha int16, beta int16, lastDepth int8, ply int8, standPat int16) int16 {
+func quiescence(position *Position, alpha int16, beta int16, ply int8, standPat int16) int16 {
 
 	outcome := position.Status()
 	if outcome == Checkmate {
-		return (-CHECKMATE_EVAL + int16(lastDepth+ply))
+		return -CHECKMATE_EVAL
 	} else if outcome == Draw {
 		return 0
 	}
@@ -30,27 +30,29 @@ func quiescence(position *Position, alpha int16, beta int16, lastDepth int8, ply
 		return standPat
 	}
 
+	isInCheck := position.IsInCheck()
+
 	w := WhitePawn
 	deltaMargin := w.Weight() * 2 // 200 centipawns
 	for _, move := range orderedMoves {
-		if move.HasTag(Capture) && !move.HasTag(EnPassant) {
+		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
 			// SEE pruning
 			board := position.Board
 			movingPiece := board.PieceAt(move.Source)
 			capturedPiece := board.PieceAt(move.Destination)
-			gain := position.Board.StaticExchangeEval(move.Destination, capturedPiece, move.Source, movingPiece)
+			gain := board.StaticExchangeEval(move.Destination, capturedPiece, move.Source, movingPiece)
 			if gain < 0 {
 				continue
 			}
 		}
 		cp, ep, tg, hc := position.MakeMove(move)
-		if cp != NoPiece && standPat < alpha-deltaMargin { // is capture
+		if !isInCheck && cp != NoPiece && standPat < alpha-deltaMargin { // is capture
 			// Delta pruning meaningless captures
 			position.UnMakeMove(move, tg, ep, cp, hc)
 			continue
 		}
 		sp := Evaluate(position)
-		score := -quiescence(position, -beta, -alpha, lastDepth, ply+1, sp)
+		score := -quiescence(position, -beta, -alpha, ply+1, sp)
 		position.UnMakeMove(move, tg, ep, cp, hc)
 		if score >= beta {
 			return beta

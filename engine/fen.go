@@ -121,7 +121,7 @@ func positionFromFen(fen string) Position {
 		NoSquare,
 		0,
 		0,
-		intintmap.New(200, 0.5),
+		intintmap.New(10000, 0.5),
 		uint8(halfMoveClock),
 	}
 

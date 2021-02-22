@@ -12,7 +12,7 @@ func (p *Position) LegalMoves() []*Move {
 	add := func(ms ...*Move) {
 		for _, m := range ms {
 			// make the move
-			capturedPiece, oldEnPassant, oldTag, hc := p.MakeMove(m)
+			capturedPiece, oldEnPassant, oldTag := p.partialMakeMove(m)
 
 			// Does the move puts the moving player in check
 			pNotInCheck := !isInCheck(p.Board, color)
@@ -24,7 +24,7 @@ func (p *Position) LegalMoves() []*Move {
 				// do nothing
 				allMoves = append(allMoves, m)
 			}
-			p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece, hc)
+			p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 		}
 	}
 
@@ -34,7 +34,7 @@ func (p *Position) LegalMoves() []*Move {
 }
 
 func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
-	allMoves := make([]*Move, 0, 40)
+	allMoves := make([]*Move, 0, 200)
 
 	color := p.Turn()
 
@@ -43,7 +43,7 @@ func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
 	add := func(ms ...*Move) {
 		for _, m := range ms {
 			// make the move
-			capturedPiece, oldEnPassant, oldTag, hc := p.MakeMove(m)
+			capturedPiece, oldEnPassant, oldTag := p.partialMakeMove(m)
 
 			// Does the move puts the moving player in check
 			pNotInCheck := !isInCheck(p.Board, color)
@@ -56,7 +56,7 @@ func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
 			} else if isChecked && pNotInCheck { // Check replies are also considered
 				allMoves = append(allMoves, m)
 			}
-			p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece, hc)
+			p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 		}
 	}
 
@@ -121,7 +121,7 @@ func (p *Position) HasLegalMoves() bool {
 	add := func(ms ...*Move) {
 		for _, m := range ms {
 			// make the move
-			capturedPiece, oldEnPassant, oldTag, hc := p.MakeMove(m)
+			capturedPiece, oldEnPassant, oldTag := p.partialMakeMove(m)
 
 			// Does the move puts the moving player in check
 			pNotInCheck := !isInCheck(p.Board, color)
@@ -129,15 +129,15 @@ func (p *Position) HasLegalMoves() bool {
 			if pNotInCheck && isInCheck(p.Board, p.Turn()) { // We put opponent in check
 				m.SetTag(Check)
 				hasMoves = true
-				p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece, hc)
+				p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 				break
 			} else if pNotInCheck { // The move does not put us in check
 				// do nothing
 				hasMoves = true
-				p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece, hc)
+				p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 				break
 			} else {
-				p.UnMakeMove(m, oldTag, oldEnPassant, capturedPiece, hc)
+				p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
 			}
 		}
 	}

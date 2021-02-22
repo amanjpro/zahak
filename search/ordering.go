@@ -87,15 +87,37 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	//
 	// capture ordering
 	if move1.HasTag(Capture) && move2.HasTag(Capture) {
-		// What are we capturing?
 		capPiece1 := board.PieceAt(move1.Destination)
 		capPiece2 := board.PieceAt(move2.Destination)
+		if !move1.HasTag(EnPassant) && !move2.HasTag(EnPassant) {
+			// SEE for ordering
+			gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
+			gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
+
+			if gain1 < 0 && gain2 >= 0 {
+				return false
+			}
+			if gain1 >= 0 && gain2 < 0 {
+				return true
+			}
+		} else if !move1.HasTag(EnPassant) {
+			// SEE for ordering
+			gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
+			return gain1 > 0
+		} else if !move2.HasTag(EnPassant) {
+			// SEE for ordering
+			gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
+			return gain2 < 0
+		}
+
+		// What are we capturing?
 		if capPiece1.Type() > capPiece2.Type() {
 			return true
 		}
 		if capPiece2.Type() > capPiece1.Type() {
 			return false
 		}
+
 		// Who is capturing?
 		if piece1.Type() < piece2.Type() {
 			return true
@@ -104,9 +126,13 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 			return false
 		}
 	} else if move1.HasTag(Capture) {
-		return true
+		capPiece1 := board.PieceAt(move1.Destination)
+		gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
+		return gain1 > 0
 	} else if move2.HasTag(Capture) {
-		return false
+		capPiece2 := board.PieceAt(move2.Destination)
+		gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
+		return gain2 < 0
 	}
 
 	// prefer checks
