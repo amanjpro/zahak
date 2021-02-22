@@ -30,21 +30,23 @@ func quiescence(position *Position, alpha int16, beta int16, lastDepth int8, ply
 		return standPat
 	}
 
+	isInCheck := position.IsInCheck()
+
 	w := WhitePawn
 	deltaMargin := w.Weight() * 2 // 200 centipawns
 	for _, move := range orderedMoves {
-		if move.HasTag(Capture) && !move.HasTag(EnPassant) {
+		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
 			// SEE pruning
 			board := position.Board
 			movingPiece := board.PieceAt(move.Source)
 			capturedPiece := board.PieceAt(move.Destination)
-			gain := position.Board.StaticExchangeEval(move.Destination, capturedPiece, move.Source, movingPiece)
+			gain := board.StaticExchangeEval(move.Destination, capturedPiece, move.Source, movingPiece)
 			if gain < 0 {
 				continue
 			}
 		}
 		cp, ep, tg, hc := position.MakeMove(move)
-		if cp != NoPiece && standPat < alpha-deltaMargin { // is capture
+		if !isInCheck && cp != NoPiece && standPat < alpha-deltaMargin { // is capture
 			// Delta pruning meaningless captures
 			position.UnMakeMove(move, tg, ep, cp, hc)
 			continue
