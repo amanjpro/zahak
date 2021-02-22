@@ -161,11 +161,11 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	cachedEval, found := TranspositionTable.Get(hash)
 	if found && cachedEval.Depth >= depthLeft {
 		score := cachedEval.Eval
-		if score >= beta && (cachedEval.Type == LowerBound || cachedEval.Type == Exact) {
+		if score >= beta && (cachedEval.Type == UpperBound || cachedEval.Type == Exact) {
 			cacheHits += 1
 			return beta
 		}
-		if score <= alpha && (cachedEval.Type == UpperBound || cachedEval.Type == Exact) {
+		if score <= alpha && (cachedEval.Type == LowerBound || cachedEval.Type == Exact) {
 			cacheHits += 1
 			return alpha
 		}
@@ -210,7 +210,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		if score >= beta {
 			// Those scores are never useufl
 			if score != -MAX_INT && score != MAX_INT {
-				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
+				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
 			}
 			return beta
 		}
@@ -223,7 +223,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		}
 	}
 	if !searchPv {
-		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, UpperBound, ply})
+		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
 	} else {
 		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
 	}
@@ -250,11 +250,11 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	if found &&
 		cachedEval.Depth >= depthLeft {
 		score := cachedEval.Eval
-		if score >= beta && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+		if score >= beta && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
 			cacheHits += 1
 			return beta
 		}
-		if score <= beta-1 && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+		if score <= beta-1 && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
 			cacheHits += 1
 			return beta - 1
 		}
@@ -331,11 +331,11 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		if score >= beta {
 			// Those scores are never useufl
 			if score != -MAX_INT && score != MAX_INT {
-				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, LowerBound, ply})
+				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
 			}
 			return beta // fail-hard beta-cutoff
 		}
 	}
-	TranspositionTable.Set(hash, &CachedEval{hash, beta - 1, depthLeft, UpperBound, ply})
+	TranspositionTable.Set(hash, &CachedEval{hash, beta - 1, depthLeft, LowerBound, ply})
 	return beta - 1 // fail-hard, return alpha
 }
