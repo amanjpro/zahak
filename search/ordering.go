@@ -98,8 +98,16 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 				return false
 			}
 			if gain1 >= 0 && gain2 < 0 {
-				return false
+				return true
 			}
+		} else if !move1.HasTag(EnPassant) {
+			// SEE for ordering
+			gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
+			return gain1 > 0
+		} else if !move2.HasTag(EnPassant) {
+			// SEE for ordering
+			gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
+			return gain2 < 0
 		}
 
 		// What are we capturing?
@@ -124,7 +132,7 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	} else if move2.HasTag(Capture) {
 		capPiece2 := board.PieceAt(move2.Destination)
 		gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
-		return gain2 <= 0
+		return gain2 < 0
 	}
 
 	// prefer checks

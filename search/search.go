@@ -49,16 +49,14 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 
 	var bestMove *Move
 	var previousBestMove *Move
-
 	bestScore := -MAX_INT
-
 	alpha := -MAX_INT
 	beta := MAX_INT
+	var lastDepth int8
 
 	fruitelessIterations := 0
 
 	start := time.Now()
-	var lastDepth int8
 END_LOOP:
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		if STOP_SEARCH_GLOBALLY {
@@ -97,7 +95,7 @@ END_LOOP:
 					pv.ReplaceLine(line)
 					bestMove = move
 					bestScore = currentBestScore
-					searchPv = false
+					// searchPv = false
 				}
 			} else {
 				iterationEvals[index] = -MAX_INT // if it is, then too bad, that is a bad move
@@ -121,15 +119,14 @@ END_LOOP:
 		} else {
 			fruitelessIterations = 0
 		}
-		previousBestMove = bestMove
 		timeSpent := time.Now().Sub(start)
 		fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
 			iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
 			cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
 			timeSpent.Milliseconds(), pv.ToString())
+		previousBestMove = bestMove
 		alpha = -MAX_INT
 		beta = MAX_INT
-		currentBestScore = -MAX_INT
 	}
 
 	timeSpent := time.Now().Sub(start)
@@ -161,11 +158,11 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	cachedEval, found := TranspositionTable.Get(hash)
 	if found && cachedEval.Depth >= depthLeft {
 		score := cachedEval.Eval
-		if score >= beta && (cachedEval.Type != UpperBound || cachedEval.Type == Exact) {
+		if score >= beta && (cachedEval.Type == LowerBound || cachedEval.Type == Exact) {
 			cacheHits += 1
 			return beta
 		}
-		if score <= alpha && (cachedEval.Type != LowerBound || cachedEval.Type == Exact) {
+		if score <= alpha && (cachedEval.Type == UpperBound || cachedEval.Type == Exact) {
 			cacheHits += 1
 			return alpha
 		}
@@ -216,7 +213,6 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		}
 		if score > alpha {
 			alpha = score
-			TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, Exact, ply})
 			// Potential PV move, lets copy it to the current pv-line
 			pvline.AddFirst(move)
 			pvline.ReplaceLine(line)
@@ -225,6 +221,8 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	}
 	if !searchPv {
 		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, UpperBound, ply})
+	} else {
+		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
 	}
 	return alpha
 }
@@ -308,11 +306,11 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		if !isInCheck && searchHeight >= 6 && depthLeft == 2 {
 			board := position.Board
 			movingPiece := board.PieceAt(move.Source)
-			capturedPiece := board.PieceAt(move.Destination)
 			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
 
 			// Extended Futility Pruning
-			if !move.HasTag(Check) && futility+capturedPiece.Weight() <= beta-1 &&
+			gain := Evaluate(position) - eval
+			if !move.HasTag(Check) && futility+gain <= beta-1 &&
 				move.PromoType == NoType && !isPromoting {
 				continue
 			}
@@ -324,7 +322,8 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		}
 
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, multiCutFlag)
+		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, !multiCutFlag)
+
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
 			// Those scores are never useufl

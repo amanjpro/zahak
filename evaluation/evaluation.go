@@ -424,19 +424,19 @@ func middlegameEval(position *Position) int16 {
 	}
 
 	// mobility and attacks
-	whiteAttacks := board.AllAttacks(White)
-	blackAttacks := board.AllAttacks(Black)
+	whiteAttacks := board.AllAttacks(Black) // get the squares that are taboo for black (white's reach)
+	blackAttacks := board.AllAttacks(White) // get the squares that are taboo for whtie (black's reach)
 	wAttackCounts := bits.OnesCount64(whiteAttacks)
 	bAttackCounts := bits.OnesCount64(blackAttacks)
 
-	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32)
-	blackAggressivity := bits.OnesCount64(blackAttacks << 32)
+	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
+	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
 
-	whiteCentipawns += int16(2 * (wAttackCounts - bAttackCounts))
-	blackCentipawns += int16(2 * (bAttackCounts - wAttackCounts))
+	whiteCentipawns += int16(wAttackCounts - bAttackCounts)
+	blackCentipawns += int16(bAttackCounts - wAttackCounts)
 
-	whiteCentipawns += int16(3 * (whiteAggressivity - blackAggressivity))
-	blackCentipawns += int16(3 * (blackAggressivity - whiteAggressivity))
+	whiteCentipawns += int16(2 * (whiteAggressivity - blackAggressivity))
+	blackCentipawns += int16(2 * (blackAggressivity - whiteAggressivity))
 
 	if turn == White {
 		return whiteCentipawns - blackCentipawns

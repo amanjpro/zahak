@@ -32,15 +32,21 @@ func (c *Cache) Consumed() int {
 
 var TranspositionTable *Cache
 
+func (c *Cache) hash(key uint64) uint32 {
+	return uint32(key>>32) % c.size
+}
+
 func (c *Cache) Set(hash uint64, value *CachedEval) {
-	key := uint32(hash>>32) % c.size
+	key := c.hash(hash)
 	oldValue := c.items[key]
 	if oldValue != nil {
 		if value.Hash == oldValue.Hash {
 			c.items[key] = value
+			return
 		}
 		if value.Age-oldValue.Age >= oldAge {
 			c.items[key] = value
+			return
 		}
 		if oldValue.Depth > value.Depth {
 			return
@@ -49,6 +55,7 @@ func (c *Cache) Set(hash uint64, value *CachedEval) {
 			return
 		} else if value.Type == Exact {
 			c.items[key] = value
+			return
 		}
 		c.items[key] = value
 	} else {
@@ -58,7 +65,7 @@ func (c *Cache) Set(hash uint64, value *CachedEval) {
 }
 
 func (c *Cache) Get(hash uint64) (*CachedEval, bool) {
-	key := uint32(hash>>32) % c.size
+	key := c.hash(hash)
 	item := c.items[key]
 	if item != nil && item.Hash == hash {
 		return item, true
