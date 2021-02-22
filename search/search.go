@@ -85,7 +85,19 @@ END_LOOP:
 			}
 			// This only works, because checkmate eval is clearly distinguished from
 			// maximum/minimum beta/alpha
-			if score > alpha && score < beta { // no very hard alpha-beta cutoff
+			if score == CHECKMATE_EVAL {
+				alpha = score
+				iterationEvals[index] = score
+				if score > currentBestScore || pv == nil || pv.moveCount > line.moveCount+1 {
+					currentBestScore = score
+					sendPv = true
+					pv.AddFirst(move)
+					pv.ReplaceLine(line)
+					bestMove = move
+					bestScore = currentBestScore
+					// searchPv = false
+				}
+			} else if score > alpha && score < beta { // no very hard alpha-beta cutoff
 				iterationEvals[index] = score
 				alpha = score
 				if score > currentBestScore {
@@ -141,7 +153,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	nodesVisited += 1
 	outcome := position.Status()
 	if outcome == Checkmate {
-		return -(CHECKMATE_EVAL + int16(ply)) // shortest checkmates win
+		return -CHECKMATE_EVAL
 	} else if outcome == Draw {
 		return 0
 	}
@@ -151,7 +163,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	}
 
 	if depthLeft == 0 {
-		return quiescence(position, alpha, beta, searchHeight, 0, Evaluate(position))
+		return quiescence(position, alpha, beta, 0, Evaluate(position))
 	}
 
 	hash := position.Hash()
@@ -236,7 +248,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 
 	if depthLeft <= 0 {
-		return quiescence(position, beta-1, beta, searchHeight, 0, Evaluate(position))
+		return quiescence(position, beta-1, beta, 0, Evaluate(position))
 	}
 
 	legalMoves := position.LegalMoves()
@@ -286,7 +298,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 
 	// Razoring
 	if depthLeft < 2 && eval+margin < beta-1 {
-		return quiescence(position, beta-1, beta, searchHeight, 0, eval)
+		return quiescence(position, beta-1, beta, 0, eval)
 	}
 
 	// Reverse Futility Pruning

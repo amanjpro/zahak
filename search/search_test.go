@@ -61,7 +61,7 @@ func TestSearchOnlyMove(t *testing.T) {
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	if evalMove.eval != -(CHECKMATE_EVAL + 1) {
+	if evalMove.eval != -CHECKMATE_EVAL {
 		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, evalMove.eval))
 	}
 }
@@ -75,7 +75,7 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	if evalMove.eval != -(CHECKMATE_EVAL + 1) {
+	if evalMove.eval != -CHECKMATE_EVAL {
 		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, evalMove.eval))
 	}
 }
