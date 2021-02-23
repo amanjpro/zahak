@@ -51,25 +51,29 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	eval2, ok2 := TranspositionTable.Get(hash2)
 
 	if ok1 && ok2 {
-		if eval1.Depth > eval2.Depth {
-			return true
-		} else if eval1.Depth < eval2.Depth {
-			return false
-		}
+		// if eval1.Depth > eval2.Depth {
+		// 	return true
+		// } else if eval1.Depth < eval2.Depth {
+		// 	return false
+		// }
 		if eval1.Type == Exact && eval2.Type != Exact {
 			return true
 		} else if eval2.Type == Exact && eval1.Type != Exact {
 			return false
 		}
-		if eval1.Eval > eval2.Eval {
+		// if eval1.Eval > eval2.Eval {
+		// 	return true
+		// } else if eval1.Eval < eval2.Eval {
+		// 	return false
+		// }
+	} else if ok1 {
+		if eval1.Type == Exact {
 			return true
-		} else if eval1.Eval < eval2.Eval {
+		}
+	} else if ok2 {
+		if eval2.Type == Exact {
 			return false
 		}
-	} else if ok1 {
-		return true
-	} else if ok2 {
-		return false
 	}
 
 	// King safety (castling)
