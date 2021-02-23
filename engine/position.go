@@ -54,12 +54,6 @@ func (p *Position) partialMakeMove(move *Move) (Piece, Square, PositionTag) {
 	capturedPiece := p.Board.PieceAt(move.Destination)
 	p.Board.Move(move.Source, move.Destination)
 
-	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
-		p.HalfMoveClock = 0
-	} else {
-		p.HalfMoveClock += 1
-	}
-
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance
 	if move.HasTag(EnPassant) {
 		p.EnPassant = NoSquare
@@ -120,15 +114,6 @@ func (p *Position) partialUnMakeMove(move *Move, tag PositionTag, enPassant Squa
 	movingPiece := p.Board.PieceAt(move.Destination)
 	p.Tag = tag
 	p.EnPassant = enPassant
-
-	v, ok := p.Positions.Get(int64(p.Hash()))
-	if ok {
-		if v == 1 {
-			p.Positions.Del(int64(p.Hash()))
-		} else {
-			p.Positions.Put(int64(p.Hash()), v-1)
-		}
-	}
 
 	p.Board.Move(move.Destination, move.Source)
 	// Undo enpassant
@@ -256,7 +241,7 @@ func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, cap
 
 	v, ok := p.Positions.Get(int64(p.Hash()))
 	if ok {
-		if v == 1 {
+		if v <= 1 {
 			p.Positions.Del(int64(p.Hash()))
 		} else {
 			p.Positions.Put(int64(p.Hash()), v-1)
@@ -323,7 +308,7 @@ func (p *Position) Status() Status {
 		if !p.HasLegalMoves() {
 			return Checkmate
 		}
-	} else if p.HalfMoveClock == 100 {
+	} else if p.HalfMoveClock >= 100 {
 		return Draw
 	} else {
 		if !p.HasLegalMoves() {
