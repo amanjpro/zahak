@@ -52,7 +52,6 @@ func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
 	bestScore := -MAX_INT
 	alpha := -MAX_INT
 	beta := MAX_INT
-	var lastDepth int8
 
 	fruitelessIterations := 0
 
@@ -62,10 +61,10 @@ END_LOOP:
 		if STOP_SEARCH_GLOBALLY {
 			break END_LOOP
 		}
-		lastDepth = iterationDepth
 		currentBestScore := -MAX_INT
 		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
+		searchPv := true
 		for index, move := range orderedMoves {
 			if STOP_SEARCH_GLOBALLY {
 				break END_LOOP
@@ -74,9 +73,19 @@ END_LOOP:
 			sendPv := false
 			cp, ep, tg, hc := position.MakeMove(move)
 			score := -MAX_INT
-			score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
+			if searchPv {
+				score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
+			} else {
+				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, true)
+				if score > alpha { // in fail-soft ... && score < beta ) is common
+					score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
+				}
+			}
 			// This only works, because checkmate eval is clearly distinguished from
 			// maximum/minimum beta/alpha
+			if score > beta {
+				beta = score
+			}
 			if score == CHECKMATE_EVAL {
 				alpha = score
 				iterationEvals[index] = score
@@ -87,6 +96,7 @@ END_LOOP:
 					pv.ReplaceLine(line)
 					bestMove = move
 					bestScore = currentBestScore
+					searchPv = false
 				}
 			} else if score > alpha && score < beta { // no very hard alpha-beta cutoff
 				iterationEvals[index] = score
@@ -98,7 +108,7 @@ END_LOOP:
 					pv.ReplaceLine(line)
 					bestMove = move
 					bestScore = currentBestScore
-					// searchPv = false
+					searchPv = false
 				}
 			} else {
 				iterationEvals[index] = -MAX_INT // if it is, then too bad, that is a bad move
@@ -108,7 +118,7 @@ END_LOOP:
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-					iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
+					pv.moveCount, nodesVisited/1000*int64(timeSpent.Seconds()),
 					cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
 					timeSpent.Milliseconds(), pv.ToString())
 			}
@@ -124,9 +134,12 @@ END_LOOP:
 		}
 		timeSpent := time.Now().Sub(start)
 		fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-			iterationDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
+			pv.moveCount, nodesVisited/1000*int64(timeSpent.Seconds()),
 			cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
 			timeSpent.Milliseconds(), pv.ToString())
+		if bestScore == CHECKMATE_EVAL {
+			break
+		}
 		previousBestMove = bestMove
 		alpha = -MAX_INT
 		beta = MAX_INT
@@ -134,7 +147,7 @@ END_LOOP:
 
 	timeSpent := time.Now().Sub(start)
 	fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-		lastDepth+1, nodesVisited/1000*int64(timeSpent.Seconds()),
+		pv.moveCount, nodesVisited/1000*int64(timeSpent.Seconds()),
 		cacheHits, TranspositionTable.Consumed(), nodesVisited, bestScore,
 		timeSpent.Milliseconds(), pv.ToString())
 	return bestMove, bestScore
@@ -214,7 +227,9 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 			}
 			return beta
 		}
-		if score > alpha {
+		if score > alpha ||
+			(score == CHECKMATE_EVAL && score >= alpha &&
+				(pvline == nil || pvline.moveCount < line.moveCount+1)) { // shorter checkmate?
 			alpha = score
 			// Potential PV move, lets copy it to the current pv-line
 			pvline.AddFirst(move)
