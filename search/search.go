@@ -76,7 +76,7 @@ END_LOOP:
 			if searchPv {
 				score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line)
 			} else {
-				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, true)
+				score = -zeroWindowSearch(position, iterationDepth, 1, -alpha, ply, true, true)
 				if score > alpha { // in fail-soft ... && score < beta ) is common
 					score = -alphaBeta(position, iterationDepth, 1, -beta, -alpha, ply, line) // re-search
 				}
@@ -184,24 +184,6 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		}
 	}
 
-	// NullMove pruning
-	isNullMoveAllowed := depthLeft >= 5 && !position.IsEndGame() && !position.IsInCheck()
-	R := int8(3)
-	if searchHeight > 6 {
-		R = 2
-	}
-
-	if isNullMoveAllowed {
-		tempo := int16(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
-		bound := beta - tempo // variable bound
-		position.NullMove()
-		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, true)
-		position.NullMove()
-		if score >= bound {
-			return beta // null move pruning
-		}
-	}
-
 	searchPv := true
 
 	legalMoves := position.LegalMoves()
@@ -214,7 +196,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 		if searchPv {
 			score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line)
 		} else {
-			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply, true)
+			score = -zeroWindowSearch(position, depthLeft-1, searchHeight+1, -alpha, ply, true, true)
 			if score > alpha { // in fail-soft ... && score < beta ) is common
 				score = -alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line) // re-search
 			}
@@ -246,7 +228,7 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 }
 
 func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int16, ply uint16,
-	multiCutFlag bool) int16 {
+	multiCutFlag bool, nullMove bool) int16 {
 	nodesVisited += 1
 
 	if STOP_SEARCH_GLOBALLY {
@@ -255,6 +237,24 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 
 	if depthLeft <= 0 {
 		return quiescence(position, beta-1, beta, 0, Evaluate(position))
+	}
+
+	// NullMove pruning
+	isNullMoveAllowed := nullMove && depthLeft >= 5 && !position.IsEndGame() && !position.IsInCheck()
+	R := int8(3)
+	if searchHeight > 6 {
+		R = 2
+	}
+
+	if isNullMoveAllowed {
+		tempo := int16(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
+		bound := beta - tempo // variable bound
+		position.NullMove()
+		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, !multiCutFlag, !nullMove)
+		position.NullMove()
+		if score >= bound {
+			return beta // null move pruning
+		}
 	}
 
 	legalMoves := position.LegalMoves()
@@ -275,7 +275,6 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		}
 	}
 	// Multi-Cut Pruning
-	R := int8(3)
 	M := 6
 	C := 3
 
@@ -284,7 +283,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		for i := 0; i < M; i++ {
 			move := legalMoves[i]
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-			score := -zeroWindowSearch(position, depthLeft-1-R, searchHeight+1, 1-beta, ply, !multiCutFlag)
+			score := -zeroWindowSearch(position, depthLeft-1-R, searchHeight+1, 1-beta, ply, !multiCutFlag, nullMove)
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 			if score >= beta {
 				cutNodeCounter++
@@ -340,7 +339,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 		}
 
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, !multiCutFlag)
+		score := -zeroWindowSearch(position, depthLeft-1-LMR, searchHeight+1, 1-beta, ply, !multiCutFlag, nullMove)
 
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 		if score >= beta {
