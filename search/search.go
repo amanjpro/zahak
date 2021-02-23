@@ -118,7 +118,7 @@ END_LOOP:
 			timeSpent := time.Now().Sub(start)
 			if sendPv {
 				fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-					pv.moveCount, nodesVisited/1000*int64(timeSpent.Seconds()),
+					pv.moveCount, nps(nodesVisited, timeSpent.Seconds()),
 					cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
 					timeSpent.Milliseconds(), pv.ToString())
 			}
@@ -134,7 +134,7 @@ END_LOOP:
 		}
 		timeSpent := time.Now().Sub(start)
 		fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-			pv.moveCount, nodesVisited/1000*int64(timeSpent.Seconds()),
+			pv.moveCount, nps(nodesVisited, timeSpent.Seconds()),
 			cacheHits, TranspositionTable.Consumed(), nodesVisited, currentBestScore,
 			timeSpent.Milliseconds(), pv.ToString())
 		if bestScore == CHECKMATE_EVAL {
@@ -147,7 +147,7 @@ END_LOOP:
 
 	timeSpent := time.Now().Sub(start)
 	fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-		pv.moveCount, nodesVisited/1000*int64(timeSpent.Seconds()),
+		pv.moveCount, nps(nodesVisited, timeSpent.Seconds()),
 		cacheHits, TranspositionTable.Consumed(), nodesVisited, bestScore,
 		timeSpent.Milliseconds(), pv.ToString())
 	return bestMove, bestScore
@@ -353,4 +353,11 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 	TranspositionTable.Set(hash, &CachedEval{hash, beta - 1, depthLeft, LowerBound, ply})
 	return beta - 1 // fail-hard, return alpha
+}
+
+func nps(nodes int64, dur float64) int64 {
+	if dur == 0 {
+		return 0
+	}
+	return int64(float64(nodes) / 1000 * dur)
 }
