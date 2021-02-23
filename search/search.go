@@ -16,7 +16,7 @@ var cacheHits int64 = 0
 var pv = NewPVLine(100)
 
 type EvalMove struct {
-	eval int16
+	eval int32
 	move *Move
 }
 
@@ -24,7 +24,7 @@ func (e *EvalMove) Move() *Move {
 	return e.move
 }
 
-func (e *EvalMove) Eval() int16 {
+func (e *EvalMove) Eval() int32 {
 	return e.eval
 }
 
@@ -40,12 +40,12 @@ func Search(position *Position, depth int8, ply uint16) EvalMove {
 	return bestEval
 }
 
-func startMinimax(position *Position, depth int8, ply uint16) (*Move, int16) {
+func startMinimax(position *Position, depth int8, ply uint16) (*Move, int32) {
 
 	// Collect evaluation for moves per iteration to help us order moves for the
 	// next iteration
 	legalMoves := position.LegalMoves()
-	iterationEvals := make([]int16, len(legalMoves))
+	iterationEvals := make([]int32, len(legalMoves))
 
 	var bestMove *Move
 	var previousBestMove *Move
@@ -153,7 +153,7 @@ END_LOOP:
 	return bestMove, bestScore
 }
 
-func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, pvline *PVLine) int16 {
+func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine) int32 {
 	nodesVisited += 1
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -227,8 +227,8 @@ func alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int1
 	return alpha
 }
 
-func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int16, ply uint16,
-	multiCutFlag bool, nullMove bool) int16 {
+func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, beta int32, ply uint16,
+	multiCutFlag bool, nullMove bool) int32 {
 	nodesVisited += 1
 
 	if STOP_SEARCH_GLOBALLY {
@@ -247,7 +247,7 @@ func zeroWindowSearch(position *Position, depthLeft int8, searchHeight int8, bet
 	}
 
 	if isNullMoveAllowed {
-		tempo := int16(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
+		tempo := int32(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
 		bound := beta - tempo // variable bound
 		position.NullMove()
 		score := -zeroWindowSearch(position, depthLeft-R-1, searchHeight+1, 1-bound, ply, !multiCutFlag, !nullMove)

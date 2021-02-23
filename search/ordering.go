@@ -171,7 +171,7 @@ func orderMoves(validMoves *ValidMoves) []*Move {
 
 type IterationMoves struct {
 	moves []*Move
-	evals []int16
+	evals []int32
 }
 
 func (iter *IterationMoves) Len() int {

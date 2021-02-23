@@ -2,7 +2,7 @@ package cache
 
 type CachedEval struct {
 	Hash  uint64
-	Eval  int16
+	Eval  int32
 	Depth int8
 	Type  NodeType
 	Age   uint16
@@ -18,7 +18,7 @@ const (
 
 var oldAge = uint16(5)
 
-const CACHE_ENTRY_SIZE = uint32(64 + 16 + 8 + 8 + 16)
+const CACHE_ENTRY_SIZE = uint32(64 + 16 + 8 + 8 + 32)
 
 type Cache struct {
 	items    []*CachedEval
@@ -84,6 +84,6 @@ func ResetCache() {
 		TranspositionTable.items = make([]*CachedEval, TranspositionTable.size)
 		TranspositionTable.consumed = 0
 	} else {
-		NewCache(40)
+		NewCache(400)
 	}
 }
