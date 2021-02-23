@@ -153,10 +153,10 @@ func middlegameEval(position *Position) int16 {
 		file := sq.File()
 		rank := sq.Rank()
 		blackPawnsPerFile[int(file)] += 1
-		if blackLeastAdvancedPawnsPerFile[file] > rank {
+		if rank > blackLeastAdvancedPawnsPerFile[file] {
 			blackLeastAdvancedPawnsPerFile[int(file)] = rank
 		}
-		if blackMostAdvancedPawnsPerFile[file] < rank {
+		if rank < blackMostAdvancedPawnsPerFile[file] {
 			blackMostAdvancedPawnsPerFile[int(file)] = rank
 		}
 		blackCentipawns += pawnPst[flip[index]]
@@ -181,10 +181,10 @@ func middlegameEval(position *Position) int16 {
 		file := sq.File()
 		rank := sq.Rank()
 		whitePawnsPerFile[int(file)] += 1
-		if whiteLeastAdvancedPawnsPerFile[file] < rank {
+		if rank < whiteLeastAdvancedPawnsPerFile[file] {
 			whiteLeastAdvancedPawnsPerFile[int(file)] = rank
 		}
-		if whiteMostAdvancedPawnsPerFile[file] > rank {
+		if rank > whiteMostAdvancedPawnsPerFile[file] {
 			whiteMostAdvancedPawnsPerFile[int(file)] = rank
 		}
 		whiteCentipawns += pawnPst[index]
