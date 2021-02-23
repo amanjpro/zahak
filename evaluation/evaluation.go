@@ -79,7 +79,7 @@ var kingPst = []int16{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
-	10, 15, 15, -15, -15, 10, 15, 10,
+	20, 25, 25, -15, -15, 20, 25, 20,
 }
 
 var flip = []int16{
@@ -338,7 +338,15 @@ func middlegameEval(position *Position) int16 {
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		blackCentipawns += kingPst[flip[index]]
+		award := kingPst[flip[index]]
+		if award <= 0 {
+			if !position.HasTag(BlackCanCastleKingSide) {
+				award -= 10
+			} else if !position.HasTag(BlackCanCastleQueenSide) {
+				award -= 10
+			}
+		}
+		blackCentipawns += award
 		pieceIter ^= mask
 	}
 
@@ -399,7 +407,15 @@ func middlegameEval(position *Position) int16 {
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		whiteCentipawns += kingPst[index]
+		award := kingPst[index]
+		if award < 0 {
+			if !position.HasTag(WhiteCanCastleKingSide) {
+				award -= 10
+			} else if !position.HasTag(WhiteCanCastleQueenSide) {
+				award -= 10
+			}
+		}
+		whiteCentipawns += award
 		pieceIter ^= mask
 	}
 
