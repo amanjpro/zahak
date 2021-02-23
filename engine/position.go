@@ -111,7 +111,7 @@ func (p *Position) partialMakeMove(move *Move) (Piece, Square, PositionTag) {
 
 // only for movegen
 func (p *Position) partialUnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece) {
-	movingPiece := p.Board.PieceAt(move.Destination)
+	p.Board.PieceAt(move.Destination)
 	p.Tag = tag
 	p.EnPassant = enPassant
 
@@ -126,7 +126,7 @@ func (p *Position) partialUnMakeMove(move *Move, tag PositionTag, enPassant Squa
 
 	// Undo promotion
 	if move.PromoType != NoType {
-		movingPiece = GetPiece(Pawn, p.Turn())
+		movingPiece := GetPiece(Pawn, p.Turn())
 		p.Board.UpdateSquare(move.Source, movingPiece)
 	}
 	if move.HasTag(QueenSideCastle) {

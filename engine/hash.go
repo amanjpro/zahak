@@ -70,13 +70,12 @@ func generateZobristHash(pos *Position) uint64 {
 }
 
 func updateHashForNullMove(pos *Position) {
-	var hash uint64 = pos.hash
-	if hash == 0 {
+	if pos.hash == 0 {
 		pos.Hash()
 		return
 	}
 	/* Turn */
-	hash ^= whiteTurnZC
+	pos.hash ^= whiteTurnZC
 
 }
 
