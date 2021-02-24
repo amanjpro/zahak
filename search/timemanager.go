@@ -11,7 +11,7 @@ func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove 
 	increment int, movesToTimeControl int, done *sync.WaitGroup, stopTimer chan bool) {
 	maximumTimeToThink := 0
 	if isPerMove {
-		maximumTimeToThink = availableTimeInMillis - 10 + increment
+		maximumTimeToThink = availableTimeInMillis - 100 + increment
 	} else {
 		if movesToTimeControl == 0 {
 			mlh := 60 // We assume that there are 60 more moves to go
