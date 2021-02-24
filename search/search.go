@@ -217,7 +217,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	searchPv := true
 
 	legalMoves := position.LegalMoves()
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight+1, ply+uint16(searchHeight))
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, ply+uint16(searchHeight))
 
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
@@ -308,7 +308,7 @@ func (e *Engine) zeroWindowSearch(position *Position, depthLeft int8, searchHeig
 	C := 3
 
 	legalMoves := position.LegalMoves()
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight+1, ply+uint16(searchHeight))
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, ply+uint16(searchHeight))
 
 	if depthLeft >= R && multiCutFlag && len(legalMoves) > M {
 		cutNodeCounter := 0
