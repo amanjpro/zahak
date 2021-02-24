@@ -88,6 +88,12 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
+		history := engine.MoveHistoryScore(piece, move.Destination, ply)
+		if history != 0 {
+			mp.scores[i] = history
+			continue
+		}
+
 		if move.PromoType != NoType {
 			p := GetPiece(move.PromoType, White)
 			mp.scores[i] = 50_000 + p.Weight()

@@ -17,6 +17,7 @@ type Engine struct {
 	move           *Move
 	score          int32
 	killerMoves    [][]*Move
+	searchHistory  [][]int32
 }
 
 func NewEngine() *Engine {
@@ -28,6 +29,7 @@ func NewEngine() *Engine {
 		nil,
 		0,
 		make([][]*Move, 600), // We assume there will be 300 moves at most
+		make([][]int32, 32),  // We have 32 pieces only
 	}
 }
 
@@ -39,7 +41,7 @@ func (e *Engine) KillerMoveScore(move *Move, ply uint16) int32 {
 		return 100_000
 	}
 	if e.killerMoves[ply][1] != nil && *e.killerMoves[ply][1] == *move {
-		return 80_000
+		return 90_000
 	}
 	return 0
 }
@@ -51,6 +53,22 @@ func (e *Engine) AddKillerMove(move *Move, ply uint16) {
 	if !move.HasTag(Capture) {
 		e.killerMoves[ply][1] = e.killerMoves[ply][0]
 		e.killerMoves[ply][0] = move
+	}
+}
+
+func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply uint16) int32 {
+	if e.searchHistory[movingPiece] == nil {
+		return 0
+	}
+	return 60_000 + e.searchHistory[movingPiece][destination]
+}
+
+func (e *Engine) AddMoveHistory(move *Move, movingPiece Piece, destination Square, ply uint16) {
+	if e.searchHistory[movingPiece] == nil {
+		e.searchHistory[movingPiece] = make([]int32, 64) // Number of Squares
+	}
+	if !move.HasTag(Capture) {
+		e.searchHistory[movingPiece][destination] += int32(ply)
 	}
 }
 
@@ -248,6 +266,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			// Potential PV move, lets copy it to the current pv-line
 			pvline.AddFirst(move)
 			pvline.ReplaceLine(line)
+			e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, uint16(searchHeight)+ply)
 			searchPv = false
 		}
 	}
