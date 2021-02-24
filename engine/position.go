@@ -36,9 +36,33 @@ func (p *Position) Turn() Color {
 	return Black
 }
 
-func (p *Position) NullMove() {
-	p.Turn()
-	updateHashForNullMove(p)
+func (p *Position) MakeNullMove() Square {
+	ep := p.EnPassant
+	p.EnPassant = NoSquare
+	p.HalfMoveClock += 1
+	p.ToggleTurn()
+	updateHashForNullMove(p, NoSquare, ep)
+	v, ok := p.Positions.Get(int64(p.Hash()))
+	if ok {
+		p.Positions.Put(int64(p.Hash()), v+1)
+	} else {
+		p.Positions.Put(int64(p.Hash()), 1)
+	}
+	return ep
+}
+
+func (p *Position) UnMakeNullMove(ep Square) {
+	v, ok := p.Positions.Get(int64(p.Hash()))
+	if ok {
+		if v <= 1 {
+			p.Positions.Del(int64(p.Hash()))
+		} else {
+			p.Positions.Put(int64(p.Hash()), v-1)
+		}
+	}
+	p.EnPassant = ep
+	p.HalfMoveClock -= 1
+	p.ToggleTurn()
 }
 
 func (p *Position) ToggleTurn() {

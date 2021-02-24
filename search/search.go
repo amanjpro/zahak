@@ -169,21 +169,21 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	// NullMove pruning
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= 5 && !position.IsEndGame() && !position.IsInCheck()
 	R := int8(3)
 	if searchHeight > 6 {
 		R = 2
 	}
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && searchHeight > 0 && depthLeft >= R+2 && !position.IsEndGame() && !position.IsInCheck()
 
 	if isNullMoveAllowed {
 		tempo := int32(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
 		bound := beta - tempo // variable bound
-		position.NullMove()
+		ep := position.MakeNullMove()
 		newBeta := 1 - bound
 		line := NewPVLine(depthLeft - 1 - R)
-		score := -e.alphaBeta(position, depthLeft-R-1, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, !nullMove)
-		position.NullMove()
-		if score >= bound {
+		score := -e.alphaBeta(position, depthLeft-R-1, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, false)
+		position.UnMakeNullMove(ep)
+		if score >= beta && score < CHECKMATE_EVAL && score > -CHECKMATE_EVAL {
 			return beta // null move pruning
 		}
 	}
@@ -217,7 +217,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 			line := NewPVLine(depthLeft - 1 - R)
 			newBeta := 1 - beta
-			score := -e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, nullMove)
+			score := -e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, true)
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 			if score >= beta {
 				cutNodeCounter++
@@ -261,32 +261,32 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		LMR := int8(0)
-		if !reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
-			board := position.Board
-			movingPiece := board.PieceAt(move.Source)
-			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
-
-			// Extended Futility Pruning
-			gain := Evaluate(position) - eval
-			if !isRootNode && !isPvNode && !move.HasTag(Check) && futility+gain <= beta-1 &&
-				move.PromoType == NoType && !isPromoting {
-				continue
-			}
-
-			// Late Move Reduction
-			if !isRootNode && !isPvNode && i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
-				LMR = 1
-			}
-		}
+		// if !reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
+		// 	board := position.Board
+		// 	movingPiece := board.PieceAt(move.Source)
+		// 	isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
+		//
+		// 	// Extended Futility Pruning
+		// 	gain := Evaluate(position) - eval
+		// 	if !isRootNode && !isPvNode && !move.HasTag(Check) && futility+gain <= beta-1 &&
+		// 		move.PromoType == NoType && !isPromoting {
+		// 		continue
+		// 	}
+		//
+		// 	// Late Move Reduction
+		// 	if !isRootNode && !isPvNode && i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
+		// 		LMR = 1
+		// 	}
+		// }
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		line := NewPVLine(depthLeft - 1 - LMR)
 		score := -MAX_INT
 		if searchPv {
-			score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, multiCutFlag, nullMove)
+			score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true)
 		} else {
-			score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, multiCutFlag, nullMove)
+			score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, !multiCutFlag, true)
 			if score > alpha {
-				score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, multiCutFlag, nullMove) // re-search
+				score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true) // re-search
 			}
 		}
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
