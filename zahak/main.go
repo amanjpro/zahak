@@ -51,6 +51,6 @@ func main() {
 		}
 		PerftTree(game, depth, moves)
 	} else {
-		UCI()
+		NewUCI().Start()
 	}
 }

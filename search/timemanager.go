@@ -1,13 +1,14 @@
 package search
 
 import (
+	"sync"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
 )
 
-func InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
-	increment int, movesToTimeControl int, stopTimer chan bool) {
+func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
+	increment int, movesToTimeControl int, done *sync.WaitGroup, stopTimer chan bool) {
 	maximumTimeToThink := 0
 	if isPerMove {
 		maximumTimeToThink = availableTimeInMillis - 10 + increment
@@ -35,9 +36,10 @@ func InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
 	case <-stopTimer:
 		break
 	case <-time.After(time.Duration(maximumTimeToThink) * time.Millisecond):
-		STOP_SEARCH_GLOBALLY = true
+		e.StopSearchFlag = true
 		break
 	}
+	done.Done()
 }
 
 func abs(num int) int {

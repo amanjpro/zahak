@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
@@ -14,9 +15,21 @@ import (
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-var timerHalter chan bool
+type UCI struct {
+	timerHalter chan bool
+	engine      *Engine
+	thinking    bool
+}
 
-func UCI() {
+func NewUCI() *UCI {
+	return &UCI{
+		make(chan bool),
+		NewEngine(),
+		false,
+	}
+}
+
+func (uci *UCI) Start() {
 	var game Game
 	var depth = int8(100)
 	reader := bufio.NewReader(os.Stdin)
@@ -35,9 +48,9 @@ func UCI() {
 			case "ucinewgame\n":
 				game = FromFen(startFen, true)
 			case "stop\n":
-				STOP_SEARCH_GLOBALLY = true
-				if timerHalter != nil {
-					timerHalter <- true
+				uci.engine.StopSearchFlag = true
+				if uci.thinking {
+					uci.timerHalter <- true
 				}
 			default:
 				if strings.HasPrefix(cmd, "setoption name Hash value") {
@@ -46,7 +59,7 @@ func UCI() {
 					hashSize, _ := strconv.Atoi(mg)
 					NewCache(uint32(hashSize))
 				} else if strings.HasPrefix(cmd, "go") {
-					go findMove(game, depth, game.MoveClock(), cmd)
+					go uci.findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen, false)
@@ -76,7 +89,7 @@ func UCI() {
 	}
 }
 
-func findMove(game Game, depth int8, ply uint16, cmd string) {
+func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	fields := strings.Fields(cmd)
 
 	pos := game.Position()
@@ -124,13 +137,15 @@ func findMove(game Game, depth int8, ply uint16, cmd string) {
 	}
 
 	if !noTC {
-		timerHalter = make(chan bool)
-		go InitiateTimer(&game, timeToThink, perMove, inc, movesToGo, timerHalter)
-		evalMove := Search(game.Position(), depth, ply)
-		fmt.Printf("bestmove %s\n", evalMove.Move().ToString())
-		timerHalter <- true
+		var done sync.WaitGroup
+		done.Add(1)
+		go uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo, &done, uci.timerHalter)
+		uci.engine.Search(game.Position(), depth, ply)
+		uci.engine.SendBestMove()
+		done.Wait()
+		uci.thinking = false
 	} else {
-		evalMove := Search(game.Position(), depth, ply)
-		fmt.Printf("bestmove %s\n", evalMove.Move().ToString())
+		uci.engine.Search(game.Position(), depth, ply)
+		uci.engine.SendBestMove()
 	}
 }

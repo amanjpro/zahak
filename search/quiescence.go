@@ -5,7 +5,7 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func quiescence(position *Position, alpha int32, beta int32, ply int8, standPat int32) int32 {
+func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8, standPat int32) int32 {
 
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -16,7 +16,7 @@ func quiescence(position *Position, alpha int32, beta int32, ply int8, standPat 
 
 	withChecks := ply <= 4
 	legalMoves := position.QuiesceneMoves(withChecks)
-	orderedMoves := orderMoves(&ValidMoves{position, legalMoves, 125})
+	orderedMoves := orderMoves(&ValidMoves{position, e.pv, legalMoves, 125})
 
 	if standPat >= beta {
 		return beta // fail hard
@@ -26,7 +26,7 @@ func quiescence(position *Position, alpha int32, beta int32, ply int8, standPat 
 		alpha = standPat
 	}
 
-	if STOP_SEARCH_GLOBALLY {
+	if e.StopSearchFlag {
 		return standPat
 	}
 
@@ -52,7 +52,7 @@ func quiescence(position *Position, alpha int32, beta int32, ply int8, standPat 
 			continue
 		}
 		sp := Evaluate(position)
-		score := -quiescence(position, -beta, -alpha, ply+1, sp)
+		score := -e.quiescence(position, -beta, -alpha, ply+1, sp)
 		position.UnMakeMove(move, tg, ep, cp, hc)
 		if score >= beta {
 			return beta

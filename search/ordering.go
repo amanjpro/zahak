@@ -9,6 +9,7 @@ import (
 
 type ValidMoves struct {
 	position  *Position
+	pv        *PVLine
 	moves     []*Move
 	moveOrder int8
 }
@@ -23,6 +24,7 @@ func (validMoves *ValidMoves) Swap(i, j int) {
 }
 
 func (validMoves *ValidMoves) Less(i, j int) bool {
+	pv := validMoves.pv
 	moves := validMoves.moves
 	move1, move2 := moves[i], moves[j]
 	board := validMoves.position.Board
@@ -171,6 +173,7 @@ func orderMoves(validMoves *ValidMoves) []*Move {
 
 type IterationMoves struct {
 	moves []*Move
+	pv    *PVLine
 	evals []int32
 }
 
@@ -186,6 +189,7 @@ func (iter *IterationMoves) Swap(i, j int) {
 }
 
 func (iter *IterationMoves) Less(i, j int) bool {
+	pv := iter.pv
 	eval1, eval2 := iter.evals[i], iter.evals[j]
 	equal := eval1 == eval2
 	if equal {
