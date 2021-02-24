@@ -71,7 +71,11 @@ func (mp *MovePicker) score() {
 			if !move.HasTag(EnPassant) {
 				// SEE for ordering
 				gain := board.StaticExchangeEval(move.Destination, capPiece, move.Source, piece)
-				mp.scores[i] = 100_000_000 + gain
+				if gain < 0 {
+					mp.scores[i] = -100_000_000 + gain
+				} else {
+					mp.scores[i] = 100_000_000 + gain
+				}
 			} else {
 				mp.scores[i] = 100_000_100
 			}
