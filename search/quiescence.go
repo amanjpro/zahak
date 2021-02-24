@@ -38,11 +38,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		move := movePicker.Next()
 		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
 			// SEE pruning
-			board := position.Board
-			movingPiece := board.PieceAt(move.Source)
-			capturedPiece := board.PieceAt(move.Destination)
-			gain := board.StaticExchangeEval(move.Destination, capturedPiece, move.Source, movingPiece)
-			if gain < 0 {
+			if movePicker.scores[i] < 0 {
 				continue
 			}
 		}
