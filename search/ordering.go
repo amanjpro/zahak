@@ -114,11 +114,17 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
+		if ok {
+			mp.scores[i] = 2000 + eval.Eval
+			continue
+		}
+
 		// Prefer smaller pieces
 		if piece.Type() == King {
 			mp.scores[i] = 0
 			continue
 		}
+
 		mp.scores[i] = 1000 - piece.Weight()
 	}
 }
