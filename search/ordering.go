@@ -7,30 +7,54 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-type ValidMoves struct {
+type MovePicker struct {
 	position  *Position
-	pv        *PVLine
+	engine    *Engine
 	moves     []*Move
 	moveOrder int8
+	ply       uint16
+	next      int
 }
 
-func (validMoves *ValidMoves) Len() int {
-	return len(validMoves.moves)
+func NewMovePicker(p *Position, e *Engine, moves []*Move, moveOrder int8, ply uint16) *MovePicker {
+	return &MovePicker{
+		p,
+		e,
+		moves,
+		moveOrder,
+		ply,
+		0,
+	}
 }
 
-func (validMoves *ValidMoves) Swap(i, j int) {
-	moves := validMoves.moves
-	moves[i], moves[j] = moves[j], moves[i]
+func (mp *MovePicker) Reset() {
+	mp.next = 0
 }
 
-func (validMoves *ValidMoves) Less(i, j int) bool {
-	pv := validMoves.pv
-	moves := validMoves.moves
-	move1, move2 := moves[i], moves[j]
-	board := validMoves.position.Board
+func (mp *MovePicker) Next() *Move {
+	var best *Move
+	var bestIndex int
+	for i := mp.next; i < len(mp.moves); i++ {
+		move := mp.moves[i]
+		if best == nil {
+			best = move
+			bestIndex = i
+		} else if Better(move, best, mp.engine, mp.position, mp.moveOrder, mp.ply) {
+			best = move
+			bestIndex = i
+		}
+	}
+	mp.moves[mp.next], mp.moves[bestIndex] = mp.moves[bestIndex], mp.moves[mp.next]
+	mp.next += 1
+	return best
+}
+
+func Better(move1 *Move, move2 *Move, engine *Engine, position *Position, moveOrder int8, ply uint16) bool {
+	pv := engine.pv
+	board := position.Board
 	// Is in PV?
-	if pv != nil && pv.moveCount > validMoves.moveOrder {
-		mv := pv.MoveAt(validMoves.moveOrder)
+	if pv != nil && pv.moveCount > moveOrder {
+		mv := pv.MoveAt(moveOrder)
 		if *mv == *move1 {
 			return true
 		}
@@ -42,14 +66,14 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	// Is in Transition table ???
 	// TODO: This is slow, that tells us either cache access is slow or has computation is
 	// Or maybe (unlikely) make/unmake move is slow
-	cp1, ep1, tg1, hc1 := validMoves.position.MakeMove(move1)
-	hash1 := validMoves.position.Hash()
-	validMoves.position.UnMakeMove(move1, tg1, ep1, cp1, hc1)
+	cp1, ep1, tg1, hc1 := position.MakeMove(move1)
+	hash1 := position.Hash()
+	position.UnMakeMove(move1, tg1, ep1, cp1, hc1)
 	eval1, ok1 := TranspositionTable.Get(hash1)
 
-	cp2, ep2, tg2, hc2 := validMoves.position.MakeMove(move2)
-	hash2 := validMoves.position.Hash()
-	validMoves.position.UnMakeMove(move2, tg2, ep2, cp2, hc2)
+	cp2, ep2, tg2, hc2 := position.MakeMove(move2)
+	hash2 := position.Hash()
+	position.UnMakeMove(move2, tg2, ep2, cp2, hc2)
 	eval2, ok2 := TranspositionTable.Get(hash2)
 
 	if ok1 && ok2 {
@@ -78,13 +102,11 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		}
 	}
 
-	// King safety (castling)
-	castling := KingSideCastle | QueenSideCastle
-	move1IsCastling := move1.HasTag(castling)
-	move2IsCastling := move2.HasTag(castling)
-	if move1IsCastling && !move2IsCastling {
+	killer1 := engine.KillerMoveScore(move1, ply)
+	killer2 := engine.KillerMoveScore(move2, ply)
+	if killer1 > killer2 {
 		return true
-	} else if move2IsCastling && !move1IsCastling {
+	} else if killer2 > killer2 {
 		return false
 	}
 
@@ -153,6 +175,16 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 		return true
 	}
 
+	// King safety (castling)
+	castling := KingSideCastle | QueenSideCastle
+	move1IsCastling := move1.HasTag(castling)
+	move2IsCastling := move2.HasTag(castling)
+	if move1IsCastling && !move2IsCastling {
+		return true
+	} else if move2IsCastling && !move1IsCastling {
+		return false
+	}
+
 	if move1.PromoType != NoType && move2.PromoType == NoType {
 		return true
 	} else if move2.PromoType != NoType && move1.PromoType == NoType {
@@ -166,15 +198,10 @@ func (validMoves *ValidMoves) Less(i, j int) bool {
 	return false
 }
 
-func orderMoves(validMoves *ValidMoves) []*Move {
-	sort.Sort(validMoves)
-	return validMoves.moves
-}
-
 type IterationMoves struct {
-	moves []*Move
-	pv    *PVLine
-	evals []int32
+	moves  []*Move
+	engine *Engine
+	evals  []int32
 }
 
 func (iter *IterationMoves) Len() int {
@@ -189,7 +216,7 @@ func (iter *IterationMoves) Swap(i, j int) {
 }
 
 func (iter *IterationMoves) Less(i, j int) bool {
-	pv := iter.pv
+	pv := iter.engine.pv
 	eval1, eval2 := iter.evals[i], iter.evals[j]
 	equal := eval1 == eval2
 	if equal {

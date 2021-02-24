@@ -125,7 +125,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 			i++
 		case "depth":
 			newPly, _ := strconv.Atoi(fields[i+1])
-			ply = uint16(newPly)
+			depth = int8(newPly)
 			i++
 		case "movetime":
 			timeToThink, _ = strconv.Atoi(fields[i+1])

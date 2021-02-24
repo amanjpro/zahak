@@ -16,6 +16,7 @@ type Engine struct {
 	StopSearchFlag bool
 	move           *Move
 	score          int32
+	killerMoves    [][]*Move
 }
 
 func NewEngine() *Engine {
@@ -26,6 +27,30 @@ func NewEngine() *Engine {
 		false,
 		nil,
 		0,
+		make([][]*Move, 600), // We assume there will be 300 moves at most
+	}
+}
+
+func (e *Engine) KillerMoveScore(move *Move, ply uint16) int32 {
+	if e.killerMoves[ply] == nil {
+		return 0
+	}
+	if e.killerMoves[ply][0] != nil && *e.killerMoves[ply][0] == *move {
+		return 1000
+	}
+	if e.killerMoves[ply][1] != nil && *e.killerMoves[ply][1] == *move {
+		return 800
+	}
+	return 0
+}
+
+func (e *Engine) AddKillerMove(move *Move, ply uint16) {
+	if e.killerMoves[ply] == nil {
+		e.killerMoves[ply] = make([]*Move, 2)
+	}
+	if !move.HasTag(Capture) {
+		e.killerMoves[ply][1] = e.killerMoves[ply][0]
+		e.killerMoves[ply][0] = move
 	}
 }
 
@@ -87,7 +112,7 @@ END_LOOP:
 			break END_LOOP
 		}
 		currentBestScore := -MAX_INT
-		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, e.pv, iterationEvals})
+		orderedMoves := orderIterationMoves(&IterationMoves{legalMoves, e, iterationEvals})
 		line := NewPVLine(iterationDepth + 1)
 		for index, move := range orderedMoves {
 			if e.StopSearchFlag {
@@ -172,7 +197,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	if depthLeft == 0 {
-		return e.quiescence(position, alpha, beta, 0, Evaluate(position))
+		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight)
 	}
 
 	hash := position.Hash()
@@ -192,9 +217,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	searchPv := true
 
 	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, e.pv, legalMoves, searchHeight + 1})
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight+1, ply+uint16(searchHeight))
 
-	for _, move := range orderedMoves {
+	for i := 0; i < len(legalMoves); i++ {
+		move := movePicker.Next()
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		line := NewPVLine(depthLeft - 1)
 		score := -MAX_INT
@@ -212,6 +238,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			if score != -MAX_INT && score != MAX_INT {
 				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
 			}
+			e.AddKillerMove(move, uint16(searchHeight)+ply)
 			return beta
 		}
 		if score > alpha ||
@@ -241,7 +268,7 @@ func (e *Engine) zeroWindowSearch(position *Position, depthLeft int8, searchHeig
 	}
 
 	if depthLeft <= 0 {
-		return e.quiescence(position, beta-1, beta, 0, Evaluate(position))
+		return e.quiescence(position, beta-1, beta, 0, Evaluate(position), searchHeight)
 	}
 
 	// NullMove pruning
@@ -262,9 +289,6 @@ func (e *Engine) zeroWindowSearch(position *Position, depthLeft int8, searchHeig
 		}
 	}
 
-	legalMoves := position.LegalMoves()
-	orderedMoves := orderMoves(&ValidMoves{position, e.pv, legalMoves, searchHeight + 1})
-
 	hash := position.Hash()
 	cachedEval, found := TranspositionTable.Get(hash)
 	if found &&
@@ -283,10 +307,13 @@ func (e *Engine) zeroWindowSearch(position *Position, depthLeft int8, searchHeig
 	M := 6
 	C := 3
 
+	legalMoves := position.LegalMoves()
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight+1, ply+uint16(searchHeight))
+
 	if depthLeft >= R && multiCutFlag && len(legalMoves) > M {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
-			move := legalMoves[i]
+			move := movePicker.Next()
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 			score := -e.zeroWindowSearch(position, depthLeft-1-R, searchHeight+1, 1-beta, ply, !multiCutFlag, nullMove)
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
@@ -308,7 +335,7 @@ func (e *Engine) zeroWindowSearch(position *Position, depthLeft int8, searchHeig
 
 	// Razoring
 	if depthLeft < 2 && eval+margin < beta-1 {
-		return e.quiescence(position, beta-1, beta, 0, eval)
+		return e.quiescence(position, beta-1, beta, 0, eval, searchHeight)
 	}
 
 	// Reverse Futility Pruning
@@ -323,7 +350,10 @@ func (e *Engine) zeroWindowSearch(position *Position, depthLeft int8, searchHeig
 		lastRank = Rank2
 	}
 
-	for i, move := range orderedMoves {
+	movePicker.Reset()
+
+	for i := 0; i < len(legalMoves); i++ {
+		move := movePicker.Next()
 		LMR := int8(0)
 		if !isInCheck && searchHeight >= 6 && depthLeft == 2 {
 			board := position.Board
