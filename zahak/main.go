@@ -21,7 +21,6 @@ func main() {
 	var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
 	flag.Parse()
 	if *profileFlag {
-		fmt.Println("I AM HERE")
 		cpu, err := os.Create("zahak-engine-cpu-profile")
 		if err != nil {
 			fmt.Println("could not create CPU profile: ", err)

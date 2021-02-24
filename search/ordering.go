@@ -11,19 +11,105 @@ type MovePicker struct {
 	position  *Position
 	engine    *Engine
 	moves     []*Move
+	scores    []int32
 	moveOrder int8
 	ply       uint16
 	next      int
 }
 
 func NewMovePicker(p *Position, e *Engine, moves []*Move, moveOrder int8, ply uint16) *MovePicker {
-	return &MovePicker{
+	mp := &MovePicker{
 		p,
 		e,
 		moves,
+		make([]int32, len(moves)),
 		moveOrder,
 		ply,
 		0,
+	}
+
+	mp.score()
+	return mp
+}
+
+func (mp *MovePicker) score() {
+	pv := mp.engine.pv
+	position := mp.position
+	board := position.Board
+	engine := mp.engine
+	moveOrder := mp.moveOrder
+	ply := mp.ply
+
+	for i, move := range mp.moves {
+		// Is in PV?
+		if pv != nil && pv.moveCount > moveOrder {
+			mv := pv.MoveAt(moveOrder)
+			if *mv == *move {
+				mp.scores[i] = 900_000_000
+				continue
+			}
+		}
+
+		// Is in Transition table ???
+		// TODO: This is slow, that tells us either cache access is slow or has computation is
+		// Or maybe (unlikely) make/unmake move is slow
+		cp, ep, tg, hc := position.MakeMove(move)
+		hash := position.Hash()
+		position.UnMakeMove(move, tg, ep, cp, hc)
+		eval, ok := TranspositionTable.Get(hash)
+
+		if ok && eval.Type == Exact {
+			mp.scores[i] = 500_000_000 + eval.Eval
+			continue
+		}
+
+		piece := board.PieceAt(move.Source)
+		//
+		// capture ordering
+		if move.HasTag(Capture) {
+			capPiece := board.PieceAt(move.Destination)
+			if !move.HasTag(EnPassant) {
+				// SEE for ordering
+				gain := board.StaticExchangeEval(move.Destination, capPiece, move.Source, piece)
+				mp.scores[i] = 100_000_000 + gain
+			} else {
+				mp.scores[i] = 100_000_100
+			}
+			continue
+		}
+
+		killer := engine.KillerMoveScore(move, ply)
+		if killer != 0 {
+			mp.scores[i] = killer
+			continue
+		}
+
+		if move.PromoType != NoType {
+			p := GetPiece(move.PromoType, White)
+			mp.scores[i] = 50_000 + p.Weight()
+			continue
+		}
+
+		// prefer checks
+		if move.HasTag(Check) {
+			mp.scores[i] = 10_000
+			continue
+		}
+
+		// King safety (castling)
+		castling := KingSideCastle | QueenSideCastle
+		moveIsCastling := move.HasTag(castling)
+		if moveIsCastling {
+			mp.scores[i] = 3_000
+			continue
+		}
+
+		// Prefer smaller pieces
+		if piece.Type() == King {
+			mp.scores[i] = 0
+			continue
+		}
+		mp.scores[i] = 1000 - piece.Weight()
 	}
 }
 
@@ -39,163 +125,15 @@ func (mp *MovePicker) Next() *Move {
 		if best == nil {
 			best = move
 			bestIndex = i
-		} else if Better(move, best, mp.engine, mp.position, mp.moveOrder, mp.ply) {
+		} else if mp.scores[i] > mp.scores[bestIndex] {
 			best = move
 			bestIndex = i
 		}
 	}
 	mp.moves[mp.next], mp.moves[bestIndex] = mp.moves[bestIndex], mp.moves[mp.next]
+	mp.scores[mp.next], mp.scores[bestIndex] = mp.scores[bestIndex], mp.scores[mp.next]
 	mp.next += 1
 	return best
-}
-
-func Better(move1 *Move, move2 *Move, engine *Engine, position *Position, moveOrder int8, ply uint16) bool {
-	pv := engine.pv
-	board := position.Board
-	// Is in PV?
-	if pv != nil && pv.moveCount > moveOrder {
-		mv := pv.MoveAt(moveOrder)
-		if *mv == *move1 {
-			return true
-		}
-		if *mv == *move2 {
-			return false
-		}
-	}
-
-	// Is in Transition table ???
-	// TODO: This is slow, that tells us either cache access is slow or has computation is
-	// Or maybe (unlikely) make/unmake move is slow
-	cp1, ep1, tg1, hc1 := position.MakeMove(move1)
-	hash1 := position.Hash()
-	position.UnMakeMove(move1, tg1, ep1, cp1, hc1)
-	eval1, ok1 := TranspositionTable.Get(hash1)
-
-	cp2, ep2, tg2, hc2 := position.MakeMove(move2)
-	hash2 := position.Hash()
-	position.UnMakeMove(move2, tg2, ep2, cp2, hc2)
-	eval2, ok2 := TranspositionTable.Get(hash2)
-
-	if ok1 && ok2 {
-		// if eval1.Depth > eval2.Depth {
-		// 	return true
-		// } else if eval1.Depth < eval2.Depth {
-		// 	return false
-		// }
-		if eval1.Type == Exact && eval2.Type != Exact {
-			return true
-		} else if eval2.Type == Exact && eval1.Type != Exact {
-			return false
-		}
-		// if eval1.Eval > eval2.Eval {
-		// 	return true
-		// } else if eval1.Eval < eval2.Eval {
-		// 	return false
-		// }
-	} else if ok1 {
-		if eval1.Type == Exact {
-			return true
-		}
-	} else if ok2 {
-		if eval2.Type == Exact {
-			return false
-		}
-	}
-
-	killer1 := engine.KillerMoveScore(move1, ply)
-	killer2 := engine.KillerMoveScore(move2, ply)
-	if killer1 > killer2 {
-		return true
-	} else if killer2 > killer2 {
-		return false
-	}
-
-	piece1 := board.PieceAt(move1.Source)
-	piece2 := board.PieceAt(move2.Source)
-	//
-	// capture ordering
-	if move1.HasTag(Capture) && move2.HasTag(Capture) {
-		capPiece1 := board.PieceAt(move1.Destination)
-		capPiece2 := board.PieceAt(move2.Destination)
-		if !move1.HasTag(EnPassant) && !move2.HasTag(EnPassant) {
-			// SEE for ordering
-			gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
-			gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
-
-			if gain1 < 0 && gain2 >= 0 {
-				return false
-			}
-			if gain1 >= 0 && gain2 < 0 {
-				return true
-			}
-		} else if !move1.HasTag(EnPassant) {
-			// SEE for ordering
-			gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
-			return gain1 > 0
-		} else if !move2.HasTag(EnPassant) {
-			// SEE for ordering
-			gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
-			return gain2 < 0
-		}
-
-		// What are we capturing?
-		if capPiece1.Type() > capPiece2.Type() {
-			return true
-		}
-		if capPiece2.Type() > capPiece1.Type() {
-			return false
-		}
-
-		// Who is capturing?
-		if piece1.Type() < piece2.Type() {
-			return true
-		}
-		if piece2.Type() < piece1.Type() {
-			return false
-		}
-	} else if move1.HasTag(Capture) {
-		capPiece1 := board.PieceAt(move1.Destination)
-		gain1 := board.StaticExchangeEval(move1.Destination, capPiece1, move1.Source, piece1)
-		return gain1 > 0
-	} else if move2.HasTag(Capture) {
-		capPiece2 := board.PieceAt(move2.Destination)
-		gain2 := board.StaticExchangeEval(move2.Destination, capPiece2, move2.Source, piece2)
-		return gain2 < 0
-	}
-
-	// prefer checks
-	if move1.HasTag(Check) {
-		return true
-	}
-	if move2.HasTag(Check) {
-		return false
-	}
-	// Prefer smaller pieces
-	if piece1.Type() < piece2.Type() {
-		return true
-	}
-
-	// King safety (castling)
-	castling := KingSideCastle | QueenSideCastle
-	move1IsCastling := move1.HasTag(castling)
-	move2IsCastling := move2.HasTag(castling)
-	if move1IsCastling && !move2IsCastling {
-		return true
-	} else if move2IsCastling && !move1IsCastling {
-		return false
-	}
-
-	if move1.PromoType != NoType && move2.PromoType == NoType {
-		return true
-	} else if move2.PromoType != NoType && move1.PromoType == NoType {
-		return false
-	} else if move2.PromoType != NoType && move1.PromoType != NoType {
-		p1 := GetPiece(move1.PromoType, White)
-		p2 := GetPiece(move2.PromoType, White)
-		return p1.Weight() > p2.Weight()
-	}
-
-	return false
 }
 
 type IterationMoves struct {

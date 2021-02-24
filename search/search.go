@@ -36,10 +36,10 @@ func (e *Engine) KillerMoveScore(move *Move, ply uint16) int32 {
 		return 0
 	}
 	if e.killerMoves[ply][0] != nil && *e.killerMoves[ply][0] == *move {
-		return 1000
+		return 100_000
 	}
 	if e.killerMoves[ply][1] != nil && *e.killerMoves[ply][1] == *move {
-		return 800
+		return 80_000
 	}
 	return 0
 }
