@@ -7,6 +7,7 @@ import (
 
 func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8, standPat int32, searchHeight int8) int32 {
 
+	e.VisitNode()
 	outcome := position.Status()
 	if outcome == Checkmate {
 		return -CHECKMATE_EVAL
