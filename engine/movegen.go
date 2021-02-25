@@ -8,7 +8,7 @@ func (p *Position) addAllMoves(allMoves *[]*Move, ms ...*Move) {
 	color := p.Turn()
 	for _, m := range ms {
 		// make the move
-		capturedPiece, oldEnPassant, oldTag := p.partialMakeMove(m)
+		capturedPiece := p.partialMakeMove(m)
 
 		// Does the move puts the moving player in check
 		pNotInCheck := !isInCheck(p.Board, color)
@@ -20,7 +20,7 @@ func (p *Position) addAllMoves(allMoves *[]*Move, ms ...*Move) {
 			// do nothing
 			*allMoves = append(*allMoves, m)
 		}
-		p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
+		p.partialUnMakeMove(m, capturedPiece)
 	}
 }
 
@@ -28,7 +28,7 @@ func (p *Position) addCaptureMoves(allMoves *[]*Move, withChecks bool, isChecked
 	color := p.Turn()
 	for _, m := range ms {
 		// make the move
-		capturedPiece, oldEnPassant, oldTag := p.partialMakeMove(m)
+		capturedPiece := p.partialMakeMove(m)
 
 		// Does the move puts the moving player in check
 		pNotInCheck := !isInCheck(p.Board, color)
@@ -41,7 +41,7 @@ func (p *Position) addCaptureMoves(allMoves *[]*Move, withChecks bool, isChecked
 		} else if isChecked && pNotInCheck { // Check replies are also considered
 			*allMoves = append(*allMoves, m)
 		}
-		p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
+		p.partialUnMakeMove(m, capturedPiece)
 	}
 }
 
@@ -115,16 +115,16 @@ func (p *Position) generateMoves(allMoves *[]*Move, capturesOnly bool, positionI
 func (p *Position) checkMove(m *Move) bool {
 	color := p.Turn()
 	// make the move
-	capturedPiece, oldEnPassant, oldTag := p.partialMakeMove(m)
+	capturedPiece := p.partialMakeMove(m)
 
 	// Does the move puts the moving player in check
 	pNotInCheck := !isInCheck(p.Board, color)
 
 	if pNotInCheck { // We put opponent in check
-		p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
+		p.partialUnMakeMove(m, capturedPiece)
 		return true
 	} else {
-		p.partialUnMakeMove(m, oldTag, oldEnPassant, capturedPiece)
+		p.partialUnMakeMove(m, capturedPiece)
 		return false
 	}
 }
