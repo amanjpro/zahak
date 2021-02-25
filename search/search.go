@@ -183,22 +183,43 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine,
 	multiCutFlag bool, nullMove bool) (int32, bool) {
 	e.VisitNode()
-	outcome := position.Status()
-	if outcome == Checkmate {
-		return -CHECKMATE_EVAL, true
-	} else if outcome == Draw {
-		return 0, true
-	}
 
 	isRootNode := searchHeight == 0
 	isPvNode := alpha == beta-1
 
-	if e.ShouldStop() {
-		return -MAX_INT, false
-	}
-
 	if depthLeft <= 0 {
 		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight), true
+	}
+
+	hash := position.Hash()
+	cachedEval, found := TranspositionTable.Get(hash)
+	if found && cachedEval.Depth >= depthLeft {
+		score := cachedEval.Eval
+		if score >= beta && (cachedEval.Type == UpperBound || cachedEval.Type == Exact) {
+			e.CacheHit()
+			return beta, true
+		}
+		if score <= alpha && (cachedEval.Type == LowerBound || cachedEval.Type == Exact) {
+			e.CacheHit()
+			return alpha, true
+		}
+	}
+
+	legalMoves := position.LegalMoves()
+
+	if len(legalMoves) == 0 {
+		outcome := position.Status()
+		if outcome == Checkmate {
+			return -CHECKMATE_EVAL, true
+		} else if outcome == Draw {
+			return 0, true
+		}
+
+	}
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
+
+	if e.ShouldStop() {
+		return -MAX_INT, false
 	}
 
 	// NullMove pruning
@@ -224,23 +245,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return beta, true // null move pruning
 		}
 	}
-
-	hash := position.Hash()
-	cachedEval, found := TranspositionTable.Get(hash)
-	if found && cachedEval.Depth >= depthLeft {
-		score := cachedEval.Eval
-		if score >= beta && (cachedEval.Type == UpperBound || cachedEval.Type == Exact) {
-			e.CacheHit()
-			return beta, true
-		}
-		if score <= alpha && (cachedEval.Type == LowerBound || cachedEval.Type == Exact) {
-			e.CacheHit()
-			return alpha, true
-		}
-	}
-
-	legalMoves := position.LegalMoves()
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
 	// Multi-Cut Pruning
 	M := 6
