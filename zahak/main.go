@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"os"
-	// "runtime"
 	"fmt"
+	"os"
+	"runtime"
 	"runtime/pprof"
 	"strconv"
 	"strings"
@@ -31,12 +31,12 @@ func main() {
 			os.Exit(1)
 		}
 
-		// mem, _ := os.Create("zahak-engine-memory-profile")
-		// runtime.GC()
-		// pprof.WriteHeapProfile(mem)
+		mem, _ := os.Create("zahak-engine-memory-profile")
+		runtime.GC()
+		pprof.WriteHeapProfile(mem)
 		defer cpu.Close()
 		defer pprof.StopCPUProfile()
-		// defer mem.Close() // error handling omitted for example
+		defer mem.Close() // error handling omitted for example
 	}
 	if *perftFlag {
 		StartPerftTest(*slowFlag)
