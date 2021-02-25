@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 
 	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
@@ -49,9 +48,6 @@ func (uci *UCI) Start() {
 				game = FromFen(startFen, true)
 			case "stop\n":
 				uci.engine.StopSearchFlag = true
-				if uci.thinking {
-					uci.timerHalter <- true
-				}
 			default:
 				if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
@@ -137,13 +133,9 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	}
 
 	if !noTC {
-		var done sync.WaitGroup
-		done.Add(1)
-		go uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo, &done, uci.timerHalter)
+		uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
-		done.Wait()
-		uci.thinking = false
 	} else {
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()

@@ -19,6 +19,7 @@ type Engine struct {
 	killerMoves    [][]*Move
 	searchHistory  [][]int32
 	startTime      time.Time
+	ThinkTime      int64
 }
 
 func NewEngine() *Engine {
@@ -32,7 +33,16 @@ func NewEngine() *Engine {
 		make([][]*Move, 125), // We assume there will be at most 126 iterations for each move/search
 		make([][]int32, 12),  // We have 12 pieces only
 		time.Now(),
+		0,
 	}
+}
+
+func (e *Engine) ShouldStop() bool {
+	if e.StopSearchFlag {
+		return true
+	}
+	now := time.Now()
+	return now.Sub(e.startTime).Milliseconds() >= e.ThinkTime
 }
 
 func (e *Engine) ClearForSearch() {
@@ -141,7 +151,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 
 	firstScore := true
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
-		if e.StopSearchFlag {
+		if e.ShouldStop() {
 			break
 		}
 		line := NewPVLine(iterationDepth + 1)
@@ -182,7 +192,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	isRootNode := searchHeight == 0
 	isPvNode := alpha == beta-1
 
-	if e.StopSearchFlag {
+	if e.ShouldStop() {
 		return beta
 	}
 

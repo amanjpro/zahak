@@ -27,7 +27,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		alpha = standPat
 	}
 
-	if e.StopSearchFlag {
+	if e.ShouldStop() {
 		return standPat
 	}
 
