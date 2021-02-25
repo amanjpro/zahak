@@ -69,14 +69,38 @@ func generateZobristHash(pos *Position) uint64 {
 	return hash
 }
 
-func updateHashForNullMove(pos *Position) {
+func updateHashForNullMove(pos *Position, newEnPassant Square, oldEnPassant Square) {
 	if pos.hash == 0 {
 		pos.Hash()
 		return
 	}
+	var hash uint64 = pos.hash
 	/* Turn */
-	pos.hash ^= whiteTurnZC
+	hash ^= whiteTurnZC
 
+	turn := pos.Turn()
+	/* En passant */
+	if newEnPassant != NoSquare {
+		if turn == Black {
+			/* Next mov Black -> Current pos White -> White en passant square */
+			hash ^= enPassantZC[newEnPassant-16]
+		} else {
+			/* Next mov White -> Current pos Black -> Black en passant square */
+			hash ^= enPassantZC[newEnPassant-40+8]
+		}
+	}
+
+	if oldEnPassant != NoSquare {
+		if turn == Black {
+			/* Previous mov Black -> Current pos White -> Black en passant square */
+			hash ^= enPassantZC[oldEnPassant-40+8]
+		} else {
+			/* Previous mov White -> Current pos Black -> White en passant square */
+			hash ^= enPassantZC[oldEnPassant-16]
+		}
+	}
+
+	pos.hash = hash
 }
 
 // capture square is provided for the case of enpassant

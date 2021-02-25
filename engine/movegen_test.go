@@ -10,11 +10,8 @@ func TestBishopMoves(t *testing.T) {
 	g := FromFen(fen, true)
 	board := g.position.Board
 	moves := make([]*Move, 0, 8)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces, board.blackKing,
-		White, bishopAttacks, false, add)
+	g.position.bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+		White, bishopAttacks, false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{E2, F1, NoType, 0},
 		&Move{E2, F3, NoType, 0},
@@ -22,7 +19,7 @@ func TestBishopMoves(t *testing.T) {
 		&Move{E2, H5, NoType, 0},
 		&Move{E2, D3, NoType, 0},
 		&Move{E2, C4, NoType, 0},
-		&Move{E2, B5, NoType, 0},
+		&Move{E2, B5, NoType, Check},
 		&Move{E2, A6, NoType, 0},
 		&Move{E3, D2, NoType, 0},
 		&Move{E3, F4, NoType, 0},
@@ -50,11 +47,8 @@ func TestRookMoves(t *testing.T) {
 	g := FromFen(fen, true)
 	board := g.position.Board
 	moves := make([]*Move, 0, 8)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbSlidingMoves(board.whiteRook, board.whitePieces, board.blackPieces, board.blackKing,
-		White, rookAttacks, false, add)
+	g.position.bbSlidingMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+		White, rookAttacks, false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{H1, G1, NoType, 0},
 		&Move{H1, F1, NoType, 0},
@@ -63,7 +57,7 @@ func TestRookMoves(t *testing.T) {
 		&Move{C1, C4, NoType, 0},
 		&Move{C1, C5, NoType, 0},
 		&Move{C1, C6, NoType, 0},
-		&Move{C1, C7, NoType, Capture},
+		&Move{C1, C7, NoType, Capture | Check},
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -85,18 +79,15 @@ func TestQueenMoves(t *testing.T) {
 	g := FromFen(fen, true)
 	board := g.position.Board
 	moves := make([]*Move, 0, 8)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces, board.blackKing,
-		White, queenAttacks, false, add)
+	g.position.bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+		White, queenAttacks, false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{D1, D2, NoType, 0},
 		&Move{D1, D3, NoType, 0},
 		&Move{D1, D4, NoType, Capture},
 		&Move{D1, C2, NoType, 0},
 		&Move{D1, B3, NoType, 0},
-		&Move{D1, A4, NoType, 0},
+		&Move{D1, A4, NoType, Check},
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -121,11 +112,8 @@ func TestKingMoves(t *testing.T) {
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, add)
+	g.position.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{E1, D2, NoType, Capture},
 		&Move{E1, F1, NoType, 0},
@@ -154,11 +142,8 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, add)
+	g.position.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{E1, E2, NoType, 0},
 		&Move{E1, F1, NoType, 0},
@@ -187,11 +172,8 @@ func TestKingQueenSideCastling(t *testing.T) {
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, add)
+	g.position.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{E1, E2, NoType, 0},
 		&Move{E1, F1, NoType, 0},
@@ -220,11 +202,8 @@ func TestPawnMovesForWhite(t *testing.T) {
 	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := White
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-		board.blackKing, color, p.EnPassant, false, add)
+	g.position.bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+		color, p.EnPassant, false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{H2, H4, NoType, 0},
 		&Move{H2, H3, NoType, 0},
@@ -235,7 +214,7 @@ func TestPawnMovesForWhite(t *testing.T) {
 		&Move{B2, B4, NoType, 0},
 		&Move{B2, B3, NoType, 0},
 		&Move{E5, D6, NoType, EnPassant | Capture},
-		&Move{E6, F7, NoType, Capture},
+		&Move{E6, F7, NoType, Capture | Check},
 		&Move{B7, A8, Queen, Capture},
 		&Move{B7, A8, Rook, Capture},
 		&Move{B7, A8, Bishop, Capture},
@@ -267,11 +246,8 @@ func TestPawnMovesForBlack(t *testing.T) {
 	board := g.position.Board
 	moves := make([]*Move, 0, 8)
 	color := Black
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-		board.whiteKing, color, p.EnPassant, false, add)
+	g.position.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+		color, p.EnPassant, false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{H7, H6, NoType, 0},
 		&Move{H7, H5, NoType, 0},
@@ -308,10 +284,7 @@ func TestKnightMoves(t *testing.T) {
 	p := g.position
 	b := p.Board
 	moves := make([]*Move, 0, 8)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbKnightMoves(b.whiteKnight, b.whitePieces, b.blackPieces, b.blackKing, false, add)
+	g.position.bbKnightMoves(b.whiteKnight, b.whitePieces, b.blackPieces, false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{G3, F1, NoType, 0},
 		&Move{G3, E4, NoType, 0},
@@ -319,10 +292,10 @@ func TestKnightMoves(t *testing.T) {
 		&Move{G3, H5, NoType, 0},
 		&Move{B5, A7, NoType, Capture},
 		&Move{B5, A3, NoType, 0},
-		&Move{B5, C7, NoType, Capture},
+		&Move{B5, C7, NoType, Capture | Check},
 		&Move{B5, C3, NoType, 0},
 		&Move{B5, D4, NoType, Capture},
-		&Move{B5, D6, NoType, 0},
+		&Move{B5, D6, NoType, Check},
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -370,11 +343,8 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	moves := make([]*Move, 0, 8)
 	color := White
 	taboo := tabooSquares(board, color)
-	add := func(ms ...*Move) {
-		moves = append(moves, ms...)
-	}
-	bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, add)
+	g.position.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+		taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, false, false, &moves)
 	expectedMoves := []*Move{
 		&Move{E1, D1, NoType, 0},
 	}

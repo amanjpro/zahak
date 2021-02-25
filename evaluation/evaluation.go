@@ -6,17 +6,16 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-func Evaluate(position *Position) int16 {
+func Evaluate(position *Position) int32 {
 	// board := position.Board
 	// allPieces := board.AllPieces()
 	return middlegameEval(position)
 }
 
-const CHECKMATE_EVAL int16 = 3100
-const DIVIDER int16 = 800
+const CHECKMATE_EVAL int32 = 400_000
 
 // Piece Square Tables
-var pawnPst = []int16{
+var pawnPst = []int32{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -27,7 +26,7 @@ var pawnPst = []int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var knightPst = []int16{
+var knightPst = []int32{
 	-40, -25, -25, -25, -25, -25, -25, -40,
 	-30, 0, 0, 0, 0, 0, 0, -30,
 	-30, 0, 0, 0, 0, 0, 0, -30,
@@ -38,7 +37,7 @@ var knightPst = []int16{
 	-40, -30, -25, -25, -25, -25, -30, -40,
 }
 
-var bishopPst = []int16{
+var bishopPst = []int32{
 	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 5, 0, 0, 0, 0, 5, -10,
 	-10, 0, 5, 0, 0, 5, 0, -10,
@@ -49,7 +48,7 @@ var bishopPst = []int16{
 	-10, -20, -20, -20, -20, -20, -20, -10,
 }
 
-var rookPst = []int16{
+var rookPst = []int32{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	10, 10, 10, 10, 10, 10, 10, 10,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -60,7 +59,7 @@ var rookPst = []int16{
 	0, 0, 0, 5, 5, 0, 0, 0,
 }
 
-var queenPst = []int16{
+var queenPst = []int32{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -71,7 +70,7 @@ var queenPst = []int16{
 	5, 5, 10, 15, 15, 10, 5, 5,
 }
 
-var kingPst = []int16{
+var kingPst = []int32{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -82,7 +81,7 @@ var kingPst = []int16{
 	20, 25, 25, -15, -15, 20, 25, 20,
 }
 
-var flip = []int16{
+var flip = []int32{
 	56, 57, 58, 59, 60, 61, 62, 63,
 	48, 49, 50, 51, 52, 53, 54, 55,
 	40, 41, 42, 43, 44, 45, 46, 47,
@@ -93,7 +92,7 @@ var flip = []int16{
 	0, 1, 2, 3, 4, 5, 6, 7,
 }
 
-func middlegameEval(position *Position) int16 {
+func middlegameEval(position *Position) int32 {
 	board := position.Board
 	p := BlackPawn
 	n := BlackKnight
@@ -117,20 +116,20 @@ func middlegameEval(position *Position) int16 {
 	bbWhiteQueen := board.GetBitboardOf(WhiteQueen)
 	bbWhiteKing := board.GetBitboardOf(WhiteKing)
 
-	blackPawnsCount := int16(0)
-	blackKnightsCount := int16(0)
-	blackBishopsCount := int16(0)
-	blackRooksCount := int16(0)
-	blackQueensCount := int16(0)
+	blackPawnsCount := int32(0)
+	blackKnightsCount := int32(0)
+	blackBishopsCount := int32(0)
+	blackRooksCount := int32(0)
+	blackQueensCount := int32(0)
 
-	whitePawnsCount := int16(0)
-	whiteKnightsCount := int16(0)
-	whiteBishopsCount := int16(0)
-	whiteRooksCount := int16(0)
-	whiteQueensCount := int16(0)
+	whitePawnsCount := int32(0)
+	whiteKnightsCount := int32(0)
+	whiteBishopsCount := int32(0)
+	whiteRooksCount := int32(0)
+	whiteQueensCount := int32(0)
 
-	blackCentipawns := int16(0)
-	whiteCentipawns := int16(0)
+	blackCentipawns := int32(0)
+	whiteCentipawns := int32(0)
 	whites := board.GetWhitePieces()
 	blacks := board.GetBlackPieces()
 	all := whites | blacks
@@ -237,7 +236,7 @@ func middlegameEval(position *Position) int16 {
 					if blackLeastAdvancedPawnsPerFile[i+1] == Rank8 || blackLeastAdvancedPawnsPerFile[i+1] < rank { // passed pawn
 						whiteCentipawns += 50 //passed pawn
 						if rank >= Rank5 {
-							whiteCentipawns += int16(rank) * 50 // advanced pawns are better
+							whiteCentipawns += int32(rank) * 50 // advanced pawns are better
 						}
 					} else {
 						whiteCentipawns += 25 // candidate passed pawn
@@ -246,7 +245,7 @@ func middlegameEval(position *Position) int16 {
 					if blackLeastAdvancedPawnsPerFile[i-1] == Rank8 || blackLeastAdvancedPawnsPerFile[i-1] < rank { // passed pawn
 						whiteCentipawns += 50 //passed pawn
 						if rank >= Rank5 {
-							whiteCentipawns += int16(rank) * 50 // advanced pawns are better
+							whiteCentipawns += int32(rank) * 50 // advanced pawns are better
 						}
 					} else {
 						whiteCentipawns += 25 // candidate passed pawn
@@ -256,7 +255,7 @@ func middlegameEval(position *Position) int16 {
 						(blackLeastAdvancedPawnsPerFile[i+1] == Rank8 || blackLeastAdvancedPawnsPerFile[i+1] < rank) { // passed pawn
 						whiteCentipawns += 50 //passed pawn
 						if rank >= Rank5 {
-							whiteCentipawns += int16(rank) * 50 // advanced pawns are better
+							whiteCentipawns += int32(rank) * 50 // advanced pawns are better
 						}
 					} else {
 						whiteCentipawns += 25 // candidate passed pawn
@@ -272,7 +271,7 @@ func middlegameEval(position *Position) int16 {
 					if whiteLeastAdvancedPawnsPerFile[i+1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i+1] > rank { // passed pawn
 						blackCentipawns += 50 //passed pawn
 						if rank <= Rank4 {
-							blackCentipawns += int16(rank) * 50 // advanced pawns are better
+							blackCentipawns += int32(rank) * 50 // advanced pawns are better
 						}
 					} else {
 						blackCentipawns += 25 // candidate passed pawn
@@ -281,7 +280,7 @@ func middlegameEval(position *Position) int16 {
 					if whiteLeastAdvancedPawnsPerFile[i-1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i-1] > rank { // passed pawn
 						blackCentipawns += 50 //passed pawn
 						if rank <= Rank4 {
-							blackCentipawns += int16(rank) * 50 // advanced pawns are better
+							blackCentipawns += int32(rank) * 50 // advanced pawns are better
 						}
 					} else {
 						blackCentipawns += 25 // candidate passed pawn
@@ -291,7 +290,7 @@ func middlegameEval(position *Position) int16 {
 						(whiteLeastAdvancedPawnsPerFile[i+1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i+1] > rank) { // passed pawn
 						blackCentipawns += 50 //passed pawn
 						if rank <= Rank4 {
-							blackCentipawns += int16(rank) * 50 // advanced pawns are better
+							blackCentipawns += int32(rank) * 50 // advanced pawns are better
 						}
 					} else {
 						blackCentipawns += 25 // candidate passed pawn
@@ -468,11 +467,11 @@ func middlegameEval(position *Position) int16 {
 	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
 	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
 
-	whiteCentipawns += int16(wAttackCounts - bAttackCounts)
-	blackCentipawns += int16(bAttackCounts - wAttackCounts)
+	whiteCentipawns += int32(wAttackCounts - bAttackCounts)
+	blackCentipawns += int32(bAttackCounts - wAttackCounts)
 
-	whiteCentipawns += int16(2 * (whiteAggressivity - blackAggressivity))
-	blackCentipawns += int16(2 * (blackAggressivity - whiteAggressivity))
+	whiteCentipawns += int32(2 * (whiteAggressivity - blackAggressivity))
+	blackCentipawns += int32(2 * (blackAggressivity - whiteAggressivity))
 
 	if turn == White {
 		return whiteCentipawns - blackCentipawns

@@ -10,9 +10,11 @@ import (
 
 func TestBlackShouldFindEscape(t *testing.T) {
 	game := FromFen("3rbbn1/BQ1kp3/2p1q2p/N4p2/8/3P4/P1P2PPP/5RK1 b - - 0 27", true)
-	evalMove := Search(game.Position(), 7, 27)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 27)
 	expected := Move{D7, D6, NoType, 0}
-	mv := *evalMove.move
+	mv := *e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -21,9 +23,11 @@ func TestBlackShouldFindEscape(t *testing.T) {
 
 func TestBlackCanFindASimpleTactic(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/2r4n/3K4 b - - 0 1", true)
-	evalMove := Search(game.Position(), 7, 1)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 1)
 	expected := Move{C2, D2, NoType, Check}
-	mv := *evalMove.move
+	mv := *e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -32,9 +36,11 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 
 func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/2K5 b - - 1 1", true)
-	evalMove := Search(game.Position(), 7, 1)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 1)
 	expected := Move{D2, G2, NoType, Check}
-	mv := *evalMove.move
+	mv := *e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -43,9 +49,11 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 
 func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/3K4 w - - 0 1", true)
-	evalMove := Search(game.Position(), 7, 1)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 1)
 	expected := Move{D1, C1, NoType, 0}
-	mv := *evalMove.move
+	mv := *e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -54,29 +62,35 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 
 func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1", true)
-	evalMove := Search(game.Position(), 7, 1)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 1)
 	expected := Move{G7, G6, NoType, 0}
-	mv := *evalMove.move
+	mv := *e.Move()
+	score := e.Score()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	if evalMove.eval != -CHECKMATE_EVAL {
-		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, evalMove.eval))
+	if score != -CHECKMATE_EVAL {
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, score))
 	}
 }
 
 func TestWhiteCanFindMateInTwo(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pbn2/3r4/4K3 w - - 2 2", true)
-	evalMove := Search(game.Position(), 7, 1)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 1)
 	expected := Move{E1, F1, NoType, 0}
-	mv := *evalMove.move
+	mv := *e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	if evalMove.eval != -CHECKMATE_EVAL {
-		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, evalMove.eval))
+	score := e.Score()
+	if score != -CHECKMATE_EVAL {
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, score))
 	}
 }
 
