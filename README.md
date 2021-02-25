@@ -2,7 +2,7 @@
 
 ![Build Status](https://github.com/amanjpro/zahak/workflows/Go/badge.svg)
 
-A UCI comppatible chess AI written in Go. Still work in proress.
+A UCI compatible chess AI written in Go. Still work in progress.
 
 # Implemented Features:
 
@@ -10,18 +10,21 @@ A UCI comppatible chess AI written in Go. Still work in proress.
 - Bitboards
 - Alpha-Beta search
 - Quiescence Search
-- Iterative Deepining
+- Iterative Deepening
 - PV Search and PV
+- Aspiration Window with PVS
 - Zero Windows
 - Delta Pruning
 - Null-Move Pruning
 - Transposition Table
 - Static Exchange Evaluation
-- Mult-Cut Pruning
+- Multi-Cut Pruning
 - Reverse Futility Pruning
 - Extended Futility Pruning
 - Late Move Reduction
 - Razoring
+- Killer Moves Heuristics
+- Move History Heuristics
 
 # Building
 
