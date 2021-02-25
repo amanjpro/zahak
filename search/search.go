@@ -18,6 +18,7 @@ type Engine struct {
 	score          int32
 	killerMoves    [][]*Move
 	searchHistory  [][]int32
+	startTime      time.Time
 }
 
 func NewEngine() *Engine {
@@ -28,9 +29,38 @@ func NewEngine() *Engine {
 		false,
 		nil,
 		0,
-		make([][]*Move, 600), // We assume there will be 300 moves at most
-		make([][]int32, 32),  // We have 32 pieces only
+		make([][]*Move, 125), // We assume there will be at most 126 iterations for each move/search
+		make([][]int32, 12),  // We have 12 pieces only
+		time.Now(),
 	}
+}
+
+func (e *Engine) ClearForSearch() {
+	for i := 0; i < len(e.killerMoves); i++ {
+		if e.killerMoves[i] == nil {
+			e.killerMoves[i] = make([]*Move, 2)
+		}
+		for j := 0; j < len(e.killerMoves[i]); j++ {
+			e.killerMoves[i][j] = nil
+		}
+	}
+
+	for i := 0; i < len(e.searchHistory); i++ {
+		if e.searchHistory[i] == nil {
+			e.searchHistory[i] = make([]int32, 64) // Number of Squares
+		}
+		for j := 0; j < len(e.searchHistory[i]); j++ {
+			e.searchHistory[i][j] = 0
+		}
+	}
+
+	e.StopSearchFlag = false
+	e.nodesVisited = 0
+	e.cacheHits = 0
+	e.pv.Pop() // pop our move
+	e.pv.Pop() // pop our opponent's move
+
+	e.startTime = time.Now()
 }
 
 func (e *Engine) KillerMoveScore(move *Move, ply uint16) int32 {
@@ -47,9 +77,6 @@ func (e *Engine) KillerMoveScore(move *Move, ply uint16) int32 {
 }
 
 func (e *Engine) AddKillerMove(move *Move, ply uint16) {
-	if e.killerMoves[ply] == nil {
-		e.killerMoves[ply] = make([]*Move, 2)
-	}
 	if !move.HasTag(Capture) {
 		e.killerMoves[ply][1] = e.killerMoves[ply][0]
 		e.killerMoves[ply][0] = move
@@ -64,9 +91,6 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply uin
 }
 
 func (e *Engine) AddMoveHistory(move *Move, movingPiece Piece, destination Square, ply uint16) {
-	if e.searchHistory[movingPiece] == nil {
-		e.searchHistory[movingPiece] = make([]int32, 64) // Number of Squares
-	}
 	if !move.HasTag(Capture) {
 		e.searchHistory[movingPiece][destination] += int32(ply)
 	}
@@ -84,7 +108,8 @@ func (e *Engine) Score() int32 {
 	return e.score
 }
 
-func (e *Engine) SendPv(thinkTime time.Duration) {
+func (e *Engine) SendPv() {
+	thinkTime := time.Now().Sub(e.startTime)
 	fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
 		e.pv.moveCount, nps(e.nodesVisited, thinkTime.Seconds()),
 		e.cacheHits, TranspositionTable.Consumed(), e.nodesVisited, e.score,
@@ -100,12 +125,8 @@ func (e *Engine) CacheHit() {
 }
 
 func (e *Engine) Search(position *Position, depth int8, ply uint16) {
-	e.StopSearchFlag = false
-	e.nodesVisited = 0
-	e.cacheHits = 0
+	e.ClearForSearch()
 	e.rootSearch(position, depth, ply)
-	e.pv.Pop() // pop our move
-	e.pv.Pop() // pop our opponent's move
 }
 
 func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
@@ -118,7 +139,6 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	e.score = alpha
 	fruitelessIterations := 0
 
-	start := time.Now()
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		if e.StopSearchFlag {
 			break
@@ -127,8 +147,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		e.score = e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, true, true)
 		e.pv = line
 		e.move = e.pv.MoveAt(0)
-		timeSpent := time.Now().Sub(start)
-		e.SendPv(timeSpent)
+		e.SendPv()
 		if iterationDepth >= 10 && *e.move == *previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
@@ -143,8 +162,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		previousBestMove = e.move
 	}
 
-	timeSpent := time.Now().Sub(start)
-	e.SendPv(timeSpent)
+	e.SendPv()
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine,
