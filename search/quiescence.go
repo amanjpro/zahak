@@ -17,7 +17,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 
 	withChecks := false && ply <= 4
 	legalMoves := position.QuiesceneMoves(withChecks)
-	movePicker := NewMovePicker(position, e, legalMoves, 125, uint16(ply+searchHeight))
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
 	if standPat >= beta {
 		return beta // fail hard
@@ -50,14 +50,14 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 			continue
 		}
 		sp := Evaluate(position)
-		score := -e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight)
+		score := -e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
 		position.UnMakeMove(move, tg, ep, cp, hc)
 		if score >= beta {
-			e.AddKillerMove(move, uint16(searchHeight+ply))
+			e.AddKillerMove(move, searchHeight)
 			return beta
 		}
 		if score > alpha {
-			e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, uint16(searchHeight+ply))
+			e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, searchHeight)
 			alpha = score
 		}
 	}

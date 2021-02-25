@@ -11,18 +11,16 @@ type MovePicker struct {
 	moves     []*Move
 	scores    []int32
 	moveOrder int8
-	ply       uint16
 	next      int
 }
 
-func NewMovePicker(p *Position, e *Engine, moves []*Move, moveOrder int8, ply uint16) *MovePicker {
+func NewMovePicker(p *Position, e *Engine, moves []*Move, moveOrder int8) *MovePicker {
 	mp := &MovePicker{
 		p,
 		e,
 		moves,
 		make([]int32, len(moves)),
 		moveOrder,
-		ply,
 		0,
 	}
 
@@ -36,7 +34,6 @@ func (mp *MovePicker) score() {
 	board := position.Board
 	engine := mp.engine
 	moveOrder := mp.moveOrder
-	ply := mp.ply
 
 	for i, move := range mp.moves {
 		// Is in PV?
@@ -80,13 +77,13 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
-		killer := engine.KillerMoveScore(move, ply)
+		killer := engine.KillerMoveScore(move, moveOrder)
 		if killer != 0 {
 			mp.scores[i] = killer
 			continue
 		}
 
-		history := engine.MoveHistoryScore(piece, move.Destination, ply)
+		history := engine.MoveHistoryScore(piece, move.Destination, moveOrder)
 		if history != 0 {
 			mp.scores[i] = history
 			continue
