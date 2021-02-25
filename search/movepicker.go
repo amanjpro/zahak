@@ -58,6 +58,11 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
+		if ok {
+			mp.scores[i] = 400_000_000 + int32(eval.Depth)
+			continue
+		}
+
 		piece := board.PieceAt(move.Source)
 		//
 		// capture ordering
@@ -106,11 +111,6 @@ func (mp *MovePicker) score() {
 		moveIsCastling := move.HasTag(castling)
 		if moveIsCastling {
 			mp.scores[i] = 3_000
-			continue
-		}
-
-		if ok {
-			mp.scores[i] = 2000 + eval.Eval
 			continue
 		}
 
