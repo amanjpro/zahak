@@ -1,6 +1,7 @@
 package search
 
 import (
+	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 )
 
@@ -45,6 +46,19 @@ func (mp *MovePicker) score() {
 				mp.scores[i] = 900_000_000
 				continue
 			}
+		}
+
+		// Is in Transition table ???
+		// TODO: This is slow, that tells us either cache access is slow or has computation is
+		// Or maybe (unlikely) make/unmake move is slow
+		cp, ep, tg, hc := position.MakeMove(move)
+		hash := position.Hash()
+		position.UnMakeMove(move, tg, ep, cp, hc)
+		eval, ok := TranspositionTable.Get(hash)
+
+		if ok && eval.Type == Exact {
+			mp.scores[i] = 500_000_000 + eval.Eval
+			continue
 		}
 
 		piece := board.PieceAt(move.Source)
@@ -95,6 +109,11 @@ func (mp *MovePicker) score() {
 		moveIsCastling := move.HasTag(castling)
 		if moveIsCastling {
 			mp.scores[i] = 3_000
+			continue
+		}
+
+		if ok {
+			mp.scores[i] = 2000 + eval.Eval
 			continue
 		}
 
