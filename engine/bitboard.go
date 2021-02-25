@@ -311,7 +311,7 @@ func StartingBoard() Bitboard {
 }
 
 func (b *Bitboard) CountPieces() int {
-	return bits.OnesCount64(b.whitePieces | b.whitePieces)
+	return bits.OnesCount64(b.blackPieces | b.whitePieces)
 }
 
 // Draw returns visual representation of the board useful for debugging.
