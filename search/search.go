@@ -224,8 +224,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	searchPv := true
-
 	legalMoves := position.LegalMoves()
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, ply+uint16(searchHeight))
 
@@ -276,7 +274,32 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	movePicker.Reset()
 
-	for i := 0; i < len(legalMoves); i++ {
+	hasSeenExact := false
+
+	// using fail soft with negamax:
+	bestscore := -MAX_INT
+	move := movePicker.Next()
+	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+	line := NewPVLine(depthLeft - 1)
+	bestscore = -e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true)
+	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+	if bestscore > alpha {
+		if bestscore >= beta {
+			// Those scores are never useful
+			if bestscore != -MAX_INT && bestscore != MAX_INT {
+				TranspositionTable.Set(hash, &CachedEval{hash, bestscore, depthLeft, UpperBound, ply})
+			}
+			e.AddKillerMove(move, uint16(searchHeight)+ply)
+			return bestscore
+		}
+		alpha = bestscore
+		pvline.AddFirst(move)
+		pvline.ReplaceLine(line)
+		hasSeenExact = true
+		e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, uint16(searchHeight)+ply)
+	}
+
+	for i := 1; i < len(legalMoves); i++ {
 		move := movePicker.Next()
 		if isRootNode {
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), i+1)
@@ -303,40 +326,42 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		line := NewPVLine(depthLeft - 1 - LMR)
 		score := -MAX_INT
-		if searchPv {
+		score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, !multiCutFlag, true)
+		if score > alpha && score < beta {
+			// research with window [alpha;beta]
 			score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true)
-		} else {
-			score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, !multiCutFlag, true)
 			if score > alpha {
-				score = -e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true) // re-search
+				alpha = score
 			}
 		}
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
-		if score >= beta {
-			// Those scores are never useful
-			if score != -MAX_INT && score != MAX_INT {
-				TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
+
+		if score > bestscore { //}||
+			// (score == CHECKMATE_EVAL && score >= alpha &&
+			// (pvline == nil || pvline.moveCount < line.moveCount+1)) { // shorter checkmate?
+			if score >= beta {
+				// Those scores are never useful
+				if score != -MAX_INT && score != MAX_INT {
+					TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
+				}
+				e.AddKillerMove(move, uint16(searchHeight)+ply)
+				return score
 			}
-			e.AddKillerMove(move, uint16(searchHeight)+ply)
-			return beta
-		}
-		if score > alpha ||
-			(score == CHECKMATE_EVAL && score >= alpha &&
-				(pvline == nil || pvline.moveCount < line.moveCount+1)) { // shorter checkmate?
-			alpha = score
+
+			bestscore = score
 			// Potential PV move, lets copy it to the current pv-line
 			pvline.AddFirst(move)
 			pvline.ReplaceLine(line)
-			searchPv = false
+			hasSeenExact = true
 			e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, uint16(searchHeight)+ply)
 		}
 	}
-	if searchPv {
-		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, LowerBound, ply})
-	} else {
+	if hasSeenExact {
 		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
+	} else {
+		TranspositionTable.Set(hash, &CachedEval{hash, bestscore, depthLeft, LowerBound, ply})
 	}
-	return alpha
+	return bestscore
 }
 
 func nps(nodes int64, dur float64) int64 {
