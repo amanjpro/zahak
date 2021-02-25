@@ -104,32 +104,41 @@ func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
 	switch piece {
 	case BlackPawn:
 		b.blackPawn |= mask
+		b.blackPieces |= mask
 	case BlackKnight:
 		b.blackKnight |= mask
+		b.blackPieces |= mask
 	case BlackBishop:
 		b.blackBishop |= mask
+		b.blackPieces |= mask
 	case BlackRook:
 		b.blackRook |= mask
+		b.blackPieces |= mask
 	case BlackQueen:
 		b.blackQueen |= mask
+		b.blackPieces |= mask
 	case BlackKing:
 		b.blackKing |= mask
+		b.blackPieces |= mask
 	case WhitePawn:
 		b.whitePawn |= mask
+		b.whitePieces |= mask
 	case WhiteKnight:
 		b.whiteKnight |= mask
+		b.whitePieces |= mask
 	case WhiteBishop:
 		b.whiteBishop |= mask
+		b.whitePieces |= mask
 	case WhiteRook:
 		b.whiteRook |= mask
+		b.whitePieces |= mask
 	case WhiteQueen:
 		b.whiteQueen |= mask
+		b.whitePieces |= mask
 	case WhiteKing:
 		b.whiteKing |= mask
+		b.whitePieces |= mask
 	}
-
-	b.blackPieces = b.blackPawn | b.blackKnight | b.blackBishop | b.blackRook | b.blackQueen | b.blackKing
-	b.whitePieces = b.whitePawn | b.whiteKnight | b.whiteBishop | b.whiteRook | b.whiteQueen | b.whiteKing
 }
 
 func (b *Bitboard) PieceAt(sq Square) Piece {
@@ -224,6 +233,10 @@ func (b *Bitboard) Move(src Square, dest Square) {
 				b.Move(A8, D8)
 			}
 		}
+
+		b.blackPieces &^= maskSrc
+		b.blackPieces |= maskDest
+		return
 	}
 	// Then it is white
 	if b.whitePawn&maskSrc != 0 {
@@ -251,8 +264,9 @@ func (b *Bitboard) Move(src Square, dest Square) {
 			b.Move(A1, D1)
 		}
 	}
-	b.blackPieces = b.blackPawn | b.blackKnight | b.blackBishop | b.blackRook | b.blackQueen | b.blackKing
-	b.whitePieces = b.whitePawn | b.whiteKnight | b.whiteBishop | b.whiteRook | b.whiteQueen | b.whiteKing
+
+	b.whitePieces &^= maskSrc
+	b.whitePieces |= maskDest
 }
 
 func StartingBoard() Bitboard {
