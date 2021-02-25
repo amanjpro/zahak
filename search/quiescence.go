@@ -15,7 +15,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		return 0
 	}
 
-	withChecks := ply <= 4
+	withChecks := false && ply <= 4
 	legalMoves := position.QuiesceneMoves(withChecks)
 	movePicker := NewMovePicker(position, e, legalMoves, 125, uint16(ply+searchHeight))
 
