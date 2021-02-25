@@ -9,7 +9,7 @@ import (
 func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
 	increment int, movesToTimeControl int) {
 	maximumTimeToThink := 0
-	numberOfMovesOutOfBook := int(game.MoveClock()) // FIXME: Yup, fix it
+	numberOfMovesOutOfBook := int(game.MoveClock()) / 2 // FIXME: Yup, fix it
 	nMoves := min(numberOfMovesOutOfBook, 10)
 	factor := 2 - nMoves/10
 	if isPerMove {
