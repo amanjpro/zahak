@@ -139,15 +139,19 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	e.score = alpha
 	fruitelessIterations := 0
 
+	firstScore := true
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		if e.StopSearchFlag {
 			break
 		}
 		line := NewPVLine(iterationDepth + 1)
 		e.score = e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, true, true)
-		e.pv = line
-		e.move = e.pv.MoveAt(0)
-		e.SendPv()
+		if firstScore || line.moveCount >= e.pv.moveCount {
+			e.pv = line
+			e.move = e.pv.MoveAt(0)
+			e.SendPv()
+			firstScore = false
+		}
 		if iterationDepth >= 10 && *e.move == *previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {

@@ -45,7 +45,7 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	gain := make([]int32, 32)
 	d := 0
 
-	mayXray := /* b.blackPawn | b.whitePawn | */ b.blackBishop | b.whiteBishop |
+	mayXray := b.blackBishop | b.whiteBishop |
 		b.blackRook | b.whiteRook | b.blackQueen | b.whiteQueen
 
 	fromSet := uint64(1 << frSq)
