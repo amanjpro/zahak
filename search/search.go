@@ -279,23 +279,23 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		LMR := int8(0)
-		// if !reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
-		// 	board := position.Board
-		// 	movingPiece := board.PieceAt(move.Source)
-		// 	isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
-		//
-		// 	// Extended Futility Pruning
-		// 	gain := Evaluate(position) - eval
-		// 	if !isRootNode && !isPvNode && !move.HasTag(Check) && futility+gain <= beta-1 &&
-		// 		move.PromoType == NoType && !isPromoting {
-		// 		continue
-		// 	}
-		//
-		// 	// Late Move Reduction
-		// 	if !isRootNode && !isPvNode && i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
-		// 		LMR = 1
-		// 	}
-		// }
+		if !reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
+			board := position.Board
+			movingPiece := board.PieceAt(move.Source)
+			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
+
+			// Extended Futility Pruning
+			gain := Evaluate(position) - eval
+			if !isRootNode && !isPvNode && !move.HasTag(Check) && futility+gain <= beta-1 &&
+				move.PromoType == NoType && !isPromoting {
+				continue
+			}
+
+			// Late Move Reduction
+			if !isRootNode && !isPvNode && i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
+				LMR = 1
+			}
+		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		line := NewPVLine(depthLeft - 1 - LMR)
 		score := -MAX_INT
