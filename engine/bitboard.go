@@ -310,8 +310,16 @@ func StartingBoard() Bitboard {
 	return bitboard
 }
 
-func (b *Bitboard) CountPieces() int {
-	return bits.OnesCount64(b.blackPieces | b.whitePieces)
+func (b *Bitboard) IsEndGame() bool {
+	noRooks := bits.OnesCount64(b.blackRook | b.whiteRook)
+	noKnights := bits.OnesCount64(b.blackRook | b.whiteRook)
+	noBishops := bits.OnesCount64(b.blackBishop | b.whiteBishop)
+	noQueens := bits.OnesCount64(b.blackQueen | b.whiteQueen)
+
+	if noRooks+noKnights+noBishops+noQueens <= 2 { // rooks, bishops and knights are almost off the table
+		return true
+	}
+	return false
 }
 
 // Draw returns visual representation of the board useful for debugging.

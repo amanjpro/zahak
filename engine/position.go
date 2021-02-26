@@ -273,7 +273,7 @@ const (
 )
 
 func (p *Position) IsEndGame() bool {
-	return p.Board.CountPieces() <= 10
+	return p.Board.IsEndGame()
 }
 
 func (p *Position) IsInCheck() bool {
