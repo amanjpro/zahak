@@ -7,15 +7,15 @@ import (
 )
 
 type PVLine struct {
-	moveCount int8    // Number of moves in the line.
-	line      []*Move // The line.
+	moveCount int8   // Number of moves in the line.
+	line      []Move // The line.
 	hasFirst  bool
 }
 
 func NewPVLine(initialSize int8) *PVLine {
 	return &PVLine{
 		0,
-		make([]*Move, initialSize),
+		make([]Move, initialSize),
 		false,
 	}
 }
@@ -33,7 +33,7 @@ func (thisLine *PVLine) ReplaceLine(otherLine *PVLine) {
 	}
 }
 
-func (thisLine *PVLine) AddFirst(move *Move) {
+func (thisLine *PVLine) AddFirst(move Move) {
 	if !thisLine.hasFirst {
 		thisLine.moveCount += 1
 		thisLine.hasFirst = true
@@ -41,14 +41,14 @@ func (thisLine *PVLine) AddFirst(move *Move) {
 	thisLine.line[0] = move
 }
 
-func (thisLine *PVLine) MoveAt(index int8) *Move {
+func (thisLine *PVLine) MoveAt(index int8) Move {
 	return thisLine.line[index]
 }
 
-func (pv *PVLine) Pop() *Move {
-	var toReturn *Move
+func (pv *PVLine) Pop() Move {
+	var toReturn Move
 	if pv.moveCount >= 0 {
-		emptySlice := make([]*Move, len(pv.line))
+		emptySlice := make([]Move, len(pv.line))
 		mv, newSlice := pv.line[0], pv.line[1:]
 		toReturn = mv
 		copy(emptySlice, newSlice)

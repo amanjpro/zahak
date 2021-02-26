@@ -540,7 +540,7 @@ func Evaluate(position *Position) int32 {
 			whiteCentipawns += lateKingPst[index]
 		} else {
 			award := earlyKingPst[index]
-			if award < 0 {
+			if award <= 0 {
 				if !position.HasTag(WhiteCanCastleKingSide) {
 					award -= 10
 				} else if !position.HasTag(WhiteCanCastleQueenSide) {

@@ -15,14 +15,12 @@ import (
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type UCI struct {
-	timerHalter chan bool
-	engine      *Engine
-	thinking    bool
+	engine   *Engine
+	thinking bool
 }
 
 func NewUCI() *UCI {
 	return &UCI{
-		make(chan bool),
 		NewEngine(),
 		false,
 	}

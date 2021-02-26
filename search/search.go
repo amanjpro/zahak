@@ -14,9 +14,9 @@ type Engine struct {
 	cacheHits      int64
 	pv             *PVLine
 	StopSearchFlag bool
-	move           *Move
+	move           Move
 	score          int32
-	killerMoves    [][]*Move
+	killerMoves    [][]Move
 	searchHistory  [][]int32
 	startTime      time.Time
 	ThinkTime      int64
@@ -28,10 +28,10 @@ func NewEngine() *Engine {
 		0,
 		NewPVLine(100),
 		false,
-		nil,
+		EmptyMove,
 		0,
-		make([][]*Move, 125), // We assume there will be at most 126 iterations for each move/search
-		make([][]int32, 12),  // We have 12 pieces only
+		make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
+		make([][]int32, 12), // We have 12 pieces only
 		time.Now(),
 		0,
 	}
@@ -45,13 +45,15 @@ func (e *Engine) ShouldStop() bool {
 	return now.Sub(e.startTime).Milliseconds() >= e.ThinkTime
 }
 
+var EmptyMove = Move{NoSquare, NoSquare, 0, 0}
+
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.killerMoves); i++ {
 		if e.killerMoves[i] == nil {
-			e.killerMoves[i] = make([]*Move, 2)
+			e.killerMoves[i] = make([]Move, 2)
 		}
 		for j := 0; j < len(e.killerMoves[i]); j++ {
-			e.killerMoves[i][j] = nil
+			e.killerMoves[i][j] = EmptyMove
 		}
 	}
 
@@ -73,20 +75,20 @@ func (e *Engine) ClearForSearch() {
 	e.startTime = time.Now()
 }
 
-func (e *Engine) KillerMoveScore(move *Move, ply int8) int32 {
+func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 	if e.killerMoves[ply] == nil {
 		return 0
 	}
-	if e.killerMoves[ply][0] != nil && *e.killerMoves[ply][0] == *move {
+	if e.killerMoves[ply][0] != EmptyMove && e.killerMoves[ply][0] == move {
 		return 100_000
 	}
-	if e.killerMoves[ply][1] != nil && *e.killerMoves[ply][1] == *move {
+	if e.killerMoves[ply][1] != EmptyMove && e.killerMoves[ply][1] == move {
 		return 90_000
 	}
 	return 0
 }
 
-func (e *Engine) AddKillerMove(move *Move, ply int8) {
+func (e *Engine) AddKillerMove(move Move, ply int8) {
 	if !move.HasTag(Capture) {
 		e.killerMoves[ply][1] = e.killerMoves[ply][0]
 		e.killerMoves[ply][0] = move
@@ -100,17 +102,18 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 	return 60_000 + e.searchHistory[movingPiece][destination]
 }
 
-func (e *Engine) AddMoveHistory(move *Move, movingPiece Piece, destination Square, ply int8) {
+func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
 	if !move.HasTag(Capture) {
 		e.searchHistory[movingPiece][destination] += int32(ply)
 	}
 }
 
 func (e *Engine) SendBestMove() {
-	fmt.Printf("bestmove %s\n", e.Move().ToString())
+	mv := e.Move()
+	fmt.Printf("bestmove %s\n", mv.ToString())
 }
 
-func (e *Engine) Move() *Move {
+func (e *Engine) Move() Move {
 	return e.move
 }
 
@@ -141,11 +144,11 @@ func (e *Engine) Search(position *Position, depth int8, ply uint16) {
 
 func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 
-	var previousBestMove *Move
+	var previousBestMove Move
 	alpha := -MAX_INT
 	beta := MAX_INT
 
-	e.move = nil
+	e.move = EmptyMove
 	e.score = alpha
 	fruitelessIterations := 0
 
@@ -163,7 +166,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			e.SendPv()
 			firstScore = false
 		}
-		if iterationDepth >= 10 && *e.move == *previousBestMove {
+		if iterationDepth >= 10 && e.move == previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
 				break
@@ -223,7 +226,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	isInCheck := false
-	if !isPvNode { // only compute it if it is not pv-node
+	if !isRootNode && !isPvNode { // only compute it if it is not pv-node
 		isInCheck = position.IsInCheck()
 	}
 
@@ -232,7 +235,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if searchHeight > 6 {
 		R = 2
 	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && searchHeight > 0 && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck
 
 	if isNullMoveAllowed {
 		tempo := int32(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
@@ -315,7 +318,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if bestscore >= beta {
 			// Those scores are never useful
 			if bestscore != -MAX_INT && bestscore != MAX_INT {
-				TranspositionTable.Set(hash, &CachedEval{hash, bestscore, depthLeft, UpperBound, ply})
+				TranspositionTable.Set(hash, CachedEval{hash, bestscore, depthLeft, UpperBound, ply})
 			}
 			e.AddKillerMove(move, searchHeight)
 			return bestscore, true
@@ -338,12 +341,13 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 			// Extended Futility Pruning
 			gain := Evaluate(position) - eval
-			if futility+gain <= beta-1 && move.PromoType == NoType {
+			isCheckMove := move.HasTag(Check)
+			if futility+gain <= beta-1 && !isCheckMove && move.PromoType == NoType {
 				continue
 			}
 
 			// Late Move Reduction
-			if i >= 5 && move.PromoType == NoType {
+			if i >= 5 && !isCheckMove && move.PromoType == NoType {
 				LMR = 1
 			}
 		}
@@ -375,7 +379,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			if score >= beta {
 				// Those scores are never useful
 				if score != -MAX_INT && score != MAX_INT {
-					TranspositionTable.Set(hash, &CachedEval{hash, score, depthLeft, UpperBound, ply})
+					TranspositionTable.Set(hash, CachedEval{hash, score, depthLeft, UpperBound, ply})
 				}
 				e.AddKillerMove(move, searchHeight)
 				return score, ok
@@ -390,9 +394,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, &CachedEval{hash, alpha, depthLeft, Exact, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, alpha, depthLeft, Exact, ply})
 	} else {
-		TranspositionTable.Set(hash, &CachedEval{hash, bestscore, depthLeft, LowerBound, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, depthLeft, LowerBound, ply})
 	}
 	return bestscore, true
 }

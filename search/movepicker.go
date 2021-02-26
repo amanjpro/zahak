@@ -8,13 +8,13 @@ import (
 type MovePicker struct {
 	position  *Position
 	engine    *Engine
-	moves     []*Move
+	moves     []Move
 	scores    []int32
 	moveOrder int8
 	next      int
 }
 
-func NewMovePicker(p *Position, e *Engine, moves []*Move, moveOrder int8) *MovePicker {
+func NewMovePicker(p *Position, e *Engine, moves []Move, moveOrder int8) *MovePicker {
 	mp := &MovePicker{
 		p,
 		e,
@@ -39,7 +39,7 @@ func (mp *MovePicker) score() {
 		// Is in PV?
 		if pv != nil && pv.moveCount > moveOrder {
 			mv := pv.MoveAt(moveOrder)
-			if *mv == *move {
+			if mv == move {
 				mp.scores[i] = 900_000_000
 				continue
 			}
@@ -128,11 +128,11 @@ func (mp *MovePicker) Reset() {
 	mp.next = 0
 }
 
-func (mp *MovePicker) Next() *Move {
+func (mp *MovePicker) Next() Move {
 	if mp.next >= len(mp.moves) {
-		return nil
+		return EmptyMove
 	}
-	var best *Move = mp.moves[mp.next]
+	var best Move = mp.moves[mp.next]
 	var bestIndex = mp.next
 	for i := mp.next + 1; i < len(mp.moves); i++ {
 		move := mp.moves[i]

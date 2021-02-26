@@ -104,7 +104,7 @@ func updateHashForNullMove(pos *Position, newEnPassant Square, oldEnPassant Squa
 }
 
 // capture square is provided for the case of enpassant
-func updateHash(pos *Position, move *Move, movingPiece Piece, capturedPiece Piece,
+func updateHash(pos *Position, move Move, movingPiece Piece, capturedPiece Piece,
 	captureSquare Square, newEnPassant Square, oldEnPassant Square, promoPiece Piece,
 	oldPositionTag PositionTag) {
 	var hash uint64 = pos.hash

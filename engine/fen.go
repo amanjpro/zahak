@@ -121,7 +121,7 @@ func positionFromFen(fen string) Position {
 		NoSquare,
 		0,
 		0,
-		intintmap.New(10000, 0.5),
+		*intintmap.New(10000, 0.5),
 		uint8(halfMoveClock),
 	}
 
@@ -178,7 +178,7 @@ func FromFen(fen string, clearCache bool) Game {
 	return NewGame(
 		&p,
 		*p.copy(),
-		[]*Move{},
+		[]Move{},
 		uint16(moveCount),
 		clearCache,
 	)
