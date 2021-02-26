@@ -185,7 +185,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	e.VisitNode()
 
 	isRootNode := searchHeight == 0
-	isPvNode := alpha == beta-1
+	isPvNode := alpha != beta-1
 
 	if depthLeft <= 0 {
 		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight), true
@@ -222,12 +222,17 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		return -MAX_INT, false
 	}
 
+	isInCheck := false
+	if !isPvNode { // only compute it if it is not pv-node
+		isInCheck = position.IsInCheck()
+	}
+
 	// NullMove pruning
 	R := int8(3)
 	if searchHeight > 6 {
 		R = 2
 	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && searchHeight > 0 && depthLeft >= R+2 && !position.IsEndGame() && !position.IsInCheck()
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && searchHeight > 0 && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck
 
 	if isNullMoveAllowed {
 		tempo := int32(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
@@ -289,11 +294,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	// Extended Futility Pruning
-	reductionsAllowed := !isRootNode || !isPvNode || position.IsInCheck()
-	lastRank := Rank7
-	if position.Turn() == Black {
-		lastRank = Rank2
-	}
+	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
 	movePicker.Reset()
 
@@ -333,20 +334,16 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		LMR := int8(0)
-		if !reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
-			board := position.Board
-			movingPiece := board.PieceAt(move.Source)
-			isPromoting := (movingPiece.Type() == Pawn && move.Destination.Rank() == lastRank)
+		if reductionsAllowed && searchHeight >= 4 && depthLeft == 2 {
 
 			// Extended Futility Pruning
 			gain := Evaluate(position) - eval
-			if !isRootNode && !isPvNode && !move.HasTag(Check) && futility+gain <= beta-1 &&
-				move.PromoType == NoType && !isPromoting {
+			if futility+gain <= beta-1 && move.PromoType == NoType {
 				continue
 			}
 
 			// Late Move Reduction
-			if !isRootNode && !isPvNode && i >= 5 && !move.HasTag(Check) && move.PromoType == NoType && !isPromoting {
+			if i >= 5 && move.PromoType == NoType {
 				LMR = 1
 			}
 		}
