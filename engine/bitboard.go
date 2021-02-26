@@ -312,7 +312,7 @@ func StartingBoard() Bitboard {
 
 func (b *Bitboard) IsEndGame() bool {
 	noRooks := bits.OnesCount64(b.blackRook | b.whiteRook)
-	noKnights := bits.OnesCount64(b.blackRook | b.whiteRook)
+	noKnights := bits.OnesCount64(b.blackKnight | b.whiteKnight)
 	noBishops := bits.OnesCount64(b.blackBishop | b.whiteBishop)
 	noQueens := bits.OnesCount64(b.blackQueen | b.whiteQueen)
 
