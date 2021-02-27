@@ -9,6 +9,23 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 
 	e.VisitNode()
 
+	if standPat >= beta {
+		return beta // fail hard
+	}
+
+	isInCheck := position.IsInCheck()
+	// Delta pruning is slowing things down
+	// q := WhiteQueen
+	// p := WhitePawn
+	// deltaMargin := int32(q - q + 2*p)
+	// if !isInCheck && standPat < alpha-deltaMargin { // is capture
+	// 	return alpha
+	// }
+	//
+	if alpha < standPat {
+		alpha = standPat
+	}
+
 	withChecks := false && ply <= 4
 	legalMoves := position.QuiesceneMoves(withChecks)
 
@@ -23,22 +40,10 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
-	if standPat >= beta {
-		return beta // fail hard
-	}
-
-	if alpha < standPat {
-		alpha = standPat
-	}
-
 	if e.ShouldStop() {
 		return standPat
 	}
 
-	isInCheck := position.IsInCheck()
-
-	w := WhitePawn
-	deltaMargin := w.Weight() * 2 // 200 centipawns
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
 		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
@@ -48,11 +53,6 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 			}
 		}
 		cp, ep, tg, hc := position.MakeMove(move)
-		if !isInCheck && cp != NoPiece && standPat < alpha-deltaMargin { // is capture
-			// Delta pruning meaningless captures
-			position.UnMakeMove(move, tg, ep, cp, hc)
-			continue
-		}
 		sp := Evaluate(position)
 		score := -e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
 		position.UnMakeMove(move, tg, ep, cp, hc)
