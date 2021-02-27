@@ -25,6 +25,7 @@ A UCI compatible chess AI written in Go. Still work in progress.
 - Razoring
 - Killer Moves Heuristics
 - Move History Heuristics
+- Check Extensions
 
 # Building
 
