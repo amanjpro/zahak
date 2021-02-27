@@ -436,9 +436,9 @@ func Evaluate(position *Position) int32 {
 		file := Square(index).File()
 		if blackPawnsPerFile[file] == 0 {
 			if whitePawnsPerFile[file] == 0 { // open file
-				blackCentipawns += 50
-			} else { // semi-open file
 				blackCentipawns += 25
+			} else { // semi-open file
+				blackCentipawns += 15
 			}
 		}
 		sq := Square(index)
@@ -525,9 +525,9 @@ func Evaluate(position *Position) int32 {
 		file := Square(index).File()
 		if whitePawnsPerFile[file] == 0 {
 			if blackPawnsPerFile[file] == 0 { // open file
-				whiteCentipawns += 50
-			} else { // semi-open file
 				whiteCentipawns += 25
+			} else { // semi-open file
+				whiteCentipawns += 15
 			}
 		}
 		sq := Square(index)
