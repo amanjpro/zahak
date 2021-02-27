@@ -211,7 +211,7 @@ func Evaluate(position *Position) int32 {
 		blackPawnsCount++
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbBlackPawn, Black) {
-			blackCentipawns -= 25
+			blackCentipawns -= 15
 		}
 		// pawn map
 		sq := Square(index)
@@ -243,7 +243,7 @@ func Evaluate(position *Position) int32 {
 		mask := uint64(1 << index)
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbBlackPawn, White) {
-			whiteCentipawns -= 25
+			whiteCentipawns -= 15
 		}
 		// pawn map
 		sq := Square(index)
