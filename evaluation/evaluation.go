@@ -276,7 +276,7 @@ func Evaluate(position *Position) int32 {
 				isIsolated = true
 			}
 			if isIsolated {
-				whiteCentipawns -= 35
+				whiteCentipawns -= 15
 			}
 		}
 
@@ -291,17 +291,17 @@ func Evaluate(position *Position) int32 {
 				isIsolated = true
 			}
 			if isIsolated {
-				blackCentipawns -= 35
+				blackCentipawns -= 15
 			}
 		}
 
 		// double pawn penalty - black
 		if blackPawnsPerFile[i] > 1 {
-			blackCentipawns -= 35
+			blackCentipawns -= 15
 		}
 		// double pawn penalty - white
 		if whitePawnsPerFile[i] > 1 {
-			whiteCentipawns -= 35
+			whiteCentipawns -= 15
 		}
 		// passed and candidate passed pawn award
 		rank := whiteMostAdvancedPawnsPerFile[i]
@@ -309,18 +309,24 @@ func Evaluate(position *Position) int32 {
 			if blackLeastAdvancedPawnsPerFile[i] == Rank8 || blackLeastAdvancedPawnsPerFile[i] < rank { // candidate
 				if i == 0 {
 					if blackLeastAdvancedPawnsPerFile[i+1] == Rank8 || blackLeastAdvancedPawnsPerFile[i+1] < rank { // passed pawn
-						whiteCentipawns += 50 //passed pawn
-						if rank >= Rank5 {
-							whiteCentipawns += int32(rank) * 50 // advanced pawns are better
+						if isEndgame {
+							whiteCentipawns += 50 //passed pawn
+						} else {
+							whiteCentipawns += 20 //passed pawn
 						}
 					} else {
-						whiteCentipawns += 25 // candidate passed pawn
+						if isEndgame {
+							whiteCentipawns += 25 // candidate passed pawn
+						} else {
+							whiteCentipawns += 10
+						}
 					}
 				} else if i == 7 {
 					if blackLeastAdvancedPawnsPerFile[i-1] == Rank8 || blackLeastAdvancedPawnsPerFile[i-1] < rank { // passed pawn
-						whiteCentipawns += 50 //passed pawn
-						if rank >= Rank5 {
-							whiteCentipawns += int32(rank) * 50 // advanced pawns are better
+						if isEndgame {
+							whiteCentipawns += 50 //passed pawn
+						} else {
+							whiteCentipawns += 20
 						}
 					} else {
 						whiteCentipawns += 25 // candidate passed pawn
@@ -328,12 +334,17 @@ func Evaluate(position *Position) int32 {
 				} else {
 					if (blackLeastAdvancedPawnsPerFile[i-1] == Rank8 || blackLeastAdvancedPawnsPerFile[i-1] < rank) &&
 						(blackLeastAdvancedPawnsPerFile[i+1] == Rank8 || blackLeastAdvancedPawnsPerFile[i+1] < rank) { // passed pawn
-						whiteCentipawns += 50 //passed pawn
-						if rank >= Rank5 {
-							whiteCentipawns += int32(rank) * 50 // advanced pawns are better
+						if isEndgame {
+							whiteCentipawns += 50 //passed pawn
+						} else {
+							whiteCentipawns += 20 //passed pawn
 						}
 					} else {
-						whiteCentipawns += 25 // candidate passed pawn
+						if isEndgame {
+							whiteCentipawns += 25 // candidate passed pawn
+						} else {
+							whiteCentipawns += 10 // candidate passed pawn
+						}
 					}
 				}
 			}
@@ -344,31 +355,46 @@ func Evaluate(position *Position) int32 {
 			if whiteLeastAdvancedPawnsPerFile[i] == Rank1 || whiteLeastAdvancedPawnsPerFile[i] > rank { // candidate
 				if i == 0 {
 					if whiteLeastAdvancedPawnsPerFile[i+1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i+1] > rank { // passed pawn
-						blackCentipawns += 50 //passed pawn
-						if rank <= Rank4 {
-							blackCentipawns += int32(rank) * 50 // advanced pawns are better
+						if isEndgame {
+							blackCentipawns += 50 //passed pawn
+						} else {
+							blackCentipawns += 20 //passed pawn
 						}
 					} else {
-						blackCentipawns += 25 // candidate passed pawn
+						if isEndgame {
+							blackCentipawns += 25 // candidate passed pawn
+						} else {
+							blackCentipawns += 10 // candidate passed pawn
+						}
 					}
 				} else if i == 7 {
 					if whiteLeastAdvancedPawnsPerFile[i-1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i-1] > rank { // passed pawn
-						blackCentipawns += 50 //passed pawn
-						if rank <= Rank4 {
-							blackCentipawns += int32(rank) * 50 // advanced pawns are better
+						if isEndgame {
+							blackCentipawns += 50 //passed pawn
+						} else {
+							blackCentipawns += 20 //passed pawn
 						}
 					} else {
-						blackCentipawns += 25 // candidate passed pawn
+						if isEndgame {
+							blackCentipawns += 25 // candidate passed pawn
+						} else {
+							blackCentipawns += 10 // candidate passed pawn
+						}
 					}
 				} else {
 					if (whiteLeastAdvancedPawnsPerFile[i-1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i-1] > rank) &&
 						(whiteLeastAdvancedPawnsPerFile[i+1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i+1] > rank) { // passed pawn
-						blackCentipawns += 50 //passed pawn
-						if rank <= Rank4 {
-							blackCentipawns += int32(rank) * 50 // advanced pawns are better
+						if isEndgame {
+							blackCentipawns += 50 //passed pawn
+						} else {
+							blackCentipawns += 20 //passed pawn
 						}
 					} else {
-						blackCentipawns += 25 // candidate passed pawn
+						if isEndgame {
+							blackCentipawns += 25 // candidate passed pawn
+						} else {
+							blackCentipawns += 10 // candidate passed pawn
+						}
 					}
 				}
 			}
