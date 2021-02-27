@@ -158,7 +158,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			break
 		}
 		line := NewPVLine(iterationDepth + 1)
-		score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, true, true)
+		score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, true, true, 0)
 		if ok && (firstScore || line.moveCount >= e.pv.moveCount) {
 			e.pv = line
 			e.score = score
@@ -184,7 +184,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine,
-	multiCutFlag bool, nullMove bool) (int32, bool) {
+	multiCutFlag bool, nullMove bool, inNullMoveSearch int8) (int32, bool) {
 	e.VisitNode()
 
 	isRootNode := searchHeight == 0
@@ -230,26 +230,34 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		isInCheck = position.IsInCheck()
 	}
 
+	eval := Evaluate(position)
+
 	// NullMove pruning
 	R := int8(3)
 	if searchHeight > 6 {
 		R = 2
 	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck && eval >= beta
 
 	if isNullMoveAllowed {
-		tempo := int32(15)    // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
-		bound := beta - tempo // variable bound
+		bound := beta
+		if inNullMoveSearch == 0 {
+			tempo := int32(15)   // TODO: Make it variable with a formula like: 10*(numPGAM > 0) + 10* numPGAM > 15);
+			bound = beta - tempo // variable bound
+		}
 		ep := position.MakeNullMove()
 		newBeta := 1 - bound
 		line := NewPVLine(depthLeft - 1 - R)
-		score, ok := e.alphaBeta(position, depthLeft-R-1, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, false)
+		score, ok := e.alphaBeta(position, depthLeft-R-1, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, false, inNullMoveSearch+1)
 		score = -score
 		position.UnMakeNullMove(ep)
 		if !ok {
 			return score, false
 		}
-		if score >= beta && score < CHECKMATE_EVAL && score > -CHECKMATE_EVAL {
+		if score >= bound {
+			if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
+				return score, true // let's not fool ourselves
+			}
 			return beta, true // null move pruning
 		}
 	}
@@ -264,7 +272,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 			line := NewPVLine(depthLeft - 1 - R)
 			newBeta := 1 - beta
-			score, ok := e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, true)
+			score, ok := e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 			if !ok {
@@ -278,8 +286,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			}
 		}
 	}
-
-	eval := Evaluate(position)
 
 	rook := WhiteRook
 	pawn := WhitePawn
@@ -308,7 +314,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	move := movePicker.Next()
 	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 	line := NewPVLine(depthLeft - 1)
-	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true)
+	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 	bestscore = -bestscore
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 	if !ok {
@@ -337,7 +343,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		LMR := int8(0)
-		if reductionsAllowed && searchHeight >= 4 && depthLeft == 2 {
+		if reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
 
 			// Extended Futility Pruning
 			gain := Evaluate(position) - eval
@@ -353,7 +359,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 		line := NewPVLine(depthLeft - 1 - LMR)
-		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, !multiCutFlag, true)
+		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 		score = -score
 		if !ok {
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
@@ -361,7 +367,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 		if score > alpha && score < beta {
 			// research with window [alpha;beta]
-			score, ok = e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true)
+			score, ok = e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
