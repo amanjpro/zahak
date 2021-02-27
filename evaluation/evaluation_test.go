@@ -93,3 +93,27 @@ func TestPawnStructureEval(t *testing.T) {
 		t.Errorf(err)
 	}
 }
+
+func TestRookStructureEval(t *testing.T) {
+	fen := "k4r2/5p2/8/8/8/8/4P3/K4R2 w - - 0 1"
+	game := FromFen(fen, false)
+
+	actual := Evaluate(game.Position())
+	expected := int32(37)
+
+	if actual != expected {
+		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+
+	fen = "k4r2/4p3/8/8/8/8/5P2/K4R2 b - - 0 1"
+	game = FromFen(fen, false)
+
+	actual = Evaluate(game.Position())
+	expected = int32(37)
+
+	if actual != expected {
+		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
