@@ -582,11 +582,15 @@ func Evaluate(position *Position) int32 {
 	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
 	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
 
-	whiteCentipawns += int32(wAttackCounts - bAttackCounts)
-	blackCentipawns += int32(bAttackCounts - wAttackCounts)
+	aggressivityFactor := int32(1)
+	if !isEndgame {
+		aggressivityFactor = 2
+	}
+	whiteCentipawns += aggressivityFactor * int32(wAttackCounts-bAttackCounts)
+	blackCentipawns += aggressivityFactor * int32(bAttackCounts-wAttackCounts)
 
-	whiteCentipawns += int32(2 * (whiteAggressivity - blackAggressivity))
-	blackCentipawns += int32(2 * (blackAggressivity - whiteAggressivity))
+	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
+	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
 
 	if turn == White {
 		return whiteCentipawns - blackCentipawns
