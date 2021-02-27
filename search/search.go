@@ -166,7 +166,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			e.SendPv()
 			firstScore = false
 		}
-		if iterationDepth >= 10 && e.move == previousBestMove {
+		if iterationDepth >= 20 && e.move == previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
 				break
