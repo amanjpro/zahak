@@ -217,8 +217,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		} else if outcome == Draw {
 			return 0, true
 		}
-
+	} else if position.IsFIDEDrawRule() { // an optimization to not call isInCheck much
+		return 0, true
 	}
+
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
 	if e.ShouldStop() {

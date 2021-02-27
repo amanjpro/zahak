@@ -35,6 +35,8 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		} else if outcome == Draw {
 			return 0
 		}
+	} else if position.IsFIDEDrawRule() { // an optimization to not call isInCheck much
+		return 0
 	}
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)

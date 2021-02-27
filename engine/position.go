@@ -348,6 +348,14 @@ func (p *Position) Status() Status {
 	return Unknown
 }
 
+func (p *Position) IsFIDEDrawRule() bool {
+	if p.HalfMoveClock >= 100 {
+		return true
+	}
+	value, ok := p.Positions.Get(int64(p.Hash()))
+	return (ok && value >= 3)
+}
+
 func (p *Position) Hash() uint64 {
 	if p.hash == 0 {
 		hash := generateZobristHash(p)
