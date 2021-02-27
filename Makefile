@@ -19,10 +19,12 @@ clean:
 	go clean ./...
 	rm -rf bin
 
-# compile:
-# 	echo "Compiling for every OS and Platform"
-# 	GOOS=linux GOARCH=arm go build -o bin/main-linux-arm main.go
-# 	GOOS=linux GOARCH=arm64 go build -o bin/main-linux-arm64 main.go
-# 	GOOS=freebsd GOARCH=386 go build -o bin/main-freebsd-386 main.go
+dist:
+	echo "Compiling for every OS and Platform"
+	GOOS=linux GOARCH=arm go build -o bin ./... && mv bin/{zahak,zahak-linux-arm}
+	GOOS=linux GOARCH=amd64 go build -o bin ./... && mv bin/{zahak,zahak-linux-amd64}
+	GOOS=darwin GOARCH=amd64 go build -o bin ./... && mv bin/{zahak,zahak-darwin-amd64}
+	GOOS=windows GOARCH=amd64 go build -o bin ./... && mv bin/{zahak.exe,zahak-windows-amd64.exe}
+	GOOS=windows GOARCH=386 go build -o bin ./... && mv bin/{zahak.exe,zahak-windows-386.exe}
 
 all: build
