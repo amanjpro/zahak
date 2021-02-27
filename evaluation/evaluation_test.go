@@ -24,4 +24,13 @@ func TestMaterialValue(t *testing.T) {
 	if actual <= 0 {
 		t.Errorf("Expected: a positive number\nGot: %d\n", actual)
 	}
+
+	fen = "2k2b1r/ppp1pppp/4b3/1P6/2P3P1/3BKP1P/7B/1R4N1 b - - 0 23"
+	game = FromFen(fen, false)
+
+	actual = Evaluate(game.Position())
+
+	if actual >= 0 {
+		t.Errorf("Expected: a negative number\nGot: %d\n", actual)
+	}
 }

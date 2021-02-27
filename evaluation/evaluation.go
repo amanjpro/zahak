@@ -201,11 +201,11 @@ func Evaluate(position *Position) int32 {
 	all := whites | blacks
 
 	// PST for black pawns
-	pieceIter := bbBlackPawn
 	blackPawnsPerFile := [8]int8{0, 0, 0, 0, 0, 0, 0, 0}
 	blackLeastAdvancedPawnsPerFile := [8]Rank{Rank1, Rank1, Rank1, Rank1, Rank1, Rank1, Rank1, Rank1}
 	blackMostAdvancedPawnsPerFile := [8]Rank{Rank8, Rank8, Rank8, Rank8, Rank8, Rank8, Rank8, Rank8}
-	for pieceIter != 0 {
+	pieceIter := bbBlackPawn
+	for pieceIter > 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		blackPawnsCount++
@@ -214,20 +214,20 @@ func Evaluate(position *Position) int32 {
 			blackCentipawns -= 25
 		}
 		// pawn map
-		sq := Square(mask)
+		sq := Square(index)
 		file := sq.File()
 		rank := sq.Rank()
-		blackPawnsPerFile[int(file)] += 1
+		blackPawnsPerFile[file] += 1
 		if rank > blackLeastAdvancedPawnsPerFile[file] {
-			blackLeastAdvancedPawnsPerFile[int(file)] = rank
+			blackLeastAdvancedPawnsPerFile[file] = rank
 		}
 		if rank < blackMostAdvancedPawnsPerFile[file] {
-			blackMostAdvancedPawnsPerFile[int(file)] = rank
+			blackMostAdvancedPawnsPerFile[file] = rank
 		}
 		if isEndgame {
-			blackCentipawns += latePawnPst[flip[index]]
+			blackCentipawns += latePawnPst[index]
 		} else {
-			blackCentipawns += earlyPawnPst[flip[index]]
+			blackCentipawns += earlyPawnPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -246,20 +246,20 @@ func Evaluate(position *Position) int32 {
 			whiteCentipawns -= 25
 		}
 		// pawn map
-		sq := Square(mask)
+		sq := Square(index)
 		file := sq.File()
 		rank := sq.Rank()
-		whitePawnsPerFile[int(file)] += 1
+		whitePawnsPerFile[file] += 1
 		if rank < whiteLeastAdvancedPawnsPerFile[file] {
-			whiteLeastAdvancedPawnsPerFile[int(file)] = rank
+			whiteLeastAdvancedPawnsPerFile[file] = rank
 		}
 		if rank > whiteMostAdvancedPawnsPerFile[file] {
-			whiteMostAdvancedPawnsPerFile[int(file)] = rank
+			whiteMostAdvancedPawnsPerFile[file] = rank
 		}
 		if isEndgame {
-			whiteCentipawns += latePawnPst[index]
+			whiteCentipawns += latePawnPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyPawnPst[index]
+			whiteCentipawns += earlyPawnPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -272,7 +272,7 @@ func Evaluate(position *Position) int32 {
 				isIsolated = true
 			} else if i == 7 && whitePawnsPerFile[i-1] <= 0 {
 				isIsolated = true
-			} else if whitePawnsPerFile[i-1] <= 0 && whitePawnsPerFile[i+1] <= 0 {
+			} else if i != 7 && i != 0 && whitePawnsPerFile[i-1] <= 0 && whitePawnsPerFile[i+1] <= 0 {
 				isIsolated = true
 			}
 			if isIsolated {
@@ -287,13 +287,14 @@ func Evaluate(position *Position) int32 {
 				isIsolated = true
 			} else if i == 7 && blackPawnsPerFile[i-1] <= 0 {
 				isIsolated = true
-			} else if blackPawnsPerFile[i-1] <= 0 && blackPawnsPerFile[i+1] <= 0 {
+			} else if i != 0 && i != 7 && blackPawnsPerFile[i-1] <= 0 && blackPawnsPerFile[i+1] <= 0 {
 				isIsolated = true
 			}
 			if isIsolated {
 				blackCentipawns -= 35
 			}
 		}
+
 		// double pawn penalty - black
 		if blackPawnsPerFile[i] > 1 {
 			blackCentipawns -= 35
@@ -381,9 +382,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			blackCentipawns += lateKnightPst[flip[index]]
+			blackCentipawns += lateKnightPst[index]
 		} else {
-			blackCentipawns += earlyKnightPst[flip[index]]
+			blackCentipawns += earlyKnightPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -394,9 +395,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			blackCentipawns += lateBishopPst[flip[index]]
+			blackCentipawns += lateBishopPst[index]
 		} else {
-			blackCentipawns += earlyBishopPst[flip[index]]
+			blackCentipawns += earlyBishopPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -423,9 +424,9 @@ func Evaluate(position *Position) int32 {
 			blackCentipawns += 15
 		}
 		if isEndgame {
-			blackCentipawns += lateRookPst[flip[index]]
+			blackCentipawns += lateRookPst[index]
 		} else {
-			blackCentipawns += earlyRookPst[flip[index]]
+			blackCentipawns += earlyRookPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -436,9 +437,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			blackCentipawns += lateQueenPst[flip[index]]
+			blackCentipawns += lateQueenPst[index]
 		} else {
-			blackCentipawns += earlyQueenPst[flip[index]]
+			blackCentipawns += earlyQueenPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -448,9 +449,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			blackCentipawns += lateKingPst[flip[index]]
+			blackCentipawns += lateKingPst[index]
 		} else {
-			award := earlyKingPst[flip[index]]
+			award := earlyKingPst[index]
 			if award <= 0 {
 				if !position.HasTag(BlackCanCastleKingSide) {
 					award -= 10
@@ -470,9 +471,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			whiteCentipawns += lateKnightPst[index]
+			whiteCentipawns += lateKnightPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyKnightPst[index]
+			whiteCentipawns += earlyKnightPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -483,9 +484,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			whiteCentipawns += lateBishopPst[index]
+			whiteCentipawns += lateBishopPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyBishopPst[index]
+			whiteCentipawns += earlyBishopPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -512,9 +513,9 @@ func Evaluate(position *Position) int32 {
 			whiteCentipawns += 15
 		}
 		if isEndgame {
-			whiteCentipawns += lateRookPst[index]
+			whiteCentipawns += lateRookPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyRookPst[index]
+			whiteCentipawns += earlyRookPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -525,9 +526,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			whiteCentipawns += lateQueenPst[index]
+			whiteCentipawns += lateQueenPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyQueenPst[index]
+			whiteCentipawns += earlyQueenPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -537,9 +538,9 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		if isEndgame {
-			whiteCentipawns += lateKingPst[index]
+			whiteCentipawns += lateKingPst[flip[index]]
 		} else {
-			award := earlyKingPst[index]
+			award := earlyKingPst[flip[index]]
 			if award <= 0 {
 				if !position.HasTag(WhiteCanCastleKingSide) {
 					award -= 10
