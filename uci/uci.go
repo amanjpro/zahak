@@ -135,6 +135,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
 	} else {
+		uci.engine.ThinkTime = 9_223_372_036_854_775_807
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
 	}
