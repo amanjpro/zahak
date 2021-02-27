@@ -23,30 +23,25 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Set env
+        run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
       - name: Distribute
         run: |
           make dist
-          TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')
           mv bin/zahak-linux-amd64 bin/zahak-linux-amd64-"$TAG_NAME"
           mv bin/zahak-linux-arm bin/zahak-linux-arm-"$TAG_NAME"
           mv bin/zahak-darwin-amd64 bin/zahak-darwin-amd64-"$TAG_NAME"
           mv bin/zahak-windows-amd64.exe bin/zahak-windows-amd64-"$TAG_NAME".exe
           mv bin/zahak-windows-386.exe bin/zahak-windows-386-"$TAG_NAME".exe
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create Release and Upload Assets
+        id: create-release-and-upload-asset
+        run: |
+          set -x
+          assets=()
+          for asset in bin/zahak-*; do
+            assets+=("-a" "$asset")
+          done
+          tag_name="$TAG_NAME"
+          hub release create "${assets[@]}" -m "$tag_name" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_paths: '["./bin/zahak*"]'
