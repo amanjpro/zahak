@@ -15,11 +15,11 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 
 	isInCheck := position.IsInCheck()
 	// Delta pruning is slowing things down
-	p := WhitePawn
-	deltaMargin := int32(p.Weight() * 1)
-	if !isInCheck && standPat < alpha-deltaMargin { // is capture
-		return alpha
-	}
+	// p := WhitePawn
+	// deltaMargin := int32(p.Weight() * 1)
+	// if !isInCheck && standPat < alpha-deltaMargin { // is capture
+	// 	return alpha
+	// }
 
 	if alpha < standPat {
 		alpha = standPat
