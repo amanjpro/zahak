@@ -73,11 +73,13 @@ func (mp *MovePicker) score() {
 				gain := board.StaticExchangeEval(move.Destination, capPiece, move.Source, piece)
 				if gain < 0 {
 					mp.scores[i] = -100_000_000 + gain
+				} else if gain == 0 {
+					mp.scores[i] = 100_000_000 + capPiece.Weight() - piece.Weight()
 				} else {
-					mp.scores[i] = 100_000_000 + gain
+					mp.scores[i] = 100_010_000 + gain
 				}
 			} else {
-				mp.scores[i] = 100_000_100
+				mp.scores[i] = 100_000_000 + capPiece.Weight() - piece.Weight()
 			}
 			continue
 		}
