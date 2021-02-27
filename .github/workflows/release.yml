@@ -26,11 +26,11 @@ jobs:
       - name: Distribute
         run: |
           make dist
-          mv bi/zahak-linux-amd64{,-${{github.ref}}}
-          mv bi/zahak-linux-arm{,-${{github.ref}}}
-          mv bi/zahak-darwin-amd64{,-${{github.ref}}}
-          mv bi/zahak-windows-amd64{,-${{github.ref}}}.exe
-          mv bi/zahak-windows-386{,-${{github.ref}}}.exe
+          mv bin/zahak-linux-amd64 bin/zahak-linux-amd64-${{github.ref}}
+          mv bin/zahak-linux-arm bin/zahak-linux-arm-${{github.ref}}
+          mv bin/zahak-darwin-amd64 bin/zahak-darwin-amd64-${{github.ref}}
+          mv bin/zahak-windows-amd64.exe bin/zahak-windows-amd64-${{github.ref}}.exe
+          mv bin/zahak-windows-386.exe bin/zahak-windows-386-${{github.ref}}.exe
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
