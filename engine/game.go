@@ -9,21 +9,21 @@ import (
 type Game struct {
 	position      *Position
 	startPosition Position
-	moves         []*Move
+	moves         []Move
 	numberOfMoves uint16
 }
 
-func (g *Game) IsLegalMove(m *Move) bool {
+func (g *Game) IsLegalMove(m Move) bool {
 	// Very inefficient, but doesn't really matter
 	for _, move := range g.position.LegalMoves() {
-		if *move == *m {
+		if move == m {
 			return true
 		}
 	}
 	return false
 }
 
-func (g *Game) Move(m *Move) {
+func (g *Game) Move(m Move) {
 	pos := g.position
 
 	if g.IsLegalMove(m) {
@@ -53,7 +53,7 @@ func (g *Game) MoveClock() uint16 {
 func NewGame(
 	position *Position,
 	startPosition Position,
-	moves []*Move,
+	moves []Move,
 	numberOfMoves uint16,
 	clearCache bool) Game {
 

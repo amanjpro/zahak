@@ -14,7 +14,7 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 27)
 	expected := Move{D7, D6, NoType, 0}
-	mv := *e.Move()
+	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -27,7 +27,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
 	expected := Move{C2, D2, NoType, Check}
-	mv := *e.Move()
+	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -40,7 +40,7 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
 	expected := Move{D2, G2, NoType, Check}
-	mv := *e.Move()
+	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -53,7 +53,7 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
 	expected := Move{D1, C1, NoType, 0}
-	mv := *e.Move()
+	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -66,7 +66,7 @@ func TestSearchOnlyMove(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
 	expected := Move{G7, G6, NoType, 0}
-	mv := *e.Move()
+	mv := e.Move()
 	score := e.Score()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -83,7 +83,7 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
 	expected := Move{E1, F1, NoType, 0}
-	mv := *e.Move()
+	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -100,22 +100,22 @@ func TestNestedMakeUnMake(t *testing.T) {
 	p := g.Position()
 	originalHash := p.Hash()
 
-	m1 := &Move{G8, E7, NoType, 0}
+	m1 := Move{G8, E7, NoType, 0}
 	cp1, ep1, tg1, hc1 := p.MakeMove(m1)
 
-	m2 := &Move{G2, G3, NoType, 0}
+	m2 := Move{G2, G3, NoType, 0}
 	cp2, ep2, tg2, hc2 := p.MakeMove(m2)
 
-	m3 := &Move{H4, G5, NoType, 0}
+	m3 := Move{H4, G5, NoType, 0}
 	cp3, ep3, tg3, hc3 := p.MakeMove(m3)
 
-	m4 := &Move{G3, G4, NoType, 0}
+	m4 := Move{G3, G4, NoType, 0}
 	cp4, ep4, tg4, hc4 := p.MakeMove(m4)
 
-	m5 := &Move{C8, B7, NoType, Capture}
+	m5 := Move{C8, B7, NoType, Capture}
 	cp5, ep5, tg5, hc5 := p.MakeMove(m5)
 
-	m6 := &Move{B2, B4, NoType, 0}
+	m6 := Move{B2, B4, NoType, 0}
 	cp6, ep6, tg6, hc6 := p.MakeMove(m6)
 
 	actualFen := g.Fen()

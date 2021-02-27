@@ -48,7 +48,7 @@ func TestAllPieces(t *testing.T) {
 		t.Errorf("Unexpected return by AllPieces: %s", err)
 	}
 
-	m := &Move{H3, G5, NoType, Capture}
+	m := Move{H3, G5, NoType, Capture}
 	cp, ep, ot, hc := g.position.MakeMove(m)
 	g.position.UnMakeMove(m, ot, ep, cp, hc)
 
@@ -58,7 +58,7 @@ func TestAllPieces(t *testing.T) {
 		t.Errorf("Knight make/unmake move broke all pieces: %s", err)
 	}
 
-	m = &Move{G1, G3, NoType, 0}
+	m = Move{G1, G3, NoType, 0}
 	cp, ep, ot, hc = g.position.MakeMove(m)
 	g.position.UnMakeMove(m, ot, ep, cp, hc)
 

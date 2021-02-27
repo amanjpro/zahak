@@ -15,14 +15,12 @@ import (
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type UCI struct {
-	timerHalter chan bool
-	engine      *Engine
-	thinking    bool
+	engine   *Engine
+	thinking bool
 }
 
 func NewUCI() *UCI {
 	return &UCI{
-		make(chan bool),
 		NewEngine(),
 		false,
 	}
@@ -137,6 +135,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
 	} else {
+		uci.engine.ThinkTime = 9_223_372_036_854_775_807
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
 	}

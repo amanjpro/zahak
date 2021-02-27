@@ -18,7 +18,7 @@ type PerftNodes struct {
 	checkmates int64
 }
 
-func PerftTree(game Game, depth int, moves []*Move) {
+func PerftTree(game Game, depth int, moves []Move) {
 	sum := int64(0)
 	for _, move := range moves {
 		game.Position().MakeMove(move)

@@ -6,27 +6,23 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-func Evaluate(position *Position) int32 {
-	// board := position.Board
-	// allPieces := board.AllPieces()
-	return middlegameEval(position)
-}
-
 const CHECKMATE_EVAL int32 = 400_000
 
 // Piece Square Tables
-var pawnPst = []int32{
+
+// Middle game
+var earlyPawnPst = [64]int32{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 15, 15, 0, 0, 0,
+	80, 80, 80, 80, 80, 80, 80, 80,
+	50, 50, 50, 50, 50, 50, 50, 50,
+	30, 30, 30, 30, 30, 30, 30, 30,
+	-10, -10, 0, 20, 20, 0, -10, -10,
 	0, 0, 0, 10, 10, 0, 0, 0,
-	0, 0, 0, 5, 5, 0, 0, 0,
-	0, 0, 0, -25, -25, 0, 0, 0,
+	0, 0, 0, -5, -5, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var knightPst = []int32{
+var earlyKnightPst = [64]int32{
 	-40, -25, -25, -25, -25, -25, -25, -40,
 	-30, 0, 0, 0, 0, 0, 0, -30,
 	-30, 0, 0, 0, 0, 0, 0, -30,
@@ -37,18 +33,18 @@ var knightPst = []int32{
 	-40, -30, -25, -25, -25, -25, -30, -40,
 }
 
-var bishopPst = []int32{
+var earlyBishopPst = [64]int32{
 	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 5, 0, 0, 0, 0, 5, -10,
 	-10, 0, 5, 0, 0, 5, 0, -10,
 	-10, 0, 0, 10, 10, 0, 0, -10,
 	-10, 0, 5, 10, 10, 5, 0, -10,
-	-10, 0, 5, 0, 0, 5, 0, -10,
+	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 5, 0, 0, 0, 0, 5, -10,
 	-10, -20, -20, -20, -20, -20, -20, -10,
 }
 
-var rookPst = []int32{
+var earlyRookPst = [64]int32{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	10, 10, 10, 10, 10, 10, 10, 10,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -59,7 +55,7 @@ var rookPst = []int32{
 	0, 0, 0, 5, 5, 0, 0, 0,
 }
 
-var queenPst = []int32{
+var earlyQueenPst = [64]int32{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -70,7 +66,7 @@ var queenPst = []int32{
 	5, 5, 10, 15, 15, 10, 5, 5,
 }
 
-var kingPst = []int32{
+var earlyKingPst = [64]int32{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -81,7 +77,75 @@ var kingPst = []int32{
 	20, 25, 25, -15, -15, 20, 25, 20,
 }
 
-var flip = []int32{
+// Endgame
+
+var latePawnPst = [64]int32{
+	0, 0, 0, 0, 0, 0, 0, 0,
+	200, 200, 200, 200, 200, 200, 200, 200,
+	150, 150, 150, 150, 150, 150, 150, 150,
+	50, 50, 50, 50, 50, 50, 50, 50,
+	10, 10, 10, 10, 10, 10, 10, 10,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+}
+
+var lateKnightPst = [64]int32{
+	-30, -20, -10, -20, -20, -20, -30, -30,
+	-10, -10, -10, -5, -5, -10, -10, -10,
+	-10, -10, 10, 10, -10, -10, -10, -10,
+	-10, 5, 10, 10, 10, 10, 10, -10,
+	-10, -5, 10, 15, 10, 15, 5, -10,
+	-10, -5, 0, 10, 10, 0, -10, -10,
+	-25, -20, -10, -5, -5, -20, -20, -25,
+	-30, -30, -30, -10, -10, -30, -30, -30,
+}
+
+var lateBishopPst = [64]int32{
+	-10, -10, -10, -10, -10, -10, -10, -10,
+	-10, -5, 5, -10, -5, -10, -5, -10,
+	5, -10, 0, 0, 0, 5, 0, 5,
+	-5, 10, 10, 10, 10, 10, 5, 0,
+	-5, 5, 10, 15, 5, 10, -5, -10,
+	-10, -5, 10, 10, 15, 5, -5, -10,
+	-10, -15, -5, 0, 5, -5, -10, -15,
+	-15, -10, -15, -5, -10, -10, -5, -15,
+}
+
+var lateRookPst = [64]int32{
+	15, 10, 15, 15, 15, 15, 10, 5,
+	10, 10, 10, 10, 5, 5, 10, 5,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	5, 5, 5, 5, 5, 5, 5, 5,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	-5, -5, -5, -5, -5, -5, -5, -5,
+	-10, -10, -10, -10, -10, -10, -10, -10,
+}
+
+var lateQueenPst = [64]int32{
+	-10, 20, 20, 25, 25, 20, 10, 20,
+	-15, 20, 30, 40, 40, 20, 20, 0,
+	-20, 5, 10, 30, 30, 30, 5, -20,
+	5, 20, 20, 30, 30, 20, 20, 5,
+	-15, 25, 20, 30, 30, 20, 25, -15,
+	-15, -25, 10, 5, 10, 15, 10, 5,
+	-20, -20, -30, -15, -15, -20, -20, -20,
+	-30, -30, -20, -30, -5, -20, -20, -20,
+}
+
+var lateKingPst = [64]int32{
+	-50, -50, -50, -50, -50, -50, -50, -50,
+	-15, 15, 15, 15, 15, 15, 15, -15,
+	10, 15, 20, 15, 20, 20, 15, 10,
+	-10, 20, 20, 20, 20, 20, 20, -10,
+	-15, -5, 20, 20, 20, 20, -5, -15,
+	-15, -5, 10, 20, 20, 10, -5, -15,
+	-20, -10, 5, 15, 15, 5, -10, -20,
+	-40, -40, -20, -10, -10, -20, -40, -40,
+}
+
+var flip = [64]int32{
 	56, 57, 58, 59, 60, 61, 62, 63,
 	48, 49, 50, 51, 52, 53, 54, 55,
 	40, 41, 42, 43, 44, 45, 46, 47,
@@ -92,7 +156,7 @@ var flip = []int32{
 	0, 1, 2, 3, 4, 5, 6, 7,
 }
 
-func middlegameEval(position *Position) int32 {
+func Evaluate(position *Position) int32 {
 	board := position.Board
 	p := BlackPawn
 	n := BlackKnight
@@ -100,6 +164,8 @@ func middlegameEval(position *Position) int32 {
 	r := BlackRook
 	q := BlackQueen
 	turn := position.Turn()
+
+	isEndgame := board.IsEndGame()
 
 	// Compute material balance
 	bbBlackPawn := board.GetBitboardOf(BlackPawn)
@@ -135,11 +201,11 @@ func middlegameEval(position *Position) int32 {
 	all := whites | blacks
 
 	// PST for black pawns
-	pieceIter := bbBlackPawn
 	blackPawnsPerFile := [8]int8{0, 0, 0, 0, 0, 0, 0, 0}
 	blackLeastAdvancedPawnsPerFile := [8]Rank{Rank1, Rank1, Rank1, Rank1, Rank1, Rank1, Rank1, Rank1}
 	blackMostAdvancedPawnsPerFile := [8]Rank{Rank8, Rank8, Rank8, Rank8, Rank8, Rank8, Rank8, Rank8}
-	for pieceIter != 0 {
+	pieceIter := bbBlackPawn
+	for pieceIter > 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		blackPawnsCount++
@@ -148,17 +214,21 @@ func middlegameEval(position *Position) int32 {
 			blackCentipawns -= 25
 		}
 		// pawn map
-		sq := Square(mask)
+		sq := Square(index)
 		file := sq.File()
 		rank := sq.Rank()
-		blackPawnsPerFile[int(file)] += 1
+		blackPawnsPerFile[file] += 1
 		if rank > blackLeastAdvancedPawnsPerFile[file] {
-			blackLeastAdvancedPawnsPerFile[int(file)] = rank
+			blackLeastAdvancedPawnsPerFile[file] = rank
 		}
 		if rank < blackMostAdvancedPawnsPerFile[file] {
-			blackMostAdvancedPawnsPerFile[int(file)] = rank
+			blackMostAdvancedPawnsPerFile[file] = rank
 		}
-		blackCentipawns += pawnPst[flip[index]]
+		if isEndgame {
+			blackCentipawns += latePawnPst[index]
+		} else {
+			blackCentipawns += earlyPawnPst[index]
+		}
 		pieceIter ^= mask
 	}
 
@@ -176,17 +246,21 @@ func middlegameEval(position *Position) int32 {
 			whiteCentipawns -= 25
 		}
 		// pawn map
-		sq := Square(mask)
+		sq := Square(index)
 		file := sq.File()
 		rank := sq.Rank()
-		whitePawnsPerFile[int(file)] += 1
+		whitePawnsPerFile[file] += 1
 		if rank < whiteLeastAdvancedPawnsPerFile[file] {
-			whiteLeastAdvancedPawnsPerFile[int(file)] = rank
+			whiteLeastAdvancedPawnsPerFile[file] = rank
 		}
 		if rank > whiteMostAdvancedPawnsPerFile[file] {
-			whiteMostAdvancedPawnsPerFile[int(file)] = rank
+			whiteMostAdvancedPawnsPerFile[file] = rank
 		}
-		whiteCentipawns += pawnPst[index]
+		if isEndgame {
+			whiteCentipawns += latePawnPst[flip[index]]
+		} else {
+			whiteCentipawns += earlyPawnPst[flip[index]]
+		}
 		pieceIter ^= mask
 	}
 
@@ -198,7 +272,7 @@ func middlegameEval(position *Position) int32 {
 				isIsolated = true
 			} else if i == 7 && whitePawnsPerFile[i-1] <= 0 {
 				isIsolated = true
-			} else if whitePawnsPerFile[i-1] <= 0 && whitePawnsPerFile[i+1] <= 0 {
+			} else if i != 7 && i != 0 && whitePawnsPerFile[i-1] <= 0 && whitePawnsPerFile[i+1] <= 0 {
 				isIsolated = true
 			}
 			if isIsolated {
@@ -213,13 +287,14 @@ func middlegameEval(position *Position) int32 {
 				isIsolated = true
 			} else if i == 7 && blackPawnsPerFile[i-1] <= 0 {
 				isIsolated = true
-			} else if blackPawnsPerFile[i-1] <= 0 && blackPawnsPerFile[i+1] <= 0 {
+			} else if i != 0 && i != 7 && blackPawnsPerFile[i-1] <= 0 && blackPawnsPerFile[i+1] <= 0 {
 				isIsolated = true
 			}
 			if isIsolated {
 				blackCentipawns -= 35
 			}
 		}
+
 		// double pawn penalty - black
 		if blackPawnsPerFile[i] > 1 {
 			blackCentipawns -= 35
@@ -306,7 +381,11 @@ func middlegameEval(position *Position) int32 {
 		blackKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		blackCentipawns += knightPst[flip[index]]
+		if isEndgame {
+			blackCentipawns += lateKnightPst[index]
+		} else {
+			blackCentipawns += earlyKnightPst[index]
+		}
 		pieceIter ^= mask
 	}
 
@@ -315,7 +394,11 @@ func middlegameEval(position *Position) int32 {
 		blackBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		blackCentipawns += bishopPst[flip[index]]
+		if isEndgame {
+			blackCentipawns += lateBishopPst[index]
+		} else {
+			blackCentipawns += earlyBishopPst[index]
+		}
 		pieceIter ^= mask
 	}
 
@@ -340,7 +423,11 @@ func middlegameEval(position *Position) int32 {
 			// double-rook horizontal
 			blackCentipawns += 15
 		}
-		blackCentipawns += rookPst[flip[index]]
+		if isEndgame {
+			blackCentipawns += lateRookPst[index]
+		} else {
+			blackCentipawns += earlyRookPst[index]
+		}
 		pieceIter ^= mask
 	}
 
@@ -349,7 +436,11 @@ func middlegameEval(position *Position) int32 {
 		blackQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		blackCentipawns += queenPst[flip[index]]
+		if isEndgame {
+			blackCentipawns += lateQueenPst[index]
+		} else {
+			blackCentipawns += earlyQueenPst[index]
+		}
 		pieceIter ^= mask
 	}
 
@@ -357,15 +448,19 @@ func middlegameEval(position *Position) int32 {
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		award := kingPst[flip[index]]
-		if award <= 0 {
-			if !position.HasTag(BlackCanCastleKingSide) {
-				award -= 10
-			} else if !position.HasTag(BlackCanCastleQueenSide) {
-				award -= 10
+		if isEndgame {
+			blackCentipawns += lateKingPst[index]
+		} else {
+			award := earlyKingPst[index]
+			if award <= 0 {
+				if !position.HasTag(BlackCanCastleKingSide) {
+					award -= 10
+				} else if !position.HasTag(BlackCanCastleQueenSide) {
+					award -= 10
+				}
 			}
+			blackCentipawns += award
 		}
-		blackCentipawns += award
 		pieceIter ^= mask
 	}
 
@@ -375,7 +470,11 @@ func middlegameEval(position *Position) int32 {
 		whiteKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		whiteCentipawns += knightPst[index]
+		if isEndgame {
+			whiteCentipawns += lateKnightPst[flip[index]]
+		} else {
+			whiteCentipawns += earlyKnightPst[flip[index]]
+		}
 		pieceIter ^= mask
 	}
 
@@ -384,7 +483,11 @@ func middlegameEval(position *Position) int32 {
 		whiteBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		whiteCentipawns += bishopPst[index]
+		if isEndgame {
+			whiteCentipawns += lateBishopPst[flip[index]]
+		} else {
+			whiteCentipawns += earlyBishopPst[flip[index]]
+		}
 		pieceIter ^= mask
 	}
 
@@ -409,7 +512,11 @@ func middlegameEval(position *Position) int32 {
 			// double-rook horizontal
 			whiteCentipawns += 15
 		}
-		whiteCentipawns += rookPst[index]
+		if isEndgame {
+			whiteCentipawns += lateRookPst[flip[index]]
+		} else {
+			whiteCentipawns += earlyRookPst[flip[index]]
+		}
 		pieceIter ^= mask
 	}
 
@@ -418,7 +525,11 @@ func middlegameEval(position *Position) int32 {
 		whiteQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		whiteCentipawns += queenPst[index]
+		if isEndgame {
+			whiteCentipawns += lateQueenPst[flip[index]]
+		} else {
+			whiteCentipawns += earlyQueenPst[flip[index]]
+		}
 		pieceIter ^= mask
 	}
 
@@ -426,15 +537,19 @@ func middlegameEval(position *Position) int32 {
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
-		award := kingPst[index]
-		if award < 0 {
-			if !position.HasTag(WhiteCanCastleKingSide) {
-				award -= 10
-			} else if !position.HasTag(WhiteCanCastleQueenSide) {
-				award -= 10
+		if isEndgame {
+			whiteCentipawns += lateKingPst[flip[index]]
+		} else {
+			award := earlyKingPst[flip[index]]
+			if award <= 0 {
+				if !position.HasTag(WhiteCanCastleKingSide) {
+					award -= 10
+				} else if !position.HasTag(WhiteCanCastleQueenSide) {
+					award -= 10
+				}
 			}
+			whiteCentipawns += award
 		}
-		whiteCentipawns += award
 		pieceIter ^= mask
 	}
 
@@ -467,11 +582,15 @@ func middlegameEval(position *Position) int32 {
 	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
 	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
 
-	whiteCentipawns += int32(wAttackCounts - bAttackCounts)
-	blackCentipawns += int32(bAttackCounts - wAttackCounts)
+	aggressivityFactor := int32(1)
+	if !isEndgame {
+		aggressivityFactor = 2
+	}
+	whiteCentipawns += aggressivityFactor * int32(wAttackCounts-bAttackCounts)
+	blackCentipawns += aggressivityFactor * int32(bAttackCounts-wAttackCounts)
 
-	whiteCentipawns += int32(2 * (whiteAggressivity - blackAggressivity))
-	blackCentipawns += int32(2 * (blackAggressivity - whiteAggressivity))
+	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
+	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
 
 	if turn == White {
 		return whiteCentipawns - blackCentipawns

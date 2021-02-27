@@ -9,7 +9,7 @@ type Position struct {
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
-	Positions     *intintmap.Map
+	Positions     intintmap.Map
 	HalfMoveClock uint8
 }
 
@@ -71,7 +71,7 @@ func (p *Position) ToggleTurn() {
 }
 
 // only for movegen
-func (p *Position) partialMakeMove(move *Move) Piece {
+func (p *Position) partialMakeMove(move Move) Piece {
 	capturedPiece := p.Board.PieceAt(move.Destination)
 	p.Board.Move(move.Source, move.Destination)
 
@@ -93,7 +93,7 @@ func (p *Position) partialMakeMove(move *Move) Piece {
 }
 
 // only for movegen
-func (p *Position) partialUnMakeMove(move *Move, capturedPiece Piece) {
+func (p *Position) partialUnMakeMove(move Move, capturedPiece Piece) {
 	p.Board.Move(move.Destination, move.Source)
 	// Undo enpassant
 	if move.HasTag(EnPassant) {
@@ -127,7 +127,7 @@ func (p *Position) partialUnMakeMove(move *Move, capturedPiece Piece) {
 	}
 }
 
-func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag, uint8) {
+func (p *Position) MakeMove(move Move) (Piece, Square, PositionTag, uint8) {
 	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
@@ -210,7 +210,7 @@ func (p *Position) MakeMove(move *Move) (Piece, Square, PositionTag, uint8) {
 	return capturedPiece, ep, tag, hc
 }
 
-func (p *Position) UnMakeMove(move *Move, tag PositionTag, enPassant Square, capturedPiece Piece,
+func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capturedPiece Piece,
 	halfClock uint8) {
 	oldTag := p.Tag
 	oldEnPassant := p.EnPassant
@@ -273,7 +273,7 @@ const (
 )
 
 func (p *Position) IsEndGame() bool {
-	return p.Board.CountPieces() <= 10
+	return p.Board.IsEndGame()
 }
 
 func (p *Position) IsInCheck() bool {
@@ -348,6 +348,14 @@ func (p *Position) Status() Status {
 	return Unknown
 }
 
+func (p *Position) IsFIDEDrawRule() bool {
+	if p.HalfMoveClock >= 100 {
+		return true
+	}
+	value, ok := p.Positions.Get(int64(p.Hash()))
+	return (ok && value >= 3)
+}
+
 func (p *Position) Hash() uint64 {
 	if p.hash == 0 {
 		hash := generateZobristHash(p)
@@ -356,19 +364,23 @@ func (p *Position) Hash() uint64 {
 	return p.hash
 }
 
-func findEnPassantCaptureSquare(move *Move) Square {
+func findEnPassantCaptureSquare(move Move) Square {
 	rank := move.Source.Rank()
 	file := move.Destination.File()
 	return SquareOf(file, rank)
 }
 
 func (p *Position) copy() *Position {
+	copyMap := intintmap.New(10000, 0.5)
+	for item := range p.Positions.Items() {
+		copyMap.Put(item[0], item[1])
+	}
 	return &Position{
 		*p.Board.copy(),
 		p.EnPassant,
 		p.Tag,
 		p.hash,
-		p.Positions,
+		*copyMap,
 		p.HalfMoveClock,
 	}
 }

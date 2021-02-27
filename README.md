@@ -14,7 +14,7 @@ A UCI compatible chess AI written in Go. Still work in progress.
 - PV Search and PV
 - Aspiration Window with PVS
 - Zero Windows
-- Delta Pruning
+- ~Delta Pruning~ Disabled, somehow it makes the search slower
 - Null-Move Pruning
 - Transposition Table
 - Static Exchange Evaluation
@@ -25,6 +25,7 @@ A UCI compatible chess AI written in Go. Still work in progress.
 - Razoring
 - Killer Moves Heuristics
 - Move History Heuristics
+- Check Extensions
 
 # Building
 

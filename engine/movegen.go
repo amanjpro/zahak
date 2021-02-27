@@ -4,7 +4,7 @@ import (
 	"math/bits"
 )
 
-func (p *Position) addAllMoves(allMoves *[]*Move, ms ...*Move) {
+func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 	color := p.Turn()
 	for _, m := range ms {
 		// make the move
@@ -24,7 +24,7 @@ func (p *Position) addAllMoves(allMoves *[]*Move, ms ...*Move) {
 	}
 }
 
-func (p *Position) addCaptureMoves(allMoves *[]*Move, withChecks bool, isChecked bool, ms ...*Move) {
+func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked bool, ms ...Move) {
 	color := p.Turn()
 	for _, m := range ms {
 		// make the move
@@ -45,16 +45,16 @@ func (p *Position) addCaptureMoves(allMoves *[]*Move, withChecks bool, isChecked
 	}
 }
 
-func (p *Position) LegalMoves() []*Move {
-	allMoves := make([]*Move, 0, 350)
+func (p *Position) LegalMoves() []Move {
+	allMoves := make([]Move, 0, 350)
 
 	p.generateMoves(&allMoves, false, false, false)
 
 	return allMoves
 }
 
-func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
-	allMoves := make([]*Move, 0, 200)
+func (p *Position) QuiesceneMoves(withChecks bool) []Move {
+	allMoves := make([]Move, 0, 200)
 
 	color := p.Turn()
 	isChecked := isInCheck(p.Board, color)
@@ -64,7 +64,7 @@ func (p *Position) QuiesceneMoves(withChecks bool) []*Move {
 	return allMoves
 }
 
-func (p *Position) generateMoves(allMoves *[]*Move, capturesOnly bool, positionIsInCheck bool, isQuiescence bool) {
+func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIsInCheck bool, isQuiescence bool) {
 
 	color := p.Turn()
 	board := p.Board
@@ -112,7 +112,7 @@ func (p *Position) generateMoves(allMoves *[]*Move, capturesOnly bool, positionI
 	}
 }
 
-func (p *Position) checkMove(m *Move) bool {
+func (p *Position) checkMove(m Move) bool {
 	color := p.Turn()
 	// make the move
 	capturedPiece := p.partialMakeMove(m)
@@ -291,7 +291,7 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 // Pawns
 
 func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color, enPassant Square,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]*Move) bool {
+	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
 	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		for bbPawn != 0 {
@@ -304,7 +304,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					if dbl != 0 {
 						dest := Square(bitScanForward(dbl))
 						var tag MoveTag = 0
-						m := &Move{srcSq, dest, NoType, tag}
+						m := Move{srcSq, dest, NoType, tag}
 						if isLegalityCheck && p.checkMove(m) {
 							return true
 						} else if !isLegalityCheck {
@@ -320,10 +320,10 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				if sngl != 0 {
 					dest := Square(bitScanForward(sngl))
 					if dest.Rank() == Rank8 {
-						m1 := &Move{srcSq, dest, Queen, 0}
-						m2 := &Move{srcSq, dest, Rook, 0}
-						m3 := &Move{srcSq, dest, Bishop, 0}
-						m4 := &Move{srcSq, dest, Knight, 0}
+						m1 := Move{srcSq, dest, Queen, 0}
+						m2 := Move{srcSq, dest, Rook, 0}
+						m3 := Move{srcSq, dest, Bishop, 0}
+						m4 := Move{srcSq, dest, Knight, 0}
 						if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 							return true
 						} else if !isLegalityCheck {
@@ -335,7 +335,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 						}
 					} else {
 						var tag MoveTag = 0
-						m := &Move{srcSq, dest, NoType, tag}
+						m := Move{srcSq, dest, NoType, tag}
 						if isLegalityCheck && p.checkMove(m) {
 							return true
 						} else if !isLegalityCheck {
@@ -353,10 +353,10 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				sq := bitScanForward(attacks)
 				dest := Square(sq)
 				if dest.Rank() == Rank8 {
-					m1 := &Move{srcSq, dest, Queen, Capture}
-					m2 := &Move{srcSq, dest, Rook, Capture}
-					m3 := &Move{srcSq, dest, Bishop, Capture}
-					m4 := &Move{srcSq, dest, Knight, Capture}
+					m1 := Move{srcSq, dest, Queen, Capture}
+					m2 := Move{srcSq, dest, Rook, Capture}
+					m3 := Move{srcSq, dest, Bishop, Capture}
+					m4 := Move{srcSq, dest, Knight, Capture}
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are
 						return true
 					} else if !isLegalityCheck {
@@ -368,7 +368,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					}
 				} else {
 					var tag MoveTag = Capture
-					m := &Move{srcSq, dest, NoType, tag}
+					m := Move{srcSq, dest, NoType, tag}
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
@@ -387,7 +387,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				if r != 0 {
 					dest := Square(bitScanForward(r))
 					var tag MoveTag = Capture | EnPassant
-					m := &Move{srcSq, dest, NoType, tag}
+					m := Move{srcSq, dest, NoType, tag}
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
@@ -411,7 +411,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				if dbl != 0 {
 					dest := Square(bitScanForward(dbl))
 					var tag MoveTag = 0
-					m := &Move{srcSq, dest, NoType, tag}
+					m := Move{srcSq, dest, NoType, tag}
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
@@ -426,10 +426,10 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				if sngl != 0 {
 					dest := Square(bitScanForward(sngl))
 					if dest.Rank() == Rank1 {
-						m1 := &Move{srcSq, dest, Queen, 0}
-						m2 := &Move{srcSq, dest, Rook, 0}
-						m3 := &Move{srcSq, dest, Bishop, 0}
-						m4 := &Move{srcSq, dest, Knight, 0}
+						m1 := Move{srcSq, dest, Queen, 0}
+						m2 := Move{srcSq, dest, Rook, 0}
+						m3 := Move{srcSq, dest, Bishop, 0}
+						m4 := Move{srcSq, dest, Knight, 0}
 						if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 							return true
 						} else if !isLegalityCheck {
@@ -440,7 +440,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 							}
 						}
 					} else {
-						m := &Move{srcSq, dest, NoType, 0}
+						m := Move{srcSq, dest, NoType, 0}
 						if isLegalityCheck && p.checkMove(m) {
 							return true
 						} else if !isLegalityCheck {
@@ -458,10 +458,10 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				sq := bitScanForward(attacks)
 				dest := Square(sq)
 				if dest.Rank() == Rank1 {
-					m1 := &Move{srcSq, dest, Queen, Capture}
-					m2 := &Move{srcSq, dest, Rook, Capture}
-					m3 := &Move{srcSq, dest, Bishop, Capture}
-					m4 := &Move{srcSq, dest, Knight, Capture}
+					m1 := Move{srcSq, dest, Queen, Capture}
+					m2 := Move{srcSq, dest, Rook, Capture}
+					m3 := Move{srcSq, dest, Bishop, Capture}
+					m4 := Move{srcSq, dest, Knight, Capture}
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
@@ -473,7 +473,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					}
 				} else {
 					var tag MoveTag = Capture
-					m := &Move{srcSq, dest, NoType, tag}
+					m := Move{srcSq, dest, NoType, tag}
 					if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
@@ -492,7 +492,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 				if r != 0 {
 					dest := Square(bitScanForward(r))
 					var tag MoveTag = Capture | EnPassant
-					m := &Move{srcSq, dest, NoType, tag}
+					m := Move{srcSq, dest, NoType, tag}
 					if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
@@ -514,7 +514,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 // Sliding moves, for rooks, queens and bishops
 func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
 	color Color, attacks func(sq Square, occ uint64, own uint64) uint64,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]*Move) bool {
+	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
@@ -526,7 +526,7 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 			for passiveMoves != 0 {
 				sq := bitScanForward(passiveMoves)
 				dest := Square(sq)
-				m := &Move{srcSq, dest, NoType, 0}
+				m := Move{srcSq, dest, NoType, 0}
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
 				} else if !isLegalityCheck {
@@ -542,7 +542,7 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 		for captureMoves != 0 {
 			sq := bitScanForward(captureMoves)
 			dest := Square(sq)
-			m := &Move{srcSq, dest, NoType, Capture}
+			m := Move{srcSq, dest, NoType, Capture}
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
@@ -562,7 +562,7 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 
 // Knights
 func (p *Position) bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]*Move) bool {
+	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
@@ -573,7 +573,7 @@ func (p *Position) bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces u
 			for moves != 0 {
 				sq := bitScanForward(moves)
 				dest := Square(sq)
-				m := &Move{srcSq, dest, NoType, 0}
+				m := Move{srcSq, dest, NoType, 0}
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
 				} else if !isLegalityCheck {
@@ -591,7 +591,7 @@ func (p *Position) bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces u
 		for captures != 0 {
 			sq := bitScanForward(captures)
 			dest := Square(sq)
-			m := &Move{srcSq, dest, NoType, Capture}
+			m := Move{srcSq, dest, NoType, Capture}
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
@@ -613,7 +613,7 @@ func (p *Position) bbKnightMoves(bbPiece uint64, ownPieces uint64, otherPieces u
 // Kings
 func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
 	tabooSquares uint64, color Color, kingSideCastle bool, queenSideCastle bool,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]*Move) bool {
+	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
 	both := (otherPieces | ownPieces)
 	if bbPiece != 0 {
 		src := bitScanForward(bbPiece)
@@ -623,7 +623,7 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 			for moves != 0 {
 				sq := bitScanForward(moves)
 				dest := Square(sq)
-				m := &Move{srcSq, dest, NoType, 0}
+				m := Move{srcSq, dest, NoType, 0}
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
 				} else if !isLegalityCheck {
@@ -658,7 +658,7 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 			if srcSq == E && kingSideCastle &&
 				((ownPieces|otherPieces)&kingSide == 0) && // are empty
 				(tabooSquares&(kingSide|1<<E) == 0) { // Not in check
-				m := &Move{srcSq, G, NoType, KingSideCastle}
+				m := Move{srcSq, G, NoType, KingSideCastle}
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
 				} else if !isLegalityCheck {
@@ -673,7 +673,7 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 			if srcSq == E && queenSideCastle &&
 				((ownPieces|otherPieces)&(queenSide|(1<<B)) == 0) && // are empty
 				(tabooSquares&(queenSide|1<<E) == 0) { // Not in check
-				m := &Move{srcSq, C, NoType, QueenSideCastle}
+				m := Move{srcSq, C, NoType, QueenSideCastle}
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
 				} else if !isLegalityCheck {
@@ -690,7 +690,7 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 		for captures != 0 {
 			sq := bitScanForward(captures)
 			dest := Square(sq)
-			m := &Move{srcSq, dest, NoType, Capture}
+			m := Move{srcSq, dest, NoType, Capture}
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
