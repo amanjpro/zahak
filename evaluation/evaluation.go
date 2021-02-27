@@ -242,7 +242,7 @@ func Evaluate(position *Position) int32 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := uint64(1 << index)
 		// backwards pawn
-		if board.IsBackwardPawn(mask, bbBlackPawn, White) {
+		if board.IsBackwardPawn(mask, bbWhitePawn, White) {
 			whiteCentipawns -= 15
 		}
 		// pawn map

@@ -1,8 +1,10 @@
 package evaluation
 
 import (
-	. "github.com/amanjpro/zahak/engine"
+	"fmt"
 	"testing"
+
+	. "github.com/amanjpro/zahak/engine"
 )
 
 func TestMaterialValue(t *testing.T) {
@@ -32,5 +34,62 @@ func TestMaterialValue(t *testing.T) {
 
 	if actual >= 0 {
 		t.Errorf("Expected: a negative number\nGot: %d\n", actual)
+	}
+}
+
+func TestIsBackwardsPawn(t *testing.T) {
+	game := FromFen("k7/5p2/4p1p1/8/8/4P1P1/5P2/K7 w - - 0 1", false)
+	board := game.Position().Board
+
+	actual := board.IsBackwardPawn(uint64(1<<int(E6)), board.GetBitboardOf(BlackPawn), Black)
+	expected := false
+
+	if actual != expected {
+		t.Error("Non-Backward Pawn - Black: is falsely identified")
+	}
+
+	actual = board.IsBackwardPawn(uint64(1<<int(F7)), board.GetBitboardOf(BlackPawn), Black)
+	expected = true
+
+	if actual != expected {
+		t.Error("Non-Backward Pawn - Black: is not identified")
+	}
+
+	actual = board.IsBackwardPawn(uint64(1<<int(G3)), board.GetBitboardOf(WhitePawn), White)
+	expected = false
+
+	if actual != expected {
+		t.Error("Non-Backward Pawn - White: is falsely identified")
+	}
+
+	actual = board.IsBackwardPawn(uint64(1<<int(F2)), board.GetBitboardOf(WhitePawn), White)
+	expected = true
+
+	if actual != expected {
+		t.Error("Non-Backward Pawn - White: is not identified")
+	}
+}
+
+func TestPawnStructureEval(t *testing.T) {
+	fen := "k7/4pp2/6p1/8/8/4P1P1/5P2/K7 w - - 0 1"
+	game := FromFen(fen, false)
+
+	actual := Evaluate(game.Position())
+	expected := int32(-17)
+
+	if actual != expected {
+		err := fmt.Sprintf("Backward Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+
+	fen = "k7/5p2/4p1p1/8/8/6P1/4PP2/K7 b - - 0 1"
+	game = FromFen(fen, false)
+
+	actual = Evaluate(game.Position())
+	expected = int32(-17)
+
+	if actual != expected {
+		err := fmt.Sprintf("Backward Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
 	}
 }
