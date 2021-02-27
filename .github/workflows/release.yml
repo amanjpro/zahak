@@ -25,16 +25,14 @@ jobs:
 
       - name: Distribute
         run: make dist
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ RELEASE_VERSION }}
-          release_name: Release ${{ RELEASE_VERSION }}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
       - name: Upload Release Asset
@@ -45,20 +43,20 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: bin/zahak-linux-arm
-          asset_name: zahak-linux-arm-${{RELEASE_VERSION }}
+          asset_name: zahak-linux-arm-${{github.ref }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: bin/zahak-linux-amd64
-          asset_name: zahak-linux-amd64-${{RELEASE_VERSION }}
+          asset_name: zahak-linux-amd64-${{github.ref }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: bin/zahak-drawin-amd64
-          asset_name: zahak-darwin-amd64-${{RELEASE_VERSION }}
+          asset_name: zahak-darwin-amd64-${{github.ref }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: bin/zahak-windows-386.exe
-          asset_name: zahak-windows-386-${{RELEASE_VERSION }}.exe
+          asset_name: zahak-windows-386-${{github.ref }}.exe
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: bin/zahak-windows-amd64.exe
-          asset_name: zahak-windows-amd64-${{RELEASE_VERSION }}.exe
+          asset_name: zahak-windows-amd64-${{github.ref }}.exe
