@@ -75,7 +75,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int32(-17)
+	expected := int32(-15)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -86,7 +86,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int32(-17)
+	expected = int32(-15)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -99,7 +99,7 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int32(37)
+	expected := int32(39)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -110,10 +110,59 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int32(37)
+	expected = int32(39)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
+
+func TestKingSafetyEval(t *testing.T) {
+	fen := "krq5/ppp5/8/7p/P7/8/1PP4P/KRQ5 w - - 0 1"
+
+	game := FromFen(fen, false)
+
+	actual := Evaluate(game.Position())
+	expected := int32(-4)
+
+	if actual != expected {
+		err := fmt.Sprintf("Advanced Own Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+
+	fen = "krq5/1pp4p/8/p7/7P/8/PPP5/KRQ5 b - - 0 1"
+
+	game = FromFen(fen, false)
+
+	actual = Evaluate(game.Position())
+	expected = int32(-4)
+
+	if actual != expected {
+		err := fmt.Sprintf("Advanced Own Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+
+	fen = "krq5/ppp4p/8/8/8/8/1PP3PP/KRQ5 w - - 0 1"
+
+	game = FromFen(fen, false)
+
+	actual = Evaluate(game.Position())
+	expected = int32(-33)
+
+	if actual != expected {
+		err := fmt.Sprintf("Missing Own Pawn -open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+	fen = "krq5/1pp3pp/8/8/8/8/PPP4P/KRQ5 b - - 0 1"
+
+	game = FromFen(fen, false)
+
+	actual = Evaluate(game.Position())
+	expected = int32(-33)
+
+	if actual != expected {
+		err := fmt.Sprintf("Missing Own Pawn -open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
 		t.Errorf(err)
 	}
 }

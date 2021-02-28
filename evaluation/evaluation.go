@@ -494,7 +494,7 @@ func Evaluate(position *Position) int32 {
 			file := square.File()
 			rank := square.Rank()
 
-			blackCentipawns -= (8 - int32(rank)) * 5 //ranks start from 0
+			blackCentipawns -= (int32(Rank8 - rank)) * 5 //ranks start from 0
 
 			var files = [3]int32{-1, -1, -1}
 			if file == FileH {
@@ -503,7 +503,7 @@ func Evaluate(position *Position) int32 {
 				files[2] = int32(FileF)
 			} else if file == FileA {
 				files[0] = int32(FileA)
-				files[1] = int32(FileG)
+				files[1] = int32(FileB)
 				files[2] = int32(FileC)
 			} else {
 				files[0] = int32(file) - 1
@@ -519,10 +519,10 @@ func Evaluate(position *Position) int32 {
 						blackCentipawns -= 70
 					}
 				} else {
-					blackCentipawns -= 5 * (8 - int32(blackLeastAdvancedPawnsPerFile[f]))
+					blackCentipawns -= 5 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
 				}
 
-				if blackPawnsPerFile[f] != 0 {
+				if whitePawnsPerFile[f] != 0 {
 					blackCentipawns -= 3 * int32(whiteMostAdvancedPawnsPerFile[f])
 				} else {
 					blackCentipawns -= 20 // black can pile up
@@ -634,7 +634,7 @@ func Evaluate(position *Position) int32 {
 				files[2] = int32(FileF)
 			} else if file == FileA {
 				files[0] = int32(FileA)
-				files[1] = int32(FileG)
+				files[1] = int32(FileB)
 				files[2] = int32(FileC)
 			} else {
 				files[0] = int32(file) - 1
@@ -654,7 +654,7 @@ func Evaluate(position *Position) int32 {
 				}
 
 				if blackPawnsPerFile[f] != 0 {
-					whiteCentipawns -= 3 * (8 - int32(blackMostAdvancedPawnsPerFile[f]))
+					whiteCentipawns -= 3 * (int32(Rank8 - blackMostAdvancedPawnsPerFile[f]))
 				} else {
 					whiteCentipawns -= 20 // black can pile up
 				}
