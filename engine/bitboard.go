@@ -326,12 +326,20 @@ func StartingBoard() Bitboard {
 }
 
 func (b *Bitboard) IsEndGame() bool {
+	if b.blackPawn == 0 && b.whitePawn == 0 { // pawns are off? then endgame
+		return true
+	}
+
 	noRooks := bits.OnesCount64(b.blackRook | b.whiteRook)
 	noKnights := bits.OnesCount64(b.blackKnight | b.whiteKnight)
 	noBishops := bits.OnesCount64(b.blackBishop | b.whiteBishop)
 	noQueens := bits.OnesCount64(b.blackQueen | b.whiteQueen)
 
-	if noRooks+noKnights+noBishops+noQueens <= 2 { // rooks, bishops and knights are almost off the table
+	if noQueens == 0 && noRooks == 0 {
+		return true
+	} else if noQueens != 0 && noRooks == 0 && noKnights+noBishops <= 2 {
+		return true
+	} else if noQueens == 0 && noRooks != 0 && noKnights+noBishops <= 2 {
 		return true
 	}
 	return false
