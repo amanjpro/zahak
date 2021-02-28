@@ -158,7 +158,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		if e.ShouldStop() {
 			break
 		}
-		line := NewPVLine(iterationDepth + 1)
+		line := NewPVLine(100)
 		score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, true, true, 0)
 		if ok && (firstScore || line.moveCount >= e.pv.moveCount) {
 			e.pv = line
@@ -251,7 +251,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 		ep := position.MakeNullMove()
 		newBeta := 1 - bound
-		line := NewPVLine(depthLeft - 1 - R)
+		line := NewPVLine(100)
 		score, ok := e.alphaBeta(position, depthLeft-R-1, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, false, inNullMoveSearch+1)
 		score = -score
 		position.UnMakeNullMove(ep)
@@ -271,7 +271,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		for i := 0; i < M; i++ {
 			move := movePicker.Next()
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-			line := NewPVLine(depthLeft - 1 - R)
+			line := NewPVLine(100)
 			newBeta := 1 - beta
 			score, ok := e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
@@ -311,12 +311,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	hasSeenExact := false
 
 	// using fail soft with negamax:
-	bestscore := -MAX_INT
 	move := movePicker.Next()
 	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-	line := NewPVLine(depthLeft - 1)
-	score, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
-	bestscore = -score
+	line := NewPVLine(100)
+	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
+	bestscore = -bestscore
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 	if !ok {
 		return bestscore, ok
