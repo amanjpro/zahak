@@ -191,6 +191,12 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	isPvNode := alpha != beta-1
 
 	if depthLeft <= 0 {
+		outcome := position.Status()
+		if outcome == Checkmate {
+			return -CHECKMATE_EVAL, true
+		} else if outcome == Draw {
+			return 0, true
+		}
 		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight), true
 	}
 
@@ -320,8 +326,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	move := movePicker.Next()
 	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 	line := NewPVLine(depthLeft - 1)
-	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
-	bestscore = -bestscore
+	score, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
+	bestscore = -score
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 	if !ok {
 		return bestscore, ok

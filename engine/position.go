@@ -285,12 +285,13 @@ func (p *Position) Status() Status {
 	if ok && value >= 3 {
 		return Draw
 	}
+	if p.HalfMoveClock >= 100 {
+		return Draw
+	}
 	if p.IsInCheck() {
 		if !p.HasLegalMoves() {
 			return Checkmate
 		}
-	} else if p.HalfMoveClock >= 100 {
-		return Draw
 	} else {
 		if !p.HasLegalMoves() {
 			return Draw
