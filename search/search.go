@@ -393,7 +393,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			if score >= beta {
 				// Those scores are never useful
 				if score != -MAX_INT && score != MAX_INT {
-					TranspositionTable.Set(hash, CachedEval{hash, score, depthLeft, LowerBound, ply})
+					TranspositionTable.Set(hash, CachedEval{hash, score, line.moveCount + 1, LowerBound, ply})
 				}
 				e.AddKillerMove(move, searchHeight)
 				return score, ok
@@ -408,9 +408,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, CachedEval{hash, alpha, depthLeft, Exact, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, alpha, pvline.moveCount, Exact, ply})
 	} else {
-		TranspositionTable.Set(hash, CachedEval{hash, bestscore, depthLeft, UpperBound, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, pvline.moveCount, UpperBound, ply})
 	}
 	return bestscore, true
 }
