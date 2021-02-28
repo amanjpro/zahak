@@ -300,7 +300,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 			pawn := uint64(1 << src)
 			if !capturesOnly {
 				if srcSq.Rank() == Rank2 {
-					dbl := wDblPushTargets(pawn, emptySquares)
+					dbl := wDoublePushTargets(pawn, emptySquares)
 					if dbl != 0 {
 						dest := Square(bitScanForward(dbl))
 						var tag MoveTag = 0
@@ -714,7 +714,7 @@ func wSinglePushTargets(wpawns uint64, empty uint64) uint64 {
 	return nortOne(wpawns) & empty
 }
 
-func wDblPushTargets(wpawns uint64, empty uint64) uint64 {
+func wDoublePushTargets(wpawns uint64, empty uint64) uint64 {
 	singlePushs := wSinglePushTargets(wpawns, empty)
 	return nortOne(singlePushs) & empty & rank4
 }
