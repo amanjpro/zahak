@@ -523,7 +523,7 @@ func Evaluate(position *Position) int32 {
 				}
 
 				if blackPawnsPerFile[f] != 0 {
-					blackCentipawns -= 5 * int32(whiteMostAdvancedPawnsPerFile[f])
+					blackCentipawns -= 3 * int32(whiteMostAdvancedPawnsPerFile[f])
 				} else {
 					blackCentipawns -= 20 // black can pile up
 				}
@@ -654,7 +654,7 @@ func Evaluate(position *Position) int32 {
 				}
 
 				if blackPawnsPerFile[f] != 0 {
-					whiteCentipawns -= 5 * (8 - int32(blackMostAdvancedPawnsPerFile[f]))
+					whiteCentipawns -= 3 * (8 - int32(blackMostAdvancedPawnsPerFile[f]))
 				} else {
 					whiteCentipawns -= 20 // black can pile up
 				}
