@@ -45,6 +45,11 @@ func (thisLine *PVLine) MoveAt(index int8) Move {
 	return thisLine.line[index]
 }
 
+func (thisLine *PVLine) Recycle() {
+	thisLine.hasFirst = false
+	thisLine.moveCount = 0
+}
+
 func (pv *PVLine) Pop() Move {
 	var toReturn Move
 	if pv.moveCount >= 0 {

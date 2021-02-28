@@ -349,6 +349,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	for i := 1; i < len(legalMoves); i++ {
+		line.Recycle()
 		move := movePicker.Next()
 		if isRootNode {
 			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), i+1)
@@ -370,7 +371,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			}
 		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-		line := NewPVLine(depthLeft - 1 - LMR)
 		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 		score = -score
 		if !ok {
@@ -378,6 +378,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return score, ok
 		}
 		if score > alpha && score < beta {
+			line.Recycle()
 			// research with window [alpha;beta]
 			score, ok = e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
