@@ -408,7 +408,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, CachedEval{hash, alpha, pvline.moveCount, Exact, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, pvline.moveCount, Exact, ply})
 	} else {
 		TranspositionTable.Set(hash, CachedEval{hash, bestscore, pvline.moveCount, UpperBound, ply})
 	}
