@@ -267,9 +267,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return score, false
 		}
 		if score >= bound {
-			if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
-				return score, true // let's not fool ourselves
-			}
 			return beta, true // null move pruning
 		}
 	}
