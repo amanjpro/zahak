@@ -238,9 +238,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		isInCheck = position.IsInCheck()
 	}
 
-	if isInCheck {
-		depthLeft += 1 // Singular Extension
-	}
+	// if isInCheck {
+	// 	depthLeft += 1 // Singular Extension
+	// }
 
 	eval := Evaluate(position)
 
