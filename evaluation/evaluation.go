@@ -74,7 +74,7 @@ var earlyKingPst = [64]int32{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
-	20, 25, 25, -15, -15, 20, 25, 20,
+	20, 25, 25, -25, -25, 20, 25, 20,
 }
 
 // Endgame
@@ -487,6 +487,48 @@ func Evaluate(position *Position) int32 {
 			}
 			blackCentipawns += award
 		}
+
+		// Middle-game king safety
+		if !isEndgame {
+			square := Square(index)
+			file := square.File()
+			rank := square.Rank()
+
+			blackCentipawns -= (8 - int32(rank)) * 5 //ranks start from 0
+
+			var files = [3]int32{-1, -1, -1}
+			if file == FileH {
+				files[0] = int32(FileH)
+				files[1] = int32(FileG)
+				files[2] = int32(FileF)
+			} else if file == FileA {
+				files[0] = int32(FileA)
+				files[1] = int32(FileG)
+				files[2] = int32(FileC)
+			} else {
+				files[0] = int32(file) - 1
+				files[1] = int32(file)
+				files[2] = int32(file) + 1
+			}
+
+			for f := range files {
+				if blackPawnsPerFile[f] == 0 { // no pawn here
+					if whitePawnsPerFile[f] == 0 { // open file!!
+						blackCentipawns -= 90
+					} else {
+						blackCentipawns -= 70
+					}
+				} else {
+					blackCentipawns -= 5 * (8 - int32(blackLeastAdvancedPawnsPerFile[f]))
+				}
+
+				if blackPawnsPerFile[f] != 0 {
+					blackCentipawns -= 5 * int32(whiteMostAdvancedPawnsPerFile[f])
+				} else {
+					blackCentipawns -= 20 // black can pile up
+				}
+			}
+		}
 		pieceIter ^= mask
 	}
 
@@ -576,6 +618,49 @@ func Evaluate(position *Position) int32 {
 			}
 			whiteCentipawns += award
 		}
+
+		// Middle-game king safety
+		if !isEndgame {
+			square := Square(index)
+			file := square.File()
+			rank := square.Rank()
+
+			whiteCentipawns -= int32(rank) * 5 //ranks start from 0
+
+			var files = [3]int32{-1, -1, -1}
+			if file == FileH {
+				files[0] = int32(FileH)
+				files[1] = int32(FileG)
+				files[2] = int32(FileF)
+			} else if file == FileA {
+				files[0] = int32(FileA)
+				files[1] = int32(FileG)
+				files[2] = int32(FileC)
+			} else {
+				files[0] = int32(file) - 1
+				files[1] = int32(file)
+				files[2] = int32(file) + 1
+			}
+
+			for f := range files {
+				if whitePawnsPerFile[f] == 0 { // no pawn here
+					if blackPawnsPerFile[f] == 0 { // open file!!
+						whiteCentipawns -= 90
+					} else {
+						whiteCentipawns -= 70
+					}
+				} else {
+					whiteCentipawns -= 5 * int32(whiteLeastAdvancedPawnsPerFile[f])
+				}
+
+				if blackPawnsPerFile[f] != 0 {
+					whiteCentipawns -= 5 * (8 - int32(blackMostAdvancedPawnsPerFile[f]))
+				} else {
+					whiteCentipawns -= 20 // black can pile up
+				}
+			}
+		}
+
 		pieceIter ^= mask
 	}
 
