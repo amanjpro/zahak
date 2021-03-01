@@ -269,9 +269,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return score, false
 		}
 		if score >= bound {
-			if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
-				return score, true // let's not fool ourselves
-			}
+			// if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
+			// 	return score, true // let's not fool ourselves
+			// }
 			return beta, true // null move pruning
 		}
 	}
@@ -349,6 +349,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, searchHeight)
 	}
 
+	alphaDepth := int8(0)
+
 	for i := 1; i < len(legalMoves); i++ {
 		line.Recycle()
 		move := movePicker.Next()
@@ -389,6 +391,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			}
 			if score > alpha {
 				alpha = score
+				alphaDepth = line.moveCount
 			}
 		}
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
@@ -413,9 +416,12 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, CachedEval{hash, alpha, pvline.moveCount, Exact, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, pvline.moveCount, Exact, ply})
 	} else {
-		TranspositionTable.Set(hash, CachedEval{hash, bestscore, pvline.moveCount, UpperBound, ply})
+		if line.moveCount > alphaDepth {
+			alphaDepth = line.moveCount
+		}
+		TranspositionTable.Set(hash, CachedEval{hash, alpha, alphaDepth + 1, UpperBound, ply})
 	}
 	return bestscore, true
 }
