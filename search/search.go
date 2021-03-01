@@ -121,10 +121,10 @@ func (e *Engine) Score() int32 {
 	return e.score
 }
 
-func (e *Engine) SendPv() {
+func (e *Engine) SendPv(depth int8) {
 	thinkTime := time.Now().Sub(e.startTime)
-	fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-		e.pv.moveCount, nps(e.nodesVisited, thinkTime.Seconds()),
+	fmt.Printf("info depth %d seldepth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
+		depth, e.pv.moveCount, nps(e.nodesVisited, thinkTime.Seconds()),
 		e.cacheHits, TranspositionTable.Consumed(), e.nodesVisited, e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
 }
@@ -153,6 +153,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	fruitelessIterations := 0
 
 	firstScore := true
+	lastDepth := int8(1)
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		if e.ShouldStop() {
 			break
@@ -163,9 +164,10 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			e.pv = line
 			e.score = score
 			e.move = e.pv.MoveAt(0)
-			e.SendPv()
+			e.SendPv(iterationDepth)
 			firstScore = false
 		}
+		lastDepth = iterationDepth
 		if iterationDepth >= 20 && e.move == previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
@@ -180,7 +182,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		previousBestMove = e.move
 	}
 
-	e.SendPv()
+	e.SendPv(lastDepth)
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine,
