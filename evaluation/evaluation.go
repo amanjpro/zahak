@@ -3,6 +3,7 @@ package evaluation
 import (
 	"math/bits"
 
+	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 )
 
@@ -157,6 +158,12 @@ var flip = [64]int32{
 }
 
 func Evaluate(position *Position) int32 {
+	hash := position.Hash()
+	value, ok := EvalTable.Get(hash)
+	if ok {
+		return value
+	}
+
 	board := position.Board
 	p := BlackPawn
 	n := BlackKnight
@@ -703,9 +710,12 @@ func Evaluate(position *Position) int32 {
 	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
 	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
 
+	var eval int32
 	if turn == White {
-		return whiteCentipawns - blackCentipawns
+		eval = whiteCentipawns - blackCentipawns
 	} else {
-		return blackCentipawns - whiteCentipawns
+		eval = blackCentipawns - whiteCentipawns
 	}
+	EvalTable.Set(hash, eval)
+	return eval
 }
