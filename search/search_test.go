@@ -141,3 +141,17 @@ func TestNestedMakeUnMake(t *testing.T) {
 		t.Errorf("Nested Make/UnMake broke hashing %s", fmt.Sprintf("Got: %d\nExpected: %d\n", endHash, originalHash))
 	}
 }
+
+func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
+	fen := "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"
+	game := FromFen(fen, true)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 7, 1)
+	expected := Move{A1, B1, NoType, 0}
+	mv := e.Move()
+	mvStr := mv.ToString()
+	if mv != expected {
+		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
+	}
+}
