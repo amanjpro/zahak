@@ -160,6 +160,7 @@ func positionFromFen(fen string) Position {
 	} else if ok {
 		p.EnPassant = sq
 	}
+	p.Positions.Put(int64(p.Hash()), 1)
 	return p
 }
 
