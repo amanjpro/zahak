@@ -189,3 +189,32 @@ func TestUnMakeMovePromotion(t *testing.T) {
 		t.Errorf("But expected: %d\n", startHash)
 	}
 }
+
+func TestThreeFoldRepetition(t *testing.T) {
+	startFen := "k7/3RR3/8/8/8/1q6/8/K1RRRR2 b - - 0 1"
+	game := FromFen(startFen, true)
+
+	m1 := Move{B3, A3, NoType, Check}
+	m2 := Move{A1, B1, NoType, 0}
+	m3 := Move{A3, B3, NoType, Check}
+	m4 := Move{B1, A1, NoType, 0}
+	m5 := Move{B3, A3, NoType, Check}
+	m6 := Move{A1, B1, NoType, 0}
+	m7 := Move{A3, B3, NoType, Check}
+	m8 := Move{B1, A1, NoType, 0}
+	m9 := Move{B3, A3, NoType, Check}
+
+	game.position.MakeMove(m1)
+	game.position.MakeMove(m2)
+	game.position.MakeMove(m3)
+	game.position.MakeMove(m4)
+	game.position.MakeMove(m5)
+	game.position.MakeMove(m6)
+	game.position.MakeMove(m7)
+	game.position.MakeMove(m8)
+	game.position.MakeMove(m9)
+
+	if game.Status() != Draw {
+		t.Errorf("Expected Draw, but got: %d", game.Status())
+	}
+}
