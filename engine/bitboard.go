@@ -320,9 +320,12 @@ func (b *Bitboard) IsEndGame() bool {
 	noBishops := bits.OnesCount64(b.blackBishop | b.whiteBishop)
 	noQueens := bits.OnesCount64(b.blackQueen | b.whiteQueen)
 
-	if noQueens == 0 && noRooks+noKnights+noBishops <= 2 { // rooks, bishops and knights are almost off the table
+	if noQueens == 0 && noRooks == 0 { // rooks, bishops and knights are almost off the table
 		return true
-	} else if noQueens != 0 && noRooks+noKnights+noBishops <= 1 { // if queens are there, then we need one other piece otherwise it is late mid-game
+	} else if noQueens != 0 && noRooks == 0 && noKnights+noBishops <= 2 {
+		return true
+	} else if noRooks == 0 && noRooks != 0 && noKnights+noBishops <= 2 {
+		return true
 	}
 	return false
 }
