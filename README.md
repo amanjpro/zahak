@@ -25,7 +25,7 @@ A UCI compatible chess AI written in Go. Still work in progress.
 - Razoring
 - Killer Moves Heuristics
 - Move History Heuristics
-- ~Check Extensions~ Disabled, causes the PV-line to cross its boundary
+- Check Extensions
 
 # Building
 
