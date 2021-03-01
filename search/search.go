@@ -269,9 +269,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return score, false
 		}
 		if score >= bound {
-			// if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
-			// 	return score, true // let's not fool ourselves
-			// }
+			if score == CHECKMATE_EVAL || score == -CHECKMATE_EVAL {
+				return score, true // let's not fool ourselves
+			}
 			return beta, true // null move pruning
 		}
 	}
@@ -421,7 +421,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if line.moveCount > alphaDepth {
 			alphaDepth = line.moveCount
 		}
-		TranspositionTable.Set(hash, CachedEval{hash, alpha, alphaDepth + 1, UpperBound, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, alphaDepth + 1, UpperBound, ply})
 	}
 	return bestscore, true
 }
