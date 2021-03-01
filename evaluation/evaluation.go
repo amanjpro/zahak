@@ -519,6 +519,9 @@ func Evaluate(position *Position) int32 {
 			}
 
 			for f := range files {
+				if f == int(FileE) { // Let's encourage e4 and e5
+					continue
+				}
 				if blackPawnsPerFile[f] == 0 { // no pawn here
 					if whitePawnsPerFile[f] == 0 { // open file!!
 						blackCentipawns -= 90
@@ -650,6 +653,9 @@ func Evaluate(position *Position) int32 {
 			}
 
 			for f := range files {
+				if f == int(FileE) { // Let's encourage e4 and e5
+					continue
+				}
 				if whitePawnsPerFile[f] == 0 { // no pawn here
 					if blackPawnsPerFile[f] == 0 { // open file!!
 						whiteCentipawns -= 90
