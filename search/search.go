@@ -187,16 +187,17 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	multiCutFlag bool, nullMove bool, inNullMoveSearch int8) (int32, bool) {
 	e.VisitNode()
 
+	outcome := position.Status()
+	if outcome == Checkmate {
+		return -CHECKMATE_EVAL, true
+	} else if outcome == Draw {
+		return 0, true
+	}
+
 	isRootNode := searchHeight == 0
 	isPvNode := alpha != beta-1
 
 	if depthLeft <= 0 {
-		outcome := position.Status()
-		if outcome == Checkmate {
-			return -CHECKMATE_EVAL, true
-		} else if outcome == Draw {
-			return 0, true
-		}
 		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight), true
 	}
 
@@ -215,17 +216,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	legalMoves := position.LegalMoves()
-
-	if len(legalMoves) == 0 {
-		outcome := position.Status()
-		if outcome == Checkmate {
-			return -CHECKMATE_EVAL, true
-		} else if outcome == Draw {
-			return 0, true
-		}
-	} else if position.IsFIDEDrawRule() { // an optimization to not call isInCheck much
-		return 0, true
-	}
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 

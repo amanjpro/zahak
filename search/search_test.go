@@ -141,3 +141,51 @@ func TestNestedMakeUnMake(t *testing.T) {
 		t.Errorf("Nested Make/UnMake broke hashing %s", fmt.Sprintf("Got: %d\nExpected: %d\n", endHash, originalHash))
 	}
 }
+
+func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
+	fen := "k7/3RR3/8/8/8/1q6/8/K1RRRR2 b - - 0 1"
+	game := FromFen(fen, true)
+	e := NewEngine()
+	e.ThinkTime = 400_000
+	e.Search(game.Position(), 13, 1)
+	expected := []Move{
+		Move{B3, A3, NoType, Check},
+		Move{A1, B1, NoType, 0},
+		Move{A3, B3, NoType, Check},
+		Move{B1, A1, NoType, 0},
+		Move{B3, A3, NoType, Check},
+		Move{A1, B1, NoType, 0},
+		Move{A3, B3, NoType, Check},
+		Move{B1, A1, NoType, 0},
+		Move{B3, A3, NoType, Check},
+		Move{A1, B1, NoType, 0},
+		Move{A3, B3, NoType, Check},
+		Move{B1, A1, NoType, 0}}
+	actual := e.pv.line
+	if equalMoves(expected, actual) {
+		actualString := e.pv.ToString()
+		e.pv.line = expected
+		expectedString := e.pv.ToString()
+		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expectedString, actualString))
+	}
+}
+
+func equalMoves(moves1 []Move, moves2 []Move) bool {
+	if len(moves1) != len(moves2) {
+		return false
+	}
+	for _, m1 := range moves1 {
+		exists := false
+		for _, m2 := range moves2 {
+			if m1 == m2 {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			fmt.Println("Missing", m1.ToString(), m1.Tag)
+			return false
+		}
+	}
+	return true
+}

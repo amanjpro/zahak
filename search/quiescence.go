@@ -8,6 +8,12 @@ import (
 func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8, standPat int32, searchHeight int8) int32 {
 
 	e.VisitNode()
+	outcome := position.Status()
+	if outcome == Checkmate {
+		return -CHECKMATE_EVAL
+	} else if outcome == Draw {
+		return 0
+	}
 
 	if standPat >= beta {
 		return beta // fail hard
@@ -27,17 +33,6 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 
 	withChecks := false && ply <= 4
 	legalMoves := position.QuiesceneMoves(withChecks)
-
-	if len(legalMoves) == 0 {
-		outcome := position.Status()
-		if outcome == Checkmate {
-			return -CHECKMATE_EVAL
-		} else if outcome == Draw {
-			return 0
-		}
-	} else if position.IsFIDEDrawRule() { // an optimization to not call isInCheck much
-		return 0
-	}
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
