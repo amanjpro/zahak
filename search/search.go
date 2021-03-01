@@ -349,8 +349,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, searchHeight)
 	}
 
-	alphaDepth := int8(0)
-
 	for i := 1; i < len(legalMoves); i++ {
 		line.Recycle()
 		move := movePicker.Next()
@@ -391,7 +389,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			}
 			if score > alpha {
 				alpha = score
-				alphaDepth = line.moveCount
 			}
 		}
 		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
@@ -401,7 +398,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 				// Those scores are never useful
 				if score != -MAX_INT && score != MAX_INT {
 					// returned line never accounts for the current line
-					TranspositionTable.Set(hash, CachedEval{hash, score, line.moveCount + 1, LowerBound, ply})
+					TranspositionTable.Set(hash, CachedEval{hash, score, depthLeft, LowerBound, ply})
 				}
 				e.AddKillerMove(move, searchHeight)
 				return score, ok
@@ -416,12 +413,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, CachedEval{hash, bestscore, pvline.moveCount, Exact, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, alpha, depthLeft, Exact, ply})
 	} else {
-		if line.moveCount > alphaDepth {
-			alphaDepth = line.moveCount
-		}
-		TranspositionTable.Set(hash, CachedEval{hash, bestscore, alphaDepth + 1, UpperBound, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, depthLeft, UpperBound, ply})
 	}
 	return bestscore, true
 }
