@@ -347,10 +347,12 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
 
 			// Extended Futility Pruning
-			gain := Evaluate(position) + futility
 			isCheckMove := move.HasTag(Check)
-			if gain <= alpha && !isCheckMove && move.PromoType == NoType {
-				continue
+			if !isCheckMove {
+				gain := Evaluate(position) + futility
+				if gain <= alpha && !isCheckMove {
+					continue
+				}
 			}
 
 			// Late Move Reduction
