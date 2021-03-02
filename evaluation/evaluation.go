@@ -531,13 +531,13 @@ func Evaluate(position *Position) int32 {
 					blackKingSafetyCentiPawns -= 70
 				}
 			} else {
-				blackKingSafetyCentiPawns -= 5 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
+				blackKingSafetyCentiPawns -= 6 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
 			}
 
 			if whitePawnsPerFile[f] != 0 {
-				blackKingSafetyCentiPawns -= 3 * int32(whiteMostAdvancedPawnsPerFile[f])
+				blackKingSafetyCentiPawns -= 5 * int32(whiteMostAdvancedPawnsPerFile[f])
 			} else {
-				blackKingSafetyCentiPawns -= 20 // black can pile up
+				blackKingSafetyCentiPawns -= 60 // black can pile up
 			}
 		}
 
@@ -664,13 +664,13 @@ func Evaluate(position *Position) int32 {
 					whiteKingSafetyCentiPawns -= 70
 				}
 			} else {
-				whiteKingSafetyCentiPawns -= 5 * int32(whiteLeastAdvancedPawnsPerFile[f])
+				whiteKingSafetyCentiPawns -= 6 * int32(whiteLeastAdvancedPawnsPerFile[f])
 			}
 
 			if blackPawnsPerFile[f] != 0 {
-				whiteKingSafetyCentiPawns -= 3 * (int32(Rank8 - blackMostAdvancedPawnsPerFile[f]))
+				whiteKingSafetyCentiPawns -= 5 * (int32(Rank8 - blackMostAdvancedPawnsPerFile[f]))
 			} else {
-				whiteKingSafetyCentiPawns -= 20 // black can pile up
+				whiteKingSafetyCentiPawns -= 60 // black can pile up
 			}
 		}
 
