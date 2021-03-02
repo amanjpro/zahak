@@ -207,6 +207,9 @@ func Evaluate(position *Position) int32 {
 	blacks := board.GetBlackPieces()
 	all := whites | blacks
 
+	blackKingSafetyCentiPawns := int32(0)
+	whiteKingSafetyCentiPawns := int32(0)
+
 	// PST for black pawns
 	blackPawnsPerFile := [8]int8{0, 0, 0, 0, 0, 0, 0, 0}
 	blackLeastAdvancedPawnsPerFile := [8]Rank{Rank1, Rank1, Rank1, Rank1, Rank1, Rank1, Rank1, Rank1}
@@ -496,47 +499,45 @@ func Evaluate(position *Position) int32 {
 		}
 
 		// Middle-game king safety
-		if !isEndgame {
-			square := Square(index)
-			file := square.File()
-			rank := square.Rank()
+		square := Square(index)
+		file := square.File()
+		rank := square.Rank()
 
-			blackCentipawns -= (int32(Rank8 - rank)) * 5 //ranks start from 0
+		blackKingSafetyCentiPawns -= (int32(Rank8 - rank)) * 5 //ranks start from 0
 
-			var files = [3]int32{-1, -1, -1}
-			if file == FileH {
-				files[0] = int32(FileH)
-				files[1] = int32(FileG)
-				files[2] = int32(FileF)
-			} else if file == FileA {
-				files[0] = int32(FileA)
-				files[1] = int32(FileB)
-				files[2] = int32(FileC)
+		var files = [3]int32{-1, -1, -1}
+		if file == FileH {
+			files[0] = int32(FileH)
+			files[1] = int32(FileG)
+			files[2] = int32(FileF)
+		} else if file == FileA {
+			files[0] = int32(FileA)
+			files[1] = int32(FileB)
+			files[2] = int32(FileC)
+		} else {
+			files[0] = int32(file) - 1
+			files[1] = int32(file)
+			files[2] = int32(file) + 1
+		}
+
+		for f := range files {
+			if f == int(FileE) || f == int(FileD) { // Let's encourage e5 and d5
+				continue
+			}
+			if blackPawnsPerFile[f] == 0 { // no pawn here
+				if whitePawnsPerFile[f] == 0 { // open file!!
+					blackKingSafetyCentiPawns -= 90
+				} else {
+					blackKingSafetyCentiPawns -= 70
+				}
 			} else {
-				files[0] = int32(file) - 1
-				files[1] = int32(file)
-				files[2] = int32(file) + 1
+				blackKingSafetyCentiPawns -= 5 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
 			}
 
-			for f := range files {
-				if f == int(FileE) { // Let's encourage e4 and e5
-					continue
-				}
-				if blackPawnsPerFile[f] == 0 { // no pawn here
-					if whitePawnsPerFile[f] == 0 { // open file!!
-						blackCentipawns -= 90
-					} else {
-						blackCentipawns -= 70
-					}
-				} else {
-					blackCentipawns -= 5 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
-				}
-
-				if whitePawnsPerFile[f] != 0 {
-					blackCentipawns -= 3 * int32(whiteMostAdvancedPawnsPerFile[f])
-				} else {
-					blackCentipawns -= 20 // black can pile up
-				}
+			if whitePawnsPerFile[f] != 0 {
+				blackKingSafetyCentiPawns -= 3 * int32(whiteMostAdvancedPawnsPerFile[f])
+			} else {
+				blackKingSafetyCentiPawns -= 20 // black can pile up
 			}
 		}
 
@@ -631,47 +632,45 @@ func Evaluate(position *Position) int32 {
 		}
 
 		// Middle-game king safety
-		if !isEndgame {
-			square := Square(index)
-			file := square.File()
-			rank := square.Rank()
+		square := Square(index)
+		file := square.File()
+		rank := square.Rank()
 
-			whiteCentipawns -= int32(rank) * 5 //ranks start from 0
+		whiteKingSafetyCentiPawns -= int32(rank) * 5 //ranks start from 0
 
-			var files = [3]int32{-1, -1, -1}
-			if file == FileH {
-				files[0] = int32(FileH)
-				files[1] = int32(FileG)
-				files[2] = int32(FileF)
-			} else if file == FileA {
-				files[0] = int32(FileA)
-				files[1] = int32(FileB)
-				files[2] = int32(FileC)
+		var files = [3]int32{-1, -1, -1}
+		if file == FileH {
+			files[0] = int32(FileH)
+			files[1] = int32(FileG)
+			files[2] = int32(FileF)
+		} else if file == FileA {
+			files[0] = int32(FileA)
+			files[1] = int32(FileB)
+			files[2] = int32(FileC)
+		} else {
+			files[0] = int32(file) - 1
+			files[1] = int32(file)
+			files[2] = int32(file) + 1
+		}
+
+		for f := range files {
+			if f == int(FileE) || f == int(FileD) { // Let's encourage e4 and d4
+				continue
+			}
+			if whitePawnsPerFile[f] == 0 { // no pawn here
+				if blackPawnsPerFile[f] == 0 { // open file!!
+					whiteKingSafetyCentiPawns -= 90
+				} else {
+					whiteKingSafetyCentiPawns -= 70
+				}
 			} else {
-				files[0] = int32(file) - 1
-				files[1] = int32(file)
-				files[2] = int32(file) + 1
+				whiteKingSafetyCentiPawns -= 5 * int32(whiteLeastAdvancedPawnsPerFile[f])
 			}
 
-			for f := range files {
-				if f == int(FileE) { // Let's encourage e4 and e5
-					continue
-				}
-				if whitePawnsPerFile[f] == 0 { // no pawn here
-					if blackPawnsPerFile[f] == 0 { // open file!!
-						whiteCentipawns -= 90
-					} else {
-						whiteCentipawns -= 70
-					}
-				} else {
-					whiteCentipawns -= 5 * int32(whiteLeastAdvancedPawnsPerFile[f])
-				}
-
-				if blackPawnsPerFile[f] != 0 {
-					whiteCentipawns -= 3 * (int32(Rank8 - blackMostAdvancedPawnsPerFile[f]))
-				} else {
-					whiteCentipawns -= 20 // black can pile up
-				}
+			if blackPawnsPerFile[f] != 0 {
+				whiteKingSafetyCentiPawns -= 3 * (int32(Rank8 - blackMostAdvancedPawnsPerFile[f]))
+			} else {
+				whiteKingSafetyCentiPawns -= 20 // black can pile up
 			}
 		}
 
@@ -716,6 +715,16 @@ func Evaluate(position *Position) int32 {
 
 	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
 	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
+
+	// king safety
+	whiteFactor := (blackKnightsCount*n.Weight() + blackBishopsCount*b.Weight() +
+		blackRooksCount*r.Weight() + blackQueensCount*q.Weight()) * 2 / p.Weight()
+
+	blackFactor := (whiteKnightsCount*n.Weight() + whiteBishopsCount*b.Weight() +
+		whiteRooksCount*r.Weight() + whiteQueensCount*q.Weight()) * 2 / p.Weight()
+
+	blackCentipawns += (blackKingSafetyCentiPawns - blackFactor)
+	whiteCentipawns += (whiteKingSafetyCentiPawns - whiteFactor)
 
 	var eval int32
 	if turn == White {
