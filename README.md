@@ -1,5 +1,7 @@
 # Zahak
 
+[![Join the chat at https://gitter.im/Zahak-Chess-Engine/zahak](https://badges.gitter.im/Zahak-Chess-Engine/zahak.svg)](https://gitter.im/Zahak-Chess-Engine/zahak?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ![Build Status](https://github.com/amanjpro/zahak/workflows/Go/badge.svg)
 
 A UCI compatible chess AI written in Go. Still work in progress.
