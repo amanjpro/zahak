@@ -50,8 +50,11 @@ func (uci *UCI) Start() {
 				if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
-					hashSize, _ := strconv.Atoi(mg)
-					NewCache(uint32(hashSize))
+					totalHashSize, _ := strconv.Atoi(mg)
+					ttSize := totalHashSize * 90 / 100
+					evalCacheSize := totalHashSize * 10 / 100
+					NewCache(uint32(ttSize))
+					EvalTable = NewStaticEvalCache(evalCacheSize)
 				} else if strings.HasPrefix(cmd, "go") {
 					go uci.findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
