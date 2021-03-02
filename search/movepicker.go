@@ -79,7 +79,8 @@ func (mp *MovePicker) score() {
 					mp.scores[i] = 100_010_000 + gain
 				}
 			} else {
-				mp.scores[i] = 100_000_000 + capPiece.Weight() - piece.Weight()
+				p := GetPiece(move.PromoType, White)
+				mp.scores[i] = 100_000_000 + capPiece.Weight() + p.Weight() - piece.Weight()
 			}
 			continue
 		}
@@ -102,27 +103,27 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
-		// prefer checks
-		if move.HasTag(Check) {
-			mp.scores[i] = 10_000
-			continue
-		}
-
-		// King safety (castling)
-		castling := KingSideCastle | QueenSideCastle
-		moveIsCastling := move.HasTag(castling)
-		if moveIsCastling {
-			mp.scores[i] = 3_000
-			continue
-		}
-
-		// Prefer smaller pieces
-		if piece.Type() == King {
-			mp.scores[i] = 0
-			continue
-		}
-
-		mp.scores[i] = 1000 - piece.Weight()
+		// // prefer checks
+		// if move.HasTag(Check) {
+		// 	mp.scores[i] = 10_000
+		// 	continue
+		// }
+		//
+		// // King safety (castling)
+		// castling := KingSideCastle | QueenSideCastle
+		// moveIsCastling := move.HasTag(castling)
+		// if moveIsCastling {
+		// 	mp.scores[i] = 3_000
+		// 	continue
+		// }
+		//
+		// // Prefer smaller pieces
+		// if piece.Type() == King {
+		// 	mp.scores[i] = 0
+		// 	continue
+		// }
+		//
+		mp.scores[i] = 1000 //- piece.Weight()
 	}
 }
 
