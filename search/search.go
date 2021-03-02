@@ -121,10 +121,10 @@ func (e *Engine) Score() int32 {
 	return e.score
 }
 
-func (e *Engine) SendPv() {
+func (e *Engine) SendPv(depth int8) {
 	thinkTime := time.Now().Sub(e.startTime)
-	fmt.Printf("info depth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
-		e.pv.moveCount, nps(e.nodesVisited, thinkTime.Seconds()),
+	fmt.Printf("info depth %d seldepth %d nps %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
+		depth, e.pv.moveCount, nps(e.nodesVisited, thinkTime.Seconds()),
 		e.cacheHits, TranspositionTable.Consumed(), e.nodesVisited, e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
 }
@@ -153,19 +153,21 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	fruitelessIterations := 0
 
 	firstScore := true
+	lastDepth := int8(1)
 	for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 		if e.ShouldStop() {
 			break
 		}
-		line := NewPVLine(iterationDepth + 1)
+		line := NewPVLine(100)
 		score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, true, true, 0)
 		if ok && (firstScore || line.moveCount >= e.pv.moveCount) {
 			e.pv = line
 			e.score = score
 			e.move = e.pv.MoveAt(0)
-			e.SendPv()
+			e.SendPv(iterationDepth)
 			firstScore = false
 		}
+		lastDepth = iterationDepth
 		if iterationDepth >= 20 && e.move == previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
@@ -180,23 +182,24 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		previousBestMove = e.move
 	}
 
-	e.SendPv()
+	e.SendPv(lastDepth)
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine,
 	multiCutFlag bool, nullMove bool, inNullMoveSearch int8) (int32, bool) {
 	e.VisitNode()
 
+	outcome := position.Status()
+	if outcome == Checkmate {
+		return -CHECKMATE_EVAL, true
+	} else if outcome == Draw {
+		return 0, true
+	}
+
 	isRootNode := searchHeight == 0
 	isPvNode := alpha != beta-1
 
 	if depthLeft <= 0 {
-		outcome := position.Status()
-		if outcome == Checkmate {
-			return -CHECKMATE_EVAL, true
-		} else if outcome == Draw {
-			return 0, true
-		}
 		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight), true
 	}
 
@@ -215,17 +218,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	legalMoves := position.LegalMoves()
-
-	if len(legalMoves) == 0 {
-		outcome := position.Status()
-		if outcome == Checkmate {
-			return -CHECKMATE_EVAL, true
-		} else if outcome == Draw {
-			return 0, true
-		}
-	} else if position.IsFIDEDrawRule() { // an optimization to not call isInCheck much
-		return 0, true
-	}
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
@@ -259,7 +251,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 		ep := position.MakeNullMove()
 		newBeta := 1 - bound
-		line := NewPVLine(depthLeft - 1 - R)
+		line := NewPVLine(100)
 		score, ok := e.alphaBeta(position, depthLeft-R-1, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, false, inNullMoveSearch+1)
 		score = -score
 		position.UnMakeNullMove(ep)
@@ -279,7 +271,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		for i := 0; i < M; i++ {
 			move := movePicker.Next()
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-			line := NewPVLine(depthLeft - 1 - R)
+			line := NewPVLine(100)
 			newBeta := 1 - beta
 			score, ok := e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
@@ -319,12 +311,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	hasSeenExact := false
 
 	// using fail soft with negamax:
-	bestscore := -MAX_INT
 	move := movePicker.Next()
 	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-	line := NewPVLine(depthLeft - 1)
-	score, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
-	bestscore = -score
+	line := NewPVLine(100)
+	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
+	bestscore = -bestscore
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 	if !ok {
 		return bestscore, ok
@@ -410,7 +401,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, CachedEval{hash, alpha, depthLeft, Exact, ply})
+		TranspositionTable.Set(hash, CachedEval{hash, bestscore, depthLeft, Exact, ply})
 	} else {
 		TranspositionTable.Set(hash, CachedEval{hash, bestscore, depthLeft, LowerBound, ply})
 	}

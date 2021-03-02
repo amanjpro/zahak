@@ -487,6 +487,7 @@ func Evaluate(position *Position) int32 {
 			}
 			blackCentipawns += award
 		}
+
 		pieceIter ^= mask
 	}
 
@@ -576,6 +577,7 @@ func Evaluate(position *Position) int32 {
 			}
 			whiteCentipawns += award
 		}
+
 		pieceIter ^= mask
 	}
 
