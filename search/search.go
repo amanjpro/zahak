@@ -278,7 +278,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	// Multi-Cut Pruning
 	M := 6
 	C := 3
-	if !isRootNode && !isPvNode && depthLeft >= R+2 && multiCutFlag && len(legalMoves) > M {
+	if !isRootNode && !isPvNode && depthLeft >= R+1 && multiCutFlag && len(legalMoves) > M {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
 			move := movePicker.Next()
