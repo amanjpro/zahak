@@ -200,7 +200,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	isPvNode := alpha != beta-1
 
 	if depthLeft <= 0 {
-		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight), true
+		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight)
 	}
 
 	hash := position.Hash()
@@ -261,7 +261,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	pawn := WhitePawn
 	razoringMargin := 3 * pawn.Weight()
 	if !isRootNode && !isPvNode && depthLeft < 2 && eval+razoringMargin < beta {
-		newEval := e.quiescence(position, alpha, beta, 0, eval, searchHeight)
+		newEval, ok := e.quiescence(position, alpha, beta, 0, eval, searchHeight)
+		if !ok {
+			return newEval, ok
+		}
 		if newEval < beta {
 			return newEval, true
 		}

@@ -5,18 +5,23 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8, standPat int32, searchHeight int8) int32 {
+func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8,
+	standPat int32, searchHeight int8) (int32, bool) {
 
 	e.VisitNode()
 	outcome := position.Status()
 	if outcome == Checkmate {
-		return -CHECKMATE_EVAL
+		return -CHECKMATE_EVAL, true
 	} else if outcome == Draw {
-		return 0
+		return 0, true
 	}
 
 	if standPat >= beta {
-		return beta // fail hard
+		return beta, true // fail hard
+	}
+
+	if e.ShouldStop() {
+		return 0, false
 	}
 
 	isInCheck := position.IsInCheck()
@@ -29,10 +34,6 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 	legalMoves := position.QuiesceneMoves(withChecks)
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
-
-	if e.ShouldStop() {
-		return standPat
-	}
 
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
@@ -74,17 +75,21 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		}
 
 		if callQuiescence {
-			score = -e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
+			v, ok := e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
 			position.UnMakeMove(move, tg, ep, cp, hc)
+			if !ok {
+				return v, ok
+			}
+			score = -v
 		}
 		if score >= beta {
 			e.AddKillerMove(move, searchHeight)
-			return beta
+			return beta, true
 		}
 		if score > alpha {
 			e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, searchHeight)
 			alpha = score
 		}
 	}
-	return alpha
+	return alpha, true
 }
