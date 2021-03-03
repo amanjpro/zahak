@@ -20,12 +20,6 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 	}
 
 	isInCheck := position.IsInCheck()
-	// Delta pruning is slowing things down
-	// p := WhitePawn
-	// deltaMargin := int32(p.Weight() * 1)
-	// if !isInCheck && standPat < alpha-deltaMargin { // is capture
-	// 	return alpha
-	// }
 
 	if alpha < standPat {
 		alpha = standPat
@@ -50,8 +44,39 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		}
 		cp, ep, tg, hc := position.MakeMove(move)
 		sp := Evaluate(position)
-		score := -e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
-		position.UnMakeMove(move, tg, ep, cp, hc)
+
+		var score int32
+		callQuiescence := true
+		if !isInCheck && !move.HasTag(Check) {
+			// The logic looks difficult, but it is not
+			// I basically pretend that I have called quiescence
+			// with the reversed alpha/beta (like normal in negamax)
+			// and then, if the bounds exceeded I pretend that I return
+			// either alpha or beta
+			newAlpha := -beta
+			newBeta := -alpha
+			q := WhiteQueen
+			deltaMargin := q.Weight()
+			if move.PromoType != NoType {
+				promo := GetPiece(move.PromoType, White)
+				deltaMargin += promo.Weight()
+			}
+			if sp >= newBeta {
+				score = -newBeta
+				position.UnMakeMove(move, tg, ep, cp, hc)
+				callQuiescence = false
+			}
+			if sp+deltaMargin < newAlpha { // is capture
+				position.UnMakeMove(move, tg, ep, cp, hc)
+				callQuiescence = false
+				score = -newAlpha
+			}
+		}
+
+		if callQuiescence {
+			score = -e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
+			position.UnMakeMove(move, tg, ep, cp, hc)
+		}
 		if score >= beta {
 			e.AddKillerMove(move, searchHeight)
 			return beta
