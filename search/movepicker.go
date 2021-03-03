@@ -10,6 +10,7 @@ type MovePicker struct {
 	engine    *Engine
 	moves     []Move
 	scores    []int32
+	hasPvMove bool
 	moveOrder int8
 	next      int
 }
@@ -20,12 +21,27 @@ func NewMovePicker(p *Position, e *Engine, moves []Move, moveOrder int8) *MovePi
 		e,
 		moves,
 		make([]int32, len(moves)),
+		false,
 		moveOrder,
 		0,
 	}
 
 	mp.score()
 	return mp
+}
+
+func (mp *MovePicker) HasPVMove() bool {
+	return mp.hasPvMove
+}
+
+func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
+	mp.hasPvMove = true
+	for i, move := range mp.moves {
+		if move == pvMove {
+			mp.scores[i] = 900_000_000
+			break
+		}
+	}
 }
 
 func (mp *MovePicker) score() {
@@ -41,6 +57,7 @@ func (mp *MovePicker) score() {
 			mv := pv.MoveAt(moveOrder)
 			if mv == move {
 				mp.scores[i] = 900_000_000
+				mp.hasPvMove = true
 				continue
 			}
 		}
@@ -55,11 +72,13 @@ func (mp *MovePicker) score() {
 
 		if ok && eval.Type == Exact {
 			mp.scores[i] = 500_000_000 + eval.Eval
+			mp.hasPvMove = true
 			continue
 		}
 
 		if ok {
 			mp.scores[i] = 400_000_000 + int32(eval.Depth)
+			mp.hasPvMove = true
 			continue
 		}
 
@@ -131,10 +150,12 @@ func (mp *MovePicker) Reset() {
 }
 
 func (mp *MovePicker) Next() Move {
+
 	if mp.next >= len(mp.moves) {
 		return EmptyMove
 	}
-	var best Move = mp.moves[mp.next]
+
+	var best = mp.moves[mp.next]
 	var bestIndex = mp.next
 	for i := mp.next + 1; i < len(mp.moves); i++ {
 		move := mp.moves[i]
