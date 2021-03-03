@@ -217,10 +217,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	legalMoves := position.LegalMoves()
-
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
-
 	if e.ShouldStop() {
 		return -MAX_INT, false
 	}
@@ -235,13 +231,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	eval := Evaluate(position)
+	rook := WhiteRook
 
 	// NullMove pruning
 	R := int8(3)
-	if searchHeight > 6 {
-		R = 2
-	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck && eval >= beta
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+1 && !position.IsEndGame() && !isInCheck
 
 	if isNullMoveAllowed {
 		bound := beta
@@ -258,15 +252,33 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if !ok {
 			return score, false
 		}
-		if score >= bound {
+		if score >= bound && abs32(score) != CHECKMATE_EVAL {
 			return beta, true // null move pruning
 		}
 	}
 
+	// Razoring
+	pawn := WhitePawn
+	razoringMargin := 3 * pawn.Weight()
+	if !isRootNode && !isPvNode && depthLeft < 2 && eval+razoringMargin < beta {
+		newEval := e.quiescence(position, alpha, beta, 0, eval, searchHeight)
+		if newEval < beta {
+			return newEval, true
+		}
+	}
+
+	reverseFutilityMargin := rook.Weight() // Rook + Pawn
+	// Reverse Futility Pruning
+	if !isRootNode && !isPvNode && depthLeft < 2 && eval-reverseFutilityMargin >= beta {
+		return eval - reverseFutilityMargin, true /* fail soft */
+	}
+
+	legalMoves := position.LegalMoves()
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 	// Multi-Cut Pruning
 	M := 6
 	C := 3
-	if !isRootNode && !isPvNode && depthLeft >= R+2 && multiCutFlag && len(legalMoves) > M {
+	if !isRootNode && !isPvNode && depthLeft >= R+1 && multiCutFlag && len(legalMoves) > M {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
 			move := movePicker.Next()
@@ -288,23 +300,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	rook := WhiteRook
-	pawn := WhitePawn
-	margin := pawn.Weight() + rook.Weight() // Rook + Pawn
-	futility := eval + rook.Weight()
-
-	// Razoring
-	if !isRootNode && !isPvNode && depthLeft < 2 && eval+margin < beta-1 {
-		return e.quiescence(position, alpha, beta, 0, eval, searchHeight), true
-	}
-
-	// Reverse Futility Pruning
-	if !isRootNode && !isPvNode && depthLeft < 5 && eval-margin >= beta {
-		return eval - margin, true /* fail soft */
-	}
-
 	// Extended Futility Pruning
-	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
+	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck && depthLeft > 2 && searchHeight > 3
 
 	movePicker.Reset()
 
@@ -344,18 +341,21 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		LMR := int8(0)
-		if reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
-
+		if reductionsAllowed && move.PromoType != NoType && !move.HasTag(Capture) && !move.HasTag(Check) {
 			// Extended Futility Pruning
-			gain := Evaluate(position) + futility
+			gain := Evaluate(position) + rook.Weight()
 			isCheckMove := move.HasTag(Check)
 			if gain <= alpha && !isCheckMove && move.PromoType == NoType {
 				continue
 			}
 
 			// Late Move Reduction
-			if i >= 5 && !isCheckMove && move.PromoType == NoType {
-				LMR = 1
+			if depthLeft > 3 && i >= 2 && !isCheckMove && move.PromoType == NoType {
+				if i >= 5 {
+					LMR = 2
+				} else {
+					LMR = 1
+				}
 			}
 		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
@@ -368,7 +368,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if score > alpha && score < beta {
 			line.Recycle()
 			// research with window [alpha;beta]
-			score, ok = e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
+			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
@@ -413,4 +413,11 @@ func nps(nodes int64, dur float64) int64 {
 		return 0
 	}
 	return int64(float64(nodes) / 1000 * dur)
+}
+
+func abs32(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
