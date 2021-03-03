@@ -275,15 +275,25 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	legalMoves := position.LegalMoves()
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
+	line := NewPVLine(100)
+
+	// Internal Iterative Deepening
+	if depthLeft >= 8 && !movePicker.HasPVMove() && !isInCheck {
+		e.alphaBeta(position, depthLeft-7, searchHeight+1, alpha, beta, ply, line, false, false, 0)
+		if line.moveCount != 0 {
+			movePicker.UpgradeToPvMove(line.MoveAt(0))
+		}
+	}
+
 	// Multi-Cut Pruning
 	M := 6
 	C := 3
 	if !isRootNode && !isPvNode && depthLeft >= R+1 && multiCutFlag && len(legalMoves) > M {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
+			line.Recycle()
 			move := movePicker.Next()
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-			line := NewPVLine(100)
 			newBeta := 1 - beta
 			score, ok := e.alphaBeta(position, depthLeft-1-R, searchHeight+1, newBeta-1, newBeta, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
@@ -310,7 +320,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	// using fail soft with negamax:
 	move := movePicker.Next()
 	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
-	line := NewPVLine(100)
+	line.Recycle()
 	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 	bestscore = -bestscore
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
