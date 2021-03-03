@@ -238,10 +238,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// NullMove pruning
 	R := int8(3)
-	if searchHeight > 6 {
-		R = 2
-	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+2 && !position.IsEndGame() && !isInCheck && eval >= beta
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft >= R+1 && !position.IsEndGame() && !isInCheck
 
 	if isNullMoveAllowed {
 		bound := beta
@@ -258,7 +255,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if !ok {
 			return score, false
 		}
-		if score >= bound {
+		if score >= bound && abs32(score) != CHECKMATE_EVAL {
 			return beta, true // null move pruning
 		}
 	}
@@ -416,4 +413,11 @@ func nps(nodes int64, dur float64) int64 {
 		return 0
 	}
 	return int64(float64(nodes) / 1000 * dur)
+}
+
+func abs32(x int32) int32 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
