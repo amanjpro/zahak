@@ -304,7 +304,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	// Extended Futility Pruning
-	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
+	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck && depthLeft > 2 && searchHeight > 3
 
 	movePicker.Reset()
 
@@ -344,20 +344,21 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		LMR := int8(0)
-		if reductionsAllowed && searchHeight >= 6 && depthLeft == 2 {
-
+		if reductionsAllowed && move.PromoType != NoType && !move.HasTag(Capture) && !move.HasTag(Check) {
 			// Extended Futility Pruning
+			gain := Evaluate(position) + rook.Weight()
 			isCheckMove := move.HasTag(Check)
-			if !isCheckMove {
-				gain := Evaluate(position) + futility
-				if gain <= alpha && !isCheckMove {
-					continue
-				}
+			if gain <= alpha && !isCheckMove && move.PromoType == NoType {
+				continue
 			}
 
 			// Late Move Reduction
-			if i >= 5 && !isCheckMove && move.PromoType == NoType {
-				LMR = 1
+			if depthLeft > 3 && i >= 2 && !isCheckMove && move.PromoType == NoType {
+				if i >= 5 {
+					LMR = 2
+				} else {
+					LMR = 1
+				}
 			}
 		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
@@ -370,7 +371,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if score > alpha && score < beta {
 			line.Recycle()
 			// research with window [alpha;beta]
-			score, ok = e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
+			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
