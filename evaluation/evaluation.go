@@ -209,6 +209,8 @@ func Evaluate(position *Position) int32 {
 
 	blackKingSafetyCentiPawns := int32(0)
 	whiteKingSafetyCentiPawns := int32(0)
+	var whiteKingSquare Square
+	var blackKingSquare Square
 
 	// PST for black pawns
 	blackPawnsPerFile := [8]int8{0, 0, 0, 0, 0, 0, 0, 0}
@@ -271,6 +273,51 @@ func Evaluate(position *Position) int32 {
 		} else {
 			whiteCentipawns += earlyPawnPst[flip[index]]
 		}
+		pieceIter ^= mask
+	}
+
+	// black king
+	pieceIter = bbBlackKing
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		if isEndgame {
+			blackCentipawns += lateKingPst[index]
+		} else {
+			award := earlyKingPst[index]
+			if award <= 0 {
+				if !position.HasTag(BlackCanCastleKingSide) {
+					award -= 10
+				} else if !position.HasTag(BlackCanCastleQueenSide) {
+					award -= 10
+				}
+			}
+			blackCentipawns += award
+		}
+		blackKingSquare = Square(index)
+		pieceIter ^= mask
+	}
+
+	// white king
+	pieceIter = bbWhiteKing
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := uint64(1 << index)
+		if isEndgame {
+			whiteCentipawns += lateKingPst[flip[index]]
+		} else {
+			award := earlyKingPst[flip[index]]
+			if award <= 0 {
+				if !position.HasTag(WhiteCanCastleKingSide) {
+					award -= 10
+				} else if !position.HasTag(WhiteCanCastleQueenSide) {
+					award -= 10
+				}
+			}
+			whiteCentipawns += award
+		}
+
+		whiteKingSquare = Square(index)
 		pieceIter ^= mask
 	}
 
@@ -480,70 +527,6 @@ func Evaluate(position *Position) int32 {
 		pieceIter ^= mask
 	}
 
-	pieceIter = bbBlackKing
-	for pieceIter != 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
-		if isEndgame {
-			blackCentipawns += lateKingPst[index]
-		} else {
-			award := earlyKingPst[index]
-			if award <= 0 {
-				if !position.HasTag(BlackCanCastleKingSide) {
-					award -= 10
-				} else if !position.HasTag(BlackCanCastleQueenSide) {
-					award -= 10
-				}
-			}
-			blackCentipawns += award
-		}
-
-		// Middle-game king safety
-		square := Square(index)
-		file := square.File()
-		rank := square.Rank()
-
-		blackKingSafetyCentiPawns -= (int32(Rank8 - rank)) * 5 //ranks start from 0
-
-		var files = [3]int32{-1, -1, -1}
-		if file == FileH {
-			files[0] = int32(FileH)
-			files[1] = int32(FileG)
-			files[2] = int32(FileF)
-		} else if file == FileA {
-			files[0] = int32(FileA)
-			files[1] = int32(FileB)
-			files[2] = int32(FileC)
-		} else {
-			files[0] = int32(file) - 1
-			files[1] = int32(file)
-			files[2] = int32(file) + 1
-		}
-
-		for f := range files {
-			if f == int(FileE) || f == int(FileD) { // Let's encourage e5 and d5
-				continue
-			}
-			if blackPawnsPerFile[f] == 0 { // no pawn here
-				if whitePawnsPerFile[f] == 0 { // open file!!
-					blackKingSafetyCentiPawns -= 90
-				} else {
-					blackKingSafetyCentiPawns -= 70
-				}
-			} else {
-				blackKingSafetyCentiPawns -= 6 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
-			}
-
-			if whitePawnsPerFile[f] != 0 {
-				blackKingSafetyCentiPawns -= 5 * int32(whiteMostAdvancedPawnsPerFile[f])
-			} else {
-				blackKingSafetyCentiPawns -= 60 // black can pile up
-			}
-		}
-
-		pieceIter ^= mask
-	}
-
 	// PST for other white pieces
 	pieceIter = bbWhiteKnight
 	for pieceIter != 0 {
@@ -613,26 +596,54 @@ func Evaluate(position *Position) int32 {
 		pieceIter ^= mask
 	}
 
-	pieceIter = bbWhiteKing
-	for pieceIter != 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
-		if isEndgame {
-			whiteCentipawns += lateKingPst[flip[index]]
+	{
+		// Black's Middle-game king safety
+		square := blackKingSquare
+		file := square.File()
+		rank := square.Rank()
+
+		blackKingSafetyCentiPawns -= (int32(Rank8 - rank)) * 5 //ranks start from 0
+
+		var files = [3]int32{-1, -1, -1}
+		if file == FileH {
+			files[0] = int32(FileH)
+			files[1] = int32(FileG)
+			files[2] = int32(FileF)
+		} else if file == FileA {
+			files[0] = int32(FileA)
+			files[1] = int32(FileB)
+			files[2] = int32(FileC)
 		} else {
-			award := earlyKingPst[flip[index]]
-			if award <= 0 {
-				if !position.HasTag(WhiteCanCastleKingSide) {
-					award -= 10
-				} else if !position.HasTag(WhiteCanCastleQueenSide) {
-					award -= 10
-				}
-			}
-			whiteCentipawns += award
+			files[0] = int32(file) - 1
+			files[1] = int32(file)
+			files[2] = int32(file) + 1
 		}
 
-		// Middle-game king safety
-		square := Square(index)
+		for f := range files {
+			if f == int(FileE) || f == int(FileD) { // Let's encourage e5 and d5
+				continue
+			}
+			if blackPawnsPerFile[f] == 0 { // no pawn here
+				if whitePawnsPerFile[f] == 0 { // open file!!
+					blackKingSafetyCentiPawns -= 90
+				} else {
+					blackKingSafetyCentiPawns -= 70
+				}
+			} else {
+				blackKingSafetyCentiPawns -= 6 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
+			}
+
+			if whitePawnsPerFile[f] != 0 {
+				blackKingSafetyCentiPawns -= 5 * int32(whiteMostAdvancedPawnsPerFile[f])
+			} else {
+				blackKingSafetyCentiPawns -= 60 // black can pile up
+			}
+		}
+	}
+
+	{
+		// White's Middle-game king safety
+		square := whiteKingSquare
 		file := square.File()
 		rank := square.Rank()
 
@@ -673,8 +684,6 @@ func Evaluate(position *Position) int32 {
 				whiteKingSafetyCentiPawns -= 60 // black can pile up
 			}
 		}
-
-		pieceIter ^= mask
 	}
 
 	blackCentipawns += blackPawnsCount * p.Weight()
