@@ -217,10 +217,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	legalMoves := position.LegalMoves()
-
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
-
 	if e.ShouldStop() {
 		return -MAX_INT, false
 	}
@@ -235,6 +231,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	eval := Evaluate(position)
+	rook := WhiteRook
 
 	// NullMove pruning
 	R := int8(3)
@@ -260,6 +257,24 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
+	// Razoring
+	pawn := WhitePawn
+	razoringMargin := 3 * pawn.Weight()
+	if !isRootNode && !isPvNode && depthLeft < 2 && eval+razoringMargin < beta {
+		newEval := e.quiescence(position, alpha, beta, 0, eval, searchHeight)
+		if newEval < beta {
+			return newEval, true
+		}
+	}
+
+	reverseFutilityMargin := rook.Weight() // Rook + Pawn
+	// Reverse Futility Pruning
+	if !isRootNode && !isPvNode && depthLeft < 2 && eval-reverseFutilityMargin >= beta {
+		return eval - reverseFutilityMargin, true /* fail soft */
+	}
+
+	legalMoves := position.LegalMoves()
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 	// Multi-Cut Pruning
 	M := 6
 	C := 3
@@ -283,21 +298,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 				}
 			}
 		}
-	}
-
-	rook := WhiteRook
-	pawn := WhitePawn
-	margin := pawn.Weight() + rook.Weight() // Rook + Pawn
-	futility := eval + rook.Weight()
-
-	// Razoring
-	if !isRootNode && !isPvNode && depthLeft < 2 && eval+margin < beta-1 {
-		return e.quiescence(position, alpha, beta, 0, eval, searchHeight), true
-	}
-
-	// Reverse Futility Pruning
-	if !isRootNode && !isPvNode && depthLeft < 5 && eval-margin >= beta {
-		return eval - margin, true /* fail soft */
 	}
 
 	// Extended Futility Pruning
