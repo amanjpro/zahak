@@ -8,19 +8,20 @@ A UCI compatible chess AI written in Go. Still work in progress.
 
 - UCI Support
 - Bitboards
+- Transposition Table
 - Alpha-Beta search
 - Quiescence Search
 - Iterative Deepening
 - PV Search and PV
-- Aspiration Window with PVS
 - Zero Windows
-- Delta Pruning
-- Null-Move Pruning
-- Transposition Table
+- Aspiration Window with PVS
 - Static Exchange Evaluation
 - Multi-Cut Pruning
+- Null-Move Pruning
+- Delta Pruning
 - Reverse Futility Pruning
 - Extended Futility Pruning
+- Futility Pruning
 - Late Move Reduction
 - Razoring
 - Killer Moves Heuristics

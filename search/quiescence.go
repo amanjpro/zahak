@@ -35,6 +35,8 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
+	p := WhitePawn
+	futility := standPat + p.Weight()
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
 		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
@@ -43,12 +45,25 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 				continue
 			}
 		}
+
+		// Futility Pruning
+		isCheckMove := move.HasTag(Check)
+		if isInCheck && futility <= alpha && !isCheckMove && move.PromoType == NoType {
+			movingPiece := position.Board.PieceAt(move.Source)
+			futility += movingPiece.Weight()
+			promoting := (movingPiece == BlackPawn && move.Source.Rank() <= Rank5) ||
+				movingPiece == WhitePawn && move.Source.Rank() >= Rank3
+			if !promoting && futility <= alpha {
+				continue
+			}
+		}
+
 		cp, ep, tg, hc := position.MakeMove(move)
 		sp := Evaluate(position)
 
 		var score int32
 		callQuiescence := true
-		if !isInCheck && !move.HasTag(Check) {
+		if !isInCheck && !isCheckMove {
 			// The logic looks difficult, but it is not
 			// I basically pretend that I have called quiescence
 			// with the reversed alpha/beta (like normal in negamax)
