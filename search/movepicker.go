@@ -35,6 +35,7 @@ func (mp *MovePicker) HasPVMove() bool {
 }
 
 func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
+	mp.hasPvMove = true
 	for i, move := range mp.moves {
 		if move == pvMove {
 			mp.scores[i] = 900_000_000
