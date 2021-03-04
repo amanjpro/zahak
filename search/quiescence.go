@@ -5,7 +5,7 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8,
+func (e *Engine) quiescence(position *Position, alpha int32, beta int32, currentMove Move, ply int8,
 	standPat int32, searchHeight int8) (int32, bool) {
 	e.info.quiesceCounter += 1
 	e.VisitNode()
@@ -24,7 +24,12 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		return 0, false
 	}
 
-	isInCheck := position.IsInCheck()
+	var isInCheck bool
+	if currentMove == EmptyMove {
+		isInCheck = position.IsInCheck()
+	} else {
+		isInCheck = currentMove.HasTag(Check)
+	}
 
 	if alpha < standPat {
 		alpha = standPat
@@ -93,7 +98,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		}
 
 		if callQuiescence {
-			v, ok := e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
+			v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
 			position.UnMakeMove(move, tg, ep, cp, hc)
 			if !ok {
 				return v, ok
