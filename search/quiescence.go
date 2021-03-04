@@ -7,7 +7,7 @@ import (
 
 func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8,
 	standPat int32, searchHeight int8) (int32, bool) {
-
+	e.info.quiesceCounter += 1
 	e.VisitNode()
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -41,6 +41,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		move := movePicker.Next()
 		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
 			// SEE pruning
+			e.info.seeQuiescenceCounter += 1
 			if movePicker.scores[i] < 0 {
 				continue
 			}
@@ -78,11 +79,13 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 				deltaMargin += promo.Weight()
 			}
 			if sp >= newBeta {
+				e.info.deltaPruningCounter += 1
 				score = -newBeta
 				position.UnMakeMove(move, tg, ep, cp, hc)
 				callQuiescence = false
 			}
 			if sp+deltaMargin < newAlpha { // is capture
+				e.info.deltaPruningCounter += 1
 				position.UnMakeMove(move, tg, ep, cp, hc)
 				callQuiescence = false
 				score = -newAlpha

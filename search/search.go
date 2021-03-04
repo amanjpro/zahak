@@ -9,6 +9,44 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+type Info struct {
+	efpCounter            int
+	rfpCounter            int
+	fpCounter             int
+	razoringCounter       int
+	checkExtentionCounter int
+	multiCutCounter       int
+	nullMoveCounter       int
+	lmrCounter            int
+	deltaPruningCounter   int
+	seeCounter            int
+	seeQuiescenceCounter  int
+	mainSearchCounter     int
+	zwCounter             int
+	quiesceCounter        int
+	killerCounter         int
+	historyCounter        int
+}
+
+func (i *Info) Print() {
+	fmt.Println("EFP: ", i.efpCounter)
+	fmt.Println("RFP: ", i.rfpCounter)
+	fmt.Println("FP: ", i.fpCounter)
+	fmt.Println("Razoring: ", i.razoringCounter)
+	fmt.Println("Check Extension: ", i.checkExtentionCounter)
+	fmt.Println("Mult-Cut: ", i.multiCutCounter)
+	fmt.Println("Null-Move: ", i.nullMoveCounter)
+	fmt.Println("LMR: ", i.lmrCounter)
+	fmt.Println("Delta Pruning: ", i.deltaPruningCounter)
+	fmt.Println("SEE: ", i.seeCounter)
+	fmt.Println("SEE Quiescence: ", i.seeQuiescenceCounter)
+	fmt.Println("PV Nodes: ", i.mainSearchCounter)
+	fmt.Println("ZW Nodes: ", i.zwCounter)
+	fmt.Println("Quiescence Nodes: ", i.quiesceCounter)
+	fmt.Println("Killer Moves: ", i.killerCounter)
+	fmt.Println("History Moves: ", i.historyCounter)
+}
+
 type Engine struct {
 	nodesVisited   int64
 	cacheHits      int64
@@ -20,6 +58,7 @@ type Engine struct {
 	searchHistory  [][]int32
 	startTime      time.Time
 	ThinkTime      int64
+	info           Info
 }
 
 func NewEngine() *Engine {
@@ -34,8 +73,11 @@ func NewEngine() *Engine {
 		make([][]int32, 12), // We have 12 pieces only
 		time.Now(),
 		0,
+		NoInfo,
 	}
 }
+
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.StopSearchFlag {
@@ -72,6 +114,8 @@ func (e *Engine) ClearForSearch() {
 	e.pv.Pop() // pop our move
 	e.pv.Pop() // pop our opponent's move
 
+	e.info = NoInfo
+
 	e.startTime = time.Now()
 }
 
@@ -90,6 +134,7 @@ func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 
 func (e *Engine) AddKillerMove(move Move, ply int8) {
 	if !move.HasTag(Capture) {
+		e.info.killerCounter += 1
 		e.killerMoves[ply][1] = e.killerMoves[ply][0]
 		e.killerMoves[ply][0] = move
 	}
@@ -104,6 +149,7 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
 	if !move.HasTag(Capture) {
+		e.info.historyCounter += 1
 		e.searchHistory[movingPiece][destination] += int32(ply)
 	}
 }
@@ -180,6 +226,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			break
 		}
 		previousBestMove = e.move
+		e.info.Print()
 	}
 
 	e.SendPv(lastDepth)
@@ -201,6 +248,12 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	if depthLeft <= 0 {
 		return e.quiescence(position, alpha, beta, 0, Evaluate(position), searchHeight)
+	}
+
+	if isPvNode {
+		e.info.mainSearchCounter += 1
+	} else {
+		e.info.zwCounter += 1
 	}
 
 	hash := position.Hash()
@@ -227,6 +280,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	if isInCheck {
+		e.info.checkExtentionCounter += 1
 		depthLeft += 1 // Singular Extension
 	}
 
@@ -253,6 +307,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return score, false
 		}
 		if score >= bound && abs32(score) != CHECKMATE_EVAL {
+			e.info.nullMoveCounter += 1
 			return beta, true // null move pruning
 		}
 	}
@@ -266,6 +321,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return newEval, ok
 		}
 		if newEval < beta {
+			e.info.razoringCounter += 1
 			return newEval, true
 		}
 	}
@@ -273,6 +329,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	reverseFutilityMargin := rook.Weight() // Rook + Pawn
 	// Reverse Futility Pruning
 	if !isRootNode && !isPvNode && depthLeft < 2 && eval-reverseFutilityMargin >= beta {
+		e.info.rfpCounter += 1
 		return eval - reverseFutilityMargin, true /* fail soft */
 	}
 
@@ -307,6 +364,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			if score >= beta {
 				cutNodeCounter++
 				if cutNodeCounter == C {
+					e.info.multiCutCounter += 1
 					return beta, ok // mc-prune
 				}
 			}
@@ -359,6 +417,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			gain := Evaluate(position) + rook.Weight()
 			isCheckMove := move.HasTag(Check)
 			if gain <= alpha && !isCheckMove && move.PromoType == NoType {
+				e.info.efpCounter += 1
 				continue
 			}
 
