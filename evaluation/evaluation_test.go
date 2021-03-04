@@ -99,10 +99,9 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen, true)
 
 	actual := Evaluate(game.Position())
-	expected := int32(39)
 
-	if actual != expected {
-		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
+	if actual <= 0 {
+		err := fmt.Sprintf("Semi-open file - White:\nExpected: positive \nGot: %d\n", actual)
 		t.Errorf(err)
 	}
 
@@ -110,10 +109,9 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen, true)
 
 	actual = Evaluate(game.Position())
-	expected = int32(39)
 
-	if actual != expected {
-		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+	if actual <= 0 {
+		err := fmt.Sprintf("Semi-open file - Black:\nExpected: positive \nGot: %d\n", actual)
 		t.Errorf(err)
 	}
 }
@@ -124,10 +122,9 @@ func TestKingSafetyEval(t *testing.T) {
 	game := FromFen(fen, true)
 
 	actual := Evaluate(game.Position())
-	expected := int32(-4)
 
-	if actual != expected {
-		err := fmt.Sprintf("Advanced Own Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
+	if actual >= 0 {
+		err := fmt.Sprintf("Advanced Own Pawn - White:\nExpected: negative \nGot: %d\n", actual)
 		t.Errorf(err)
 	}
 
@@ -136,10 +133,9 @@ func TestKingSafetyEval(t *testing.T) {
 	game = FromFen(fen, true)
 
 	actual = Evaluate(game.Position())
-	expected = int32(-4)
 
-	if actual != expected {
-		err := fmt.Sprintf("Advanced Own Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+	if actual >= 0 {
+		err := fmt.Sprintf("Advanced Own Pawn - Black:\nExpected: negative \nGot: %d\n", actual)
 		t.Errorf(err)
 	}
 
@@ -148,10 +144,9 @@ func TestKingSafetyEval(t *testing.T) {
 	game = FromFen(fen, true)
 
 	actual = Evaluate(game.Position())
-	expected = int32(-33)
 
-	if actual != expected {
-		err := fmt.Sprintf("Missing Own Pawn -open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+	if actual >= 0 {
+		err := fmt.Sprintf("Missing Own Pawn -open file - White:\nExpected: negative\nGot: %d\n", actual)
 		t.Errorf(err)
 	}
 	fen = "krq5/1pp3pp/8/8/8/8/PPP4P/KRQ5 b - - 0 1"
@@ -159,10 +154,9 @@ func TestKingSafetyEval(t *testing.T) {
 	game = FromFen(fen, true)
 
 	actual = Evaluate(game.Position())
-	expected = int32(-33)
 
-	if actual != expected {
-		err := fmt.Sprintf("Missing Own Pawn -open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
+	if actual >= 0 {
+		err := fmt.Sprintf("Missing Own Pawn -open file - Black:\nExpected: negative\nGot: %d\n", actual)
 		t.Errorf(err)
 	}
 }

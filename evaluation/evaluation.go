@@ -625,18 +625,29 @@ func Evaluate(position *Position) int32 {
 			}
 			if blackPawnsPerFile[f] == 0 { // no pawn here
 				if whitePawnsPerFile[f] == 0 { // open file!!
-					blackKingSafetyCentiPawns -= 90
+					blackKingSafetyCentiPawns -= 60
 				} else {
-					blackKingSafetyCentiPawns -= 70
+					blackKingSafetyCentiPawns -= 50
 				}
 			} else {
-				blackKingSafetyCentiPawns -= 6 * (int32(Rank8 - blackLeastAdvancedPawnsPerFile[f]))
+				if blackLeastAdvancedPawnsPerFile[f] == Rank5 {
+					blackKingSafetyCentiPawns -= 25
+				} else if blackLeastAdvancedPawnsPerFile[f] <= Rank4 {
+					blackKingSafetyCentiPawns -= 35 + 8 - int32(blackLeastAdvancedPawnsPerFile[f])
+				}
 			}
 
 			if whitePawnsPerFile[f] != 0 {
-				blackKingSafetyCentiPawns -= 5 * int32(whiteMostAdvancedPawnsPerFile[f])
+				if whiteMostAdvancedPawnsPerFile[f] >= Rank5 {
+					blackKingSafetyCentiPawns -= 25
+				}
 			} else {
-				blackKingSafetyCentiPawns -= 60 // black can pile up
+				wfile := int8(whiteKingSquare.File())
+				if File(wfile-1) != file &&
+					File(wfile) != file &&
+					File(wfile)+1 != file {
+					blackKingSafetyCentiPawns -= 40 // white can pile up
+				}
 			}
 		}
 	}
@@ -670,18 +681,29 @@ func Evaluate(position *Position) int32 {
 			}
 			if whitePawnsPerFile[f] == 0 { // no pawn here
 				if blackPawnsPerFile[f] == 0 { // open file!!
-					whiteKingSafetyCentiPawns -= 90
+					whiteKingSafetyCentiPawns -= 60
 				} else {
-					whiteKingSafetyCentiPawns -= 70
+					whiteKingSafetyCentiPawns -= 50
 				}
 			} else {
-				whiteKingSafetyCentiPawns -= 6 * int32(whiteLeastAdvancedPawnsPerFile[f])
+				if whiteLeastAdvancedPawnsPerFile[f] == Rank4 {
+					whiteKingSafetyCentiPawns -= 25
+				} else if whiteLeastAdvancedPawnsPerFile[f] >= Rank4 {
+					whiteKingSafetyCentiPawns -= 35 + int32(whiteLeastAdvancedPawnsPerFile[f])
+				}
 			}
 
 			if blackPawnsPerFile[f] != 0 {
-				whiteKingSafetyCentiPawns -= 5 * (int32(Rank8 - blackMostAdvancedPawnsPerFile[f]))
+				if blackMostAdvancedPawnsPerFile[f] <= Rank4 {
+					whiteKingSafetyCentiPawns -= 25
+				}
 			} else {
-				whiteKingSafetyCentiPawns -= 60 // black can pile up
+				bfile := int8(blackKingSquare.File())
+				if File(bfile-1) != file &&
+					File(bfile) != file &&
+					File(bfile)+1 != file {
+					whiteKingSafetyCentiPawns -= 40 // black can pile up
+				}
 			}
 		}
 	}
