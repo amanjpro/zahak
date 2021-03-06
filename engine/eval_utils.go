@@ -30,7 +30,7 @@ func (b *Bitboard) getLeastValuablePiece(attacks uint64, color Color) (uint64, P
 	start := int8(WhitePawn) + shift
 	finish := int8(WhiteKing) + shift
 
-	for piece := start; piece >= finish; piece-- {
+	for piece := start; piece <= finish; piece++ {
 		bb := b.GetBitboardOf(Piece(piece))
 		subset := attacks & bb
 		if subset != 0 {

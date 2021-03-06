@@ -62,7 +62,7 @@ func generateZobristHash(pos *Position) uint64 {
 	for sq := A1; sq <= H8; sq++ {
 		p := board.PieceAt(sq)
 		if p != NoPiece {
-			hash ^= piecesZC[int8(p)][sq]
+			hash ^= piecesZC[int8(p)-1][sq]
 		}
 	}
 
@@ -119,21 +119,21 @@ func updateHash(pos *Position, move Move, movingPiece Piece, capturedPiece Piece
 	/* Castle */
 	if move.Source == E1 { // White
 		if move.HasTag(KingSideCastle) {
-			hash ^= piecesZC[int8(WhiteRook)][H1]
-			hash ^= piecesZC[int8(WhiteRook)][F1]
+			hash ^= piecesZC[int8(WhiteRook)-1][H1]
+			hash ^= piecesZC[int8(WhiteRook)-1][F1]
 		}
 		if move.HasTag(QueenSideCastle) {
-			hash ^= piecesZC[int8(WhiteRook)][A1]
-			hash ^= piecesZC[int8(WhiteRook)][D1]
+			hash ^= piecesZC[int8(WhiteRook)-1][A1]
+			hash ^= piecesZC[int8(WhiteRook)-1][D1]
 		}
 	} else if move.Source == E8 { // Black
 		if move.HasTag(KingSideCastle) {
-			hash ^= piecesZC[int8(BlackRook)][H8]
-			hash ^= piecesZC[int8(BlackRook)][F8]
+			hash ^= piecesZC[int8(BlackRook)-1][H8]
+			hash ^= piecesZC[int8(BlackRook)-1][F8]
 		}
 		if move.HasTag(QueenSideCastle) {
-			hash ^= piecesZC[int8(BlackRook)][A8]
-			hash ^= piecesZC[int8(BlackRook)][D8]
+			hash ^= piecesZC[int8(BlackRook)-1][A8]
+			hash ^= piecesZC[int8(BlackRook)-1][D8]
 		}
 	}
 
@@ -172,15 +172,15 @@ func updateHash(pos *Position, move Move, movingPiece Piece, capturedPiece Piece
 	}
 
 	/* Board */
-	hash ^= piecesZC[int8(movingPiece)][move.Source]
+	hash ^= piecesZC[int8(movingPiece)-1][move.Source]
 	if promoPiece != NoPiece {
-		hash ^= piecesZC[int8(promoPiece)][move.Destination]
+		hash ^= piecesZC[int8(promoPiece)-1][move.Destination]
 	} else {
-		hash ^= piecesZC[int8(movingPiece)][move.Destination]
+		hash ^= piecesZC[int8(movingPiece)-1][move.Destination]
 	}
 
 	if capturedPiece != NoPiece {
-		hash ^= piecesZC[int8(capturedPiece)][captureSquare]
+		hash ^= piecesZC[int8(capturedPiece)-1][captureSquare]
 	}
 
 	pos.hash = hash

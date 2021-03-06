@@ -9,6 +9,8 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+var EmptyMove = Move{NoSquare, NoSquare, NoType, 0}
+
 type Info struct {
 	efpCounter            int
 	rfpCounter            int
@@ -87,8 +89,6 @@ func (e *Engine) ShouldStop() bool {
 	return now.Sub(e.startTime).Milliseconds() >= e.ThinkTime
 }
 
-var EmptyMove = Move{NoSquare, NoSquare, 0, 0}
-
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.killerMoves); i++ {
 		if e.killerMoves[i] == nil {
@@ -143,16 +143,16 @@ func (e *Engine) AddKillerMove(move Move, ply int8) {
 }
 
 func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if e.searchHistory[movingPiece] == nil {
+	if e.searchHistory[movingPiece-1] == nil {
 		return 0
 	}
-	return 60_000 + e.searchHistory[movingPiece][destination]
+	return 60_000 + e.searchHistory[movingPiece-1][destination]
 }
 
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
 	if !move.HasTag(Capture) {
 		e.info.historyCounter += 1
-		e.searchHistory[movingPiece][destination] += int32(ply)
+		e.searchHistory[movingPiece-1][destination] += int32(ply)
 	}
 }
 

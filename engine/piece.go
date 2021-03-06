@@ -3,39 +3,39 @@ package engine
 type Piece int8
 
 const (
-	WhiteKing Piece = iota
-	WhiteQueen
-	WhiteRook
-	WhiteBishop
-	WhiteKnight
+	NoPiece Piece = iota
 	WhitePawn
-	BlackKing
-	BlackQueen
-	BlackRook
-	BlackBishop
-	BlackKnight
+	WhiteKnight
+	WhiteBishop
+	WhiteRook
+	WhiteQueen
+	WhiteKing
 	BlackPawn
-	NoPiece
+	BlackKnight
+	BlackBishop
+	BlackRook
+	BlackQueen
+	BlackKing
 )
 
 type PieceType int8
 
 const (
-	Pawn PieceType = iota
+	NoType PieceType = iota
+	Pawn
 	Knight
 	Bishop
 	Rook
 	Queen
 	King
-	NoType
 )
 
 type Color int8
 
 const (
-	White Color = iota
+	NoColor Color = iota
+	White
 	Black
-	NoColor
 )
 
 func (c *Color) Other() Color {
