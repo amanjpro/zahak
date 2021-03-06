@@ -167,14 +167,7 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 		Move{A1, B1, NoType, 0},
 		Move{A3, B3, NoType, Check},
 		Move{B1, A1, NoType, 0},
-		Move{B3, A3, NoType, Check},
-		Move{A1, B1, NoType, 0},
-		Move{A3, B3, NoType, Check},
-		Move{B1, A1, NoType, 0},
-		Move{B3, A3, NoType, Check},
-		Move{A1, B1, NoType, 0},
-		Move{A3, B3, NoType, Check},
-		Move{B1, A1, NoType, 0}}
+		Move{B3, A3, NoType, Check}}
 	actual := e.pv.line
 	if equalMoves(expected, actual) {
 		actualString := e.pv.ToString()
