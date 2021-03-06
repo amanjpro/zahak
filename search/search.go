@@ -59,6 +59,7 @@ type Engine struct {
 	startTime      time.Time
 	ThinkTime      int64
 	info           Info
+	pred           Predecessors
 }
 
 func NewEngine() *Engine {
@@ -74,6 +75,7 @@ func NewEngine() *Engine {
 		time.Now(),
 		0,
 		NoInfo,
+		NewPredecessors(),
 	}
 }
 
@@ -115,6 +117,8 @@ func (e *Engine) ClearForSearch() {
 	e.pv.Pop() // pop our opponent's move
 
 	e.info = NoInfo
+
+	e.pred.Clear()
 
 	e.startTime = time.Now()
 }
@@ -226,6 +230,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			break
 		}
 		previousBestMove = e.move
+		e.pred.Clear()
 		e.info.Print()
 	}
 
@@ -234,6 +239,10 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine, currentMove Move, multiCutFlag bool, nullMove bool, inNullMoveSearch int8) (int32, bool) {
 	e.VisitNode()
+
+	if IsRepetition(position, e.pred, currentMove) {
+		return 0, true
+	}
 
 	outcome := position.Status()
 	if outcome == Checkmate {
@@ -301,8 +310,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		ep := position.MakeNullMove()
 		newBeta := 1 - bound
 		line := NewPVLine(100)
+		oldPred := e.pred
+		e.pred = NewPredecessors()
 		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, line, EmptyMove, !multiCutFlag, false, inNullMoveSearch+1)
 		score = -score
+		e.pred = oldPred
 		position.UnMakeNullMove(ep)
 		if !ok {
 			return score, false
@@ -357,8 +369,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 			newBeta := 1 - beta
 			// newBeta := -beta + 1
+			e.pred.Push(position.Hash())
 			score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, line, move, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
+			e.pred.Pop()
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 			if !ok {
 				return score, ok
@@ -384,8 +398,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	move := movePicker.Next()
 	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
 	line.Recycle()
+	e.pred.Push(position.Hash())
 	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, move, !multiCutFlag, true, inNullMoveSearch)
 	bestscore = -bestscore
+	e.pred.Pop()
 	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 	if !ok {
 		return bestscore, ok
@@ -433,8 +449,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			}
 		}
 		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+		e.pred.Push(position.Hash())
 		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, move, !multiCutFlag, true, inNullMoveSearch)
 		score = -score
+		e.pred.Pop()
 		if !ok {
 			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 			return score, ok
@@ -442,8 +460,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if score > alpha && score < beta {
 			line.Recycle()
 			// research with window [alpha;beta]
+			e.pred.Push(position.Hash())
 			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, move, !multiCutFlag, true, inNullMoveSearch)
 			score = -score
+			e.pred.Pop()
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
 				return score, ok
@@ -494,4 +514,57 @@ func abs32(x int32) int32 {
 		return -x
 	}
 	return x
+}
+
+type Predecessors struct {
+	line     []uint64
+	maxIndex int
+}
+
+func NewPredecessors() Predecessors {
+	return Predecessors{make([]uint64, 100), -1}
+}
+
+func (p *Predecessors) Push(hash uint64) {
+	p.maxIndex += 1
+	p.line[p.maxIndex] = hash
+}
+
+func (p *Predecessors) Clear() {
+	p.maxIndex = -1
+}
+
+func (p *Predecessors) Pop() {
+	if p.maxIndex < 0 {
+		return
+	}
+	p.maxIndex -= 1
+}
+
+func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
+	current := p.Hash()
+	previouslySeen := p.Positions[current]
+
+	if currentMove == EmptyMove || p.HalfMoveClock == 0 {
+		return false
+	}
+
+	if previouslySeen >= 3 {
+		return true
+	}
+
+	for i := pred.maxIndex - 1; i >= 0; i-- {
+		var candidate = pred.line[i]
+		if current == candidate {
+			if previouslySeen > 0 {
+				return true
+			} else {
+				previouslySeen += 1
+			}
+		}
+	}
+	if previouslySeen >= 2 {
+		return true
+	}
+	return false
 }

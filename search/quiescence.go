@@ -7,8 +7,14 @@ import (
 
 func (e *Engine) quiescence(position *Position, alpha int32, beta int32, currentMove Move, ply int8,
 	standPat int32, searchHeight int8) (int32, bool) {
+
 	e.info.quiesceCounter += 1
 	e.VisitNode()
+
+	if IsRepetition(position, e.pred, currentMove) {
+		return 0, true
+	}
+
 	outcome := position.Status()
 	if outcome == Checkmate {
 		return -CHECKMATE_EVAL, true
@@ -104,7 +110,14 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 				return v, ok
 			}
 			score = -v
+		e.pred.Push(position.Hash())
+		v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
+		e.pred.Pop()
+		position.UnMakeMove(move, tg, ep, cp, hc)
+		if !ok {
+			return v, ok
 		}
+		score := -v
 		if score >= beta {
 			e.AddKillerMove(move, searchHeight)
 			return beta, true
