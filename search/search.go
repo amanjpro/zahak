@@ -454,8 +454,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		// Late Move Reduction
-		if reductionsAllowed && move.PromoType == NoType && !isCaptureMove && !isCheckMove &&
-			depthLeft == 2 && i >= 6 && searchHeight > 4 {
+		if reductionsAllowed && move.PromoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
 			e.info.lmrCounter += 1
 			LMR = 1
 		}
