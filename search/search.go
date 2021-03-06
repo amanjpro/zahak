@@ -21,6 +21,7 @@ type Info struct {
 	seeQuiescenceCounter  int
 	mainSearchCounter     int
 	zwCounter             int
+	researchCounter       int
 	quiesceCounter        int
 	killerCounter         int
 	historyCounter        int
@@ -38,6 +39,7 @@ func (i *Info) Print() {
 	fmt.Println("SEE Quiescence: ", i.seeQuiescenceCounter)
 	fmt.Println("PV Nodes: ", i.mainSearchCounter)
 	fmt.Println("ZW Nodes: ", i.zwCounter)
+	fmt.Println("Research: ", i.researchCounter)
 	fmt.Println("Quiescence Nodes: ", i.quiesceCounter)
 	fmt.Println("Killer Moves: ", i.killerCounter)
 	fmt.Println("History Moves: ", i.historyCounter)
@@ -75,7 +77,7 @@ func NewEngine() *Engine {
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.StopSearchFlag {
@@ -380,7 +382,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			}
 		}
 	}
-	//
+
 	if isInCheck && isPvNode {
 		e.info.checkExtentionCounter += 1
 		depthLeft += 1 // Singular Extension
@@ -468,6 +470,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 		if score > alpha && score < beta {
 			line.Recycle()
+			e.info.researchCounter += 1
 			// research with window [alpha;beta]
 			e.pred.Push(position.Hash())
 			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, move, !multiCutFlag, true)
