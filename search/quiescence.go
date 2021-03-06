@@ -14,8 +14,14 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 	if IsRepetition(position, e.pred, currentMove) {
 		return 0, true
 	}
+	var isInCheck bool
+	if currentMove == EmptyMove {
+		isInCheck = position.IsInCheck()
+	} else {
+		isInCheck = currentMove.HasTag(Check)
+	}
 
-	outcome := position.Status()
+	outcome := position.Status(isInCheck)
 	if outcome == Checkmate {
 		return -CHECKMATE_EVAL, true
 	} else if outcome == Draw {
@@ -30,27 +36,32 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 		return 0, false
 	}
 
-	var isInCheck bool
-	if currentMove == EmptyMove {
-		isInCheck = position.IsInCheck()
-	} else {
-		isInCheck = currentMove.HasTag(Check)
+	// Delta Pruning
+	q := WhiteQueen
+	deltaMargin := q.Weight()
+	if currentMove.PromoType != NoType {
+		promo := GetPiece(currentMove.PromoType, White)
+		deltaMargin += promo.Weight()
+	}
+	if !isInCheck && standPat+deltaMargin < alpha {
+		e.info.deltaPruningCounter += 1
+		return alpha, true
 	}
 
 	if alpha < standPat {
 		alpha = standPat
 	}
 
-	withChecks := ply < 4
+	withChecks := false && ply < 4
 	legalMoves := position.QuiesceneMoves(withChecks)
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
-	p := WhitePawn
-	futility := standPat + p.Weight()
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
-		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
+		isCheckMove := move.HasTag(Check)
+		isCaptureMove := move.HasTag(Capture)
+		if !isInCheck && isCaptureMove && !isCheckMove && !move.HasTag(EnPassant) {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
 			if movePicker.scores[i] < 0 {
