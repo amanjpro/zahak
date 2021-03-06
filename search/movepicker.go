@@ -68,16 +68,16 @@ func (mp *MovePicker) score() {
 		cp, ep, tg, hc := position.MakeMove(move)
 		hash := position.Hash()
 		position.UnMakeMove(move, tg, ep, cp, hc)
-		eval, ok := TranspositionTable.Get(hash)
+		eval, depth, tpe, ok := TranspositionTable.Get(hash)
 
-		if ok && eval.Type == Exact {
-			mp.scores[i] = 500_000_000 + eval.Eval
+		if ok && tpe == Exact {
+			mp.scores[i] = 500_000_000 + eval
 			mp.hasPvMove = true
 			continue
 		}
 
 		if ok {
-			mp.scores[i] = 400_000_000 + int32(eval.Depth)
+			mp.scores[i] = 400_000_000 + int32(depth)
 			mp.hasPvMove = true
 			continue
 		}
