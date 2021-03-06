@@ -46,7 +46,7 @@ func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked 
 }
 
 func (p *Position) LegalMoves() []Move {
-	allMoves := make([]Move, 0, 350)
+	allMoves := make([]Move, 0, 256)
 
 	p.generateMoves(&allMoves, false, false, false)
 
@@ -54,7 +54,7 @@ func (p *Position) LegalMoves() []Move {
 }
 
 func (p *Position) QuiesceneMoves(withChecks bool) []Move {
-	allMoves := make([]Move, 0, 200)
+	allMoves := make([]Move, 0, 256)
 
 	color := p.Turn()
 	isChecked := isInCheck(p.Board, color)
@@ -223,19 +223,33 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 		}
 	}
 	// Knights and pawns cannot discover each other
-	slidingChecks := (bishopAttacks(squareOfKing, occupiedBB, empty) & opBQ) |
-		(rookAttacks(squareOfKing, occupiedBB, empty) & opRQ)
+	bishopChecks := (bishopAttacks(squareOfKing, occupiedBB, empty) & opBQ)
 
-	if slidingChecks != 0 && !doubleCheck {
+	if bishopChecks != 0 && !doubleCheck {
 		return true
 	} else {
-		for slidingChecks != 0 {
-			sq := bitScanForward(slidingChecks)
+		for bishopChecks != 0 {
+			sq := bitScanForward(bishopChecks)
 			acc += 1
 			if (!doubleCheck && acc >= 1) || acc > 1 {
 				return true
 			}
-			slidingChecks ^= (1 << sq)
+			bishopChecks ^= (1 << sq)
+		}
+	}
+
+	rookChecks := (rookAttacks(squareOfKing, occupiedBB, empty) & opRQ)
+
+	if rookChecks != 0 && !doubleCheck {
+		return true
+	} else {
+		for rookChecks != 0 {
+			sq := bitScanForward(rookChecks)
+			acc += 1
+			if (!doubleCheck && acc >= 1) || acc > 1 {
+				return true
+			}
+			rookChecks ^= (1 << sq)
 		}
 	}
 
