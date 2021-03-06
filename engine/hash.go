@@ -104,9 +104,10 @@ func updateHashForNullMove(pos *Position, newEnPassant Square, oldEnPassant Squa
 }
 
 // capture square is provided for the case of enpassant
-func updateHash(pos *Position, move Move, movingPiece Piece, capturedPiece Piece,
-	captureSquare Square, newEnPassant Square, oldEnPassant Square, promoPiece Piece,
-	oldPositionTag PositionTag) {
+func updateHash(pos *Position, move Move, captureSquare Square,
+	newEnPassant Square, oldEnPassant Square, promoPiece Piece, oldPositionTag PositionTag) {
+	source := move.Source()
+	dest := move.Destination()
 	var hash uint64 = pos.hash
 	if hash == 0 {
 		pos.Hash()
@@ -117,21 +118,21 @@ func updateHash(pos *Position, move Move, movingPiece Piece, capturedPiece Piece
 	turn := pos.Turn()
 
 	/* Castle */
-	if move.Source == E1 { // White
-		if move.HasTag(KingSideCastle) {
+	if source == E1 { // White
+		if move.IsKingSideCastle() {
 			hash ^= piecesZC[int8(WhiteRook)-1][H1]
 			hash ^= piecesZC[int8(WhiteRook)-1][F1]
 		}
-		if move.HasTag(QueenSideCastle) {
+		if move.IsQueenSideCastle() {
 			hash ^= piecesZC[int8(WhiteRook)-1][A1]
 			hash ^= piecesZC[int8(WhiteRook)-1][D1]
 		}
-	} else if move.Source == E8 { // Black
-		if move.HasTag(KingSideCastle) {
+	} else if source == E8 { // Black
+		if move.IsKingSideCastle() {
 			hash ^= piecesZC[int8(BlackRook)-1][H8]
 			hash ^= piecesZC[int8(BlackRook)-1][F8]
 		}
-		if move.HasTag(QueenSideCastle) {
+		if move.IsQueenSideCastle() {
 			hash ^= piecesZC[int8(BlackRook)-1][A8]
 			hash ^= piecesZC[int8(BlackRook)-1][D8]
 		}
@@ -171,16 +172,19 @@ func updateHash(pos *Position, move Move, movingPiece Piece, capturedPiece Piece
 		}
 	}
 
+	movingPiece := move.MovingPiece()
+
 	/* Board */
-	hash ^= piecesZC[int8(movingPiece)-1][move.Source]
+	hash ^= piecesZC[int8(movingPiece)-1][source]
 	if promoPiece != NoPiece {
-		hash ^= piecesZC[int8(promoPiece)-1][move.Destination]
+		hash ^= piecesZC[int8(promoPiece)-1][dest]
 	} else {
-		hash ^= piecesZC[int8(movingPiece)-1][move.Destination]
+		hash ^= piecesZC[int8(movingPiece)-1][dest]
 	}
 
-	if capturedPiece != NoPiece {
-		hash ^= piecesZC[int8(capturedPiece)-1][captureSquare]
+	cp := move.CapturedPiece()
+	if cp != NoPiece {
+		hash ^= piecesZC[int8(cp)-1][cp]
 	}
 
 	pos.hash = hash
