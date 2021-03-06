@@ -93,6 +93,6 @@ func ResetCache() {
 			TranspositionTable.items[i] = EmptyEval
 		}
 	} else {
-		NewCache(20)
+		NewCache(10)
 	}
 }
