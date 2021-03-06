@@ -21,7 +21,6 @@ A UCI compatible chess AI written in Go. Still work in progress.
 - Delta Pruning
 - Reverse Futility Pruning
 - Extended Futility Pruning
-- Futility Pruning
 - Late Move Reduction
 - Razoring
 - Killer Moves Heuristics
