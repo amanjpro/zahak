@@ -18,7 +18,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 	if currentMove == EmptyMove {
 		isInCheck = position.IsInCheck()
 	} else {
-		isInCheck = currentMove.HasTag(Check)
+		isInCheck = currentMove.IsCheck()
 	}
 
 	outcome := position.Status(isInCheck)
@@ -39,8 +39,9 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 	// Delta Pruning
 	q := WhiteQueen
 	deltaMargin := q.Weight()
-	if currentMove.PromoType != NoType {
-		promo := GetPiece(currentMove.PromoType, White)
+	promoType := currentMove.PromoType()
+	if promoType != NoType {
+		promo := GetPiece(promoType, White)
 		deltaMargin += promo.Weight()
 	}
 	if !isInCheck && standPat+deltaMargin < alpha {
@@ -59,9 +60,9 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
-		isCheckMove := move.HasTag(Check)
-		isCaptureMove := move.HasTag(Capture)
-		if !isInCheck && isCaptureMove && !isCheckMove && !move.HasTag(EnPassant) {
+		isCheckMove := move.IsCheck()
+		isCaptureMove := move.IsCapture()
+		if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
 			if movePicker.scores[i] < 0 {
@@ -69,13 +70,13 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 			}
 		}
 
-		cp, ep, tg, hc := position.MakeMove(move)
+		ep, tg, hc := position.MakeMove(move)
 		sp := Evaluate(position)
 
 		e.pred.Push(position.Hash())
 		v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
 		e.pred.Pop()
-		position.UnMakeMove(move, tg, ep, cp, hc)
+		position.UnMakeMove(move, tg, ep, hc)
 		if !ok {
 			return v, ok
 		}
@@ -85,7 +86,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 			return beta, true
 		}
 		if score > alpha {
-			e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, searchHeight)
+			e.AddMoveHistory(move, position.Board.PieceAt(move.Source()), move.Destination(), searchHeight)
 			alpha = score
 		}
 	}

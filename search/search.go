@@ -9,8 +9,6 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-var EmptyMove = Move{NoSquare, NoSquare, NoType, 0}
-
 type Info struct {
 	efpCounter            int
 	rfpCounter            int
@@ -135,7 +133,7 @@ func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 }
 
 func (e *Engine) AddKillerMove(move Move, ply int8) {
-	if !move.HasTag(Capture) {
+	if !move.IsCapture() {
 		e.info.killerCounter += 1
 		e.killerMoves[ply][1] = e.killerMoves[ply][0]
 		e.killerMoves[ply][0] = move
@@ -150,7 +148,7 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 }
 
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if !move.HasTag(Capture) {
+	if !move.IsCapture() {
 		e.info.historyCounter += 1
 		e.searchHistory[movingPiece-1][destination] += int32(ply)
 	}
@@ -244,7 +242,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if currentMove == EmptyMove && isRootNode {
 		isInCheck = position.IsInCheck()
 	} else {
-		isInCheck = currentMove.HasTag(Check)
+		isInCheck = currentMove.IsCheck()
 	}
 
 	if IsRepetition(position, e.pred, currentMove) {
@@ -362,14 +360,14 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		for i := 0; i < M; i++ {
 			line.Recycle()
 			move := movePicker.Next()
-			capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+			oldEnPassant, oldTag, hc := position.MakeMove(move)
 			newBeta := 1 - beta
 			// newBeta := -beta + 1
 			e.pred.Push(position.Hash())
 			score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, line, move, !multiCutFlag, true)
 			score = -score
 			e.pred.Pop()
-			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 			if !ok {
 				return score, ok
 			}
@@ -397,13 +395,13 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// using fail soft with negamax:
 	move := movePicker.Next()
-	capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+	oldEnPassant, oldTag, hc := position.MakeMove(move)
 	line.Recycle()
 	e.pred.Push(position.Hash())
 	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, move, !multiCutFlag, true)
 	bestscore = -bestscore
 	e.pred.Pop()
-	position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 	if !ok {
 		return bestscore, ok
 	}
@@ -420,7 +418,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		pvline.AddFirst(move)
 		pvline.ReplaceLine(line)
 		hasSeenExact = true
-		e.AddMoveHistory(move, position.Board.PieceAt(move.Source), move.Destination, searchHeight)
+		e.AddMoveHistory(move, position.Board.PieceAt(move.Source()), move.Destination(), searchHeight)
 	}
 
 	for i := 1; i < len(legalMoves); i++ {
@@ -432,19 +430,20 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		LMR := int8(0)
 
-		isCheckMove := move.HasTag(Check)
-		isCaptureMove := move.HasTag(Capture)
+		isCheckMove := move.IsCheck()
+		isCaptureMove := move.IsCapture()
+		promoType := move.PromoType()
 
 		// Extended Futility Pruning
 		if reductionsAllowed && !isCheckMove && depthLeft == 2 {
 			margin := 3 * pawn.Weight()
 			gain := int32(0)
 			if isCaptureMove {
-				cp := position.Board.PieceAt(move.Destination)
+				cp := move.CapturedPiece()
 				gain += cp.Weight()
 			}
-			if move.PromoType != NoType {
-				piece := GetPiece(move.PromoType, White)
+			if promoType != NoType {
+				piece := GetPiece(promoType, White)
 				gain += piece.Weight() - pawn.Weight()
 			}
 			if eval+gain+margin <= alpha && depthLeft == 2 && searchHeight > 2 {
@@ -454,17 +453,17 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 
 		// Late Move Reduction
-		if reductionsAllowed && move.PromoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
+		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
 			e.info.lmrCounter += 1
 			LMR = 1
 		}
-		capturedPiece, oldEnPassant, oldTag, hc := position.MakeMove(move)
+		oldEnPassant, oldTag, hc := position.MakeMove(move)
 		e.pred.Push(position.Hash())
 		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, line, move, !multiCutFlag, true)
 		score = -score
 		e.pred.Pop()
 		if !ok {
-			position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 			return score, ok
 		}
 		if score > alpha && score < beta {
@@ -476,15 +475,15 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			score = -score
 			e.pred.Pop()
 			if !ok {
-				position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				return score, ok
 			}
 			if score > alpha {
-				e.AddMoveHistory(move, position.Board.PieceAt(move.Destination), move.Destination, searchHeight)
+				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 				alpha = score
 			}
 		}
-		position.UnMakeMove(move, oldTag, oldEnPassant, capturedPiece, hc)
+		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 
 		if score > bestscore {
 			if score >= beta {

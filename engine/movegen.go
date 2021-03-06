@@ -8,7 +8,7 @@ func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 	color := p.Turn()
 	for _, m := range ms {
 		// make the move
-		capturedPiece := p.partialMakeMove(m)
+		p.partialMakeMove(m)
 
 		// Does the move puts the moving player in check
 		pNotInCheck := !isInCheck(p.Board, color)
@@ -20,7 +20,7 @@ func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 			// do nothing
 			*allMoves = append(*allMoves, m)
 		}
-		p.partialUnMakeMove(m, capturedPiece)
+		p.partialUnMakeMove(m)
 	}
 }
 
@@ -28,7 +28,7 @@ func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked 
 	color := p.Turn()
 	for _, m := range ms {
 		// make the move
-		capturedPiece := p.partialMakeMove(m)
+		p.partialMakeMove(m)
 
 		// Does the move puts the moving player in check
 		pNotInCheck := !isInCheck(p.Board, color)
@@ -36,12 +36,12 @@ func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked 
 		if pNotInCheck && withChecks && isInCheck(p.Board, p.Turn()) { // We put opponent in check
 			m.AddCheckTag()
 			*allMoves = append(*allMoves, m)
-		} else if pNotInCheck && capturedPiece != NoPiece { // The move is a capture
+		} else if pNotInCheck && m.IsCapture() { // The move is a capture
 			*allMoves = append(*allMoves, m)
 		} else if isChecked && pNotInCheck { // Check replies are also considered
 			*allMoves = append(*allMoves, m)
 		}
-		p.partialUnMakeMove(m, capturedPiece)
+		p.partialUnMakeMove(m)
 	}
 }
 
@@ -115,16 +115,16 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 func (p *Position) checkMove(m Move) bool {
 	color := p.Turn()
 	// make the move
-	capturedPiece := p.partialMakeMove(m)
+	p.partialMakeMove(m)
 
 	// Does the move puts the moving player in check
 	pNotInCheck := !isInCheck(p.Board, color)
 
 	if pNotInCheck { // We put opponent in check
-		p.partialUnMakeMove(m, capturedPiece)
+		p.partialUnMakeMove(m)
 		return true
 	} else {
-		p.partialUnMakeMove(m, capturedPiece)
+		p.partialUnMakeMove(m)
 		return false
 	}
 }

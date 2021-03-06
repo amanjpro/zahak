@@ -31,11 +31,11 @@ func PerftTree(game Game, depth int, moves []Move) {
 		}
 		moves = game.Position().LegalMoves()
 		for _, move := range moves {
-			cp, ep, tg, hc := game.Position().MakeMove(move)
+			ep, tg, hc := game.Position().MakeMove(move)
 			nodes := bulkyPerft(game.Position(), depth)
 			fmt.Printf("%s %d\n", move.ToString(), nodes)
 			sum += nodes
-			game.Position().UnMakeMove(move, tg, ep, cp, hc)
+			game.Position().UnMakeMove(move, tg, ep, hc)
 		}
 	}
 
@@ -193,7 +193,7 @@ func test(fen string, depth int, expected PerftNodes) int8 {
 	fmt.Printf("Running perft for %s depth %d\n", fen, depth)
 	g := FromFen(fen, true)
 	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
-	perft(g.Position(), depth, NoType, 0, &actual)
+	perft(g.Position(), depth, EmptyMove, &actual)
 	if actual != expected {
 		fmt.Printf("test failed\nExpected: %d\nGot: %d\n", expected, actual)
 		return 1
@@ -223,27 +223,28 @@ func testNodesOnly(fen string, depth int, expected int64) int8 {
 	return 0
 }
 
-func perft(p *Position, depth int, lastPromo PieceType, lastTag MoveTag, acc *PerftNodes) {
+func perft(p *Position, depth int, currentMove Move, acc *PerftNodes) {
 	if depth == 0 {
-		isCheckmate := p.Status(lastTag&Check != 0) == Checkmate
+		isCheck := currentMove.IsCheck()
+		isCheckmate := p.Status(isCheck) == Checkmate
 		acc.nodes += 1
 		if isCheckmate {
 			acc.checkmates += 1
 		}
-		if lastTag&Check != 0 {
+		if isCheck {
 			acc.checks += 1
 		}
 
-		if lastTag&Capture != 0 {
+		if currentMove.IsCapture() {
 			acc.captures += 1
 		}
-		if lastTag&EnPassant != 0 {
+		if currentMove.IsEnPassant() {
 			acc.enPassants += 1
 		}
-		if lastTag&QueenSideCastle != 0 || lastTag&KingSideCastle != 0 {
+		if currentMove.IsQueenSideCastle() || currentMove.IsKingSideCastle() {
 			acc.castles += 1
 		}
-		if lastPromo != NoType {
+		if currentMove.PromoType() != NoType {
 			acc.promotions += 1
 		}
 		return
@@ -252,9 +253,9 @@ func perft(p *Position, depth int, lastPromo PieceType, lastTag MoveTag, acc *Pe
 	moves := p.LegalMoves()
 
 	for _, move := range moves {
-		cp, ep, tag, hc := p.MakeMove(move)
-		perft(p, depth-1, move.PromoType, move.Tag, acc)
-		p.UnMakeMove(move, tag, ep, cp, hc)
+		ep, tag, hc := p.MakeMove(move)
+		perft(p, depth-1, move, acc)
+		p.UnMakeMove(move, tag, ep, hc)
 	}
 }
 
@@ -274,7 +275,7 @@ func bulkyPerft(p *Position, depth int) int64 {
 
 	for i := 0; i < l; i++ {
 		move := moves[i]
-		cp, ep, tag, hc := p.MakeMove(move)
+		ep, tag, hc := p.MakeMove(move)
 		hash := p.Hash()
 		n, ok := cache[depth-1][hash]
 		if ok {
@@ -284,7 +285,7 @@ func bulkyPerft(p *Position, depth int) int64 {
 			cache[depth-1][hash] = n
 			nodes += n
 		}
-		p.UnMakeMove(move, tag, ep, cp, hc)
+		p.UnMakeMove(move, tag, ep, hc)
 	}
 	return nodes
 }
