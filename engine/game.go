@@ -41,10 +41,6 @@ func (g *Game) Move(m Move) {
 	}
 }
 
-func (g *Game) Status() Status {
-	return g.position.Status()
-}
-
 func (g *Game) Position() *Position {
 	return g.position
 }

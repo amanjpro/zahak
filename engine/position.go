@@ -248,12 +248,12 @@ func (p *Position) IsInCheck() bool {
 	return isInCheck(p.Board, p.Turn())
 }
 
-func (p *Position) Status() Status {
+func (p *Position) Status(isInCheck bool) Status {
 	value, ok := p.Positions[p.Hash()]
 	if ok && value >= 3 {
 		return Draw
 	}
-	if p.IsInCheck() {
+	if isInCheck {
 		if !p.HasLegalMoves() {
 			return Checkmate
 		}
