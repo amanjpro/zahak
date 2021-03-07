@@ -225,8 +225,8 @@ func testNodesOnly(fen string, depth int, expected int64) int8 {
 
 func perft(p *Position, depth int, currentMove Move, acc *PerftNodes) {
 	if depth == 0 {
-		isCheck := currentMove.IsCheck()
-		isCheckmate := p.Status(isCheck) == Checkmate
+		isCheck := p.IsInCheck()
+		isCheckmate := p.Status() == Checkmate
 		acc.nodes += 1
 		if isCheckmate {
 			acc.checkmates += 1

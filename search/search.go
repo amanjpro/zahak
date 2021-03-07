@@ -238,18 +238,13 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	isRootNode := searchHeight == 0
 	isPvNode := alpha != beta-1
 
-	var isInCheck bool
-	if currentMove == EmptyMove && isRootNode {
-		isInCheck = position.IsInCheck()
-	} else {
-		isInCheck = currentMove.IsCheck()
-	}
+	var isInCheck = currentMove.IsCheck()
 
 	if IsRepetition(position, e.pred, currentMove) {
 		return 0, true
 	}
 
-	outcome := position.Status(isInCheck)
+	outcome := position.Status()
 	if outcome == Checkmate {
 		return -CHECKMATE_EVAL, true
 	} else if outcome == Draw {
@@ -562,6 +557,7 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 			}
 		}
 	}
+
 	if previouslySeen >= 2 {
 		return true
 	}

@@ -16,6 +16,7 @@ const (
 	WhiteCanCastleQueenSide
 	BlackCanCastleKingSide
 	BlackCanCastleQueenSide
+	InCheck
 	BlackToMove
 	WhiteToMove
 )
@@ -130,6 +131,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 	dest := move.Destination()
 	captureSquare := NoSquare
 	promoPiece := NoPiece
+
 	p.Board.Move(source, dest, movingPiece, NoPiece)
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
@@ -191,6 +193,13 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 		p.ClearTag(WhiteCanCastleQueenSide)
 	} else if dest == H1 && p.Turn() == Black {
 		p.ClearTag(WhiteCanCastleKingSide)
+	}
+
+	// Set check tag
+	if move.IsCheck() {
+		p.SetTag(InCheck)
+	} else {
+		p.ClearTag(InCheck)
 	}
 
 	p.ToggleTurn()
@@ -259,15 +268,15 @@ func (p *Position) IsEndGame() bool {
 }
 
 func (p *Position) IsInCheck() bool {
-	return isInCheck(p.Board, p.Turn())
+	return p.HasTag(InCheck)
 }
 
-func (p *Position) Status(isInCheck bool) Status {
+func (p *Position) Status() Status {
 	value, ok := p.Positions[p.Hash()]
 	if ok && value >= 3 {
 		return Draw
 	}
-	if isInCheck {
+	if p.IsInCheck() {
 		if !p.HasLegalMoves() {
 			return Checkmate
 		}

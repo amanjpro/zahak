@@ -14,14 +14,10 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 	if IsRepetition(position, e.pred, currentMove) {
 		return 0, true
 	}
-	var isInCheck bool
-	if currentMove == EmptyMove {
-		isInCheck = position.IsInCheck()
-	} else {
-		isInCheck = currentMove.IsCheck()
-	}
 
-	outcome := position.Status(isInCheck)
+	var isInCheck = currentMove.IsCheck()
+
+	outcome := position.Status()
 	if outcome == Checkmate {
 		return -CHECKMATE_EVAL, true
 	} else if outcome == Draw {

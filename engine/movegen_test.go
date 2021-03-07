@@ -444,8 +444,8 @@ func TestDoubleCheckResponses(t *testing.T) {
 	if !isDoubleCheck(p.Board, White) {
 		t.Errorf("Position is wrongfully considered not double-check for: %s", fen)
 	}
-	if p.Status(p.IsInCheck()) != Unknown {
-		t.Errorf("Position is wrongfully considered ended: %b", p.Status(p.IsInCheck()))
+	if p.Status() != Unknown {
+		t.Errorf("Position is wrongfully considered ended: %b", p.Status())
 	}
 	expectedLen := len(expectedMoves)
 	if expectedLen != len(legalMoves) || !equalMoves(expectedMoves, legalMoves) {

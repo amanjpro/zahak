@@ -158,6 +158,10 @@ func positionFromFen(fen string) Position {
 	} else if ok {
 		p.EnPassant = sq
 	}
+	if isInCheck(p.Board, p.Turn()) {
+		p.SetTag(InCheck)
+	}
+
 	p.Positions[p.Hash()] = 1
 	return p
 }

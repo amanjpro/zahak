@@ -13,12 +13,14 @@ func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 		// Does the move puts the moving player in check
 		pNotInCheck := !isInCheck(p.Board, color)
 
-		if pNotInCheck && isInCheck(p.Board, p.Turn()) { // We put opponent in check
-			m.AddCheckTag()
-			*allMoves = append(*allMoves, m)
-		} else if pNotInCheck { // The move does not put us in check
-			// do nothing
-			*allMoves = append(*allMoves, m)
+		if pNotInCheck {
+			if isInCheck(p.Board, p.Turn()) { // We put opponent in check
+				m.AddCheckTag()
+				*allMoves = append(*allMoves, m)
+			} else { // The move does not put us in check
+				// do nothing
+				*allMoves = append(*allMoves, m)
+			}
 		}
 		p.partialUnMakeMove(m)
 	}
@@ -33,13 +35,20 @@ func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked 
 		// Does the move puts the moving player in check
 		pNotInCheck := !isInCheck(p.Board, color)
 
-		if pNotInCheck && withChecks && isInCheck(p.Board, p.Turn()) { // We put opponent in check
-			m.AddCheckTag()
-			*allMoves = append(*allMoves, m)
-		} else if pNotInCheck && m.IsCapture() { // The move is a capture
-			*allMoves = append(*allMoves, m)
-		} else if isChecked && pNotInCheck { // Check replies are also considered
-			*allMoves = append(*allMoves, m)
+		if pNotInCheck {
+			isCheckMove := isInCheck(p.Board, p.Turn())
+
+			if isCheckMove {
+				m.AddCheckTag()
+			}
+
+			if withChecks && isCheckMove { // We put opponent in check
+				*allMoves = append(*allMoves, m)
+			} else if m.IsCapture() { // The move is a capture
+				*allMoves = append(*allMoves, m)
+			} else if isChecked { // Check replies are also considered
+				*allMoves = append(*allMoves, m)
+			}
 		}
 		p.partialUnMakeMove(m)
 	}
@@ -48,7 +57,7 @@ func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked 
 func (p *Position) LegalMoves() []Move {
 	allMoves := make([]Move, 0, 256)
 
-	p.generateMoves(&allMoves, false, false, false)
+	p.generateMoves(&allMoves, false, p.IsInCheck(), false)
 
 	return allMoves
 }
@@ -56,8 +65,7 @@ func (p *Position) LegalMoves() []Move {
 func (p *Position) QuiesceneMoves(withChecks bool) []Move {
 	allMoves := make([]Move, 0, 256)
 
-	color := p.Turn()
-	isChecked := isInCheck(p.Board, color)
+	isChecked := p.IsInCheck()
 
 	p.generateMoves(&allMoves, !(withChecks || isChecked), isChecked, true)
 
@@ -123,14 +131,9 @@ func (p *Position) checkMove(m Move) bool {
 
 	// Does the move puts the moving player in check
 	pNotInCheck := !isInCheck(p.Board, color)
+	p.partialUnMakeMove(m)
 
-	if pNotInCheck { // We put opponent in check
-		p.partialUnMakeMove(m)
-		return true
-	} else {
-		p.partialUnMakeMove(m)
-		return false
-	}
+	return pNotInCheck
 }
 
 func (p *Position) HasLegalMoves() bool {
