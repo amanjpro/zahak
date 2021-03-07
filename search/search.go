@@ -418,7 +418,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		pvline.AddFirst(move)
 		pvline.ReplaceLine(line)
 		hasSeenExact = true
-		e.AddMoveHistory(move, position.Board.PieceAt(move.Source()), move.Destination(), searchHeight)
+		e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 	}
 
 	for i := 1; i < len(legalMoves); i++ {
