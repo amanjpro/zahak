@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type Move int32
+type Move uint32
 
 /*
 Move is represented as follows:
@@ -29,13 +29,14 @@ Given 32 bit int: 0000 0000 0000 0000 0000 000000 000000
 const EmptyMove = Move(0)
 
 func NewMove(from Square, to Square, movingPiece Piece, capturedPiece Piece, promoType PieceType, tag MoveTag) Move {
-	s := int32(from)               // the first 6 bits
-	d := int32(to << 6)            // the second 6 bits
-	m := int32(movingPiece << 6)   // next 4 bits
-	c := int32(capturedPiece << 4) // next 4 bits
-	p := int32(promoType << 4)     // next 4 bits
-	t := int32(tag << 4)           // reminder
-	return Move(s | d | m | c | p | t)
+	s := uint32(from)                // the first 6 bits
+	d := uint32(to) << 6             // the second 6 bits
+	m := uint32(movingPiece) << 12   // next 4 bits
+	c := uint32(capturedPiece) << 16 // next 4 bits
+	p := uint32(promoType) << 20     // next 4 bits
+	t := uint32(tag) << 23           // reminder
+	mv := Move(s | d | m | c | p | t)
+	return mv
 }
 
 type MoveTag uint8
@@ -54,47 +55,51 @@ const (
 )
 
 func (m *Move) Source() Square {
-	return Square(int32(*m) & 0x3F)
+	return Square(uint32(*m) & 0x3F)
 }
 
 func (m *Move) Destination() Square {
-	return Square(int32(*m) & 0xFC0)
+	return Square(uint32(*m) & 0xFC0 >> 6)
 }
 
 func (m *Move) MovingPiece() Piece {
-	return Piece(int32(*m) & 0xF000)
+	return Piece(uint32(*m) & 0xF000 >> 12)
 }
 
 func (m *Move) CapturedPiece() Piece {
-	return Piece(int32(*m) & 0xF0000)
+	return Piece(uint32(*m) & 0xF0000 >> 16)
 }
 
 func (m *Move) PromoType() PieceType {
-	return PieceType(int32(*m) & 0x700000)
+	return PieceType(uint32(*m) & 0x700000 >> 20)
+}
+
+func (m *Move) Tag() MoveTag {
+	return MoveTag(uint32(*m >> 23))
 }
 
 func (m *Move) IsKingSideCastle() bool {
-	return int32(*m)&0x800000 != 0
+	return uint32(*m)&0x800000 != 0
 }
 
 func (m *Move) IsQueenSideCastle() bool {
-	return int32(*m)&0x1000000 != 0
+	return uint32(*m)&0x1000000 != 0
 }
 
 func (m *Move) IsCapture() bool {
-	return int32(*m)&0x2000000 != 0
+	return uint32(*m)&0x2000000 != 0
 }
 
 func (m *Move) IsEnPassant() bool {
-	return int32(*m)&0x4000000 != 0
+	return uint32(*m)&0x4000000 != 0
 }
 
 func (m *Move) IsCheck() bool {
-	return int32(*m)&0x8000000 != 0
+	return uint32(*m)&0x8000000 != 0
 }
 
 func (m *Move) AddCheckTag() {
-	*m = Move(int32(*m) | 0x8000000)
+	*m = Move(uint32(*m) | 0x8000000)
 }
 
 func (m *Move) ToString() string {

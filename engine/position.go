@@ -99,14 +99,14 @@ func (p *Position) partialUnMakeMove(move Move) {
 
 	if move.IsQueenSideCastle() {
 		// white
-		if source == C1 {
+		if dest == C1 {
 			p.Board.Move(D1, A1)
 		} else { // black
 			p.Board.Move(D8, A8)
 		}
 	} else if move.IsKingSideCastle() {
 		// white
-		if source == G1 {
+		if dest == G1 {
 			p.Board.Move(F1, H1)
 		} else { // black
 			p.Board.Move(F8, H8)
@@ -140,16 +140,15 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 		p.Board.Clear(ep)
 	} else if move.IsCapture() {
 		captureSquare = dest
+	}
+	if movingPiece == WhitePawn &&
+		source.Rank() == Rank2 && dest.Rank() == Rank4 {
+		p.EnPassant = SquareOf(source.File(), Rank3)
+	} else if movingPiece == BlackPawn &&
+		source.Rank() == Rank7 && dest.Rank() == Rank5 {
+		p.EnPassant = SquareOf(source.File(), Rank6)
 	} else {
-		if movingPiece == WhitePawn &&
-			source.Rank() == Rank2 && dest.Rank() == Rank4 {
-			p.EnPassant = SquareOf(source.File(), Rank3)
-		} else if movingPiece == BlackPawn &&
-			source.Rank() == Rank7 && dest.Rank() == Rank5 {
-			p.EnPassant = SquareOf(source.File(), Rank6)
-		} else {
-			p.EnPassant = NoSquare
-		}
+		p.EnPassant = NoSquare
 	}
 
 	// Do promotion
@@ -196,7 +195,7 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, half
 	oldEnPassant := p.EnPassant
 	movingPiece := move.MovingPiece()
 	capturedPiece := move.CapturedPiece()
-	promoPiece := movingPiece
+	promoPiece := NoPiece
 	p.Tag = tag
 	p.HalfMoveClock = halfClock
 	p.EnPassant = enPassant
@@ -208,6 +207,7 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, half
 	// Undo enpassant
 	if move.IsEnPassant() {
 		cp := findEnPassantCaptureSquare(move)
+		captureSquare = cp
 		p.Board.UpdateSquare(cp, capturedPiece)
 	} else if move.IsCapture() { // Undo capture
 		p.Board.UpdateSquare(dest, capturedPiece)
@@ -217,7 +217,7 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, half
 	// Undo promotion
 	promoType := move.PromoType()
 	if promoType != NoType {
-		movingPiece = GetPiece(Pawn, p.Turn())
+		promoPiece = GetPiece(promoType, p.Turn())
 		p.Board.UpdateSquare(source, movingPiece)
 	}
 	if move.IsQueenSideCastle() {

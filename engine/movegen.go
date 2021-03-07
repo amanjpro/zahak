@@ -75,10 +75,12 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 	if isDoubleCheck(board, color) {
 		if color == White {
 			p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
+				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
 		} else if color == Black {
 			p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
+				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
 		}
 	} else {
 
@@ -94,7 +96,8 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 			p.bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
 				color, WhiteQueen, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
 			p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
+				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
 		} else if color == Black {
 			p.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
 				color, p.EnPassant, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
@@ -107,7 +110,8 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 			p.bbSlidingMoves(board.blackQueen, board.blackPieces, board.whitePieces,
 				color, BlackQueen, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
 			p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
+				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
 		}
 	}
 }

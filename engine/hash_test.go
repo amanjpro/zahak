@@ -198,10 +198,10 @@ func TestZobristCollisions(t *testing.T) {
 	for _, pos := range positions {
 		for _, mov := range pos.LegalMoves() {
 			tests++
-			cp, ep, tg, hc := pos.MakeMove(mov)
+			ep, tg, hc := pos.MakeMove(mov)
 			hash := pos.Hash()
 			fen := pos.Fen()
-			pos.UnMakeMove(mov, tg, ep, cp, hc)
+			pos.UnMakeMove(mov, tg, ep, hc)
 			if dumps, ok := collisions[hash]; ok {
 				dumps[fen]++
 			} else {
@@ -230,11 +230,11 @@ func TestUpdateZobristHash(t *testing.T) {
 		pos.hash = 0 // Reset the positions
 		originalHash := pos.Hash()
 		for _, mov := range pos.LegalMoves() {
-			cp, ep, tg, hc := pos.MakeMove(mov)
+			ep, tg, hc := pos.MakeMove(mov)
 			incrementHash := pos.Hash()
 			pos.hash = 0
 			freshHash := pos.Hash()
-			pos.UnMakeMove(mov, tg, ep, cp, hc)
+			pos.UnMakeMove(mov, tg, ep, hc)
 			unmadeHash := pos.Hash()
 			pos.hash = originalHash
 			if incrementHash != freshHash {

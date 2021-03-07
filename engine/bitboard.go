@@ -324,7 +324,7 @@ func (b *Bitboard) IsEndGame() bool {
 
 // Draw returns visual representation of the board useful for debugging.
 func (b *Bitboard) Draw() string {
-	pieceUnicodes := []string{"♔", "♕", "♖", "♗", "♘", "♙", "♚", "♛", "♜", "♝", "♞", "♟"}
+	pieceUnicodes := []string{"♙", "♘", "♗", "♖", "♕", "♔", "♟", "♞", "♝", "♜", "♛", "♚"}
 	s := "\n A B C D E F G H\n"
 	for r := 7; r >= 0; r-- {
 		s += fmt.Sprint(Rank(r + 1))
@@ -333,7 +333,7 @@ func (b *Bitboard) Draw() string {
 			if p == NoPiece {
 				s += "-"
 			} else {
-				s += pieceUnicodes[int(p)]
+				s += pieceUnicodes[int(p-1)]
 			}
 			s += " "
 		}
