@@ -24,7 +24,7 @@ func TestComplicatedStaticExchangeEval(t *testing.T) {
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E5, BlackPawn, D3, WhiteKnight)
-	expected := int32(-200)
+	expected := int32(-225)
 
 	if actual != expected {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))

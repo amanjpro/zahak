@@ -68,16 +68,16 @@ func (mp *MovePicker) score() {
 		cp, ep, tg, hc := position.MakeMove(move)
 		hash := position.Hash()
 		position.UnMakeMove(move, tg, ep, cp, hc)
-		eval, ok := TranspositionTable.Get(hash)
+		eval, depth, tpe, ok := TranspositionTable.Get(hash)
 
-		if ok && eval.Type == Exact {
-			mp.scores[i] = 500_000_000 + eval.Eval
+		if ok && tpe == Exact {
+			mp.scores[i] = 500_000_000 + eval
 			mp.hasPvMove = true
 			continue
 		}
 
 		if ok {
-			mp.scores[i] = 400_000_000 + int32(eval.Depth)
+			mp.scores[i] = 400_000_000 + int32(depth)
 			mp.hasPvMove = true
 			continue
 		}
@@ -91,14 +91,14 @@ func (mp *MovePicker) score() {
 				// SEE for ordering
 				gain := board.StaticExchangeEval(move.Destination, capPiece, move.Source, piece)
 				if gain < 0 {
-					mp.scores[i] = -100_000_000 + gain
+					mp.scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
 					mp.scores[i] = 100_000_000 + capPiece.Weight() - piece.Weight()
 				} else {
-					mp.scores[i] = 100_010_000 + gain
+					mp.scores[i] = 100_100_000 + gain
 				}
 			} else {
-				mp.scores[i] = 100_000_000 + capPiece.Weight() - piece.Weight()
+				mp.scores[i] = 100_100_000 + capPiece.Weight() - piece.Weight()
 			}
 			continue
 		}

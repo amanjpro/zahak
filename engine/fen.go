@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/brentp/intintmap"
 )
 
 func (b *Bitboard) Fen() string {
@@ -121,7 +119,7 @@ func positionFromFen(fen string) Position {
 		NoSquare,
 		0,
 		0,
-		*intintmap.New(10000, 0.5),
+		make(map[uint64]int, 100),
 		uint8(halfMoveClock),
 	}
 
@@ -160,7 +158,7 @@ func positionFromFen(fen string) Position {
 	} else if ok {
 		p.EnPassant = sq
 	}
-	p.Positions.Put(int64(p.Hash()), 1)
+	p.Positions[p.Hash()] = 1
 	return p
 }
 

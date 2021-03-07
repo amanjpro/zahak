@@ -18,7 +18,7 @@ const (
 
 var oldAge = uint16(5)
 
-const CACHE_ENTRY_SIZE = uint32(64 + 16 + 8 + 8 + 32)
+const CACHE_ENTRY_SIZE = uint32(64+16+8+8+32) / 8
 
 type Cache struct {
 	items    []CachedEval
@@ -39,41 +39,41 @@ func (c *Cache) hash(key uint64) uint32 {
 	return uint32(key>>32) % c.size
 }
 
-func (c *Cache) Set(hash uint64, value CachedEval) {
+func (c *Cache) Set(hash uint64, eval int32, depth int8, nodeType NodeType, age uint16) {
 	key := c.hash(hash)
 	oldValue := c.items[key]
 	if oldValue != EmptyEval {
-		if value.Hash == oldValue.Hash {
-			c.items[key] = value
+		if hash == oldValue.Hash {
+			c.items[key] = CachedEval{hash, eval, depth, nodeType, age}
 			return
 		}
-		if value.Age-oldValue.Age >= oldAge {
-			c.items[key] = value
+		if age-oldValue.Age >= oldAge {
+			c.items[key] = CachedEval{hash, eval, depth, nodeType, age}
 			return
 		}
-		if oldValue.Depth > value.Depth {
+		if oldValue.Depth > depth {
 			return
 		}
-		if oldValue.Type == Exact || value.Type != Exact {
+		if oldValue.Type == Exact || nodeType != Exact {
 			return
-		} else if value.Type == Exact {
-			c.items[key] = value
+		} else if nodeType == Exact {
+			c.items[key] = CachedEval{hash, eval, depth, nodeType, age}
 			return
 		}
-		c.items[key] = value
+		c.items[key] = CachedEval{hash, eval, depth, nodeType, age}
 	} else {
 		c.consumed += 1
-		c.items[key] = value
+		c.items[key] = CachedEval{hash, eval, depth, nodeType, age}
 	}
 }
 
-func (c *Cache) Get(hash uint64) (CachedEval, bool) {
+func (c *Cache) Get(hash uint64) (int32, int8, NodeType, bool) {
 	key := c.hash(hash)
-	item := c.items[key]
+	item := &c.items[key]
 	if item.Hash == hash {
-		return item, true
+		return item.Eval, item.Depth, item.Type, true
 	}
-	return EmptyEval, false
+	return 0, 0, 0, false
 }
 
 func NewCache(megabytes uint32) {
@@ -93,6 +93,6 @@ func ResetCache() {
 			TranspositionTable.items[i] = EmptyEval
 		}
 	} else {
-		NewCache(400)
+		NewCache(10)
 	}
 }

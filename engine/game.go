@@ -30,13 +30,15 @@ func (g *Game) Move(m Move) {
 		g.numberOfMoves += 1
 		g.moves = append(g.moves, m)
 		pos.MakeMove(m)
+		v, ok := pos.Positions[pos.Hash()]
+		if ok {
+			pos.Positions[pos.Hash()] = v + 1
+		} else {
+			pos.Positions[pos.Hash()] = 1
+		}
 	} else {
 		fmt.Printf("Illegal move, please try again: %s\n%s\n", m.ToString(), pos.Board.Draw())
 	}
-}
-
-func (g *Game) Status() Status {
-	return g.position.Status()
 }
 
 func (g *Game) Position() *Position {

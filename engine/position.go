@@ -1,15 +1,11 @@
 package engine
 
-import (
-	"github.com/brentp/intintmap"
-)
-
 type Position struct {
 	Board         Bitboard
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
-	Positions     intintmap.Map
+	Positions     map[uint64]int
 	HalfMoveClock uint8
 }
 
@@ -42,24 +38,11 @@ func (p *Position) MakeNullMove() Square {
 	p.HalfMoveClock += 1
 	p.ToggleTurn()
 	updateHashForNullMove(p, NoSquare, ep)
-	v, ok := p.Positions.Get(int64(p.Hash()))
-	if ok {
-		p.Positions.Put(int64(p.Hash()), v+1)
-	} else {
-		p.Positions.Put(int64(p.Hash()), 1)
-	}
 	return ep
 }
 
 func (p *Position) UnMakeNullMove(ep Square) {
-	v, ok := p.Positions.Get(int64(p.Hash()))
-	if ok {
-		if v <= 1 {
-			p.Positions.Del(int64(p.Hash()))
-		} else {
-			p.Positions.Put(int64(p.Hash()), v-1)
-		}
-	}
+	updateHashForNullMove(p, NoSquare, ep)
 	p.EnPassant = ep
 	p.HalfMoveClock -= 1
 	p.ToggleTurn()
@@ -201,12 +184,6 @@ func (p *Position) MakeMove(move Move) (Piece, Square, PositionTag, uint8) {
 
 	p.ToggleTurn()
 	updateHash(p, move, movingPiece, capturedPiece, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	v, ok := p.Positions.Get(int64(p.Hash()))
-	if ok {
-		p.Positions.Put(int64(p.Hash()), v+1)
-	} else {
-		p.Positions.Put(int64(p.Hash()), 1)
-	}
 	return capturedPiece, ep, tag, hc
 }
 
@@ -219,15 +196,6 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, capt
 	p.Tag = tag
 	p.HalfMoveClock = halfClock
 	p.EnPassant = enPassant
-
-	v, ok := p.Positions.Get(int64(p.Hash()))
-	if ok {
-		if v <= 1 {
-			p.Positions.Del(int64(p.Hash()))
-		} else {
-			p.Positions.Put(int64(p.Hash()), v-1)
-		}
-	}
 
 	captureSquare := NoSquare
 	p.Board.Move(move.Destination, move.Source)
@@ -280,12 +248,12 @@ func (p *Position) IsInCheck() bool {
 	return isInCheck(p.Board, p.Turn())
 }
 
-func (p *Position) Status() Status {
-	value, ok := p.Positions.Get(int64(p.Hash()))
+func (p *Position) Status(isInCheck bool) Status {
+	value, ok := p.Positions[p.Hash()]
 	if ok && value >= 3 {
 		return Draw
 	}
-	if p.IsInCheck() {
+	if isInCheck {
 		if !p.HasLegalMoves() {
 			return Checkmate
 		}
@@ -352,7 +320,7 @@ func (p *Position) IsFIDEDrawRule() bool {
 	if p.HalfMoveClock >= 100 {
 		return true
 	}
-	value, ok := p.Positions.Get(int64(p.Hash()))
+	value, ok := p.Positions[p.Hash()]
 	return (ok && value >= 3)
 }
 
@@ -371,16 +339,16 @@ func findEnPassantCaptureSquare(move Move) Square {
 }
 
 func (p *Position) copy() *Position {
-	copyMap := intintmap.New(10000, 0.5)
-	for item := range p.Positions.Items() {
-		copyMap.Put(item[0], item[1])
+	copyMap := make(map[uint64]int, 100)
+	for k, v := range p.Positions {
+		copyMap[k] = v
 	}
 	return &Position{
 		*p.Board.copy(),
 		p.EnPassant,
 		p.Tag,
 		p.hash,
-		*copyMap,
+		copyMap,
 		p.HalfMoveClock,
 	}
 }

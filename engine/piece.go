@@ -72,13 +72,13 @@ func (p *Piece) Weight() int32 {
 	case WhitePawn, BlackPawn:
 		return 100
 	case WhiteKnight, BlackKnight:
-		return 300
+		return 325
 	case WhiteBishop, BlackBishop:
-		return 300
+		return 325
 	case WhiteRook, BlackRook:
-		return 500
+		return 550
 	case WhiteQueen, BlackQueen:
-		return 900
+		return 1000
 	case WhiteKing, BlackKing:
 		return MAX_INT
 	}

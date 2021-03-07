@@ -5,11 +5,23 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int8,
+func (e *Engine) quiescence(position *Position, alpha int32, beta int32, currentMove Move, ply int8,
 	standPat int32, searchHeight int8) (int32, bool) {
 
+	e.info.quiesceCounter += 1
 	e.VisitNode()
-	outcome := position.Status()
+
+	if IsRepetition(position, e.pred, currentMove) {
+		return 0, true
+	}
+	var isInCheck bool
+	if currentMove == EmptyMove {
+		isInCheck = position.IsInCheck()
+	} else {
+		isInCheck = currentMove.HasTag(Check)
+	}
+
+	outcome := position.Status(isInCheck)
 	if outcome == Checkmate {
 		return -CHECKMATE_EVAL, true
 	} else if outcome == Draw {
@@ -24,36 +36,35 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		return 0, false
 	}
 
-	isInCheck := position.IsInCheck()
+	// Delta Pruning
+	q := WhiteQueen
+	deltaMargin := q.Weight()
+	if currentMove.PromoType != NoType {
+		promo := GetPiece(currentMove.PromoType, White)
+		deltaMargin += promo.Weight()
+	}
+	if !isInCheck && standPat+deltaMargin < alpha {
+		e.info.deltaPruningCounter += 1
+		return alpha, true
+	}
 
 	if alpha < standPat {
 		alpha = standPat
 	}
 
-	withChecks := ply < 4
+	withChecks := false && ply < 4
 	legalMoves := position.QuiesceneMoves(withChecks)
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
 
-	p := WhitePawn
-	futility := standPat + p.Weight()
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()
-		if !isInCheck && move.HasTag(Capture) && !move.HasTag(EnPassant) {
-			// SEE pruning
-			if movePicker.scores[i] < 0 {
-				continue
-			}
-		}
-
-		// Futility Pruning
 		isCheckMove := move.HasTag(Check)
-		if isInCheck && futility <= alpha && !isCheckMove && move.PromoType == NoType {
-			movingPiece := position.Board.PieceAt(move.Source)
-			futility += movingPiece.Weight()
-			promoting := (movingPiece == BlackPawn && move.Source.Rank() <= Rank5) ||
-				movingPiece == WhitePawn && move.Source.Rank() >= Rank3
-			if !promoting && futility <= alpha {
+		isCaptureMove := move.HasTag(Capture)
+		if !isInCheck && isCaptureMove && !isCheckMove && !move.HasTag(EnPassant) {
+			// SEE pruning
+			e.info.seeQuiescenceCounter += 1
+			if movePicker.scores[i] < 0 {
 				continue
 			}
 		}
@@ -61,42 +72,14 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, ply int
 		cp, ep, tg, hc := position.MakeMove(move)
 		sp := Evaluate(position)
 
-		var score int32
-		callQuiescence := true
-		if !isInCheck && !isCheckMove {
-			// The logic looks difficult, but it is not
-			// I basically pretend that I have called quiescence
-			// with the reversed alpha/beta (like normal in negamax)
-			// and then, if the bounds exceeded I pretend that I return
-			// either alpha or beta
-			newAlpha := -beta
-			newBeta := -alpha
-			q := WhiteQueen
-			deltaMargin := q.Weight()
-			if move.PromoType != NoType {
-				promo := GetPiece(move.PromoType, White)
-				deltaMargin += promo.Weight()
-			}
-			if sp >= newBeta {
-				score = -newBeta
-				position.UnMakeMove(move, tg, ep, cp, hc)
-				callQuiescence = false
-			}
-			if sp+deltaMargin < newAlpha { // is capture
-				position.UnMakeMove(move, tg, ep, cp, hc)
-				callQuiescence = false
-				score = -newAlpha
-			}
+		e.pred.Push(position.Hash())
+		v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
+		e.pred.Pop()
+		position.UnMakeMove(move, tg, ep, cp, hc)
+		if !ok {
+			return v, ok
 		}
-
-		if callQuiescence {
-			v, ok := e.quiescence(position, -beta, -alpha, ply+1, sp, searchHeight+1)
-			position.UnMakeMove(move, tg, ep, cp, hc)
-			if !ok {
-				return v, ok
-			}
-			score = -v
-		}
+		score := -v
 		if score >= beta {
 			e.AddKillerMove(move, searchHeight)
 			return beta, true
