@@ -80,7 +80,7 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 	taboo := tabooSquares(board, color)
 
 	// If it is double check, only king can move
-	if isDoubleCheck(board, color) {
+	if positionIsInCheck && isDoubleCheck(board, color) {
 		if color == White {
 			p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
