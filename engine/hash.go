@@ -184,7 +184,7 @@ func updateHash(pos *Position, move Move, captureSquare Square,
 
 	cp := move.CapturedPiece()
 	if cp != NoPiece {
-		hash ^= piecesZC[int8(cp)-1][cp]
+		hash ^= piecesZC[int8(cp)-1][captureSquare]
 	}
 
 	pos.hash = hash
