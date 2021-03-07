@@ -95,7 +95,7 @@ func bitboardFromFen(fen string) Bitboard {
 			bitboardIndex = ranks[rank]
 			continue
 		} else if p := pieceFromName(ch); p != NoPiece {
-			board.UpdateSquare(bitboardIndex, p)
+			board.UpdateSquare(bitboardIndex, p, NoPiece)
 			bitboardIndex++
 		} else {
 			panic(fmt.Sprintf("Invalid FEN notation %s, bitboardIndex == %d, parsing %s",

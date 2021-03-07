@@ -8,7 +8,7 @@ type Move uint32
 
 /*
 Move is represented as follows:
-Given 32 bit int: 0000 0000 0000 0000 0000 000000 000000
+Given 32 bit int: 00000 000 0000 0000 0000 000000 000000
 
 	- the lowest 6 bits represented the Source square
 	- the next 6 bits represented the Destination square
@@ -29,12 +29,12 @@ Given 32 bit int: 0000 0000 0000 0000 0000 000000 000000
 const EmptyMove = Move(0)
 
 func NewMove(from Square, to Square, movingPiece Piece, capturedPiece Piece, promoType PieceType, tag MoveTag) Move {
-	s := uint32(from)                // the first 6 bits
-	d := uint32(to) << 6             // the second 6 bits
-	m := uint32(movingPiece) << 12   // next 4 bits
-	c := uint32(capturedPiece) << 16 // next 4 bits
-	p := uint32(promoType) << 20     // next 4 bits
-	t := uint32(tag) << 23           // reminder
+	s := uint32(from)                // the first 6 bits, offset = 0 = 0
+	d := uint32(to) << 6             // the second 6 bits, offset = 0 + 6 = 6
+	m := uint32(movingPiece) << 12   // next 4 bits, offset = 0 + 6 + 6 = 12
+	c := uint32(capturedPiece) << 16 // next 4 bits, offset = 0 + 6 + 6 + 4 = 16
+	p := uint32(promoType) << 20     // next 4 bits, offset = 0 + 6 + 6 + 4 + 4 = 20
+	t := uint32(tag) << 23           // reminder, offset = 0 + 6 + 6 + 4 + 4 + 3 = 23
 	mv := Move(s | d | m | c | p | t)
 	return mv
 }

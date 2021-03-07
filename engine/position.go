@@ -57,19 +57,23 @@ func (p *Position) ToggleTurn() {
 func (p *Position) partialMakeMove(move Move) {
 	source := move.Source()
 	dest := move.Destination()
-	p.Board.Move(source, dest)
+	movingPiece := move.MovingPiece()
+	cp := move.CapturedPiece()
 
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance
 	if move.IsEnPassant() {
 		ep := findEnPassantCaptureSquare(move)
-		p.Board.Clear(ep)
+		p.Board.Move(source, dest, movingPiece, NoPiece)
+		p.Board.Clear(ep, cp)
+	} else {
+		p.Board.Move(source, dest, movingPiece, cp)
 	}
 
 	// Do promotion
 	promoType := move.PromoType()
 	if promoType != NoType {
 		promoPiece := GetPiece(promoType, p.Turn())
-		p.Board.UpdateSquare(dest, promoPiece)
+		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
 	}
 
 	p.ToggleTurn()
@@ -77,39 +81,41 @@ func (p *Position) partialMakeMove(move Move) {
 
 // only for movegen
 func (p *Position) partialUnMakeMove(move Move) {
+	p.ToggleTurn()
+	movingPiece := move.MovingPiece()
 	capturedPiece := move.CapturedPiece()
 	source := move.Source()
 	dest := move.Destination()
-	p.Board.Move(dest, source)
-	// Undo enpassant
-	if move.IsEnPassant() {
-		cp := findEnPassantCaptureSquare(move)
-		p.Board.UpdateSquare(cp, capturedPiece)
-	} else if move.IsCapture() { // Undo capture
-		p.Board.UpdateSquare(dest, capturedPiece)
-	}
 
-	p.ToggleTurn()
 	// Undo promotion
 	promoType := move.PromoType()
 	if promoType != NoType {
-		movingPiece := GetPiece(Pawn, p.Turn())
-		p.Board.UpdateSquare(source, movingPiece)
+		promoPiece := GetPiece(promoType, p.Turn())
+		p.Board.UpdateSquare(dest, movingPiece, promoPiece)
+	}
+
+	p.Board.Move(dest, source, movingPiece, NoPiece)
+	// Undo enpassant
+	if move.IsEnPassant() {
+		cp := findEnPassantCaptureSquare(move)
+		p.Board.UpdateSquare(cp, capturedPiece, NoPiece)
+	} else if move.IsCapture() { // Undo capture
+		p.Board.UpdateSquare(dest, capturedPiece, NoPiece)
 	}
 
 	if move.IsQueenSideCastle() {
 		// white
 		if dest == C1 {
-			p.Board.Move(D1, A1)
+			p.Board.Move(D1, A1, WhiteRook, NoPiece)
 		} else { // black
-			p.Board.Move(D8, A8)
+			p.Board.Move(D8, A8, BlackRook, NoPiece)
 		}
 	} else if move.IsKingSideCastle() {
 		// white
 		if dest == G1 {
-			p.Board.Move(F1, H1)
+			p.Board.Move(F1, H1, WhiteRook, NoPiece)
 		} else { // black
-			p.Board.Move(F8, H8)
+			p.Board.Move(F8, H8, BlackRook, NoPiece)
 		}
 	}
 }
@@ -122,9 +128,9 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 	capturedPiece := move.CapturedPiece()
 	source := move.Source()
 	dest := move.Destination()
-	p.Board.Move(source, dest)
 	captureSquare := NoSquare
 	promoPiece := NoPiece
+	p.Board.Move(source, dest, movingPiece, NoPiece)
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
 		p.HalfMoveClock = 0
@@ -137,10 +143,12 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 		p.EnPassant = NoSquare
 		ep := findEnPassantCaptureSquare(move)
 		captureSquare = ep
-		p.Board.Clear(ep)
+		p.Board.Clear(ep, capturedPiece)
 	} else if move.IsCapture() {
 		captureSquare = dest
+		p.Board.Clear(dest, capturedPiece)
 	}
+
 	if movingPiece == WhitePawn &&
 		source.Rank() == Rank2 && dest.Rank() == Rank4 {
 		p.EnPassant = SquareOf(source.File(), Rank3)
@@ -155,7 +163,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 	promoType := move.PromoType()
 	if promoType != NoType {
 		promoPiece = GetPiece(promoType, p.Turn())
-		p.Board.UpdateSquare(dest, promoPiece)
+		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
 	}
 
 	if movingPiece == BlackKing {
@@ -201,38 +209,38 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, half
 	p.EnPassant = enPassant
 	source := move.Source()
 	dest := move.Destination()
-
-	captureSquare := NoSquare
-	p.Board.Move(dest, source)
-	// Undo enpassant
-	if move.IsEnPassant() {
-		cp := findEnPassantCaptureSquare(move)
-		captureSquare = cp
-		p.Board.UpdateSquare(cp, capturedPiece)
-	} else if move.IsCapture() { // Undo capture
-		p.Board.UpdateSquare(dest, capturedPiece)
-		captureSquare = dest
-	}
-
 	// Undo promotion
 	promoType := move.PromoType()
 	if promoType != NoType {
 		promoPiece = GetPiece(promoType, p.Turn())
-		p.Board.UpdateSquare(source, movingPiece)
+		p.Board.UpdateSquare(dest, movingPiece, promoPiece)
 	}
+	p.Board.Move(dest, source, movingPiece, NoPiece)
+
+	captureSquare := NoSquare
+	// Undo enpassant
+	if move.IsEnPassant() {
+		cp := findEnPassantCaptureSquare(move)
+		captureSquare = cp
+		p.Board.UpdateSquare(cp, capturedPiece, NoPiece)
+	} else if move.IsCapture() { // Undo capture
+		captureSquare = dest
+		p.Board.UpdateSquare(dest, capturedPiece, NoPiece)
+	}
+
 	if move.IsQueenSideCastle() {
 		// white
 		if dest == C1 {
-			p.Board.Move(D1, A1)
+			p.Board.Move(D1, A1, WhiteRook, NoPiece)
 		} else { // black
-			p.Board.Move(D8, A8)
+			p.Board.Move(D8, A8, BlackRook, NoPiece)
 		}
 	} else if move.IsKingSideCastle() {
 		// white
 		if dest == G1 {
-			p.Board.Move(F1, H1)
+			p.Board.Move(F1, H1, WhiteRook, NoPiece)
 		} else { // black
-			p.Board.Move(F8, H8)
+			p.Board.Move(F8, H8, BlackRook, NoPiece)
 		}
 	}
 	updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)

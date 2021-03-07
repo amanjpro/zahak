@@ -44,7 +44,7 @@ func TestAllPieces(t *testing.T) {
 	}
 	actual := g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
-		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
+		err := fmt.Sprintf("Got: %x\nExpected %x", actual, expected)
 		t.Errorf("Unexpected return by AllPieces: %s", err)
 	}
 
@@ -54,7 +54,7 @@ func TestAllPieces(t *testing.T) {
 
 	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
-		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
+		err := fmt.Sprintf("Got: %x\nExpected %x", actual, expected)
 		t.Errorf("Knight make/unmake move broke all pieces: %s", err)
 	}
 
@@ -66,6 +66,19 @@ func TestAllPieces(t *testing.T) {
 	if !equalMaps(actual, expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Rook make/unmake move broke all pieces: %s", err)
+	}
+}
+
+func TestUpdateSquare(t *testing.T) {
+	b := StartingBoard()
+	b.UpdateSquare(E1, BlackQueen, WhiteKing)
+	if b.PieceAt(E1) != BlackQueen {
+		t.Errorf("Expected black queen got: %x\n", b.PieceAt(E1))
+	}
+
+	b.UpdateSquare(E5, WhiteKing, NoPiece)
+	if b.PieceAt(E5) != WhiteKing {
+		t.Errorf("Expected white king got: %x\n", b.PieceAt(E5))
 	}
 }
 

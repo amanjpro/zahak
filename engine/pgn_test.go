@@ -15,11 +15,11 @@ func TestPGNParsing(t *testing.T) {
 		NewMove(H8, H2, BlackRook, WhitePawn, NoType, Capture),
 	}
 	if !equalMoves(expected, actual) {
-		fmt.Println("Got:")
+		fmt.Println("Expected:")
 		for _, i := range expected {
 			fmt.Println(i.ToString(), i.PromoType(), i.Tag())
 		}
-		fmt.Println("Expected:")
+		fmt.Println("Got:")
 		for _, i := range actual {
 			fmt.Println(i.ToString(), i.PromoType(), i.Tag())
 		}
