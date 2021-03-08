@@ -194,27 +194,25 @@ func TestThreeFoldRepetition(t *testing.T) {
 	startFen := "k7/3RR3/8/8/8/1q6/8/K1RRRR2 b - - 0 1"
 	game := FromFen(startFen, true)
 
-	m1 := Move{B3, A3, NoType, Check}
-	m2 := Move{A1, B1, NoType, 0}
-	m3 := Move{A3, B3, NoType, Check}
-	m4 := Move{B1, A1, NoType, 0}
-	m5 := Move{B3, A3, NoType, Check}
-	m6 := Move{A1, B1, NoType, 0}
-	m7 := Move{A3, B3, NoType, Check}
-	m8 := Move{B1, A1, NoType, 0}
-	m9 := Move{B3, A3, NoType, Check}
+	m1 := NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check)
+	m2 := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
+	m3 := NewMove(A3, B3, BlackQueen, NoPiece, NoType, Check)
+	m4 := NewMove(B1, A1, WhiteKing, NoPiece, NoType, 0)
+	m5 := NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check)
+	m6 := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
+	m7 := NewMove(A3, B3, BlackQueen, NoPiece, NoType, Check)
+	m8 := NewMove(B1, A1, WhiteKing, NoPiece, NoType, 0)
 
-	game.position.MakeMove(m1)
-	game.position.MakeMove(m2)
-	game.position.MakeMove(m3)
-	game.position.MakeMove(m4)
-	game.position.MakeMove(m5)
-	game.position.MakeMove(m6)
-	game.position.MakeMove(m7)
-	game.position.MakeMove(m8)
-	game.position.MakeMove(m9)
+	game.Move(m1)
+	game.Move(m2)
+	game.Move(m3)
+	game.Move(m4)
+	game.Move(m5)
+	game.Move(m6)
+	game.Move(m7)
+	game.Move(m8)
 
-	if game.Status() != Draw {
-		t.Errorf("Expected Draw, but got: %d", game.Status())
+	if game.position.Status() != Draw {
+		t.Errorf("Expected Draw, but got: %d", game.position.Status())
 	}
 }
