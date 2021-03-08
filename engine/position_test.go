@@ -6,7 +6,7 @@ import (
 
 func TestMakeMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
-	move := Move{F3, G4, NoType, 0}
+	move := NewMove(F3, G4, WhiteBishop, NoPiece, NoType, 0)
 	game.position.MakeMove(move)
 	fen := game.Fen()
 	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p1B1/6N1/PP3PPP/RNBQK2R b KQkq - 1 1"
@@ -18,7 +18,7 @@ func TestMakeMove(t *testing.T) {
 
 func TestMakeMoveDoublePushPawn(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
-	move := Move{H2, H4, NoType, 0}
+	move := NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0)
 	game.position.MakeMove(move)
 	fen := game.Fen()
 	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p2P/5BN1/PP3PP1/RNBQK2R b KQkq h3 0 1"
@@ -30,7 +30,7 @@ func TestMakeMoveDoublePushPawn(t *testing.T) {
 
 func TestMakeMoveCapture(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
-	move := Move{F3, E4, NoType, Capture}
+	move := NewMove(F3, E4, WhiteBishop, BlackPawn, NoType, Capture)
 	game.position.MakeMove(move)
 	fen := game.Fen()
 	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4B3/6N1/PP3PPP/RNBQK2R b KQkq - 0 1"
@@ -42,7 +42,7 @@ func TestMakeMoveCapture(t *testing.T) {
 
 func TestMakeMoveCastling(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
-	move := Move{E1, G1, NoType, KingSideCastle}
+	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
 	game.position.MakeMove(move)
 	fen := game.Fen()
 	expected := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQ1RK1 b kq - 1 1"
@@ -54,7 +54,7 @@ func TestMakeMoveCastling(t *testing.T) {
 
 func TestMakeMoveEnPassant(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
-	move := Move{E5, D6, NoType, EnPassant | Capture}
+	move := NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture)
 	game.position.MakeMove(move)
 	fen := game.Fen()
 	expected := "rnbqkbnr/pPp1pppp/3PP3/8/4p3/5BN1/PP3PPP/RNBQK2R b KQkq - 0 1"
@@ -66,7 +66,7 @@ func TestMakeMoveEnPassant(t *testing.T) {
 
 func TestMakeMovePromotion(t *testing.T) {
 	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
-	move := Move{B7, A8, Queen, Capture}
+	move := NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture)
 	game.position.MakeMove(move)
 	fen := game.Fen()
 	expected := "Qnbqkbnr/p1p1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R b KQk - 0 1"
@@ -80,9 +80,9 @@ func TestUnMakeMove(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
-	move := Move{F3, G4, NoType, 0}
-	cp, ep, tag, hc := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp, hc)
+	move := NewMove(F3, G4, WhiteBishop, NoPiece, NoType, 0)
+	ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -99,9 +99,9 @@ func TestUnMakeMoveDoublePushPawn(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
-	move := Move{H2, H4, NoType, 0}
-	cp, ep, tag, hc := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp, hc)
+	move := NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0)
+	ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -118,9 +118,9 @@ func TestUnMakeMoveCapture(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
-	move := Move{F3, E4, NoType, Capture}
-	cp, ep, tag, hc := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp, hc)
+	move := NewMove(F3, E4, WhiteBishop, BlackPawn, NoType, Capture)
+	ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -137,9 +137,9 @@ func TestUnMakeMoveCastling(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
-	move := Move{E1, G1, NoType, KingSideCastle}
-	cp, ep, tag, hc := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp, hc)
+	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
+	ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -156,9 +156,9 @@ func TestUnMakeMoveEnPassant(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
-	move := Move{E5, D6, Pawn, EnPassant | Capture}
-	cp, ep, tag, hc := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp, hc)
+	move := NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture)
+	ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)
@@ -175,9 +175,9 @@ func TestUnMakeMovePromotion(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
-	move := Move{B7, A8, Queen, Capture}
-	cp, ep, tag, hc := game.position.MakeMove(move)
-	game.position.UnMakeMove(move, tag, ep, cp, hc)
+	move := NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture)
+	ep, tag, hc := game.position.MakeMove(move)
+	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
 		t.Errorf("Move was not undone properly\nGot: %s\n", fen)

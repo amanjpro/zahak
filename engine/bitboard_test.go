@@ -44,28 +44,41 @@ func TestAllPieces(t *testing.T) {
 	}
 	actual := g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
-		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
+		err := fmt.Sprintf("Got: %x\nExpected %x", actual, expected)
 		t.Errorf("Unexpected return by AllPieces: %s", err)
 	}
 
-	m := Move{H3, G5, NoType, Capture}
-	cp, ep, ot, hc := g.position.MakeMove(m)
-	g.position.UnMakeMove(m, ot, ep, cp, hc)
+	m := NewMove(H3, G5, WhiteKnight, BlackPawn, NoType, Capture)
+	ep, ot, hc := g.position.MakeMove(m)
+	g.position.UnMakeMove(m, ot, ep, hc)
 
 	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
-		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
+		err := fmt.Sprintf("Got: %x\nExpected %x", actual, expected)
 		t.Errorf("Knight make/unmake move broke all pieces: %s", err)
 	}
 
-	m = Move{G1, G3, NoType, 0}
-	cp, ep, ot, hc = g.position.MakeMove(m)
-	g.position.UnMakeMove(m, ot, ep, cp, hc)
+	m = NewMove(G1, G3, WhiteRook, NoPiece, NoType, 0)
+	ep, ot, hc = g.position.MakeMove(m)
+	g.position.UnMakeMove(m, ot, ep, hc)
 
 	actual = g.position.Board.AllPieces()
 	if !equalMaps(actual, expected) {
 		err := fmt.Sprintf("Got: %x\nExpected%x", actual, expected)
 		t.Errorf("Rook make/unmake move broke all pieces: %s", err)
+	}
+}
+
+func TestUpdateSquare(t *testing.T) {
+	b := StartingBoard()
+	b.UpdateSquare(E1, BlackQueen, WhiteKing)
+	if b.PieceAt(E1) != BlackQueen {
+		t.Errorf("Expected black queen got: %x\n", b.PieceAt(E1))
+	}
+
+	b.UpdateSquare(E5, WhiteKing, NoPiece)
+	if b.PieceAt(E5) != WhiteKing {
+		t.Errorf("Expected white king got: %x\n", b.PieceAt(E5))
 	}
 }
 

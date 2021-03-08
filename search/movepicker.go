@@ -65,9 +65,9 @@ func (mp *MovePicker) score() {
 		// Is in Transition table ???
 		// TODO: This is slow, that tells us either cache access is slow or has computation is
 		// Or maybe (unlikely) make/unmake move is slow
-		cp, ep, tg, hc := position.MakeMove(move)
+		ep, tg, hc := position.MakeMove(move)
 		hash := position.Hash()
-		position.UnMakeMove(move, tg, ep, cp, hc)
+		position.UnMakeMove(move, tg, ep, hc)
 		eval, depth, tpe, ok := TranspositionTable.Get(hash)
 
 		if ok && tpe == Exact {
@@ -82,14 +82,16 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
-		piece := board.PieceAt(move.Source)
+		source := move.Source()
+		dest := move.Destination()
+		piece := move.MovingPiece()
 		//
 		// capture ordering
-		if move.HasTag(Capture) {
-			capPiece := board.PieceAt(move.Destination)
-			if !move.HasTag(EnPassant) {
+		if move.IsCapture() {
+			capPiece := move.CapturedPiece()
+			if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := board.StaticExchangeEval(move.Destination, capPiece, move.Source, piece)
+				gain := board.StaticExchangeEval(dest, capPiece, source, piece)
 				if gain < 0 {
 					mp.scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
@@ -109,28 +111,28 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
-		history := engine.MoveHistoryScore(piece, move.Destination, moveOrder)
+		history := engine.MoveHistoryScore(piece, dest, moveOrder)
 		if history != 0 {
 			mp.scores[i] = history
 			continue
 		}
 
-		if move.PromoType != NoType {
-			p := GetPiece(move.PromoType, White)
+		promoType := move.PromoType()
+		if promoType != NoType {
+			p := GetPiece(promoType, White)
 			mp.scores[i] = 50_000 + p.Weight()
 			continue
 		}
 
 		// prefer checks
-		if move.HasTag(Check) {
+		if move.IsCheck() {
 			mp.scores[i] = 10_000
 			continue
 		}
 
 		// King safety (castling)
-		castling := KingSideCastle | QueenSideCastle
-		moveIsCastling := move.HasTag(castling)
-		if moveIsCastling {
+		isCastling := move.IsKingSideCastle() || move.IsQueenSideCastle()
+		if isCastling {
 			mp.scores[i] = 3_000
 			continue
 		}

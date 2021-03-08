@@ -97,11 +97,11 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 	return allPieces
 }
 
-func (b *Bitboard) UpdateSquare(sq Square, piece Piece) {
+func (b *Bitboard) UpdateSquare(sq Square, newPiece Piece, oldPiece Piece) {
 	// Remove the piece from source square and add it to destination
-	b.Clear(sq)
+	b.Clear(sq, oldPiece)
 	mask := uint64(1 << sq)
-	switch piece {
+	switch newPiece {
 	case BlackPawn:
 		b.blackPawn |= mask
 		b.blackPieces |= mask
@@ -179,133 +179,148 @@ func (b *Bitboard) PieceAt(sq Square) Piece {
 	return NoPiece
 }
 
-func (b *Bitboard) Clear(square Square) {
-
+func (b *Bitboard) Clear(square Square, piece Piece) {
+	if piece == NoPiece {
+		return
+	}
 	mask := uint64(1 << square)
-	b.blackPawn &^= mask
-	b.blackKnight &^= mask
-	b.blackBishop &^= mask
-	b.blackRook &^= mask
-	b.blackQueen &^= mask
-	b.blackKing &^= mask
-	b.blackPieces &^= mask
-	b.whitePawn &^= mask
-	b.whiteKnight &^= mask
-	b.whiteBishop &^= mask
-	b.whiteRook &^= mask
-	b.whiteQueen &^= mask
-	b.whiteKing &^= mask
-	b.whitePieces &^= mask
+	switch piece {
+	case BlackPawn:
+		b.blackPawn &^= mask
+		b.blackPieces &^= mask
+	case BlackKnight:
+		b.blackKnight &^= mask
+		b.blackPieces &^= mask
+	case BlackBishop:
+		b.blackBishop &^= mask
+		b.blackPieces &^= mask
+	case BlackRook:
+		b.blackRook &^= mask
+		b.blackPieces &^= mask
+	case BlackQueen:
+		b.blackQueen &^= mask
+		b.blackPieces &^= mask
+	case BlackKing:
+		b.blackKing &^= mask
+		b.blackPieces &^= mask
+	case WhitePawn:
+		b.whitePawn &^= mask
+		b.whitePieces &^= mask
+	case WhiteKnight:
+		b.whiteKnight &^= mask
+		b.whitePieces &^= mask
+	case WhiteBishop:
+		b.whiteBishop &^= mask
+		b.whitePieces &^= mask
+	case WhiteRook:
+		b.whiteRook &^= mask
+		b.whitePieces &^= mask
+	case WhiteQueen:
+		b.whiteQueen &^= mask
+		b.whitePieces &^= mask
+	case WhiteKing:
+		b.whiteKing &^= mask
+		b.whitePieces &^= mask
+	}
 }
 
-func (b *Bitboard) Move(src Square, dest Square) {
+func (b *Bitboard) Move(src Square, dest Square, sourcePiece Piece, destinationPiece Piece) {
 
 	// clear destination square
-	b.Clear(dest)
-	maskSrc := uint64(1 << src)
+	b.Clear(dest, destinationPiece)
+	b.Clear(src, sourcePiece)
 	maskDest := uint64(1 << dest)
 
 	// Remove the piece from source square and add it to destination
-	// is black?
-	if b.blackPieces&maskSrc != 0 {
-		if b.blackPawn&maskSrc != 0 {
-			b.blackPawn &^= maskSrc
-			b.blackPawn |= maskDest
-		} else if b.blackKnight&maskSrc != 0 {
-			b.blackKnight &^= maskSrc
-			b.blackKnight |= maskDest
-		} else if b.blackBishop&maskSrc != 0 {
-			b.blackBishop &^= maskSrc
-			b.blackBishop |= maskDest
-		} else if b.blackRook&maskSrc != 0 {
-			b.blackRook &^= maskSrc
-			b.blackRook |= maskDest
-		} else if b.blackQueen&maskSrc != 0 {
-			b.blackQueen &^= maskSrc
-			b.blackQueen |= maskDest
-		} else if b.blackKing&maskSrc != 0 {
-			b.blackKing &^= maskSrc
-			b.blackKing |= maskDest
-			// Is it a castle?
-			if src == E8 && dest == G8 {
-				b.Move(H8, F8)
-			} else if src == E8 && dest == C8 {
-				b.Move(A8, D8)
-			}
-		}
-
-		b.blackPieces &^= maskSrc
+	switch sourcePiece {
+	case BlackPawn:
+		b.blackPawn |= maskDest
 		b.blackPieces |= maskDest
-		return
-	}
-	// Then it is white
-	if b.whitePawn&maskSrc != 0 {
-		b.whitePawn &^= maskSrc
+	case BlackKnight:
+		b.blackKnight |= maskDest
+		b.blackPieces |= maskDest
+	case BlackBishop:
+		b.blackBishop |= maskDest
+		b.blackPieces |= maskDest
+	case BlackRook:
+		b.blackRook |= maskDest
+		b.blackPieces |= maskDest
+	case BlackQueen:
+		b.blackQueen |= maskDest
+		b.blackPieces |= maskDest
+	case BlackKing:
+		b.blackKing |= maskDest
+		b.blackPieces |= maskDest
+		// Is it a castle?
+		if src == E8 && dest == G8 {
+			b.Move(H8, F8, BlackRook, NoPiece)
+		} else if src == E8 && dest == C8 {
+			b.Move(A8, D8, BlackRook, NoPiece)
+		}
+	case WhitePawn:
 		b.whitePawn |= maskDest
-	} else if b.whiteKnight&maskSrc != 0 {
-		b.whiteKnight &^= maskSrc
+		b.whitePieces |= maskDest
+	case WhiteKnight:
 		b.whiteKnight |= maskDest
-	} else if b.whiteBishop&maskSrc != 0 {
-		b.whiteBishop &^= maskSrc
+		b.whitePieces |= maskDest
+	case WhiteBishop:
 		b.whiteBishop |= maskDest
-	} else if b.whiteRook&maskSrc != 0 {
-		b.whiteRook &^= maskSrc
+		b.whitePieces |= maskDest
+	case WhiteRook:
 		b.whiteRook |= maskDest
-	} else if b.whiteQueen&maskSrc != 0 {
-		b.whiteQueen &^= maskSrc
+		b.whitePieces |= maskDest
+	case WhiteQueen:
 		b.whiteQueen |= maskDest
-	} else if b.whiteKing&maskSrc != 0 {
-		b.whiteKing &^= maskSrc
+		b.whitePieces |= maskDest
+	case WhiteKing:
 		b.whiteKing |= maskDest
+		b.whitePieces |= maskDest
 		// Is it a castle?
 		if src == E1 && dest == G1 {
-			b.Move(H1, F1)
+			b.Move(H1, F1, WhiteRook, NoPiece)
 		} else if src == E1 && dest == C1 {
-			b.Move(A1, D1)
+			b.Move(A1, D1, WhiteRook, NoPiece)
 		}
 	}
-
-	b.whitePieces &^= maskSrc
-	b.whitePieces |= maskDest
 }
 
 func StartingBoard() Bitboard {
 	bitboard := Bitboard{}
-	bitboard.UpdateSquare(A2, WhitePawn)
-	bitboard.UpdateSquare(B2, WhitePawn)
-	bitboard.UpdateSquare(C2, WhitePawn)
-	bitboard.UpdateSquare(D2, WhitePawn)
-	bitboard.UpdateSquare(E2, WhitePawn)
-	bitboard.UpdateSquare(F2, WhitePawn)
-	bitboard.UpdateSquare(G2, WhitePawn)
-	bitboard.UpdateSquare(H2, WhitePawn)
+	bitboard.UpdateSquare(A2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(B2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(C2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(D2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(E2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(F2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(G2, WhitePawn, NoPiece)
+	bitboard.UpdateSquare(H2, WhitePawn, NoPiece)
 
-	bitboard.UpdateSquare(A7, BlackPawn)
-	bitboard.UpdateSquare(B7, BlackPawn)
-	bitboard.UpdateSquare(C7, BlackPawn)
-	bitboard.UpdateSquare(D7, BlackPawn)
-	bitboard.UpdateSquare(E7, BlackPawn)
-	bitboard.UpdateSquare(F7, BlackPawn)
-	bitboard.UpdateSquare(G7, BlackPawn)
-	bitboard.UpdateSquare(H7, BlackPawn)
+	bitboard.UpdateSquare(A7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(B7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(C7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(D7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(E7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(F7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(G7, BlackPawn, NoPiece)
+	bitboard.UpdateSquare(H7, BlackPawn, NoPiece)
 
-	bitboard.UpdateSquare(A1, WhiteRook)
-	bitboard.UpdateSquare(B1, WhiteKnight)
-	bitboard.UpdateSquare(C1, WhiteBishop)
-	bitboard.UpdateSquare(D1, WhiteQueen)
-	bitboard.UpdateSquare(E1, WhiteKing)
-	bitboard.UpdateSquare(F1, WhiteBishop)
-	bitboard.UpdateSquare(G1, WhiteKnight)
-	bitboard.UpdateSquare(H1, WhiteRook)
+	bitboard.UpdateSquare(A1, WhiteRook, NoPiece)
+	bitboard.UpdateSquare(B1, WhiteKnight, NoPiece)
+	bitboard.UpdateSquare(C1, WhiteBishop, NoPiece)
+	bitboard.UpdateSquare(D1, WhiteQueen, NoPiece)
+	bitboard.UpdateSquare(E1, WhiteKing, NoPiece)
+	bitboard.UpdateSquare(F1, WhiteBishop, NoPiece)
+	bitboard.UpdateSquare(G1, WhiteKnight, NoPiece)
+	bitboard.UpdateSquare(H1, WhiteRook, NoPiece)
 
-	bitboard.UpdateSquare(A8, BlackRook)
-	bitboard.UpdateSquare(B8, BlackKnight)
-	bitboard.UpdateSquare(C8, BlackBishop)
-	bitboard.UpdateSquare(D8, BlackQueen)
-	bitboard.UpdateSquare(E8, BlackKing)
-	bitboard.UpdateSquare(F8, BlackBishop)
-	bitboard.UpdateSquare(G8, BlackKnight)
-	bitboard.UpdateSquare(H8, BlackRook)
+	bitboard.UpdateSquare(A8, BlackRook, NoPiece)
+	bitboard.UpdateSquare(B8, BlackKnight, NoPiece)
+	bitboard.UpdateSquare(C8, BlackBishop, NoPiece)
+	bitboard.UpdateSquare(D8, BlackQueen, NoPiece)
+	bitboard.UpdateSquare(E8, BlackKing, NoPiece)
+	bitboard.UpdateSquare(F8, BlackBishop, NoPiece)
+	bitboard.UpdateSquare(G8, BlackKnight, NoPiece)
+	bitboard.UpdateSquare(H8, BlackRook, NoPiece)
 
 	return bitboard
 }
@@ -324,7 +339,7 @@ func (b *Bitboard) IsEndGame() bool {
 
 // Draw returns visual representation of the board useful for debugging.
 func (b *Bitboard) Draw() string {
-	pieceUnicodes := []string{"♔", "♕", "♖", "♗", "♘", "♙", "♚", "♛", "♜", "♝", "♞", "♟"}
+	pieceUnicodes := []string{"♙", "♘", "♗", "♖", "♕", "♔", "♟", "♞", "♝", "♜", "♛", "♚"}
 	s := "\n A B C D E F G H\n"
 	for r := 7; r >= 0; r-- {
 		s += fmt.Sprint(Rank(r + 1))
@@ -333,7 +348,7 @@ func (b *Bitboard) Draw() string {
 			if p == NoPiece {
 				s += "-"
 			} else {
-				s += pieceUnicodes[int(p)]
+				s += pieceUnicodes[int(p-1)]
 			}
 			s += " "
 		}
