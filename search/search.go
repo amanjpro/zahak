@@ -425,18 +425,14 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		promoType := move.PromoType()
 
 		// Extended Futility Pruning
-		if reductionsAllowed && !isCheckMove && depthLeft == 2 {
-			margin := 3 * pawn.Weight()
-			gain := int32(0)
-			if isCaptureMove {
-				cp := move.CapturedPiece()
-				gain += cp.Weight()
+		if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
+			alpha != abs32(CHECKMATE_EVAL) && beta != abs32(CHECKMATE_EVAL) &&
+			promoType == NoType {
+			margin := BlackBishop.Weight()
+			if depthLeft == 2 {
+				margin = WhiteRook.Weight()
 			}
-			if promoType != NoType {
-				piece := GetPiece(promoType, White)
-				gain += piece.Weight() - pawn.Weight()
-			}
-			if eval+gain+margin <= alpha && depthLeft == 2 && searchHeight > 2 {
+			if eval+margin <= alpha {
 				e.info.efpCounter += 1
 				continue
 			}
