@@ -213,7 +213,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			firstScore = false
 		}
 		lastDepth = iterationDepth
-		if iterationDepth >= 20 && e.move == previousBestMove {
+		if iterationDepth >= 35 && e.move == previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
 				break
@@ -309,18 +309,16 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	// Reverse Futility Pruning
-	rook := WhiteRook
-	reverseFutilityMargin := rook.Weight()
-	if !isRootNode && !isPvNode && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
+	reverseFutilityMargin := WhiteRook.Weight()
+	if !isRootNode && !isPvNode && !isInCheck && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
 		return eval - reverseFutilityMargin, true /* fail soft */
 	}
 
 	// Razoring
-	pawn := WhitePawn
-	razoringMargin := 3 * pawn.Weight()
+	razoringMargin := 3 * WhitePawn.Weight()
 	if depthLeft == 1 {
-		razoringMargin = 2 * pawn.Weight()
+		razoringMargin = 2 * WhitePawn.Weight()
 	}
 	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
@@ -339,7 +337,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	line.Recycle()
 
 	// Internal Iterative Deepening
-	if depthLeft >= 8 && !movePicker.HasPVMove() && !isInCheck {
+	if depthLeft >= 8 && !movePicker.HasPVMove() {
 		e.alphaBeta(position, depthLeft-7, searchHeight+1, alpha, beta, ply, line, currentMove, false, false)
 		if line.moveCount != 0 {
 			movePicker.UpgradeToPvMove(line.MoveAt(0))
@@ -402,10 +400,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 	if bestscore > alpha {
 		if bestscore >= beta {
-			// Those scores are never useful
-			if bestscore != -MAX_INT && bestscore != MAX_INT {
-				TranspositionTable.Set(hash, bestscore, depthLeft, UpperBound, ply)
-			}
+			TranspositionTable.Set(hash, bestscore, depthLeft, UpperBound, ply)
 			e.AddKillerMove(move, searchHeight)
 			return bestscore, true
 		}
@@ -482,7 +477,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		if score > bestscore {
 			if score >= beta {
-				// Those scores are never useful
 				TranspositionTable.Set(hash, score, depthLeft, UpperBound, ply)
 				e.AddKillerMove(move, searchHeight)
 				return score, ok

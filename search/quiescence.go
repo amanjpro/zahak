@@ -33,8 +33,7 @@ func (e *Engine) quiescence(position *Position, alpha int32, beta int32, current
 	}
 
 	// Delta Pruning
-	q := WhiteQueen
-	deltaMargin := q.Weight()
+	deltaMargin := WhiteQueen.Weight()
 	promoType := currentMove.PromoType()
 	if promoType != NoType {
 		promo := GetPiece(promoType, White)
