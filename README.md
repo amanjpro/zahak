@@ -4,6 +4,10 @@
 
 A UCI compatible chess AI written in Go. Still work in progress.
 
+# Play Zahak online
+
+Zahak is new to LiChess, you can play him and be impressed with him. His LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine).
+
 # Implemented Features:
 
 - UCI Support
