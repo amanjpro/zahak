@@ -6,7 +6,7 @@ A UCI compatible chess AI written in Go. Still work in progress.
 
 # Play Zahak online
 
-Zahak is new to LiChess, you can play him and be impressed with him. His LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine).
+Zahak is new to LiChess, you can play him and be impressed with him. His LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine). He is currently running on an old RaspberryPi device, so do not expense a truly amazing performance. But, hopefully he will be online 24/7.
 
 # Implemented Features:
 
