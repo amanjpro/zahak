@@ -158,11 +158,6 @@ var flip = [64]int32{
 
 func Evaluate(position *Position) int32 {
 	board := position.Board
-	p := BlackPawn
-	n := BlackKnight
-	b := BlackBishop
-	r := BlackRook
-	q := BlackQueen
 	turn := position.Turn()
 
 	isEndgame := board.IsEndGame()
@@ -211,7 +206,7 @@ func Evaluate(position *Position) int32 {
 		blackPawnsCount++
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbBlackPawn, Black) {
-			blackCentipawns -= 15
+			blackCentipawns -= 25
 		}
 		// pawn map
 		sq := Square(index)
@@ -243,7 +238,7 @@ func Evaluate(position *Position) int32 {
 		mask := uint64(1 << index)
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbWhitePawn, White) {
-			whiteCentipawns -= 15
+			whiteCentipawns -= 25
 		}
 		// pawn map
 		sq := Square(index)
@@ -276,7 +271,7 @@ func Evaluate(position *Position) int32 {
 				isIsolated = true
 			}
 			if isIsolated {
-				whiteCentipawns -= 15
+				whiteCentipawns -= 25
 			}
 		}
 
@@ -291,17 +286,17 @@ func Evaluate(position *Position) int32 {
 				isIsolated = true
 			}
 			if isIsolated {
-				blackCentipawns -= 15
+				blackCentipawns -= 25
 			}
 		}
 
 		// double pawn penalty - black
 		if blackPawnsPerFile[i] > 1 {
-			blackCentipawns -= 15
+			blackCentipawns -= 25
 		}
 		// double pawn penalty - white
 		if whitePawnsPerFile[i] > 1 {
-			whiteCentipawns -= 15
+			whiteCentipawns -= 25
 		}
 		// passed and candidate passed pawn award
 		rank := whiteMostAdvancedPawnsPerFile[i]
@@ -329,7 +324,11 @@ func Evaluate(position *Position) int32 {
 							whiteCentipawns += 20
 						}
 					} else {
-						whiteCentipawns += 25 // candidate passed pawn
+						if isEndgame {
+							whiteCentipawns += 25 // candidate passed pawn
+						} else {
+							whiteCentipawns += 10
+						}
 					}
 				} else {
 					if (blackLeastAdvancedPawnsPerFile[i-1] == Rank8 || blackLeastAdvancedPawnsPerFile[i-1] < rank) &&
@@ -581,25 +580,19 @@ func Evaluate(position *Position) int32 {
 		pieceIter ^= mask
 	}
 
-	blackCentipawns += blackPawnsCount * p.Weight()
-	blackCentipawns += blackKnightsCount * n.Weight()
-	blackCentipawns += blackBishopsCount * b.Weight()
-	blackCentipawns += blackRooksCount * r.Weight()
-	blackCentipawns += blackQueensCount * q.Weight()
+	pawnFactor := (16 - blackPawnsCount - whitePawnsCount) * 2
 
-	whiteCentipawns += whitePawnsCount * p.Weight()
-	whiteCentipawns += whiteKnightsCount * n.Weight()
-	whiteCentipawns += whiteBishopsCount * b.Weight()
-	whiteCentipawns += whiteRooksCount * r.Weight()
-	whiteCentipawns += whiteQueensCount * q.Weight()
+	blackCentipawns += blackPawnsCount * BlackPawn.Weight()
+	blackCentipawns += (blackKnightsCount - pawnFactor) * BlackKnight.Weight()
+	blackCentipawns += (blackBishopsCount + pawnFactor) * BlackBishop.Weight()
+	blackCentipawns += (blackRooksCount + pawnFactor) * BlackRook.Weight()
+	blackCentipawns += blackQueensCount * BlackQueen.Weight()
 
-	// 2 Bishops vs 2 Knights
-	if whiteBishopsCount >= 2 && blackBishopsCount < 2 {
-		whiteCentipawns += 25
-	}
-	if whiteBishopsCount < 2 && blackBishopsCount >= 2 {
-		blackCentipawns += 25
-	}
+	whiteCentipawns += whitePawnsCount * WhitePawn.Weight()
+	whiteCentipawns += (whiteKnightsCount - pawnFactor) * WhiteKnight.Weight()
+	whiteCentipawns += (whiteBishopsCount + pawnFactor) * WhiteBishop.Weight()
+	whiteCentipawns += (whiteRooksCount + pawnFactor) * WhiteRook.Weight()
+	whiteCentipawns += whiteQueensCount * WhiteQueen.Weight()
 
 	// mobility and attacks
 	whiteAttacks := board.AllAttacks(Black) // get the squares that are taboo for black (white's reach)
@@ -614,8 +607,8 @@ func Evaluate(position *Position) int32 {
 	if !isEndgame {
 		aggressivityFactor = 2
 	}
-	whiteCentipawns += aggressivityFactor * int32(wAttackCounts-bAttackCounts)
-	blackCentipawns += aggressivityFactor * int32(bAttackCounts-wAttackCounts)
+	whiteCentipawns += int32(wAttackCounts - bAttackCounts)
+	blackCentipawns += int32(bAttackCounts - wAttackCounts)
 
 	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
 	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
