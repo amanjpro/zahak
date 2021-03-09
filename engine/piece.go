@@ -38,17 +38,17 @@ const (
 	Black
 )
 
-func (c *Color) Other() Color {
-	if *c == White {
+func (c Color) Other() Color {
+	if c == White {
 		return Black
-	} else if *c == Black {
+	} else if c == Black {
 		return White
 	}
 	return NoColor
 }
 
-func (p *Piece) Type() PieceType {
-	switch *p {
+func (p Piece) Type() PieceType {
+	switch p {
 	case WhitePawn, BlackPawn:
 		return Pawn
 	case WhiteKnight, BlackKnight:
@@ -67,8 +67,8 @@ func (p *Piece) Type() PieceType {
 
 const MAX_INT = int32(2_147_483_647)
 
-func (p *Piece) Weight() int32 {
-	switch *p {
+func (p Piece) Weight() int32 {
+	switch p {
 	case WhitePawn, BlackPawn:
 		return 100
 	case WhiteKnight, BlackKnight:
@@ -85,8 +85,8 @@ func (p *Piece) Weight() int32 {
 	return 0
 }
 
-func (p *Piece) Name() string {
-	switch *p {
+func (p Piece) Name() string {
+	switch p {
 	case WhitePawn:
 		return "P"
 	case WhiteKnight:
@@ -145,8 +145,8 @@ func pieceFromName(name rune) Piece {
 	return NoPiece
 }
 
-func (p *Piece) Color() Color {
-	switch *p {
+func (p Piece) Color() Color {
+	switch p {
 	case WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing:
 		return White
 	case NoPiece:
