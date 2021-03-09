@@ -5,8 +5,8 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) quiescence(position *Position, alpha int32, beta int32, currentMove Move, ply int8,
-	standPat int32, searchHeight int8) (int32, bool) {
+func (e *Engine) quiescence(position *Position, alpha int16, beta int16, currentMove Move, ply int8,
+	standPat int16, searchHeight int8) (int16, bool) {
 
 	e.info.quiesceCounter += 1
 	e.VisitNode()

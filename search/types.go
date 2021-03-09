@@ -50,7 +50,7 @@ type Engine struct {
 	pv             *PVLine
 	StopSearchFlag bool
 	move           Move
-	score          int32
+	score          int16
 	killerMoves    [][]Move
 	searchHistory  [][]int32
 	startTime      time.Time
@@ -162,7 +162,7 @@ func (e *Engine) Move() Move {
 	return e.move
 }
 
-func (e *Engine) Score() int32 {
+func (e *Engine) Score() int16 {
 	return e.score
 }
 
@@ -235,7 +235,7 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 	return false
 }
 
-func abs32(x int32) int32 {
+func abs16(x int16) int16 {
 	if x < 0 {
 		return -x
 	}

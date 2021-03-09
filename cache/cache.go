@@ -2,7 +2,7 @@ package cache
 
 type CachedEval struct {
 	Hash  uint64
-	Eval  int32
+	Eval  int16
 	Depth int8
 	Type  NodeType
 	Age   uint16
@@ -18,7 +18,7 @@ const (
 
 var oldAge = uint16(5)
 
-const CACHE_ENTRY_SIZE = uint32(64+16+8+8+32) / 8
+const CACHE_ENTRY_SIZE = uint32(64+16+8+8+16) / 8
 
 type Cache struct {
 	items    []CachedEval
@@ -39,7 +39,7 @@ func (c *Cache) hash(key uint64) uint32 {
 	return uint32(key>>32) % c.size
 }
 
-func (c *Cache) Set(hash uint64, eval int32, depth int8, nodeType NodeType, age uint16) {
+func (c *Cache) Set(hash uint64, eval int16, depth int8, nodeType NodeType, age uint16) {
 	key := c.hash(hash)
 	oldValue := c.items[key]
 	if oldValue != EmptyEval {
@@ -67,7 +67,7 @@ func (c *Cache) Set(hash uint64, eval int32, depth int8, nodeType NodeType, age 
 	}
 }
 
-func (c *Cache) Get(hash uint64) (int32, int8, NodeType, bool) {
+func (c *Cache) Get(hash uint64) (int16, int8, NodeType, bool) {
 	key := c.hash(hash)
 	item := &c.items[key]
 	if item.Hash == hash {
