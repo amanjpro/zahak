@@ -3,7 +3,6 @@ package search
 import (
 	"fmt"
 
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )

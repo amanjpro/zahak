@@ -1,7 +1,6 @@
 package search
 
 import (
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 )
 
