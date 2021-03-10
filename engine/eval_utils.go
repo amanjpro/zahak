@@ -40,9 +40,9 @@ func (b *Bitboard) getLeastValuablePiece(attacks uint64, color Color) (uint64, P
 	return 0, NoPiece
 }
 
-func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aPiece Piece) int32 {
+func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aPiece Piece) int16 {
 
-	gain := make([]int32, 32)
+	gain := make([]int16, 32)
 	d := 0
 
 	mayXray := b.blackBishop | b.whiteBishop |
@@ -155,7 +155,7 @@ func QueenAttacks(sq Square, occ uint64, own uint64) uint64 {
 	return queenAttacks(sq, occ, own)
 }
 
-func max(x int32, y int32) int32 {
+func max(x int16, y int16) int16 {
 	if x > y {
 		return x
 	}

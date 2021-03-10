@@ -71,7 +71,7 @@ func (mp *MovePicker) score() {
 		eval, depth, tpe, ok := TranspositionTable.Get(hash)
 
 		if ok && tpe == Exact {
-			mp.scores[i] = 500_000_000 + eval
+			mp.scores[i] = 500_000_000 + int32(eval)
 			mp.hasPvMove = true
 			continue
 		}
@@ -91,16 +91,16 @@ func (mp *MovePicker) score() {
 			capPiece := move.CapturedPiece()
 			if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := board.StaticExchangeEval(dest, capPiece, source, piece)
+				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 				if gain < 0 {
 					mp.scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
-					mp.scores[i] = 100_000_000 + capPiece.Weight() - piece.Weight()
+					mp.scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
 				} else {
 					mp.scores[i] = 100_100_000 + gain
 				}
 			} else {
-				mp.scores[i] = 100_100_000 + capPiece.Weight() - piece.Weight()
+				mp.scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
 			}
 			continue
 		}
@@ -120,7 +120,7 @@ func (mp *MovePicker) score() {
 		promoType := move.PromoType()
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			mp.scores[i] = 50_000 + p.Weight()
+			mp.scores[i] = 50_000 + int32(p.Weight())
 			continue
 		}
 
@@ -143,7 +143,7 @@ func (mp *MovePicker) score() {
 			continue
 		}
 
-		mp.scores[i] = 1000 - piece.Weight()
+		mp.scores[i] = 1000 - int32(piece.Weight())
 	}
 }
 

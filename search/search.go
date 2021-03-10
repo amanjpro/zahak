@@ -58,7 +58,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	e.SendPv(lastDepth)
 }
 
-func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int32, beta int32, ply uint16, pvline *PVLine, currentMove Move, multiCutFlag bool, nullMove bool) (int32, bool) {
+func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, pvline *PVLine, currentMove Move, multiCutFlag bool, nullMove bool) (int16, bool) {
 	e.VisitNode()
 
 	isRootNode := searchHeight == 0
@@ -104,7 +104,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		return -MAX_INT, false
 	}
 
-	var eval int32
+	var eval int16
 	if !isInCheck {
 		eval = Evaluate(position)
 	}
@@ -128,7 +128,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if !ok {
 			return score, false
 		}
-		if score >= beta && abs32(score) < CHECKMATE_EVAL {
+		if score >= beta && abs16(score) < CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
 			return beta, true // null move pruning
 		}
@@ -252,7 +252,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		// Extended Futility Pruning
 		if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
-			alpha != abs32(CHECKMATE_EVAL) && beta != abs32(CHECKMATE_EVAL) &&
+			alpha != abs16(CHECKMATE_EVAL) && beta != abs16(CHECKMATE_EVAL) &&
 			promoType == NoType {
 			margin := BlackBishop.Weight()
 			if depthLeft == 2 {

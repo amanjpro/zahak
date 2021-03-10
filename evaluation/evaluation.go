@@ -6,12 +6,13 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-const CHECKMATE_EVAL int32 = 400_000
+const CHECKMATE_EVAL int16 = 30000
+const MAX_NON_CHECKMATE int16 = 25000
 
 // Piece Square Tables
 
 // Middle game
-var earlyPawnPst = [64]int32{
+var earlyPawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	80, 80, 80, 80, 80, 80, 80, 80,
 	50, 50, 50, 50, 50, 50, 50, 50,
@@ -22,7 +23,7 @@ var earlyPawnPst = [64]int32{
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var earlyKnightPst = [64]int32{
+var earlyKnightPst = [64]int16{
 	-40, -25, -25, -25, -25, -25, -25, -40,
 	-30, 0, 0, 0, 0, 0, 0, -30,
 	-30, 0, 0, 0, 0, 0, 0, -30,
@@ -33,7 +34,7 @@ var earlyKnightPst = [64]int32{
 	-40, -30, -25, -25, -25, -25, -30, -40,
 }
 
-var earlyBishopPst = [64]int32{
+var earlyBishopPst = [64]int16{
 	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 5, 0, 0, 0, 0, 5, -10,
 	-10, 0, 5, 0, 0, 5, 0, -10,
@@ -44,7 +45,7 @@ var earlyBishopPst = [64]int32{
 	-10, -20, -20, -20, -20, -20, -20, -10,
 }
 
-var earlyRookPst = [64]int32{
+var earlyRookPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	10, 10, 10, 10, 10, 10, 10, 10,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -55,7 +56,7 @@ var earlyRookPst = [64]int32{
 	0, 0, 0, 5, 5, 0, 0, 0,
 }
 
-var earlyQueenPst = [64]int32{
+var earlyQueenPst = [64]int16{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -66,7 +67,7 @@ var earlyQueenPst = [64]int32{
 	5, 5, 10, 15, 15, 10, 5, 5,
 }
 
-var earlyKingPst = [64]int32{
+var earlyKingPst = [64]int16{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -79,7 +80,7 @@ var earlyKingPst = [64]int32{
 
 // Endgame
 
-var latePawnPst = [64]int32{
+var latePawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	200, 200, 200, 200, 200, 200, 200, 200,
 	150, 150, 150, 150, 150, 150, 150, 150,
@@ -90,7 +91,7 @@ var latePawnPst = [64]int32{
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var lateKnightPst = [64]int32{
+var lateKnightPst = [64]int16{
 	-30, -20, -10, -20, -20, -20, -30, -30,
 	-10, -10, -10, -5, -5, -10, -10, -10,
 	-10, -10, 10, 10, -10, -10, -10, -10,
@@ -101,7 +102,7 @@ var lateKnightPst = [64]int32{
 	-30, -30, -30, -10, -10, -30, -30, -30,
 }
 
-var lateBishopPst = [64]int32{
+var lateBishopPst = [64]int16{
 	-10, -10, -10, -10, -10, -10, -10, -10,
 	-10, -5, 5, -10, -5, -10, -5, -10,
 	5, -10, 0, 0, 0, 5, 0, 5,
@@ -112,7 +113,7 @@ var lateBishopPst = [64]int32{
 	-15, -10, -15, -5, -10, -10, -5, -15,
 }
 
-var lateRookPst = [64]int32{
+var lateRookPst = [64]int16{
 	15, 10, 15, 15, 15, 15, 10, 5,
 	10, 10, 10, 10, 5, 5, 10, 5,
 	5, 5, 5, 5, 5, 5, 5, 5,
@@ -123,7 +124,7 @@ var lateRookPst = [64]int32{
 	-10, -10, -10, -10, -10, -10, -10, -10,
 }
 
-var lateQueenPst = [64]int32{
+var lateQueenPst = [64]int16{
 	-10, 20, 20, 25, 25, 20, 10, 20,
 	-15, 20, 30, 40, 40, 20, 20, 0,
 	-20, 5, 10, 30, 30, 30, 5, -20,
@@ -134,7 +135,7 @@ var lateQueenPst = [64]int32{
 	-30, -30, -20, -30, -5, -20, -20, -20,
 }
 
-var lateKingPst = [64]int32{
+var lateKingPst = [64]int16{
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-15, 15, 15, 15, 15, 15, 15, -15,
 	10, 15, 20, 15, 20, 20, 15, 10,
@@ -145,7 +146,7 @@ var lateKingPst = [64]int32{
 	-40, -40, -20, -10, -10, -20, -40, -40,
 }
 
-var flip = [64]int32{
+var flip = [64]int16{
 	56, 57, 58, 59, 60, 61, 62, 63,
 	48, 49, 50, 51, 52, 53, 54, 55,
 	40, 41, 42, 43, 44, 45, 46, 47,
@@ -156,7 +157,7 @@ var flip = [64]int32{
 	0, 1, 2, 3, 4, 5, 6, 7,
 }
 
-func Evaluate(position *Position) int32 {
+func Evaluate(position *Position) int16 {
 	board := position.Board
 	turn := position.Turn()
 
@@ -177,20 +178,20 @@ func Evaluate(position *Position) int32 {
 	bbWhiteQueen := board.GetBitboardOf(WhiteQueen)
 	bbWhiteKing := board.GetBitboardOf(WhiteKing)
 
-	blackPawnsCount := int32(0)
-	blackKnightsCount := int32(0)
-	blackBishopsCount := int32(0)
-	blackRooksCount := int32(0)
-	blackQueensCount := int32(0)
+	blackPawnsCount := int16(0)
+	blackKnightsCount := int16(0)
+	blackBishopsCount := int16(0)
+	blackRooksCount := int16(0)
+	blackQueensCount := int16(0)
 
-	whitePawnsCount := int32(0)
-	whiteKnightsCount := int32(0)
-	whiteBishopsCount := int32(0)
-	whiteRooksCount := int32(0)
-	whiteQueensCount := int32(0)
+	whitePawnsCount := int16(0)
+	whiteKnightsCount := int16(0)
+	whiteBishopsCount := int16(0)
+	whiteRooksCount := int16(0)
+	whiteQueensCount := int16(0)
 
-	blackCentipawns := int32(0)
-	whiteCentipawns := int32(0)
+	blackCentipawns := int16(0)
+	whiteCentipawns := int16(0)
 	whites := board.GetWhitePieces()
 	blacks := board.GetBlackPieces()
 	all := whites | blacks
@@ -603,19 +604,30 @@ func Evaluate(position *Position) int32 {
 	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
 	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
 
-	aggressivityFactor := int32(1)
+	aggressivityFactor := int16(1)
 	if !isEndgame {
 		aggressivityFactor = 2
 	}
-	whiteCentipawns += aggressivityFactor * int32(wAttackCounts-bAttackCounts)
-	blackCentipawns += aggressivityFactor * int32(bAttackCounts-wAttackCounts)
 
-	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
-	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
+	whiteCentipawns += aggressivityFactor * int16(wAttackCounts-bAttackCounts)
+	blackCentipawns += aggressivityFactor * int16(bAttackCounts-wAttackCounts)
+
+	whiteCentipawns += aggressivityFactor * int16(2*(whiteAggressivity-blackAggressivity))
+	blackCentipawns += aggressivityFactor * int16(2*(blackAggressivity-whiteAggressivity))
 
 	if turn == White {
-		return whiteCentipawns - blackCentipawns
+		return toEval(whiteCentipawns - blackCentipawns)
 	} else {
-		return blackCentipawns - whiteCentipawns
+		return toEval(blackCentipawns - whiteCentipawns)
 	}
+}
+
+func toEval(eval int16) int16 {
+	if eval >= CHECKMATE_EVAL {
+		return MAX_NON_CHECKMATE
+	} else if eval <= -CHECKMATE_EVAL {
+		return -MAX_NON_CHECKMATE
+	}
+	return eval
+
 }
