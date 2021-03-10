@@ -54,55 +54,55 @@ const (
 	Check
 )
 
-func (m *Move) Source() Square {
-	return Square(uint32(*m) & 0x3F)
+func (m Move) Source() Square {
+	return Square(uint32(m) & 0x3F)
 }
 
-func (m *Move) Destination() Square {
-	return Square(uint32(*m) & 0xFC0 >> 6)
+func (m Move) Destination() Square {
+	return Square(uint32(m) & 0xFC0 >> 6)
 }
 
-func (m *Move) MovingPiece() Piece {
-	return Piece(uint32(*m) & 0xF000 >> 12)
+func (m Move) MovingPiece() Piece {
+	return Piece(uint32(m) & 0xF000 >> 12)
 }
 
-func (m *Move) CapturedPiece() Piece {
-	return Piece(uint32(*m) & 0xF0000 >> 16)
+func (m Move) CapturedPiece() Piece {
+	return Piece(uint32(m) & 0xF0000 >> 16)
 }
 
-func (m *Move) PromoType() PieceType {
-	return PieceType(uint32(*m) & 0x700000 >> 20)
+func (m Move) PromoType() PieceType {
+	return PieceType(uint32(m) & 0x700000 >> 20)
 }
 
-func (m *Move) Tag() MoveTag {
-	return MoveTag(uint32(*m >> 23))
+func (m Move) Tag() MoveTag {
+	return MoveTag(uint32(m >> 23))
 }
 
-func (m *Move) IsKingSideCastle() bool {
-	return uint32(*m)&0x800000 != 0
+func (m Move) IsKingSideCastle() bool {
+	return uint32(m)&0x800000 != 0
 }
 
-func (m *Move) IsQueenSideCastle() bool {
-	return uint32(*m)&0x1000000 != 0
+func (m Move) IsQueenSideCastle() bool {
+	return uint32(m)&0x1000000 != 0
 }
 
-func (m *Move) IsCapture() bool {
-	return uint32(*m)&0x2000000 != 0
+func (m Move) IsCapture() bool {
+	return uint32(m)&0x2000000 != 0
 }
 
-func (m *Move) IsEnPassant() bool {
-	return uint32(*m)&0x4000000 != 0
+func (m Move) IsEnPassant() bool {
+	return uint32(m)&0x4000000 != 0
 }
 
-func (m *Move) IsCheck() bool {
-	return uint32(*m)&0x8000000 != 0
+func (m Move) IsCheck() bool {
+	return uint32(m)&0x8000000 != 0
 }
 
 func (m *Move) AddCheckTag() {
 	*m = Move(uint32(*m) | 0x8000000)
 }
 
-func (m *Move) ToString() string {
+func (m Move) ToString() string {
 	notation := fmt.Sprintf("%s%s", m.Source().Name(), m.Destination().Name())
 	if m.PromoType() != NoType {
 		// color doesn't matter here, I picked black as it prints lower case letters

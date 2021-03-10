@@ -21,10 +21,10 @@ const (
 	WhiteToMove
 )
 
-func (p *Position) SetTag(tag PositionTag)      { p.Tag |= tag }
-func (p *Position) ClearTag(tag PositionTag)    { p.Tag &= ^tag }
-func (p *Position) ToggleTag(tag PositionTag)   { p.Tag ^= tag }
-func (p *Position) HasTag(tag PositionTag) bool { return p.Tag&tag != 0 }
+func (p *Position) SetTag(tag PositionTag)     { p.Tag |= tag }
+func (p *Position) ClearTag(tag PositionTag)   { p.Tag &= ^tag }
+func (p *Position) ToggleTag(tag PositionTag)  { p.Tag ^= tag }
+func (p Position) HasTag(tag PositionTag) bool { return p.Tag&tag != 0 }
 
 func (p *Position) Turn() Color {
 	if p.HasTag(WhiteToMove) {
