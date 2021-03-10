@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/search"
@@ -14,14 +15,14 @@ import (
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type UCI struct {
-	engine   *Engine
-	thinking bool
+	engine    *Engine
+	thinkTime int64
 }
 
 func NewUCI() *UCI {
 	return &UCI{
 		NewEngine(),
-		false,
+		0,
 	}
 }
 
@@ -33,20 +34,37 @@ func (uci *UCI) Start() {
 		cmd, err := reader.ReadString('\n')
 		if err == nil {
 			switch cmd {
+			case "debug on\n":
+				uci.engine.DebugMode = true
+			case "debug off\n":
+				uci.engine.DebugMode = false
+			case "ponderhit\n":
+				uci.engine.StartTime = time.Now()
+				uci.engine.Pondering = false
+				uci.engine.ThinkTime = uci.thinkTime
+				uci.thinkTime = 0
+				uci.engine.SendPv(-1)
 			case "quit\n":
 				return
 			case "uci\n":
 				fmt.Print("id name Zahak\n\n")
 				fmt.Print("id author Amanj\n\n")
+				fmt.Print("option name Ponder type check default false\n\n")
 				fmt.Print("uciok\n\n")
 			case "isready\n":
 				fmt.Print("readyok\n\n")
 			case "ucinewgame\n":
 				game = FromFen(startFen, true)
 			case "stop\n":
-				uci.engine.StopSearchFlag = true
+				if uci.engine.Pondering {
+					uci.stopPondering()
+				} else {
+					uci.engine.StopSearchFlag = true
+				}
 			default:
-				if strings.HasPrefix(cmd, "setoption name Hash value") {
+				if strings.HasPrefix(cmd, "setoption name Ponder value") {
+					continue
+				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
@@ -54,14 +72,17 @@ func (uci *UCI) Start() {
 				} else if strings.HasPrefix(cmd, "go") {
 					go uci.findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
+					uci.stopPondering()
 					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen, false)
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
+					uci.stopPondering()
 					game = FromFen(startFen, true)
 				} else if strings.HasPrefix(cmd, "position fen") {
+					uci.stopPondering()
 					cmd := strings.Fields(cmd)
 					fen := fmt.Sprintf("%s %s %s %s %s %s", cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7])
 					moves := []string{}
@@ -83,6 +104,7 @@ func (uci *UCI) Start() {
 }
 
 func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
+	uci.thinkTime = 0
 	fields := strings.Fields(cmd)
 
 	pos := game.Position()
@@ -91,8 +113,11 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	inc := 0
 	movesToGo := 0
 	perMove := false
+	uci.engine.Pondering = false
 	for i := 0; i < len(fields); i++ {
 		switch fields[i] {
+		case "ponder":
+			uci.engine.Pondering = true
 		case "wtime":
 			if pos.Turn() == White {
 				timeToThink, _ = strconv.Atoi(fields[i+1])
@@ -129,13 +154,31 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		}
 	}
 
+	var MAX_TIME int64 = 9_223_372_036_854_775_807
+
 	if !noTC {
-		uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
+		if uci.engine.Pondering {
+			uci.thinkTime = uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
+			uci.engine.ThinkTime = MAX_TIME
+		} else {
+			uci.engine.ThinkTime = uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
+		}
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
+		uci.engine.Pondering = false
 	} else {
-		uci.engine.ThinkTime = 9_223_372_036_854_775_807
+		uci.engine.ThinkTime = MAX_TIME
+		uci.thinkTime = uci.engine.ThinkTime
 		uci.engine.Search(game.Position(), depth, ply)
 		uci.engine.SendBestMove()
+		uci.engine.Pondering = false
+	}
+}
+
+func (uci *UCI) stopPondering() {
+	if uci.engine.Pondering {
+		uci.engine.StopSearchFlag = true
+		for !uci.engine.Pondering {
+		} // wait until stopped
 	}
 }

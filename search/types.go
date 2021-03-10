@@ -26,21 +26,21 @@ type Info struct {
 }
 
 func (i *Info) Print() {
-	fmt.Println("EFP: ", i.efpCounter)
-	fmt.Println("RFP: ", i.rfpCounter)
-	fmt.Println("Razoring: ", i.razoringCounter)
-	fmt.Println("Check Extension: ", i.checkExtentionCounter)
-	fmt.Println("Mult-Cut: ", i.multiCutCounter)
-	fmt.Println("Null-Move: ", i.nullMoveCounter)
-	fmt.Println("LMR: ", i.lmrCounter)
-	fmt.Println("Delta Pruning: ", i.deltaPruningCounter)
-	fmt.Println("SEE Quiescence: ", i.seeQuiescenceCounter)
-	fmt.Println("PV Nodes: ", i.mainSearchCounter)
-	fmt.Println("ZW Nodes: ", i.zwCounter)
-	fmt.Println("Research: ", i.researchCounter)
-	fmt.Println("Quiescence Nodes: ", i.quiesceCounter)
-	fmt.Println("Killer Moves: ", i.killerCounter)
-	fmt.Println("History Moves: ", i.historyCounter)
+	fmt.Printf("info string EFP: %d\n\n", i.efpCounter)
+	fmt.Printf("info string RFP: %d\n\n", i.rfpCounter)
+	fmt.Printf("info string Razoring: %d\n\n", i.razoringCounter)
+	fmt.Printf("info string Check Extension: %d\n\n", i.checkExtentionCounter)
+	fmt.Printf("info string Mult-Cut: %d\n\n", i.multiCutCounter)
+	fmt.Printf("info string Null-Move: %d\n\n", i.nullMoveCounter)
+	fmt.Printf("info string LMR: %d\n\n", i.lmrCounter)
+	fmt.Printf("info string Delta Pruning: %d\n\n", i.deltaPruningCounter)
+	fmt.Printf("info string SEE Quiescence: %d\n\n", i.seeQuiescenceCounter)
+	fmt.Printf("info string PV Nodes: %d\n\n", i.mainSearchCounter)
+	fmt.Printf("info string ZW Nodes: %d\n\n", i.zwCounter)
+	fmt.Printf("info string Research: %d\n\n", i.researchCounter)
+	fmt.Printf("info string Quiescence Nodes: %d\n\n", i.quiesceCounter)
+	fmt.Printf("info string Killer Moves: %d\n\n", i.killerCounter)
+	fmt.Printf("info string History Moves: %d\n\n", i.historyCounter)
 }
 
 type Engine struct {
@@ -52,10 +52,12 @@ type Engine struct {
 	score          int16
 	killerMoves    [][]Move
 	searchHistory  [][]int32
-	startTime      time.Time
+	StartTime      time.Time
 	ThinkTime      int64
 	info           Info
 	pred           Predecessors
+	DebugMode      bool
+	Pondering      bool
 }
 
 func NewEngine() *Engine {
@@ -72,6 +74,8 @@ func NewEngine() *Engine {
 		0,
 		NoInfo,
 		NewPredecessors(),
+		false,
+		false,
 	}
 }
 
@@ -82,7 +86,7 @@ func (e *Engine) ShouldStop() bool {
 		return true
 	}
 	now := time.Now()
-	return now.Sub(e.startTime).Milliseconds() >= e.ThinkTime
+	return now.Sub(e.StartTime).Milliseconds() >= e.ThinkTime
 }
 
 func (e *Engine) ClearForSearch() {
@@ -114,7 +118,7 @@ func (e *Engine) ClearForSearch() {
 
 	e.pred.Clear()
 
-	e.startTime = time.Now()
+	e.StartTime = time.Now()
 }
 
 func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
@@ -154,7 +158,11 @@ func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square
 
 func (e *Engine) SendBestMove() {
 	mv := e.Move()
-	fmt.Printf("bestmove %s\n", mv.ToString())
+	if e.pv.moveCount >= 2 {
+		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), e.pv.MoveAt(1).ToString())
+	} else {
+		fmt.Printf("bestmove %s\n", mv.ToString())
+	}
 }
 
 func (e *Engine) Move() Move {
@@ -166,7 +174,10 @@ func (e *Engine) Score() int16 {
 }
 
 func (e *Engine) SendPv(depth int8) {
-	thinkTime := time.Now().Sub(e.startTime)
+	if depth == -1 {
+		depth = e.pv.moveCount
+	}
+	thinkTime := time.Now().Sub(e.StartTime)
 	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
 		depth, e.pv.moveCount, e.cacheHits, TranspositionTable.Consumed(), e.nodesVisited, e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
