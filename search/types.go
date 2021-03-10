@@ -213,23 +213,15 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 		return false
 	}
 
-	if previouslySeen >= 3 {
+	if previouslySeen >= 2 {
 		return true
 	}
 
 	for i := pred.maxIndex - 1; i >= 0; i-- {
 		var candidate = pred.line[i]
 		if current == candidate {
-			if previouslySeen > 0 {
-				return true
-			} else {
-				previouslySeen += 1
-			}
+			return true
 		}
-	}
-
-	if previouslySeen >= 2 {
-		return true
 	}
 	return false
 }
