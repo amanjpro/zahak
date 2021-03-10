@@ -607,8 +607,8 @@ func Evaluate(position *Position) int32 {
 	if !isEndgame {
 		aggressivityFactor = 2
 	}
-	whiteCentipawns += int32(wAttackCounts - bAttackCounts)
-	blackCentipawns += int32(bAttackCounts - wAttackCounts)
+	whiteCentipawns += aggressivityFactor * int32(wAttackCounts-bAttackCounts)
+	blackCentipawns += aggressivityFactor * int32(bAttackCounts-wAttackCounts)
 
 	whiteCentipawns += aggressivityFactor * int32(2*(whiteAggressivity-blackAggressivity))
 	blackCentipawns += aggressivityFactor * int32(2*(blackAggressivity-whiteAggressivity))
