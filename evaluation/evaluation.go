@@ -7,6 +7,7 @@ import (
 )
 
 const CHECKMATE_EVAL int16 = 30000
+const MAX_NON_CHECKMATE int16 = 25000
 
 // Piece Square Tables
 
@@ -615,8 +616,18 @@ func Evaluate(position *Position) int16 {
 	blackCentipawns += aggressivityFactor * int16(2*(blackAggressivity-whiteAggressivity))
 
 	if turn == White {
-		return whiteCentipawns - blackCentipawns
+		return toEval(whiteCentipawns - blackCentipawns)
 	} else {
-		return blackCentipawns - whiteCentipawns
+		return toEval(blackCentipawns - whiteCentipawns)
 	}
+}
+
+func toEval(eval int16) int16 {
+	if eval >= CHECKMATE_EVAL {
+		return MAX_NON_CHECKMATE
+	} else if eval <= -CHECKMATE_EVAL {
+		return -MAX_NON_CHECKMATE
+	}
+	return eval
+
 }
