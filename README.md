@@ -40,5 +40,5 @@ You can also run it in perfttree mode with `./zahak -preft-tree`.
 
 # Acknowledgement
 
-Zahak wouldn't have been possible without (VICE videos)[https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg]
-and (Chess Programming Wiki)[https://www.chessprogramming.org/]
+Zahak wouldn't have been possible without [VICE videos](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
+and [Chess Programming Wiki](https://www.chessprogramming.org/)
