@@ -267,6 +267,13 @@ func (p *Position) IsEndGame() bool {
 	return p.Board.IsEndGame()
 }
 
+func (p *Position) IsCheckMove(move Move) bool {
+	p.partialMakeMove(move)
+	isCheck := isInCheck(p.Board, p.Turn())
+	p.partialUnMakeMove(move)
+	return isCheck
+}
+
 func (p *Position) IsInCheck() bool {
 	return p.HasTag(InCheck)
 }

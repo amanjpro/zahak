@@ -1,10 +1,62 @@
 package book
 
-type BookMove struct {
-	key    uint64
-	move   int32
-	weight int16
-	learn  uint32
+import (
+	. "github.com/amanjpro/zahak/engine"
+)
+
+func ToMove(position *Position, bookmove int32) Move {
+	toFile := bookmove & 7
+	toRank := (bookmove >> 3) & 7
+	fromFile := (bookmove >> 6) & 7
+	fromRank := (bookmove >> 9) & 7
+	promo := (bookmove >> 11) & 7
+
+	source := SquareOf(File(fromFile), Rank(fromRank))
+	dest := SquareOf(File(toFile), Rank(toRank))
+	promotion := NoType
+
+	if promo != 0 {
+		promotion = PieceType(promotion - 1)
+	}
+
+	movingPiece := position.Board.PieceAt(source)
+	capturedPiece := NoPiece
+
+	castling := false
+	tag := MoveTag(0)
+
+	// is castling?
+	if source == E1 && dest == H1 && movingPiece == WhiteKing {
+		tag |= KingSideCastle
+		castling = true
+	} else if source == E1 && dest == A1 && movingPiece == WhiteKing {
+		tag |= QueenSideCastle
+		castling = true
+	} else if source == E8 && dest == H8 && movingPiece == BlackKing {
+		tag |= KingSideCastle
+		castling = true
+	} else if source == E8 && dest == A8 && movingPiece == BlackKing {
+		tag |= QueenSideCastle
+		castling = true
+	}
+
+	if !castling {
+		// is normal capture
+		capturedPiece = position.Board.PieceAt(dest)
+		if capturedPiece != NoPiece {
+			tag |= Capture
+		} else if movingPiece.Type() == Pawn && dest == position.EnPassant {
+			tag |= Capture | EnPassant
+			capturedPiece = GetPiece(Pawn, position.Turn().Other())
+		}
+	}
+	move := NewMove(source, dest, movingPiece, capturedPiece, promotion, tag)
+
+	if position.IsCheckMove(move) {
+		move.AddCheckTag()
+	}
+
+	return move
 }
 
 // black-pawn = 0
@@ -19,13 +71,73 @@ type BookMove struct {
 // white-queen=9
 // black-king=10
 // white-king=11
-const PolyPieceIndex = [12]int{1, 3, 4, 6, 8, 10, 0, 2, 4, 6, 7, 9, 11}
+var PolyPieceIndex = [13]int{-1, 1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10}
 
-func (p *Position) PolyHash() uint64 {
-	return 0
+func HasPawnForCapture(p *Position) bool {
+	ep := p.EnPassant
+	if ep == NoSquare {
+		return false
+	}
+
+	epFile := ep.File()
+	epRank := ep.Rank()
+	if p.Turn() == White {
+		if epFile == FileA {
+			return p.Board.PieceAt(SquareOf(File(epFile+1), Rank(epRank-1))) == WhitePawn
+		} else if epFile == FileH {
+			return p.Board.PieceAt(SquareOf(File(epFile-1), Rank(epRank-1))) == WhitePawn
+		} else {
+			return p.Board.PieceAt(SquareOf(File(epFile+1), Rank(epRank-1))) == WhitePawn ||
+				p.Board.PieceAt(SquareOf(File(epFile-1), Rank(epRank-1))) == WhitePawn
+		}
+	} else {
+		if epFile == FileA {
+			return p.Board.PieceAt(SquareOf(File(epFile+1), Rank(epRank+1))) == BlackPawn
+		} else if epFile == FileH {
+			return p.Board.PieceAt(SquareOf(File(epFile-1), Rank(epRank+1))) == BlackPawn
+		} else {
+			return p.Board.PieceAt(SquareOf(File(epFile+1), Rank(epRank+1))) == BlackPawn ||
+				p.Board.PieceAt(SquareOf(File(epFile-1), Rank(epRank+1))) == BlackPawn
+		}
+	}
 }
 
-const PolyRandom = [781]uint64{
+func PolyHash(p *Position) uint64 {
+	hash := uint64(0)
+	board := p.Board
+	for sq := A1; sq <= H8; sq++ {
+		piece := board.PieceAt(sq)
+		if piece != NoPiece {
+			hash ^= PolyRandom[64*PolyPieceIndex[int(piece)]+(8*int(sq.Rank()))+int(sq.File())]
+		}
+	}
+	offset := 768
+	if p.HasTag(WhiteCanCastleKingSide) {
+		hash ^= PolyRandom[offset+0]
+	}
+	if p.HasTag(WhiteCanCastleQueenSide) {
+		hash ^= PolyRandom[offset+1]
+	}
+	if p.HasTag(BlackCanCastleKingSide) {
+		hash ^= PolyRandom[offset+2]
+	}
+	if p.HasTag(BlackCanCastleQueenSide) {
+		hash ^= PolyRandom[offset+3]
+	}
+	offset = 772
+	if HasPawnForCapture(p) {
+		file := p.EnPassant.File()
+		hash ^= PolyRandom[offset+int(file)]
+	}
+
+	if p.Turn() == White {
+		hash ^= PolyRandom[780]
+	}
+
+	return hash
+}
+
+var PolyRandom = [781]uint64{
 	uint64(0x9D39247E33776D41), uint64(0x2AF7398005AAA5C7), uint64(0x44DB015024623547), uint64(0x9C15F73E62A76AE2),
 	uint64(0x75834465489C0C89), uint64(0x3290AC3A203001BF), uint64(0x0FBBAD1F61042279), uint64(0xE83A908FF2FB60CA),
 	uint64(0x0D7E765D58755C10), uint64(0x1A083822CEAFE02D), uint64(0x9605D5F0E25EC3B0), uint64(0xD021FF5CD13A2ED5),
