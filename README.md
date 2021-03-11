@@ -37,3 +37,8 @@ Zahak is new to LiChess, you can play him and be impressed with him. His LiChess
 To build the project, simply run `make build`, testing with `make test`, and running with `make run`.
 Other features exist, for example you can run `perft` with `./zahak -perft` or profile it with `./zahak -profile`.
 You can also run it in perfttree mode with `./zahak -preft-tree`.
+
+# Acknowledgement
+
+Zahak wouldn't have been possible without (VICE videos)[https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg]
+and (Chess Programming Wiki)[https://www.chessprogramming.org/]
