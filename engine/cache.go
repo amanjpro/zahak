@@ -78,6 +78,9 @@ func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 }
 
 func NewCache(megabytes uint32) {
+	if megabytes > MAX_CACHE_SIZE {
+		return
+	}
 	size := megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE
 	items := make([]CachedEval, size)
 	TranspositionTable = Cache{items, uint32(size), 0} //s, current: 0}
@@ -85,6 +88,9 @@ func NewCache(megabytes uint32) {
 		TranspositionTable.items[i] = EmptyEval
 	}
 }
+
+const DEFAULT_CACHE_SIZE = uint32(10)
+const MAX_CACHE_SIZE = uint32(8000)
 
 func ResetCache() {
 	if TranspositionTable.size != EmptyCache.size {
@@ -94,6 +100,6 @@ func ResetCache() {
 			TranspositionTable.items[i] = EmptyEval
 		}
 	} else {
-		NewCache(10)
+		NewCache(DEFAULT_CACHE_SIZE)
 	}
 }

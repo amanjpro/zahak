@@ -19,6 +19,7 @@ func main() {
 	var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
 	var perftTreeFlag = flag.Bool("perft-tree", false, "Run the engine in prefttree mode")
 	var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
+	var bookPath = flag.String("book", "", "Path to openning book in PolyGlot (bin) format")
 	flag.Parse()
 	if *profileFlag {
 		cpu, err := os.Create("zahak-engine-cpu-profile")
@@ -50,6 +51,6 @@ func main() {
 		}
 		PerftTree(game, depth, moves)
 	} else {
-		NewUCI().Start()
+		NewUCI(*bookPath != "", *bookPath).Start()
 	}
 }

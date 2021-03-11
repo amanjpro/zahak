@@ -9,7 +9,7 @@ func ToMove(position *Position, bookmove uint16) Move {
 	toRank := (bookmove >> 3) & 7
 	fromFile := (bookmove >> 6) & 7
 	fromRank := (bookmove >> 9) & 7
-	promo := (bookmove >> 11) & 7
+	promo := (bookmove >> 12) & 7
 
 	source := SquareOf(File(fromFile), Rank(fromRank))
 	dest := SquareOf(File(toFile), Rank(toRank))
@@ -29,15 +29,19 @@ func ToMove(position *Position, bookmove uint16) Move {
 	if source == E1 && dest == H1 && movingPiece == WhiteKing {
 		tag |= KingSideCastle
 		castling = true
+		dest = G1
 	} else if source == E1 && dest == A1 && movingPiece == WhiteKing {
 		tag |= QueenSideCastle
 		castling = true
+		dest = C1
 	} else if source == E8 && dest == H8 && movingPiece == BlackKing {
 		tag |= KingSideCastle
 		castling = true
+		dest = G8
 	} else if source == E8 && dest == A8 && movingPiece == BlackKing {
 		tag |= QueenSideCastle
 		castling = true
+		dest = C8
 	}
 
 	if !castling {
