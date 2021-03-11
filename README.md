@@ -31,6 +31,31 @@ Zahak is new to LiChess, you can play him and be impressed with him. His LiChess
 - Move History Heuristics
 - Check Extensions
 - Internal Iterative Deepening
+- PolyGlot opening book
+
+# Command line options
+
+```
+Usage of bin/zahak:
+  -book string
+    Path to openning book in PolyGlot (bin) format
+  -perft
+    Provide this to run perft tests
+  -perft-tree
+    Run the engine in prefttree mode
+  -profile
+    Run the engine in profiling mode
+  -slow
+    Run all perft tests, even the very slow tests
+```
+
+# Opening Books
+
+Currently only PolyGlot is supported. Then engine doesn't come with any books,
+but you can attach your favourite one easily by passing the path to `-book`
+command: `zahak -book PATH_TO_BOOK`.
+
+A bunch of free books are available [here](https://github.com/michaeldv/donna_opening_books)
 
 # Building
 
