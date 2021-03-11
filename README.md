@@ -4,6 +4,15 @@
 
 A UCI compatible chess AI written in Go. Still work in progress.
 
+# The name
+
+Zahak (or Zahhak or Azhi Dahak) is an evil figure in Iranian/Kurdish/Perisan
+mythology, evident in ancient Iranian folklore as Azhi Dahāka, the name by
+which he also appears in the texts of the Avesta.  Legend has that, that he two
+giant snakes on his shoulders that he had to feed them two human brains on
+daily basis, you can read more about him
+[here](https://en.wikipedia.org/wiki/Zahhak)
+
 # Play Zahak online
 
 Zahak is new to LiChess, you can play him and be impressed with him. His LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine). He is currently running on an old RaspberryPi device, so do not expect a truly amazing performance. But, hopefully he will be online 24/7.
