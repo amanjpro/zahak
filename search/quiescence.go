@@ -51,7 +51,7 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 	withChecks := false && ply < 4
 	legalMoves := position.QuiesceneMoves(withChecks)
 
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, EmptyMove)
 
 	for i := 0; i < len(legalMoves); i++ {
 		move := movePicker.Next()

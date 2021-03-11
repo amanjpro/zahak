@@ -3,7 +3,6 @@ package search
 import (
 	"fmt"
 
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )
@@ -88,7 +87,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	hash := position.Hash()
-	nEval, nDepth, nType, found := TranspositionTable.Get(hash)
+	nHashMove, nEval, nDepth, nType, found := TranspositionTable.Get(hash)
 	if found && nDepth >= depthLeft {
 		if nEval >= beta && (nType == UpperBound || nType == Exact) {
 			e.CacheHit()
@@ -159,7 +158,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	legalMoves := position.LegalMoves()
 
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight)
+	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, nHashMove)
 	line.Recycle()
 
 	// Internal Iterative Deepening
@@ -219,6 +218,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	e.pred.Push(position.Hash())
 	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, line, move, !multiCutFlag, true)
 	bestscore = -bestscore
+	hashmove := move
 	e.pred.Pop()
 	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 	if !ok {
@@ -226,7 +226,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 	if bestscore > alpha {
 		if bestscore >= beta {
-			TranspositionTable.Set(hash, bestscore, depthLeft, UpperBound, ply)
+			TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
 			e.AddKillerMove(move, searchHeight)
 			return bestscore, true
 		}
@@ -299,12 +299,13 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		if score > bestscore {
 			if score >= beta {
-				TranspositionTable.Set(hash, score, depthLeft, UpperBound, ply)
+				TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
 				e.AddKillerMove(move, searchHeight)
 				return score, ok
 			}
 
 			bestscore = score
+			hashmove = move
 			// Potential PV move, lets copy it to the current pv-line
 			pvline.AddFirst(move)
 			pvline.ReplaceLine(line)
@@ -312,9 +313,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, bestscore, depthLeft, Exact, ply)
+		TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, ply)
 	} else {
-		TranspositionTable.Set(hash, bestscore, depthLeft, LowerBound, ply)
+		TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, ply)
 	}
 	return bestscore, true
 }

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/search"
 )

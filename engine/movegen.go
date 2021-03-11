@@ -155,31 +155,31 @@ func (p *Position) HasLegalMoves() bool {
 	} else {
 
 		if color == White {
-			return p.bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-				color, p.EnPassant, false, false, true, false, nil) ||
+			return p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, true, false, nil) ||
 				p.bbKnightMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
 					false, false, true, false, nil) ||
+				p.bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+					color, p.EnPassant, false, false, true, false, nil) ||
 				p.bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
 					color, WhiteBishop, false, false, true, false, nil) ||
 				p.bbSlidingMoves(board.whiteRook, board.whitePieces, board.blackPieces,
 					color, WhiteRook, false, false, true, false, nil) ||
 				p.bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-					color, WhiteQueen, false, false, true, false, nil) ||
-				p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-					taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, true, false, nil)
+					color, WhiteQueen, false, false, true, false, nil)
 		} else if color == Black {
-			return p.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-				color, p.EnPassant, false, false, true, false, nil) ||
+			return p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), false, false, true, false, nil) ||
 				p.bbKnightMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
 					false, false, true, false, nil) ||
+				p.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+					color, p.EnPassant, false, false, true, false, nil) ||
 				p.bbSlidingMoves(board.blackBishop, board.blackPieces, board.whitePieces,
 					color, BlackBishop, false, false, true, false, nil) ||
 				p.bbSlidingMoves(board.blackRook, board.blackPieces, board.whitePieces,
 					color, BlackRook, false, false, true, false, nil) ||
 				p.bbSlidingMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-					color, BlackQueen, false, false, true, false, nil) ||
-				p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-					taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), false, false, true, false, nil)
+					color, BlackQueen, false, false, true, false, nil)
 		}
 	}
 	return false

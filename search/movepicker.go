@@ -1,13 +1,13 @@
 package search
 
 import (
-	. "github.com/amanjpro/zahak/cache"
 	. "github.com/amanjpro/zahak/engine"
 )
 
 type MovePicker struct {
 	position  *Position
 	engine    *Engine
+	hashmove  Move
 	moves     []Move
 	scores    []int32
 	hasPvMove bool
@@ -15,13 +15,14 @@ type MovePicker struct {
 	next      int
 }
 
-func NewMovePicker(p *Position, e *Engine, moves []Move, moveOrder int8) *MovePicker {
+func NewMovePicker(p *Position, e *Engine, moves []Move, moveOrder int8, hashmove Move) *MovePicker {
 	mp := &MovePicker{
 		p,
 		e,
+		hashmove,
 		moves,
 		make([]int32, len(moves)),
-		false,
+		hashmove != EmptyMove,
 		moveOrder,
 		0,
 	}
@@ -47,6 +48,7 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 func (mp *MovePicker) score() {
 	pv := mp.engine.pv
 	position := mp.position
+	hashmove := mp.hashmove
 	board := position.Board
 	engine := mp.engine
 	moveOrder := mp.moveOrder
@@ -62,23 +64,8 @@ func (mp *MovePicker) score() {
 			}
 		}
 
-		// Is in Transition table ???
-		// TODO: This is slow, that tells us either cache access is slow or has computation is
-		// Or maybe (unlikely) make/unmake move is slow
-		ep, tg, hc := position.MakeMove(move)
-		hash := position.Hash()
-		position.UnMakeMove(move, tg, ep, hc)
-		eval, depth, tpe, ok := TranspositionTable.Get(hash)
-
-		if ok && tpe == Exact {
-			mp.scores[i] = 500_000_000 + int32(eval)
-			mp.hasPvMove = true
-			continue
-		}
-
-		if ok {
-			mp.scores[i] = 400_000_000 + int32(depth)
-			mp.hasPvMove = true
+		if move == hashmove {
+			mp.scores[i] = 500_000_000
 			continue
 		}
 
