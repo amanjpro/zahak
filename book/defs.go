@@ -4,7 +4,7 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-func ToMove(position *Position, bookmove int32) Move {
+func ToMove(position *Position, bookmove uint16) Move {
 	toFile := bookmove & 7
 	toRank := (bookmove >> 3) & 7
 	fromFile := (bookmove >> 6) & 7
