@@ -38,7 +38,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			firstScore = false
 		}
 		lastDepth = iterationDepth
-		if iterationDepth >= 35 && e.move == previousBestMove {
+		if !e.Pondering && iterationDepth >= 35 && e.move == previousBestMove {
 			fruitelessIterations++
 			if fruitelessIterations > 4 {
 				break
@@ -51,10 +51,14 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		}
 		previousBestMove = e.move
 		e.pred.Clear()
-		e.info.Print()
+		if !e.Pondering && e.DebugMode {
+			e.info.Print()
+		}
 	}
 
-	e.SendPv(lastDepth)
+	if e.Pondering {
+		e.SendPv(lastDepth)
+	}
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, pvline *PVLine, currentMove Move, multiCutFlag bool, nullMove bool) (int16, bool) {
@@ -241,7 +245,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		line.Recycle()
 		move := movePicker.Next()
 		if isRootNode {
-			fmt.Printf("info currmove %s currmovenumber %d\n\n", move.ToString(), i+1)
+			fmt.Printf("info depth %d currmove %s currmovenumber %d\n\n", depthLeft, move.ToString(), i+1)
 		}
 
 		LMR := int8(0)

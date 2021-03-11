@@ -5,7 +5,7 @@ import (
 )
 
 func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
-	increment int, movesToTimeControl int) {
+	increment int, movesToTimeControl int) int64 {
 	maximumTimeToThink := 0
 	if isPerMove {
 		maximumTimeToThink = availableTimeInMillis - 50
@@ -17,7 +17,7 @@ func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove 
 		availableTimeInMillis /= movestogo
 		maximumTimeToThink = availableTimeInMillis - 50
 	}
-	e.ThinkTime = int64(maximumTimeToThink + increment)
+	return int64(maximumTimeToThink + increment)
 }
 
 func abs(num int) int {
