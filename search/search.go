@@ -69,6 +69,10 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	}
 
 	e.SendPv(lastDepth)
+	if e.move == EmptyMove { // we didn't have time to pick a move, pick a random one
+		allMoves := position.LegalMoves()
+		e.move = allMoves[0]
+	}
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, pvline *PVLine, currentMove Move, multiCutFlag bool, nullMove bool) (int16, bool) {
