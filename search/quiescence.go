@@ -11,18 +11,7 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 	e.info.quiesceCounter += 1
 	e.VisitNode()
 
-	if IsRepetition(position, e.pred, currentMove) {
-		return 0, true
-	}
-
 	var isInCheck = currentMove.IsCheck()
-
-	outcome := position.Status()
-	if outcome == Checkmate {
-		return -CHECKMATE_EVAL, true
-	} else if outcome == Draw {
-		return 0, true
-	}
 
 	if standPat >= beta {
 		return beta, true // fail hard
