@@ -158,6 +158,10 @@ func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square
 
 func (e *Engine) SendBestMove() {
 	mv := e.Move()
+	if mv == EmptyMove {
+		fmt.Printf("info string no bestmove available, need more time\n\n")
+		return
+	}
 	if e.pv.moveCount >= 2 {
 		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), e.pv.MoveAt(1).ToString())
 	} else {

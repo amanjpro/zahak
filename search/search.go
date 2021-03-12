@@ -68,9 +68,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		}
 	}
 
-	if e.Pondering {
-		e.SendPv(lastDepth)
-	}
+	e.SendPv(lastDepth)
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, pvline *PVLine, currentMove Move, multiCutFlag bool, nullMove bool) (int16, bool) {
