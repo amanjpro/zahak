@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/search"
 )
@@ -17,18 +18,25 @@ const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 type UCI struct {
 	engine    *Engine
 	thinkTime int64
+	withBook  bool
+	bookPath  string
 }
 
-func NewUCI() *UCI {
+func NewUCI(withBook bool, bookPath string) *UCI {
 	return &UCI{
 		NewEngine(),
 		0,
+		withBook,
+		bookPath,
 	}
 }
 
 func (uci *UCI) Start() {
 	var game Game
 	var depth = int8(100)
+	if uci.withBook {
+		InitBook(uci.bookPath)
+	}
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		cmd, err := reader.ReadString('\n')
@@ -50,6 +58,8 @@ func (uci *UCI) Start() {
 				fmt.Print("id name Zahak\n\n")
 				fmt.Print("id author Amanj\n\n")
 				fmt.Print("option name Ponder type check default false\n\n")
+				fmt.Printf("option name Hash type spin default %d min 1 max %d\n\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
+				fmt.Printf("option name Book type check default %t\n\n", uci.withBook)
 				fmt.Print("uciok\n\n")
 			case "isready\n":
 				fmt.Print("readyok\n\n")
@@ -64,6 +74,14 @@ func (uci *UCI) Start() {
 			default:
 				if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
+				} else if strings.HasPrefix(cmd, "setoption name Book value ") {
+					options := strings.Fields(cmd)
+					opt := options[len(options)-1]
+					if opt == "false" {
+						ResetBook()
+					} else if !IsBoookLoaded() && opt == "true" { // if it is loaded, no need to reload
+						InitBook(uci.bookPath)
+					}
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
