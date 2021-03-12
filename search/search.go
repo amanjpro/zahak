@@ -79,18 +79,17 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	var isInCheck = currentMove.IsCheck()
 
-	if IsRepetition(position, e.pred, currentMove) {
+	// Position is drawn
+	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
 		return 0, true
 	}
 
-	outcome := position.Status()
-	if outcome == Checkmate {
-		return -CHECKMATE_EVAL, true
-	} else if outcome == Draw {
-		return 0, true
+	if isInCheck && isPvNode {
+		e.info.checkExtentionCounter += 1
+		depthLeft += 1 // Singular Extension
 	}
 
-	if depthLeft == 0 {
+	if depthLeft <= 0 {
 		return e.quiescence(position, alpha, beta, currentMove, 0, Evaluate(position), searchHeight)
 	}
 
@@ -115,11 +114,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	if e.ShouldStop() {
 		return -MAX_INT, false
-	}
-
-	var eval int16
-	if !isInCheck {
-		eval = Evaluate(position)
 	}
 
 	// NullMove pruning
@@ -147,6 +141,20 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
+	legalMoves := position.LegalMoves()
+	if len(legalMoves) == 0 {
+		if isInCheck {
+			return -CHECKMATE_EVAL, true
+		} else {
+			return 0, true
+		}
+	}
+
+	var eval int16
+	if !isInCheck {
+		eval = Evaluate(position)
+	}
+
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
 	if !isRootNode && !isPvNode && !isInCheck && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
@@ -169,8 +177,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			return newEval, true
 		}
 	}
-
-	legalMoves := position.LegalMoves()
 
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, nHashMove)
 	line.Recycle()
@@ -211,11 +217,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 				}
 			}
 		}
-	}
-
-	if isInCheck && isPvNode {
-		e.info.checkExtentionCounter += 1
-		depthLeft += 1 // Singular Extension
 	}
 
 	// Extended Futility Pruning
