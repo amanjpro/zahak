@@ -105,50 +105,48 @@ func (b *Bitboard) IsVerticalDoubleRook(sq Square, otherRooks uint64, occupied u
 	return (horizontalAttacks & otherRooks) != 0
 }
 
-func (b *Bitboard) AllAttacks(color Color) uint64 {
-	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
+func (b *Bitboard) AllAttacks(color Color) (uint64, uint64, uint64) {
+	var ownPawns, ownKnights, ownR, ownB, ownQ, ownKing, ownPieces uint64
 	occupiedBB := b.whitePieces | b.blackPieces
-	if color == White {
-		opPieces = b.blackPieces
-		ownPieces := b.whitePieces
-		emptySquares := (opPieces | ownPieces) ^ universal
-		opPawns = bPawnsAble2CaptureAny(b.blackPawn, universal) | bDoublePushTargets(b.blackPawn, emptySquares) | bSinglePushTargets(b.blackPawn, emptySquares)
-		opKnights = b.blackKnight
-		opR = b.blackRook
-		opB = b.blackBishop
-		opQ = b.blackQueen
-		opKing = b.blackKing
+	if color == Black {
+		ownPieces = b.blackPieces
+		ownPawns = bPawnsAble2CaptureAny(b.blackPawn, universal)
+		ownKnights = b.blackKnight
+		ownR = b.blackRook
+		ownB = b.blackBishop
+		ownQ = b.blackQueen
+		ownKing = b.blackKing
 	} else {
-		opPieces = b.whitePieces
-		ownPieces := b.blackPieces
-		emptySquares := (opPieces | ownPieces) ^ universal
-		opPawns = wPawnsAble2CaptureAny(b.whitePawn, universal) | wDoublePushTargets(b.whitePawn, emptySquares) | wSinglePushTargets(b.whitePawn, emptySquares)
-		opKnights = b.whiteKnight
-		opR = b.whiteRook
-		opB = b.whiteBishop
-		opQ = b.whiteQueen
-		opKing = b.whiteKing
+		ownPieces = b.whitePieces
+		ownPawns = wPawnsAble2CaptureAny(b.whitePawn, universal)
+		ownKnights = b.whiteKnight
+		ownR = b.whiteRook
+		ownB = b.whiteBishop
+		ownQ = b.whiteQueen
+		ownKing = b.whiteKing
 	}
-	taboo := opPawns | (knightAttacks(opKnights)) | kingAttacks(opKing)
-	for opB != 0 {
-		sq := bitScanForward(opB)
-		taboo |= bishopAttacks(Square(sq), occupiedBB, opPieces)
-		opB ^= (1 << sq)
-	}
-
-	for opR != 0 {
-		sq := bitScanForward(opR)
-		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
-		opR ^= (1 << sq)
+	pawnAttacks := ownPawns
+	minorAttacks := (knightAttacks(ownKnights))
+	otherAttacks := kingAttacks(ownKing)
+	for ownB != 0 {
+		sq := bitScanForward(ownB)
+		minorAttacks |= bishopAttacks(Square(sq), occupiedBB, ownPieces)
+		ownB ^= (1 << sq)
 	}
 
-	for opQ != 0 {
-		sq := bitScanForward(opQ)
-		taboo |= queenAttacks(Square(sq), occupiedBB, opPieces)
-		opQ ^= (1 << sq)
+	for ownR != 0 {
+		sq := bitScanForward(ownR)
+		otherAttacks |= rookAttacks(Square(sq), occupiedBB, ownPieces)
+		ownR ^= (1 << sq)
 	}
 
-	return taboo
+	for ownQ != 0 {
+		sq := bitScanForward(ownQ)
+		otherAttacks |= queenAttacks(Square(sq), occupiedBB, ownPieces)
+		ownQ ^= (1 << sq)
+	}
+
+	return pawnAttacks, minorAttacks, otherAttacks
 }
 
 func QueenAttacks(sq Square, occ uint64, own uint64) uint64 {
@@ -160,4 +158,31 @@ func max(x int16, y int16) int16 {
 		return x
 	}
 	return y
+}
+
+var SquareInnerRingMask [64]uint64 = initInnerRingMask()
+var SquareOuterRingMask [64]uint64 = initOuterRingMask()
+
+func initInnerRingMask() [64]uint64 {
+	var masks [64]uint64
+	for i := 0; i < 64; i++ {
+		masks[i] = kingAttacks(uint64(1 << i))
+	}
+	return masks
+}
+
+func initOuterRingMask() [64]uint64 {
+	var masks [64]uint64
+	for i := 0; i < 64; i++ {
+		innerMask := SquareInnerRingMask[i]
+		iter := innerMask
+		masks[i] = 0
+		for iter != 0 {
+			sq := bitScanForward(iter)
+			masks[i] |= kingAttacks(1 << sq)
+			iter ^= (1 << sq)
+		}
+		masks[i] = masks[i] &^ innerMask
+	}
+	return masks
 }
