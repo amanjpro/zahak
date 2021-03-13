@@ -346,6 +346,67 @@ func (p *Position) Status() Status {
 	return Unknown
 }
 
+func (p *Position) IsDraw() bool {
+	if p.HalfMoveClock >= 100 {
+		if p.IsInCheck() {
+			return p.HasLegalMoves()
+		}
+		return true
+	} else {
+		if p.Board.blackPawn != 0 || p.Board.whitePawn != 0 ||
+			p.Board.blackRook != 0 || p.Board.whiteRook != 0 ||
+			p.Board.blackQueen != 0 || p.Board.whiteQueen != 0 {
+			return false
+		} else {
+			wKnights := bitScanForward(p.Board.whiteKnight)
+			bKnights := bitScanForward(p.Board.blackKnight)
+			wBishops := bitScanForward(p.Board.blackBishop)
+			bBishops := bitScanForward(p.Board.blackBishop)
+
+			wKnightsNum := 0
+			bKnightsNum := 0
+			wBishopsNum := 0
+			bBishopsNum := 0
+
+			if wKnights != 64 {
+				wKnightsNum = 1
+			}
+
+			if bKnights != 64 {
+				bKnightsNum = 1
+			}
+
+			if wBishops != 64 {
+				wBishopsNum = 1
+			}
+
+			if bBishops != 64 {
+				bBishopsNum = 1
+			}
+
+			all := wKnightsNum + bKnightsNum + wBishopsNum + bBishopsNum
+
+			// both sides have a bare king
+			// one side has a king and a minor piece against a bare king
+
+			if all <= 1 {
+				return true
+			}
+			// both sides have a king and a bishop, the bishops being the same color
+			if wKnightsNum == 0 && bKnightsNum == 0 {
+				otherWB := wBishops ^ (1 << wBishops)
+				otherBB := bBishops ^ (1 << bBishops)
+				if otherWB == 0 && otherBB == 0 &&
+					Square(1<<bBishops).GetColor() == Square(1<<wBishops).GetColor() {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 func (p *Position) IsFIDEDrawRule() bool {
 	if p.HalfMoveClock >= 100 {
 		return true
