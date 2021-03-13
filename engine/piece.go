@@ -47,6 +47,24 @@ func (c Color) Other() Color {
 	return NoColor
 }
 
+func (t PieceType) Name() string {
+	switch t {
+	case Pawn:
+		return "P"
+	case Knight:
+		return "N"
+	case Bishop:
+		return "B"
+	case Rook:
+		return "R"
+	case Queen:
+		return "Q"
+	case King:
+		return "K"
+	}
+	return "nothing"
+}
+
 func (p Piece) Type() PieceType {
 	switch p {
 	case WhitePawn, BlackPawn:

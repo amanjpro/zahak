@@ -46,10 +46,18 @@ func (sq Square) GetColor() Color {
 	return White
 }
 
+func (f File) Name() string {
+	return string('a' + byte(f))
+}
+
+func (r Rank) Name() int {
+	return (int(r) + 1)
+}
+
 func (s Square) Name() string {
-	var fileName byte = ('a' + byte(s.File()))
-	var rankName int = (int(s.Rank()) + 1)
-	return fmt.Sprint(string(fileName), rankName)
+	var fileName = s.File().Name()
+	var rankName = s.Rank().Name()
+	return fmt.Sprint(fileName, rankName)
 }
 
 func (sq Square) File() File {

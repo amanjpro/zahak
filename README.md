@@ -56,6 +56,8 @@ Usage of bin/zahak:
     Run the engine in profiling mode
   -slow
     Run all perft tests, even the very slow tests
+	-test-positions
+    Path to EPD positions, used to test the strength of the engine
 ```
 
 # Opening Books
