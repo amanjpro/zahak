@@ -30,3 +30,68 @@ func (p *Position) ParseMoves(moveStr []string) []Move {
 		return append(append([]Move{}, parsed), otherMoves...)
 	}
 }
+
+func (p *Position) MoveToPGN(move Move) string {
+	if move.IsKingSideCastle() {
+		return "O-O"
+	}
+	if move.IsQueenSideCastle() {
+		return "O-O-O"
+	}
+	isCapture := move.IsCapture()
+	isCheck := move.IsCheck()
+	movingPiece := move.MovingPiece()
+	source := move.Source()
+	dest := move.Destination()
+	promoType := move.PromoType()
+
+	// highly inefficient, but so what
+	ambiguity := 0
+	var alternativeMove Move
+	if movingPiece.Type() != Pawn {
+		validMoves := p.LegalMoves()
+		for _, m := range validMoves {
+			if m != move && m.MovingPiece() == movingPiece && m.Destination() == dest {
+				alternativeMove = m
+				ambiguity += 1
+			}
+		}
+	}
+
+	moveStr := ""
+	if movingPiece.Type() != Pawn {
+		moveStr = movingPiece.Type().Name()
+	} else if movingPiece.Type() == Pawn && isCapture {
+		moveStr = source.File().Name()
+	}
+
+	if ambiguity == 1 {
+		s := alternativeMove.Source()
+		if s.File() != source.File() {
+			moveStr = fmt.Sprint(moveStr, source.File().Name())
+		} else {
+			moveStr = fmt.Sprint(moveStr, source.Rank().Name())
+		}
+	} else if ambiguity > 1 {
+		moveStr = fmt.Sprint(moveStr, source.File().Name(), source.Rank().Name())
+	}
+	if isCapture {
+		moveStr = fmt.Sprint(moveStr, "x")
+	}
+	moveStr = fmt.Sprint(moveStr, dest.Name())
+	if promoType != NoType {
+		moveStr = fmt.Sprint(moveStr, "=", promoType.Name())
+	}
+	if isCheck {
+		// is Checkmate?
+		p.partialMakeMove(move)
+		if p.Status() == Checkmate {
+			moveStr = fmt.Sprint(moveStr, "#")
+		} else {
+			moveStr = fmt.Sprint(moveStr, "+")
+		}
+		p.partialUnMakeMove(move)
+	}
+
+	return moveStr
+}

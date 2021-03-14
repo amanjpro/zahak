@@ -11,6 +11,7 @@ import (
 
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/perft"
+	. "github.com/amanjpro/zahak/strength"
 	. "github.com/amanjpro/zahak/uci"
 )
 
@@ -20,6 +21,7 @@ func main() {
 	var perftTreeFlag = flag.Bool("perft-tree", false, "Run the engine in prefttree mode")
 	var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
 	var bookPath = flag.String("book", "", "Path to openning book in PolyGlot (bin) format")
+	var epdPath = flag.String("test-positions", "", "Path to EPD positions, used to test the strength of the engine")
 	flag.Parse()
 	if *profileFlag {
 		cpu, err := os.Create("zahak-engine-cpu-profile")
@@ -39,7 +41,9 @@ func main() {
 		defer pprof.StopCPUProfile()
 		defer mem.Close() // error handling omitted for example
 	}
-	if *perftFlag {
+	if *epdPath != "" {
+		RunTestPositions(*epdPath)
+	} else if *perftFlag {
 		StartPerftTest(*slowFlag)
 	} else if *perftTreeFlag {
 		depth, _ := strconv.Atoi(flag.Arg(0))
