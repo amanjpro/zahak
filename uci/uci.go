@@ -40,32 +40,33 @@ func (uci *UCI) Start() {
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		cmd, err := reader.ReadString('\n')
+		cmd = strings.Trim(cmd, "\n\r")
 		if err == nil {
 			switch cmd {
-			case "debug on\n":
+			case "debug on":
 				uci.engine.DebugMode = true
-			case "debug off\n":
+			case "debug off":
 				uci.engine.DebugMode = false
-			case "ponderhit\n":
+			case "ponderhit":
 				uci.engine.StartTime = time.Now()
 				uci.engine.Pondering = false
 				uci.engine.ThinkTime = uci.thinkTime
 				uci.thinkTime = 0
 				uci.engine.SendPv(-1)
-			case "quit\n":
+			case "quit":
 				return
-			case "uci\n":
+			case "uci":
 				fmt.Print("id name Zahak\n\n")
 				fmt.Print("id author Amanj\n\n")
 				fmt.Print("option name Ponder type check default false\n\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
 				fmt.Printf("option name Book type check default %t\n\n", uci.withBook)
 				fmt.Print("uciok\n\n")
-			case "isready\n":
-				fmt.Print("readyok\n\n")
-			case "ucinewgame\n":
+			case "isready":
+				fmt.Print("readyok\n")
+			case "ucinewgame":
 				game = FromFen(startFen, true)
-			case "stop\n":
+			case "stop":
 				if uci.engine.Pondering {
 					uci.stopPondering()
 				} else {
