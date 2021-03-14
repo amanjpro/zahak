@@ -260,7 +260,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		line.Recycle()
 		move := movePicker.Next()
 		if isRootNode {
-			fmt.Printf("info depth %d currmove %s currmovenumber %d\n\n", depthLeft, move.ToString(), i+1)
+			fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), i+1)
 		}
 
 		LMR := int8(0)

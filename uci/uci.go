@@ -56,12 +56,12 @@ func (uci *UCI) Start() {
 			case "quit":
 				return
 			case "uci":
-				fmt.Print("id name Zahak\n\n")
-				fmt.Print("id author Amanj\n\n")
-				fmt.Print("option name Ponder type check default false\n\n")
-				fmt.Printf("option name Hash type spin default %d min 1 max %d\n\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
-				fmt.Printf("option name Book type check default %t\n\n", uci.withBook)
-				fmt.Print("uciok\n\n")
+				fmt.Print("id name Zahak\n")
+				fmt.Print("id author Amanj\n")
+				fmt.Print("option name Ponder type check default false\n")
+				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
+				fmt.Printf("option name Book type check default %t\n", uci.withBook)
+				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
 			case "ucinewgame":

@@ -26,21 +26,21 @@ type Info struct {
 }
 
 func (i *Info) Print() {
-	fmt.Printf("info string EFP: %d\n\n", i.efpCounter)
-	fmt.Printf("info string RFP: %d\n\n", i.rfpCounter)
-	fmt.Printf("info string Razoring: %d\n\n", i.razoringCounter)
-	fmt.Printf("info string Check Extension: %d\n\n", i.checkExtentionCounter)
-	fmt.Printf("info string Mult-Cut: %d\n\n", i.multiCutCounter)
-	fmt.Printf("info string Null-Move: %d\n\n", i.nullMoveCounter)
-	fmt.Printf("info string LMR: %d\n\n", i.lmrCounter)
-	fmt.Printf("info string Delta Pruning: %d\n\n", i.deltaPruningCounter)
-	fmt.Printf("info string SEE Quiescence: %d\n\n", i.seeQuiescenceCounter)
-	fmt.Printf("info string PV Nodes: %d\n\n", i.mainSearchCounter)
-	fmt.Printf("info string ZW Nodes: %d\n\n", i.zwCounter)
-	fmt.Printf("info string Research: %d\n\n", i.researchCounter)
-	fmt.Printf("info string Quiescence Nodes: %d\n\n", i.quiesceCounter)
-	fmt.Printf("info string Killer Moves: %d\n\n", i.killerCounter)
-	fmt.Printf("info string History Moves: %d\n\n", i.historyCounter)
+	fmt.Printf("info string EFP: %d\n", i.efpCounter)
+	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
+	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
+	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
+	fmt.Printf("info string Mult-Cut: %d\n", i.multiCutCounter)
+	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
+	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
+	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
+	fmt.Printf("info string SEE Quiescence: %d\n", i.seeQuiescenceCounter)
+	fmt.Printf("info string PV Nodes: %d\n", i.mainSearchCounter)
+	fmt.Printf("info string ZW Nodes: %d\n", i.zwCounter)
+	fmt.Printf("info string Research: %d\n", i.researchCounter)
+	fmt.Printf("info string Quiescence Nodes: %d\n", i.quiesceCounter)
+	fmt.Printf("info string Killer Moves: %d\n", i.killerCounter)
+	fmt.Printf("info string History Moves: %d\n", i.historyCounter)
 }
 
 type Engine struct {
@@ -178,7 +178,7 @@ func (e *Engine) SendPv(depth int8) {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n\n",
+	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n",
 		depth, e.pv.moveCount, e.cacheHits, TranspositionTable.Consumed(), e.nodesVisited, e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
 }
