@@ -15,6 +15,8 @@ import (
 	. "github.com/amanjpro/zahak/uci"
 )
 
+var version = "dev"
+
 func main() {
 	var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
 	var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
@@ -55,6 +57,6 @@ func main() {
 		}
 		PerftTree(game, depth, moves)
 	} else {
-		NewUCI(*bookPath != "", *bookPath).Start()
+		NewUCI(version, *bookPath != "", *bookPath).Start()
 	}
 }

@@ -16,14 +16,16 @@ import (
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type UCI struct {
+	version   string
 	engine    *Engine
 	thinkTime int64
 	withBook  bool
 	bookPath  string
 }
 
-func NewUCI(withBook bool, bookPath string) *UCI {
+func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
+		version,
 		NewEngine(),
 		0,
 		withBook,
@@ -56,7 +58,7 @@ func (uci *UCI) Start() {
 			case "quit":
 				return
 			case "uci":
-				fmt.Print("id name Zahak\n")
+				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
 				fmt.Print("option name Ponder type check default false\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
