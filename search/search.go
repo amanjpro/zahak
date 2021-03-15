@@ -42,7 +42,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			line.Recycle()
 			score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, EmptyMove, true, true)
 			if ok && (firstScore || line.moveCount >= e.pv.moveCount) {
-				e.pv = line
+				e.pv.Clone(line)
 				e.score = score
 				e.move = e.pv.MoveAt(0)
 				e.SendPv(iterationDepth)

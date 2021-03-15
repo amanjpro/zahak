@@ -33,6 +33,15 @@ func (thisLine *PVLine) ReplaceLine(otherLine *PVLine) {
 	}
 }
 
+func (thisLine *PVLine) Clone(otherLine *PVLine) {
+	otherLineLen := int(otherLine.moveCount)
+	for i := 0; i < otherLineLen; i++ {
+		thisLine.line[i] = otherLine.line[i]
+	}
+	thisLine.moveCount = otherLine.moveCount
+	thisLine.hasFirst = otherLine.hasFirst
+}
+
 func (thisLine *PVLine) AddFirst(move Move) {
 	if !thisLine.hasFirst {
 		thisLine.moveCount += 1
