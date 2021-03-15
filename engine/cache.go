@@ -9,6 +9,15 @@ type CachedEval struct {
 	Age      uint16
 }
 
+func (c *CachedEval) Update(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
+	c.Hash = hash
+	c.HashMove = hashmove
+	c.Eval = eval
+	c.Depth = depth
+	c.Type = nodeType
+	c.Age = age
+}
+
 type NodeType uint8
 
 const (
@@ -45,11 +54,11 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	oldValue := c.items[key]
 	if oldValue != EmptyEval {
 		if hash == oldValue.Hash {
-			c.items[key] = CachedEval{hash, hashmove, eval, depth, nodeType, age}
+			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 			return
 		}
 		if age-oldValue.Age >= oldAge {
-			c.items[key] = CachedEval{hash, hashmove, eval, depth, nodeType, age}
+			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 			return
 		}
 		if oldValue.Depth > depth {
@@ -58,13 +67,13 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 		if oldValue.Type == Exact || nodeType != Exact {
 			return
 		} else if nodeType == Exact {
-			c.items[key] = CachedEval{hash, hashmove, eval, depth, nodeType, age}
+			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 			return
 		}
-		c.items[key] = CachedEval{hash, hashmove, eval, depth, nodeType, age}
+		c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 	} else {
 		c.consumed += 1
-		c.items[key] = CachedEval{hash, hashmove, eval, depth, nodeType, age}
+		c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 	}
 }
 
@@ -74,7 +83,7 @@ func (c *Cache) Size() uint32 {
 
 func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 	key := c.hash(hash)
-	item := &c.items[key]
+	item := c.items[key]
 	if item.Hash == hash {
 		return item.HashMove, item.Eval, item.Depth, item.Type, true
 	}
