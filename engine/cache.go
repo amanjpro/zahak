@@ -29,15 +29,15 @@ type Cache struct {
 
 var EmptyEval = CachedEval{0, EmptyMove, 0, 0, 0, 0}
 
+const DEFAULT_CACHE_SIZE = uint32(10)
+const MAX_CACHE_SIZE = uint32(8000)
+
 func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-var EmptyCache = Cache{nil, 0, 0}
-var TranspositionTable Cache = EmptyCache
-
 func (c *Cache) hash(key uint64) uint32 {
-	return uint32(key>>32) % c.size
+	return uint32(key>>32) % uint32(len(c.items))
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
@@ -68,6 +68,10 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	}
 }
 
+func (c *Cache) Size() uint32 {
+	return c.size
+}
+
 func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 	key := c.hash(hash)
 	item := &c.items[key]
@@ -77,29 +81,15 @@ func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 	return EmptyMove, 0, 0, 0, false
 }
 
-func NewCache(megabytes uint32) {
+func NewCache(megabytes uint32) *Cache {
 	if megabytes > MAX_CACHE_SIZE {
-		return
+		return nil
 	}
 	size := megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE
 	items := make([]CachedEval, size)
-	TranspositionTable = Cache{items, uint32(size), 0} //s, current: 0}
+	tt := Cache{items, megabytes, 0} //s, current: 0}
 	for i := 0; i < int(size); i++ {
-		TranspositionTable.items[i] = EmptyEval
+		tt.items[i] = EmptyEval
 	}
-}
-
-const DEFAULT_CACHE_SIZE = uint32(10)
-const MAX_CACHE_SIZE = uint32(8000)
-
-func ResetCache() {
-	if TranspositionTable.size != EmptyCache.size {
-		TranspositionTable.items = make([]CachedEval, TranspositionTable.size)
-		TranspositionTable.consumed = 0
-		for i := 0; i < int(TranspositionTable.size); i++ {
-			TranspositionTable.items[i] = EmptyEval
-		}
-	} else {
-		NewCache(DEFAULT_CACHE_SIZE)
-	}
+	return &tt
 }

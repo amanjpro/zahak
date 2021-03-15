@@ -77,7 +77,7 @@ func RunTestPositions(path string) {
 		os.Stdout = w
 
 		game := FromFen(epd.fen, true)
-		e := NewEngine()
+		e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 		e.ThinkTime = 120000
 		pos := game.Position()
 		e.Search(pos, 100, 0)

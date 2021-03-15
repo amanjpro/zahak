@@ -104,7 +104,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	hash := position.Hash()
-	nHashMove, nEval, nDepth, nType, found := TranspositionTable.Get(hash)
+	nHashMove, nEval, nDepth, nType, found := e.TranspositionTable.Get(hash)
 	if found && nDepth >= depthLeft {
 		if nEval >= beta && (nType == UpperBound || nType == Exact) {
 			e.CacheHit()
@@ -245,7 +245,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 	if bestscore > alpha {
 		if bestscore >= beta {
-			TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
+			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
 			e.AddKillerMove(move, searchHeight)
 			return bestscore, true
 		}
@@ -318,7 +318,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		if score > bestscore {
 			if score >= beta {
-				TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
+				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
 				e.AddKillerMove(move, searchHeight)
 				return score, ok
 			}
@@ -332,9 +332,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 	if hasSeenExact {
-		TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, ply)
+		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, ply)
 	} else {
-		TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, ply)
+		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, ply)
 	}
 	return bestscore, true
 }

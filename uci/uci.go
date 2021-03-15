@@ -26,7 +26,7 @@ type UCI struct {
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
-		NewEngine(),
+		NewEngine(NewCache(DEFAULT_CACHE_SIZE)),
 		0,
 		withBook,
 		bookPath,
@@ -35,7 +35,7 @@ func NewUCI(version string, withBook bool, bookPath string) *UCI {
 
 func (uci *UCI) Start() {
 	var game Game
-	var depth = int8(100)
+	var depth = int8(MAX_DEPTH)
 	if uci.withBook {
 		InitBook(uci.bookPath)
 	}
@@ -67,6 +67,7 @@ func (uci *UCI) Start() {
 			case "isready":
 				fmt.Print("readyok\n")
 			case "ucinewgame":
+				uci.engine.TranspositionTable = NewCache(uci.engine.TranspositionTable.Size())
 				game = FromFen(startFen, true)
 			case "stop":
 				if uci.engine.Pondering {
@@ -89,7 +90,7 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
-					NewCache(uint32(hashSize))
+					uci.engine.TranspositionTable = NewCache(uint32(hashSize))
 				} else if strings.HasPrefix(cmd, "go") {
 					go uci.findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
@@ -101,6 +102,7 @@ func (uci *UCI) Start() {
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
 					uci.stopPondering()
+					uci.engine.TranspositionTable = NewCache(uci.engine.TranspositionTable.Size())
 					game = FromFen(startFen, true)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
@@ -111,6 +113,7 @@ func (uci *UCI) Start() {
 						moves = cmd[9:]
 						game = FromFen(fen, false)
 					} else {
+						uci.engine.TranspositionTable = NewCache(uci.engine.TranspositionTable.Size())
 						game = FromFen(fen, true)
 					}
 					for _, move := range game.Position().ParseMoves(moves) {

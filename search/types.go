@@ -44,23 +44,24 @@ func (i *Info) Print() {
 }
 
 type Engine struct {
-	nodesVisited   int64
-	cacheHits      int64
-	pv             *PVLine
-	StopSearchFlag bool
-	move           Move
-	score          int16
-	killerMoves    [][]Move
-	searchHistory  [][]int32
-	StartTime      time.Time
-	ThinkTime      int64
-	info           Info
-	pred           Predecessors
-	DebugMode      bool
-	Pondering      bool
+	nodesVisited       int64
+	cacheHits          int64
+	pv                 *PVLine
+	StopSearchFlag     bool
+	move               Move
+	score              int16
+	killerMoves        [][]Move
+	searchHistory      [][]int32
+	StartTime          time.Time
+	ThinkTime          int64
+	info               Info
+	pred               Predecessors
+	TranspositionTable *Cache
+	DebugMode          bool
+	Pondering          bool
 }
 
-func NewEngine() *Engine {
+func NewEngine(tt *Cache) *Engine {
 	return &Engine{
 		0,
 		0,
@@ -74,6 +75,7 @@ func NewEngine() *Engine {
 		0,
 		NoInfo,
 		NewPredecessors(),
+		tt,
 		false,
 		false,
 	}
@@ -179,7 +181,7 @@ func (e *Engine) SendPv(depth int8) {
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
 	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n",
-		depth, e.pv.moveCount, e.cacheHits, TranspositionTable.Consumed(), e.nodesVisited, e.score,
+		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(), e.nodesVisited, e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
 }
 
