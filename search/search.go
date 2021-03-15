@@ -33,7 +33,6 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		e.pv = line
 	}
 
-	firstScore := true
 	if e.move == EmptyMove {
 		e.pv = NewPVLine(MAX_DEPTH)
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
@@ -42,12 +41,11 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			}
 			line.Recycle()
 			score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, line, EmptyMove, true, true)
-			if ok && (firstScore || line.moveCount >= e.pv.moveCount) {
+			if ok {
 				e.pv.Clone(line)
 				e.score = score
 				e.move = e.pv.MoveAt(0)
 				e.SendPv(iterationDepth)
-				firstScore = false
 			}
 			lastDepth = iterationDepth
 			if !e.Pondering && iterationDepth >= 35 && e.move == previousBestMove {
