@@ -46,7 +46,7 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 }
 
 func (mp *MovePicker) score() {
-	pv := mp.engine.pv
+	// pv := mp.engine.pv
 	position := mp.position
 	hashmove := mp.hashmove
 	board := position.Board
@@ -54,21 +54,22 @@ func (mp *MovePicker) score() {
 	moveOrder := mp.moveOrder
 
 	for i, move := range mp.moves {
-		// Is in PV?
-		if pv != nil && pv.moveCount > moveOrder {
-			mv := pv.MoveAt(moveOrder)
-			if mv == move {
-				mp.scores[i] = 900_000_000
-				mp.hasPvMove = true
-				continue
-			}
-		}
 
 		if move == hashmove {
-			mp.scores[i] = 500_000_000
+			mp.scores[i] = 900_000_000
 			continue
 		}
 
+		// // Is in PV?
+		// if pv != nil && pv.moveCount > moveOrder {
+		// 	mv := pv.MoveAt(moveOrder)
+		// 	if mv == move {
+		// 		mp.scores[i] = 500_000_000
+		// 		mp.hasPvMove = true
+		// 		continue
+		// 	}
+		// }
+		//
 		source := move.Source()
 		dest := move.Destination()
 		piece := move.MovingPiece()
