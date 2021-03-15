@@ -8,8 +8,8 @@ A UCI compatible chess AI written in Go. Still work in progress.
 
 Zahak (or Zahhak or Azhi Dahak) is an evil figure in Iranian/Kurdish/Perisan
 mythology, evident in ancient Iranian folklore as Azhi Dahāka, the name by
-which he also appears in the texts of the Avesta.  Legend has that, that he two
-giant snakes on his shoulders that he had to feed them two human brains on
+which he also appears in the texts of the Avesta.  Legend has it, that he had two
+giant snakes on his shoulders and he had to feed them two human brains on
 daily basis, you can read more about him
 [here](https://en.wikipedia.org/wiki/Zahhak)
 
