@@ -61,11 +61,13 @@ type Engine struct {
 	Pondering          bool
 }
 
+var MAX_DEPTH int8 = int8(100)
+
 func NewEngine(tt *Cache) *Engine {
 	return &Engine{
 		0,
 		0,
-		NewPVLine(100),
+		NewPVLine(MAX_DEPTH),
 		false,
 		EmptyMove,
 		0,
@@ -199,7 +201,7 @@ type Predecessors struct {
 }
 
 func NewPredecessors() Predecessors {
-	return Predecessors{make([]uint64, 100), -1}
+	return Predecessors{make([]uint64, MAX_DEPTH), -1}
 }
 
 func (p *Predecessors) Push(hash uint64) {

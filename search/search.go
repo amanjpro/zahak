@@ -22,7 +22,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 	e.move = EmptyMove
 	e.score = alpha
 	fruitelessIterations := 0
-	line := NewPVLine(100)
+	line := NewPVLine(MAX_DEPTH)
 
 	bookmove := GetBookMove(position)
 	lastDepth := int8(1)
@@ -35,6 +35,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 
 	firstScore := true
 	if e.move == EmptyMove {
+		e.pv = NewPVLine(MAX_DEPTH)
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 			if e.ShouldStop() {
 				break
@@ -127,7 +128,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft > R && !position.IsEndGame() && !isInCheck
 
-	line := NewPVLine(100)
+	line := NewPVLine(MAX_DEPTH)
 	if isNullMoveAllowed {
 		ep := position.MakeNullMove()
 		oldPred := e.pred
