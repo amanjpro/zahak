@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -67,7 +68,10 @@ func (uci *UCI) Start() {
 			case "isready":
 				fmt.Print("readyok\n")
 			case "ucinewgame":
-				uci.engine.TranspositionTable = NewCache(uci.engine.TranspositionTable.Size())
+				size := uci.engine.TranspositionTable.Size()
+				uci.engine.TranspositionTable = nil
+				runtime.GC()
+				uci.engine.TranspositionTable = NewCache(size)
 				game = FromFen(startFen, true)
 			case "stop":
 				if uci.engine.Pondering {
@@ -90,6 +94,8 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
+					uci.engine.TranspositionTable = nil
+					runtime.GC()
 					uci.engine.TranspositionTable = NewCache(uint32(hashSize))
 				} else if strings.HasPrefix(cmd, "go") {
 					go uci.findMove(game, depth, game.MoveClock(), cmd)
@@ -102,8 +108,7 @@ func (uci *UCI) Start() {
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
 					uci.stopPondering()
-					uci.engine.TranspositionTable = NewCache(uci.engine.TranspositionTable.Size())
-					game = FromFen(startFen, true)
+					game = FromFen(startFen, false)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
 					cmd := strings.Fields(cmd)
@@ -113,8 +118,7 @@ func (uci *UCI) Start() {
 						moves = cmd[9:]
 						game = FromFen(fen, false)
 					} else {
-						uci.engine.TranspositionTable = NewCache(uci.engine.TranspositionTable.Size())
-						game = FromFen(fen, true)
+						game = FromFen(fen, false)
 					}
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
