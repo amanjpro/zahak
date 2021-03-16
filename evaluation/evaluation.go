@@ -581,18 +581,18 @@ func Evaluate(position *Position) int16 {
 		pieceIter ^= mask
 	}
 
-	pawnFactor := (16 - blackPawnsCount - whitePawnsCount) * 2
+	pawnFactor := int16(16-blackPawnsCount-whitePawnsCount) * 2
 
 	blackCentipawns += blackPawnsCount * BlackPawn.Weight()
-	blackCentipawns += (blackKnightsCount - pawnFactor) * BlackKnight.Weight()
-	blackCentipawns += (blackBishopsCount + pawnFactor) * BlackBishop.Weight()
-	blackCentipawns += (blackRooksCount + pawnFactor) * BlackRook.Weight()
+	blackCentipawns += blackKnightsCount * (BlackKnight.Weight() - pawnFactor)
+	blackCentipawns += blackBishopsCount * (BlackBishop.Weight() + pawnFactor)
+	blackCentipawns += blackRooksCount * (BlackRook.Weight() + pawnFactor)
 	blackCentipawns += blackQueensCount * BlackQueen.Weight()
 
 	whiteCentipawns += whitePawnsCount * WhitePawn.Weight()
-	whiteCentipawns += (whiteKnightsCount - pawnFactor) * WhiteKnight.Weight()
-	whiteCentipawns += (whiteBishopsCount + pawnFactor) * WhiteBishop.Weight()
-	whiteCentipawns += (whiteRooksCount + pawnFactor) * WhiteRook.Weight()
+	whiteCentipawns += whiteKnightsCount * (WhiteKnight.Weight() - pawnFactor)
+	whiteCentipawns += whiteBishopsCount * (WhiteBishop.Weight() + pawnFactor)
+	whiteCentipawns += whiteRooksCount * (WhiteRook.Weight() + pawnFactor)
 	whiteCentipawns += whiteQueensCount * WhiteQueen.Weight()
 
 	// mobility and attacks
