@@ -46,7 +46,7 @@ func (i *Info) Print() {
 type Engine struct {
 	nodesVisited       int64
 	cacheHits          int64
-	pv                 *PVLine
+	pv                 PVLine
 	StopSearchFlag     bool
 	move               Move
 	score              int16
@@ -56,6 +56,7 @@ type Engine struct {
 	ThinkTime          int64
 	info               Info
 	pred               Predecessors
+	innerLines         []PVLine
 	TranspositionTable *Cache
 	DebugMode          bool
 	Pondering          bool
@@ -64,10 +65,16 @@ type Engine struct {
 var MAX_DEPTH int8 = int8(100)
 
 func NewEngine(tt *Cache) *Engine {
+	line := NewPVLine(MAX_DEPTH)
+	innerLines := make([]PVLine, MAX_DEPTH)
+	for i := int8(0); i < MAX_DEPTH; i++ {
+		line := NewPVLine(MAX_DEPTH)
+		innerLines[i] = line
+	}
 	return &Engine{
 		0,
 		0,
-		NewPVLine(MAX_DEPTH),
+		line,
 		false,
 		EmptyMove,
 		0,
@@ -77,6 +84,7 @@ func NewEngine(tt *Cache) *Engine {
 		0,
 		NoInfo,
 		NewPredecessors(),
+		innerLines,
 		tt,
 		false,
 		false,

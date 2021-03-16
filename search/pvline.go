@@ -12,15 +12,15 @@ type PVLine struct {
 	hasFirst  bool
 }
 
-func NewPVLine(initialSize int8) *PVLine {
-	return &PVLine{
+func NewPVLine(initialSize int8) PVLine {
+	return PVLine{
 		0,
 		make([]Move, initialSize),
 		false,
 	}
 }
 
-func (thisLine *PVLine) ReplaceLine(otherLine *PVLine) {
+func (thisLine *PVLine) ReplaceLine(otherLine PVLine) {
 	otherLineLen := int(otherLine.moveCount)
 	if thisLine.hasFirst {
 		thisLine.moveCount = 1
@@ -33,7 +33,7 @@ func (thisLine *PVLine) ReplaceLine(otherLine *PVLine) {
 	}
 }
 
-func (thisLine *PVLine) Clone(otherLine *PVLine) {
+func (thisLine *PVLine) Clone(otherLine PVLine) {
 	otherLineLen := int(otherLine.moveCount)
 	for i := 0; i < otherLineLen; i++ {
 		thisLine.line[i] = otherLine.line[i]
