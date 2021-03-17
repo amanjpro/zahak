@@ -102,6 +102,9 @@ func (e *Engine) ShouldStop() bool {
 }
 
 func (e *Engine) ClearForSearch() {
+	for i := 0; i < len(e.innerLines); i++ {
+		e.innerLines[i].Recycle()
+	}
 	for i := 0; i < len(e.killerMoves); i++ {
 		if e.killerMoves[i] == nil {
 			e.killerMoves[i] = make([]Move, 2)

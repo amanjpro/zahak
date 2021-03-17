@@ -32,7 +32,7 @@ var EmptyEval = CachedEval{0, EmptyMove, 0, 0, 0, 0}
 var CACHE_ENTRY_SIZE = uint32(8 + 4 + 2 + 2 + 1 + 1)
 
 type Cache struct {
-	items    []*CachedEval
+	items    []CachedEval
 	size     uint32
 	consumed int
 }
@@ -51,7 +51,7 @@ func (c *Cache) hash(key uint64) uint32 {
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
 	key := c.hash(hash)
 	oldValue := c.items[key]
-	if oldValue != nil {
+	if oldValue != EmptyEval {
 		if hash == oldValue.Hash {
 			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 			return
@@ -72,7 +72,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 		c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 	} else {
 		c.consumed += 1
-		c.items[key] = &CachedEval{hash, hashmove, eval, age, depth, nodeType}
+		c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
 	}
 }
 
@@ -83,7 +83,7 @@ func (c *Cache) Size() uint32 {
 func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 	key := c.hash(hash)
 	item := c.items[key]
-	if item != nil && item.Hash == hash {
+	if item.Hash == hash {
 		return item.HashMove, item.Eval, item.Depth, item.Type, true
 	}
 	return EmptyMove, 0, 0, 0, false
@@ -93,8 +93,15 @@ func NewCache(megabytes uint32) *Cache {
 	if megabytes > MAX_CACHE_SIZE {
 		return nil
 	}
-	osize := int(megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE)
-	size := osize // roundPowerOfTwo(osize)
+	size := int(megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE)
 
-	return &Cache{make([]*CachedEval, size), megabytes, 0} //s, current: 0}
+	return &Cache{make([]CachedEval, roundPowerOfTwo(size)), megabytes, 0}
+}
+
+func roundPowerOfTwo(size int) int {
+	var x = 1
+	for (x << 1) <= size {
+		x <<= 1
+	}
+	return x
 }
