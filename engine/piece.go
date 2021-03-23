@@ -96,7 +96,7 @@ func (p Piece) Weight() int16 {
 	case WhiteRook, BlackRook:
 		return 525
 	case WhiteQueen, BlackQueen:
-		return 925
+		return 1000
 	case WhiteKing, BlackKing:
 		return MAX_INT
 	}
