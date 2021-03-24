@@ -4,22 +4,22 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-const COMMUNICATION_TIME_BUFFER = 100
+const COMMUNICATION_TIME_BUFFER = 50
 
 func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
 	increment int, movesToTimeControl int) int64 {
 	maximumTimeToThink := 0
 	if isPerMove {
-		maximumTimeToThink = availableTimeInMillis - COMMUNICATION_TIME_BUFFER
+		maximumTimeToThink = availableTimeInMillis
 	} else {
 		movestogo := 30
 		if movesToTimeControl != 0 {
 			movestogo = movesToTimeControl
 		}
 		availableTimeInMillis /= movestogo
-		maximumTimeToThink = availableTimeInMillis - COMMUNICATION_TIME_BUFFER
+		maximumTimeToThink = availableTimeInMillis
 	}
-	return int64(maximumTimeToThink + increment)
+	return int64(maximumTimeToThink - COMMUNICATION_TIME_BUFFER)
 }
 
 func abs(num int) int {
