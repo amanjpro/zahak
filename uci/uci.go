@@ -11,6 +11,7 @@ import (
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/evaluation"
 	. "github.com/amanjpro/zahak/search"
 )
 
@@ -58,6 +59,12 @@ func (uci *UCI) Start() {
 				uci.engine.SendPv(-1)
 			case "quit":
 				return
+			case "eval":
+				dir := int16(1)
+				if game.Position().Turn() == Black {
+					dir = -1
+				}
+				fmt.Printf("%d\n", dir*Evaluate(game.Position()))
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
@@ -112,7 +119,12 @@ func (uci *UCI) Start() {
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
 					cmd := strings.Fields(cmd)
-					fen := fmt.Sprintf("%s %s %s %s %s %s", cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7])
+					var fen string
+					if len(cmd) < 8 {
+						fen = fmt.Sprintf("%s %s %s %s %d %d", cmd[2], cmd[3], cmd[4], cmd[5], 0, 1)
+					} else {
+						fen = fmt.Sprintf("%s %s %s %s %s %s", cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7])
+					}
 					moves := []string{}
 					if len(cmd) > 9 {
 						moves = cmd[9:]
