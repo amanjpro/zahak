@@ -16,10 +16,13 @@ func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove 
 		if movesToTimeControl != 0 {
 			movestogo = movesToTimeControl
 		}
-		availableTimeInMillis /= movestogo
-		maximumTimeToThink = availableTimeInMillis
+		maximumTimeToThink = availableTimeInMillis / movestogo
 	}
-	return int64(maximumTimeToThink - COMMUNICATION_TIME_BUFFER)
+	if availableTimeInMillis < increment {
+		return int64(maximumTimeToThink - COMMUNICATION_TIME_BUFFER)
+	} else {
+		return int64(maximumTimeToThink - COMMUNICATION_TIME_BUFFER + increment)
+	}
 }
 
 func abs(num int) int {

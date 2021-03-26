@@ -25,9 +25,11 @@ func (g *Game) Move(m Move) {
 	pos := g.position
 
 	if g.IsLegalMove(m) {
-		g.numberOfMoves += 1
 		g.moves = append(g.moves, m)
 		pos.MakeMove(m)
+		if pos.Turn() == White {
+			g.numberOfMoves += 1
+		}
 		v, ok := pos.Positions[pos.Hash()]
 		if ok {
 			pos.Positions[pos.Hash()] = v + 1
@@ -44,9 +46,6 @@ func (g *Game) Position() *Position {
 }
 
 func (g *Game) MoveClock() uint16 {
-	if g.position.Turn() == Black {
-		return g.numberOfMoves + 1
-	}
 	return g.numberOfMoves
 }
 

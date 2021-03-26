@@ -615,10 +615,11 @@ func Evaluate(position *Position) int16 {
 	whiteCentipawns += aggressivityFactor * int16(2*(whiteAggressivity-blackAggressivity))
 	blackCentipawns += aggressivityFactor * int16(2*(blackAggressivity-whiteAggressivity))
 
+	tempo := int16(5)
 	if turn == White {
-		return toEval(whiteCentipawns - blackCentipawns)
+		return toEval(whiteCentipawns - blackCentipawns + tempo)
 	} else {
-		return toEval(blackCentipawns - whiteCentipawns)
+		return toEval(blackCentipawns - whiteCentipawns + tempo)
 	}
 }
 
