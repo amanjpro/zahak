@@ -198,7 +198,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 		kingIndex := bitScanForward(b.whiteKing)
 		ownKing = (1 << kingIndex)
 		squareOfKing = Square(kingIndex)
-		opPawnAttacks = wPawnsAble2CaptureAny(ownKing, b.blackPawn)
+		opPawnAttacks = wPawnsCaptureAny(squareOfKing, b.blackPawn)
 		opKnights = b.blackKnight
 		opRQ = b.blackRook | b.blackQueen
 		opBQ = b.blackBishop | b.blackQueen
@@ -206,7 +206,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 		kingIndex := bitScanForward(b.blackKing)
 		ownKing = (1 << kingIndex)
 		squareOfKing = Square(kingIndex)
-		opPawnAttacks = bPawnsAble2CaptureAny(ownKing, b.whitePawn)
+		opPawnAttacks = bPawnsCaptureAny(squareOfKing, b.whitePawn)
 		opKnights = b.whiteKnight
 		opRQ = b.whiteRook | b.whiteQueen
 		opBQ = b.whiteBishop | b.whiteQueen
@@ -271,7 +271,7 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
 	occupiedBB := b.whitePieces | b.blackPieces
 	if colorOfKing == White {
-		opPawns = bPawnsAble2CaptureAny(b.blackPawn, universal)
+		opPawns = bAllPawnsCaptureAny(b.blackPawn, universal)
 		opKnights = b.blackKnight
 		opR = b.blackRook
 		opB = b.blackBishop
@@ -279,7 +279,7 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 		opKing = b.blackKing
 		opPieces = b.blackPieces
 	} else {
-		opPawns = wPawnsAble2CaptureAny(b.whitePawn, universal)
+		opPawns = wAllPawnsCaptureAny(b.whitePawn, universal)
 		opKnights = b.whiteKnight
 		opR = b.whiteRook
 		opB = b.whiteBishop
@@ -321,7 +321,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 			pawn := uint64(1 << src)
 			if !capturesOnly {
 				if srcSq.Rank() == Rank2 {
-					dbl := wDoublePushTargets(pawn, emptySquares)
+					dbl := wDoublePushTargets(srcSq, emptySquares)
 					if dbl != 0 {
 						dest := Square(bitScanForward(dbl))
 						var tag MoveTag = 0
@@ -337,7 +337,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 						}
 					}
 				}
-				sngl := wSinglePushTargets(pawn, emptySquares)
+				sngl := wSinglePushTargets(srcSq, emptySquares)
 				if sngl != 0 {
 					dest := Square(bitScanForward(sngl))
 					if dest.Rank() == Rank8 {
@@ -368,7 +368,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					}
 				}
 			}
-			attacks := wPawnsAble2CaptureAny(pawn, otherPieces)
+			attacks := wPawnsCaptureAny(srcSq, otherPieces)
 			for attacks != 0 {
 				sq := bitScanForward(attacks)
 				dest := Square(sq)
@@ -403,7 +403,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 			}
 			if srcSq.Rank() == Rank5 && enPassant != NoSquare && enPassant.Rank() == Rank6 {
 				ep := uint64(1 << enPassant)
-				r := wPawnsAble2CaptureAny(pawn, ep)
+				r := wPawnsCaptureAny(srcSq, ep)
 				if r != 0 {
 					dest := Square(bitScanForward(r))
 					var tag MoveTag = Capture | EnPassant
@@ -427,7 +427,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 			srcSq := Square(src)
 			pawn := uint64(1 << src)
 			if !capturesOnly {
-				dbl := bDoublePushTargets(pawn, emptySquares)
+				dbl := bDoublePushTargets(srcSq, emptySquares)
 				if dbl != 0 {
 					dest := Square(bitScanForward(dbl))
 					var tag MoveTag = 0
@@ -442,7 +442,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 						}
 					}
 				}
-				sngl := bSinglePushTargets(pawn, emptySquares)
+				sngl := bSinglePushTargets(srcSq, emptySquares)
 				if sngl != 0 {
 					dest := Square(bitScanForward(sngl))
 					if dest.Rank() == Rank1 {
@@ -473,7 +473,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					}
 				}
 			}
-			attacks := bPawnsAble2CaptureAny(pawn, otherPieces)
+			attacks := bPawnsCaptureAny(srcSq, otherPieces)
 			for attacks != 0 {
 				sq := bitScanForward(attacks)
 				dest := Square(sq)
@@ -509,7 +509,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 			}
 			if srcSq.Rank() == Rank4 && enPassant != NoSquare && enPassant.Rank() == Rank3 {
 				ep := uint64(1 << enPassant)
-				r := bPawnsAble2CaptureAny(pawn, ep)
+				r := bPawnsCaptureAny(srcSq, ep)
 				if r != 0 {
 					dest := Square(bitScanForward(r))
 					var tag MoveTag = Capture | EnPassant
@@ -744,41 +744,78 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 	return false
 }
 
-// Pawn Pushes
+// Pawns
 
-func wSinglePushTargets(wpawns uint64, empty uint64) uint64 {
+// All pawn attacks
+func wAllSinglePushTargets(wpawns uint64, empty uint64) uint64 {
 	return nortOne(wpawns) & empty
 }
 
-func wDoublePushTargets(wpawns uint64, empty uint64) uint64 {
-	singlePushs := wSinglePushTargets(wpawns, empty)
+func wAllDoublePushTargets(wpawns uint64, empty uint64) uint64 {
+	singlePushs := wAllSinglePushTargets(wpawns, empty)
 	return nortOne(singlePushs) & empty & rank4
 }
 
-func bSinglePushTargets(bpawns uint64, empty uint64) uint64 {
+func bAllSinglePushTargets(bpawns uint64, empty uint64) uint64 {
 	return soutOne(bpawns) & empty
 }
 
-func bDoublePushTargets(bpawns uint64, empty uint64) uint64 {
-	singlePushs := bSinglePushTargets(bpawns, empty)
+func bAllDoublePushTargets(bpawns uint64, empty uint64) uint64 {
+	singlePushs := bAllSinglePushTargets(bpawns, empty)
 	return soutOne(singlePushs) & empty & rank5
 }
 
-func wPawnAnyAttacks(wpawns uint64) uint64 {
-	return noEaOne(wpawns) | noWeOne(wpawns)
+func wAllPawnsCaptureAny(wpawns uint64, bpieces uint64) uint64 {
+	return (noEaOne(wpawns) | noWeOne(wpawns)) & bpieces
 }
 
-func bPawnAnyAttacks(bpawns uint64) uint64 {
-	return soEaOne(bpawns) | soWeOne(bpawns)
+func bAllPawnsCaptureAny(bpawns uint64, wpieces uint64) uint64 {
+	return (soEaOne(bpawns) | soWeOne(bpawns)) & wpieces
 }
 
-func wPawnsAble2CaptureAny(wpawns uint64, bpieces uint64) uint64 {
-	return wPawnAnyAttacks(wpawns) & bpieces
+// Single pawn attacks
+
+func wSinglePushTargets(sq Square, empty uint64) uint64 {
+	return wPawnSinglePushArray[sq] & empty
 }
 
-func bPawnsAble2CaptureAny(bpawns uint64, wpieces uint64) uint64 {
-	return bPawnAnyAttacks(bpawns) & wpieces
+func wDoublePushTargets(sq Square, empty uint64) uint64 {
+	if sq.Rank() != Rank2 {
+		return 0
+	}
+	singlePushs := wSinglePushTargets(sq, empty)
+	if singlePushs == 0 {
+		return 0
+	}
+	newSq := Square(bitScanForward(singlePushs))
+	return wSinglePushTargets(newSq, empty) // & rank4
 }
+
+func bSinglePushTargets(sq Square, empty uint64) uint64 {
+	return bPawnSinglePushArray[sq] & empty
+}
+
+func bDoublePushTargets(sq Square, empty uint64) uint64 {
+	if sq.Rank() != Rank7 {
+		return 0
+	}
+	singlePushs := bSinglePushTargets(sq, empty)
+	if singlePushs == 0 {
+		return 0
+	}
+	newSq := Square(bitScanForward(singlePushs))
+	return bSinglePushTargets(newSq, empty) // & rank5
+}
+
+func wPawnsCaptureAny(sq Square, bpieces uint64) uint64 {
+	return wPawnAttacksArray[sq] & bpieces
+}
+
+func bPawnsCaptureAny(sq Square, wpieces uint64) uint64 {
+	return bPawnAttacksArray[sq] & wpieces
+}
+
+var wPawnSinglePushArray, bPawnSinglePushArray, wPawnAttacksArray, bPawnAttacksArray [64]uint64
 
 // Sliding pieces
 
@@ -1154,16 +1191,25 @@ func init() {
 
 	for sq := 0; sq < 64; sq++ {
 
+		var b = uint64(1 << sq)
+
+		squareMask[sq] = b
 		// Needs to retire, when we get rid of horizontal and vertical double rooks
 		// That is hopefully, when the more efficient in-between mask is created
-		rayAttacksArray[North][sq] = northRay(1 << sq)
-		rayAttacksArray[NorthEast][sq] = northEastRay(1 << sq)
-		rayAttacksArray[East][sq] = eastRay(1 << sq)
-		rayAttacksArray[SouthEast][sq] = southEastRay(1 << sq)
-		rayAttacksArray[South][sq] = southRay(1 << sq)
-		rayAttacksArray[SouthWest][sq] = southWestRay(1 << sq)
-		rayAttacksArray[West][sq] = westRay(1 << sq)
-		rayAttacksArray[NorthWest][sq] = northWestRay(1 << sq)
+		rayAttacksArray[North][sq] = northRay(squareMask[sq])
+		rayAttacksArray[NorthEast][sq] = northEastRay(squareMask[sq])
+		rayAttacksArray[East][sq] = eastRay(squareMask[sq])
+		rayAttacksArray[SouthEast][sq] = southEastRay(squareMask[sq])
+		rayAttacksArray[South][sq] = southRay(squareMask[sq])
+		rayAttacksArray[SouthWest][sq] = southWestRay(squareMask[sq])
+		rayAttacksArray[West][sq] = westRay(squareMask[sq])
+		rayAttacksArray[NorthWest][sq] = northWestRay(squareMask[sq])
+
+		// Pawns
+		wPawnSinglePushArray[sq] = nortOne(squareMask[sq])
+		bPawnSinglePushArray[sq] = soutOne(squareMask[sq])
+		wPawnAttacksArray[sq] = noEaOne(squareMask[sq]) | noWeOne(squareMask[sq])
+		bPawnAttacksArray[sq] = soEaOne(squareMask[sq]) | soWeOne(squareMask[sq])
 
 		// Knights
 		computedKnightAttacks[sq] = knightAttacks(1 << sq)
@@ -1175,9 +1221,6 @@ func init() {
 		var mask = rookMask[sq]
 		var count = 1 << uint(bits.OnesCount64(mask))
 		for i := 0; i < count; i++ {
-			var b = uint64(1 << sq)
-
-			squareMask[sq] = b
 
 			var occ = magicify(mask, i)
 			var attacks = computeSlideAttacks(sq, occ, rookShifts[:])

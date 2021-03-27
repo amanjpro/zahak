@@ -13,9 +13,8 @@ func (b *Bitboard) attacksTo(occupied uint64, sq Square) uint64 {
 	rooksQueens |= b.blackRook | b.whiteRook
 	bishopsQueens |= b.blackBishop | b.whiteBishop
 
-	sqMask := uint64(1 << sq)
-	return wPawnsAble2CaptureAny(sqMask, b.blackPawn) |
-		bPawnsAble2CaptureAny(sqMask, b.whitePawn) |
+	return wPawnsCaptureAny(sq, b.blackPawn) |
+		bPawnsCaptureAny(sq, b.whitePawn) |
 		(computedKnightAttacks[sq] & knights) |
 		(computedKingAttacks[sq] & kings) |
 		(bishopAttacks(sq, occupied, empty) & bishopsQueens) |
@@ -112,7 +111,7 @@ func (b *Bitboard) AllAttacks(color Color) uint64 {
 		opPieces = b.blackPieces
 		ownPieces := b.whitePieces
 		emptySquares := (opPieces | ownPieces) ^ universal
-		opPawns = bPawnsAble2CaptureAny(b.blackPawn, universal) | bDoublePushTargets(b.blackPawn, emptySquares) | bSinglePushTargets(b.blackPawn, emptySquares)
+		opPawns = bAllPawnsCaptureAny(b.blackPawn, universal) | bAllDoublePushTargets(b.blackPawn, emptySquares) | bAllSinglePushTargets(b.blackPawn, emptySquares)
 		opKnights = b.blackKnight
 		opR = b.blackRook
 		opB = b.blackBishop
@@ -122,7 +121,7 @@ func (b *Bitboard) AllAttacks(color Color) uint64 {
 		opPieces = b.whitePieces
 		ownPieces := b.blackPieces
 		emptySquares := (opPieces | ownPieces) ^ universal
-		opPawns = wPawnsAble2CaptureAny(b.whitePawn, universal) | wDoublePushTargets(b.whitePawn, emptySquares) | wSinglePushTargets(b.whitePawn, emptySquares)
+		opPawns = wAllPawnsCaptureAny(b.whitePawn, universal) | wAllDoublePushTargets(b.whitePawn, emptySquares) | wAllSinglePushTargets(b.whitePawn, emptySquares)
 		opKnights = b.whiteKnight
 		opR = b.whiteRook
 		opB = b.whiteBishop
