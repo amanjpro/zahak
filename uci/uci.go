@@ -74,6 +74,10 @@ func (uci *UCI) Start() {
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
+			case "isdraw":
+				fmt.Print(game.Position().IsDraw(), "\n")
+			case "draw":
+				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame":
 				size := uci.engine.TranspositionTable.Size()
 				uci.engine.TranspositionTable = nil

@@ -299,7 +299,7 @@ func (p *Position) Status() Status {
 		} else {
 			wKnights := bitScanForward(p.Board.whiteKnight)
 			bKnights := bitScanForward(p.Board.blackKnight)
-			wBishops := bitScanForward(p.Board.blackBishop)
+			wBishops := bitScanForward(p.Board.whiteBishop)
 			bBishops := bitScanForward(p.Board.blackBishop)
 
 			wKnightsNum := 0
@@ -360,7 +360,7 @@ func (p *Position) IsDraw() bool {
 		} else {
 			wKnights := bitScanForward(p.Board.whiteKnight)
 			bKnights := bitScanForward(p.Board.blackKnight)
-			wBishops := bitScanForward(p.Board.blackBishop)
+			wBishops := bitScanForward(p.Board.whiteBishop)
 			bBishops := bitScanForward(p.Board.blackBishop)
 
 			wKnightsNum := 0
