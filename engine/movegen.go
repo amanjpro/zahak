@@ -1154,30 +1154,30 @@ func init() {
 
 	for sq := 0; sq < 64; sq++ {
 
+		var b = uint64(1 << sq)
+
+		squareMask[sq] = b
 		// Needs to retire, when we get rid of horizontal and vertical double rooks
 		// That is hopefully, when the more efficient in-between mask is created
-		rayAttacksArray[North][sq] = northRay(1 << sq)
-		rayAttacksArray[NorthEast][sq] = northEastRay(1 << sq)
-		rayAttacksArray[East][sq] = eastRay(1 << sq)
-		rayAttacksArray[SouthEast][sq] = southEastRay(1 << sq)
-		rayAttacksArray[South][sq] = southRay(1 << sq)
-		rayAttacksArray[SouthWest][sq] = southWestRay(1 << sq)
-		rayAttacksArray[West][sq] = westRay(1 << sq)
-		rayAttacksArray[NorthWest][sq] = northWestRay(1 << sq)
+		rayAttacksArray[North][sq] = northRay(squareMask[sq])
+		rayAttacksArray[NorthEast][sq] = northEastRay(squareMask[sq])
+		rayAttacksArray[East][sq] = eastRay(squareMask[sq])
+		rayAttacksArray[SouthEast][sq] = southEastRay(squareMask[sq])
+		rayAttacksArray[South][sq] = southRay(squareMask[sq])
+		rayAttacksArray[SouthWest][sq] = southWestRay(squareMask[sq])
+		rayAttacksArray[West][sq] = westRay(squareMask[sq])
+		rayAttacksArray[NorthWest][sq] = northWestRay(squareMask[sq])
 
 		// Knights
-		computedKnightAttacks[sq] = knightAttacks(1 << sq)
+		computedKnightAttacks[sq] = knightAttacks(squareMask[sq])
 
 		// Kings
-		computedKingAttacks[sq] = kingAttacks(1 << sq)
+		computedKingAttacks[sq] = kingAttacks(squareMask[sq])
 
 		// Rooks.
 		var mask = rookMask[sq]
 		var count = 1 << uint(bits.OnesCount64(mask))
 		for i := 0; i < count; i++ {
-			var b = uint64(1 << sq)
-
-			squareMask[sq] = b
 
 			var occ = magicify(mask, i)
 			var attacks = computeSlideAttacks(sq, occ, rookShifts[:])
