@@ -198,12 +198,13 @@ func TestKingQueenSideCastling(t *testing.T) {
 func TestPawnMovesForWhite(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
 	g := FromFen(fen, true)
-	p := g.position
 	board := g.position.Board
 	moves := make([]Move, 0, 8)
 	color := White
-	g.position.bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-		color, p.EnPassant, false, false, false, false, &moves)
+	g.position.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+		color, false, &moves)
+	g.position.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+		color, false, &moves)
 	expectedMoves := []Move{
 		NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0),
 		NewMove(H2, H3, WhitePawn, NoPiece, NoType, 0),
@@ -242,12 +243,13 @@ func TestPawnMovesForWhite(t *testing.T) {
 func TestPawnMovesForBlack(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3p1p2/1P4P1/4pP2/N6N/P1PPP2P/R1BQKB1R b KQkq f3 0 1"
 	g := FromFen(fen, true)
-	p := g.position
 	board := g.position.Board
 	moves := make([]Move, 0, 8)
 	color := Black
-	g.position.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-		color, p.EnPassant, false, false, false, false, &moves)
+	g.position.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+		color, false, &moves)
+	g.position.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+		color, false, &moves)
 	expectedMoves := []Move{
 		NewMove(H7, H6, BlackPawn, NoPiece, NoType, 0),
 		NewMove(H7, H5, BlackPawn, NoPiece, NoType, 0),
