@@ -17,6 +17,10 @@ type MovePicker struct {
 }
 
 func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) *MovePicker {
+	startIndex := 0
+	if hashmove != EmptyMove {
+		startIndex = 1
+	}
 	mp := &MovePicker{
 		p,
 		e,
@@ -25,7 +29,7 @@ func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuie
 		nil,
 		hashmove != EmptyMove,
 		moveOrder,
-		0,
+		startIndex,
 		isQuiescence,
 	}
 	if hashmove == EmptyMove {
@@ -39,6 +43,16 @@ func (mp *MovePicker) addMoves() {
 		mp.moves = mp.position.QuiesceneMoves(false)
 	} else {
 		mp.moves = mp.position.LegalMoves()
+	}
+	if mp.hashmove != EmptyMove {
+		hashIndex := 0
+		for i, m := range mp.moves {
+			if m == mp.hashmove {
+				hashIndex = i
+				break
+			}
+		}
+		mp.moves[0], mp.moves[hashIndex] = mp.moves[hashIndex], mp.moves[0]
 	}
 	mp.score()
 }
@@ -55,13 +69,18 @@ func (mp *MovePicker) Length() int {
 }
 
 func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
-	mp.useHashMove = true
+	hashIndex := 0
 	for i, move := range mp.moves {
 		if move == pvMove {
+			hashIndex = i
 			mp.scores[i] = 900_000_000
 			break
 		}
 	}
+	mp.moves[0], mp.moves[hashIndex] = mp.moves[hashIndex], mp.moves[0]
+	mp.scores[0], mp.scores[hashIndex] = mp.scores[hashIndex], mp.scores[0]
+	mp.hashmove = mp.moves[0]
+	mp.useHashMove = true
 }
 
 func (mp *MovePicker) score() {
@@ -156,10 +175,19 @@ func (mp *MovePicker) score() {
 }
 
 func (mp *MovePicker) Reset() {
-	mp.next = 0
+	startIndex := 0
+	if mp.hashmove != EmptyMove {
+		mp.useHashMove = true
+		startIndex = 1
+	}
+	mp.next = startIndex
 }
 
 func (mp *MovePicker) Next() Move {
+	if mp.useHashMove {
+		mp.useHashMove = false
+		return mp.hashmove
+	}
 	if mp.moves == nil {
 		mp.addMoves()
 	}
