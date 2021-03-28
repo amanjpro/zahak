@@ -196,7 +196,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 	occupiedBB := b.whitePieces | b.blackPieces
 	if colorOfKing == White {
 		kingIndex := bitScanForward(b.whiteKing)
-		ownKing = (1 << kingIndex)
+		ownKing = squareMask[kingIndex]
 		squareOfKing = Square(kingIndex)
 		opPawnAttacks = wPawnsAble2CaptureAny(ownKing, b.blackPawn)
 		opKnights = b.blackKnight
@@ -204,7 +204,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 		opBQ = b.blackBishop | b.blackQueen
 	} else {
 		kingIndex := bitScanForward(b.blackKing)
-		ownKing = (1 << kingIndex)
+		ownKing = squareMask[kingIndex]
 		squareOfKing = Square(kingIndex)
 		opPawnAttacks = bPawnsAble2CaptureAny(ownKing, b.whitePawn)
 		opKnights = b.whiteKnight
@@ -241,7 +241,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 			if (!doubleCheck && acc >= 1) || acc > 1 {
 				return true
 			}
-			bishopChecks ^= (1 << sq)
+			bishopChecks ^= squareMask[sq]
 		}
 	}
 
@@ -256,7 +256,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color, doubleCheck bool) bool {
 			if (!doubleCheck && acc >= 1) || acc > 1 {
 				return true
 			}
-			rookChecks ^= (1 << sq)
+			rookChecks ^= squareMask[sq]
 		}
 	}
 
@@ -291,19 +291,19 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 	for opB != 0 {
 		sq := bitScanForward(opB)
 		taboo |= bishopAttacks(Square(sq), occupiedBB, opPieces)
-		opB ^= (1 << sq)
+		opB ^= squareMask[sq]
 	}
 
 	for opR != 0 {
 		sq := bitScanForward(opR)
 		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
-		opR ^= (1 << sq)
+		opR ^= squareMask[sq]
 	}
 
 	for opQ != 0 {
 		sq := bitScanForward(opQ)
 		taboo |= queenAttacks(Square(sq), occupiedBB, opPieces)
-		opQ ^= (1 << sq)
+		opQ ^= squareMask[sq]
 	}
 
 	return taboo
@@ -318,7 +318,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 		for bbPawn != 0 {
 			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
-			pawn := uint64(1 << src)
+			pawn := squareMask[src]
 			if !capturesOnly {
 				if srcSq.Rank() == Rank2 {
 					dbl := wDoublePushTargets(pawn, emptySquares)
@@ -399,10 +399,10 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 						}
 					}
 				}
-				attacks ^= (1 << sq)
+				attacks ^= squareMask[sq]
 			}
 			if srcSq.Rank() == Rank5 && enPassant != NoSquare && enPassant.Rank() == Rank6 {
-				ep := uint64(1 << enPassant)
+				ep := squareMask[enPassant]
 				r := wPawnsAble2CaptureAny(pawn, ep)
 				if r != 0 {
 					dest := Square(bitScanForward(r))
@@ -425,7 +425,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 		for bbPawn != 0 {
 			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
-			pawn := uint64(1 << src)
+			pawn := squareMask[src]
 			if !capturesOnly {
 				dbl := bDoublePushTargets(pawn, emptySquares)
 				if dbl != 0 {
@@ -505,10 +505,10 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 						}
 					}
 				}
-				attacks ^= (1 << sq)
+				attacks ^= squareMask[sq]
 			}
 			if srcSq.Rank() == Rank4 && enPassant != NoSquare && enPassant.Rank() == Rank3 {
-				ep := uint64(1 << enPassant)
+				ep := squareMask[enPassant]
 				r := bPawnsAble2CaptureAny(pawn, ep)
 				if r != 0 {
 					dest := Square(bitScanForward(r))
@@ -565,7 +565,7 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 						p.addAllMoves(allMoves, m)
 					}
 				}
-				passiveMoves ^= (1 << sq)
+				passiveMoves ^= squareMask[sq]
 			}
 		}
 		for captureMoves != 0 {
@@ -583,9 +583,9 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 				}
 			}
 
-			captureMoves ^= (1 << sq)
+			captureMoves ^= squareMask[sq]
 		}
-		bbPiece ^= (1 << src)
+		bbPiece ^= squareMask[src]
 	}
 	return false
 }
@@ -597,7 +597,7 @@ func (p *Position) bbKnightMoves(movingPiece Piece, bbPiece uint64, ownPieces ui
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
-		knight := uint64(1 << src)
+		knight := squareMask[src]
 		if !capturesOnly {
 			moves := knightMovesNoCaptures(srcSq, both)
 			for moves != 0 {
@@ -614,7 +614,7 @@ func (p *Position) bbKnightMoves(movingPiece Piece, bbPiece uint64, ownPieces ui
 					}
 				}
 
-				moves ^= (1 << sq)
+				moves ^= squareMask[sq]
 			}
 		}
 		captures := knightCaptures(srcSq, otherPieces)
@@ -633,7 +633,7 @@ func (p *Position) bbKnightMoves(movingPiece Piece, bbPiece uint64, ownPieces ui
 				}
 			}
 
-			captures ^= (1 << sq)
+			captures ^= squareMask[sq]
 		}
 		bbPiece ^= knight
 	}
@@ -669,7 +669,7 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 					}
 				}
 
-				moves ^= (1 << sq)
+				moves ^= squareMask[sq]
 			}
 
 			E := E1
@@ -687,12 +687,12 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 				B = B8
 			}
 
-			kingSide := uint64(1<<F | 1<<G)
-			queenSide := uint64(1<<D | 1<<C)
+			kingSide := uint64(squareMask[F] | squareMask[G])
+			queenSide := uint64(squareMask[D] | squareMask[C])
 
 			if srcSq == E && kingSideCastle &&
 				((ownPieces|otherPieces)&kingSide == 0) && // are empty
-				(tabooSquares&(kingSide|1<<E) == 0) { // Not in check
+				(tabooSquares&(kingSide|squareMask[E]) == 0) { // Not in check
 				m := NewMove(srcSq, G, movingPiece, NoPiece, NoType, KingSideCastle)
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
@@ -706,8 +706,8 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 			}
 
 			if srcSq == E && queenSideCastle &&
-				((ownPieces|otherPieces)&(queenSide|(1<<B)) == 0) && // are empty
-				(tabooSquares&(queenSide|1<<E) == 0) { // Not in check
+				((ownPieces|otherPieces)&(queenSide|(squareMask[B])) == 0) && // are empty
+				(tabooSquares&(queenSide|squareMask[E]) == 0) { // Not in check
 				m := NewMove(srcSq, C, movingPiece, NoPiece, NoType, QueenSideCastle)
 				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 					return true
@@ -737,7 +737,7 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 				}
 			}
 
-			captures ^= (1 << sq)
+			captures ^= squareMask[sq]
 		}
 	}
 
@@ -1142,21 +1142,29 @@ func computeSlideAttacks(f int, occ uint64, fs []func(sq uint64) uint64) uint64 
 
 var rookAttacksArray [64][1 << 12]uint64
 var bishopAttacksArray [64][1 << 9]uint64
-var squareMask [64]uint64
+var squareMask = initSquareMask()
 
 func SquareMask(sq uint64) uint64 {
+	if sq > 64 {
+		return 0
+	}
 	return squareMask[sq]
 }
 
+func initSquareMask() [64]uint64 {
+	var sqm [64]uint64
+	for sq := 0; sq < 64; sq++ {
+		var b = uint64(1 << sq)
+		sqm[sq] = b
+	}
+	return sqm
+}
 func init() {
 	var rookShifts = [...]func(uint64) uint64{nortOne, westOne, soutOne, eastOne}
 	var bishopShifts = [...]func(uint64) uint64{noWeOne, noEaOne, soWeOne, soEaOne}
 
 	for sq := 0; sq < 64; sq++ {
 
-		var b = uint64(1 << sq)
-
-		squareMask[sq] = b
 		// Needs to retire, when we get rid of horizontal and vertical double rooks
 		// That is hopefully, when the more efficient in-between mask is created
 		rayAttacksArray[North][sq] = northRay(squareMask[sq])

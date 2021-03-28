@@ -65,7 +65,7 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 	allBits := b.whitePieces | b.blackPieces
 	for allBits != 0 {
 		index := bitScanForward(allBits)
-		mask := uint64(1 << index)
+		mask := squareMask[index]
 		sq := Square(index)
 		if b.blackPawn&(mask) != 0 {
 			allPieces[sq] = BlackPawn
@@ -100,7 +100,7 @@ func (b *Bitboard) AllPieces() map[Square]Piece {
 func (b *Bitboard) UpdateSquare(sq Square, newPiece Piece, oldPiece Piece) {
 	// Remove the piece from source square and add it to destination
 	b.Clear(sq, oldPiece)
-	mask := uint64(1 << sq)
+	mask := squareMask[int(sq)]
 	switch newPiece {
 	case BlackPawn:
 		b.blackPawn |= mask
@@ -142,10 +142,10 @@ func (b *Bitboard) UpdateSquare(sq Square, newPiece Piece, oldPiece Piece) {
 }
 
 func (b *Bitboard) PieceAt(sq Square) Piece {
-	mask := uint64(1 << sq)
 	if sq == NoSquare {
 		return NoPiece
 	}
+	mask := squareMask[int(sq)]
 	if b.blackPieces&mask != 0 {
 		if b.blackPawn&mask != 0 {
 			return BlackPawn
@@ -183,7 +183,7 @@ func (b *Bitboard) Clear(square Square, piece Piece) {
 	if piece == NoPiece {
 		return
 	}
-	mask := uint64(1 << square)
+	mask := squareMask[int(square)]
 	switch piece {
 	case BlackPawn:
 		b.blackPawn &^= mask
@@ -226,10 +226,13 @@ func (b *Bitboard) Clear(square Square, piece Piece) {
 
 func (b *Bitboard) Move(src Square, dest Square, sourcePiece Piece, destinationPiece Piece) {
 
+	if src == NoSquare || dest == NoSquare {
+		return
+	}
 	// clear destination square
 	b.Clear(dest, destinationPiece)
 	b.Clear(src, sourcePiece)
-	maskDest := uint64(1 << dest)
+	maskDest := squareMask[int(dest)]
 
 	// Remove the piece from source square and add it to destination
 	switch sourcePiece {
