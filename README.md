@@ -15,7 +15,19 @@ daily basis, you can read more about him
 
 # Play Zahak online
 
-Zahak is new to LiChess, you can play him and be impressed with him. His LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine). He is currently running on an old RaspberryPi device, so do not expect a truly amazing performance. But, hopefully he will be online 24/7.
+Zahak is new to LiChess, you can play him and be impressed with him. His
+LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine). He is
+currently running on an old RaspberryPi device, so do not expect a truly
+amazing performance. But, hopefully he will be online 24/7.
+
+# Rating
+
+Zahak is participating in some tournaments arranged by [Chess Engine
+Diaries](https://chessengines.blogspot.com/), he recently advanced to the E7 in
+the 44th edition of JCER competition.
+
+He is also listed in the [CCRL ratings](https://ccrl.chessdom.com/ccrl/404/),
+his current rating is around 1922.
 
 # Implemented Features:
 
