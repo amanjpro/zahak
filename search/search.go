@@ -117,6 +117,16 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
+	if nHashMove == EmptyMove && !position.HasLegalMoves() {
+		if isInCheck {
+			e.innerLines[searchHeight].Recycle()
+			return -CHECKMATE_EVAL, true
+		} else {
+			e.innerLines[searchHeight].Recycle()
+			return 0, true
+		}
+	}
+
 	if e.ShouldStop() {
 		e.innerLines[searchHeight].Recycle()
 		return -MAX_INT, false
@@ -145,17 +155,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			e.info.nullMoveCounter += 1
 			e.innerLines[searchHeight].Recycle()
 			return beta, true // null move pruning
-		}
-	}
-
-	legalMoves := position.LegalMoves()
-	if len(legalMoves) == 0 {
-		if isInCheck {
-			e.innerLines[searchHeight].Recycle()
-			return -CHECKMATE_EVAL, true
-		} else {
-			e.innerLines[searchHeight].Recycle()
-			return 0, true
 		}
 	}
 
@@ -190,6 +189,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
+	legalMoves := position.LegalMoves()
 	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, nHashMove)
 
 	// Internal Iterative Deepening
