@@ -1145,9 +1145,6 @@ var bishopAttacksArray [64][1 << 9]uint64
 var squareMask = initSquareMask()
 
 func SquareMask(sq uint64) uint64 {
-	if sq > 64 {
-		return 0
-	}
 	return squareMask[sq]
 }
 
