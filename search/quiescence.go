@@ -37,12 +37,10 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		alpha = standPat
 	}
 
-	withChecks := false && ply < 4
-	legalMoves := position.QuiesceneMoves(withChecks)
+	// withChecks := false && ply < 4
+	movePicker := NewMovePicker(position, e, searchHeight, EmptyMove, true)
 
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, EmptyMove)
-
-	for i := 0; i < len(legalMoves); i++ {
+	for i := 0; i < movePicker.Length(); i++ {
 		move := movePicker.Next()
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()

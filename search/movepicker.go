@@ -5,38 +5,57 @@ import (
 )
 
 type MovePicker struct {
-	position  *Position
-	engine    *Engine
-	hashmove  Move
-	moves     []Move
-	scores    []int32
-	hasPvMove bool
-	moveOrder int8
-	next      int
+	position     *Position
+	engine       *Engine
+	hashmove     Move
+	moves        []Move
+	scores       []int32
+	useHashMove  bool
+	moveOrder    int8
+	next         int
+	isQuiescence bool
 }
 
-func NewMovePicker(p *Position, e *Engine, moves []Move, moveOrder int8, hashmove Move) *MovePicker {
+func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) *MovePicker {
 	mp := &MovePicker{
 		p,
 		e,
 		hashmove,
-		moves,
-		make([]int32, len(moves)),
+		nil,
+		nil,
 		hashmove != EmptyMove,
 		moveOrder,
 		0,
+		isQuiescence,
 	}
-
-	mp.score()
+	if hashmove == EmptyMove {
+		mp.addMoves()
+	}
 	return mp
 }
 
+func (mp *MovePicker) addMoves() {
+	if mp.isQuiescence {
+		mp.moves = mp.position.QuiesceneMoves(false)
+	} else {
+		mp.moves = mp.position.LegalMoves()
+	}
+	mp.score()
+}
+
 func (mp *MovePicker) HasPVMove() bool {
-	return mp.hasPvMove
+	return mp.hashmove != EmptyMove
+}
+
+func (mp *MovePicker) Length() int {
+	if mp.moves == nil {
+		mp.addMoves()
+	}
+	return len(mp.moves)
 }
 
 func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
-	mp.hasPvMove = true
+	mp.useHashMove = true
 	for i, move := range mp.moves {
 		if move == pvMove {
 			mp.scores[i] = 900_000_000
@@ -52,6 +71,7 @@ func (mp *MovePicker) score() {
 	board := position.Board
 	engine := mp.engine
 	moveOrder := mp.moveOrder
+	mp.scores = make([]int32, len(mp.moves))
 
 	for i, move := range mp.moves {
 
@@ -140,6 +160,9 @@ func (mp *MovePicker) Reset() {
 }
 
 func (mp *MovePicker) Next() Move {
+	if mp.moves == nil {
+		mp.addMoves()
+	}
 
 	if mp.next >= len(mp.moves) {
 		return EmptyMove

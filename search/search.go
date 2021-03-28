@@ -189,8 +189,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	legalMoves := position.LegalMoves()
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, nHashMove)
+	movePicker := NewMovePicker(position, e, searchHeight, nHashMove, false)
 
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && !movePicker.HasPVMove() {
@@ -205,7 +204,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	M := 6
 	C := 3
 	R = 4
-	if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag && len(legalMoves) > M {
+	if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag && movePicker.Length() > M {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
 			move := movePicker.Next()
@@ -266,7 +265,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 	}
 
-	for i := 1; i < len(legalMoves); i++ {
+	for i := 1; i < movePicker.Length(); i++ {
 		move := movePicker.Next()
 		if isRootNode {
 			fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), i+1)
