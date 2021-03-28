@@ -286,7 +286,8 @@ func TestKnightMoves(t *testing.T) {
 	p := g.position
 	b := p.Board
 	moves := make([]Move, 0, 8)
-	g.position.bbKnightMoves(WhiteKnight, b.whiteKnight, b.whitePieces, b.blackPieces, false, false, false, false, &moves)
+	g.position.knightQuietMoves(WhiteKnight, b.whiteKnight, b.whitePieces, b.blackPieces, false, &moves)
+	g.position.knightCaptureMoves(WhiteKnight, b.whiteKnight, b.whitePieces, b.blackPieces, false, &moves)
 	expectedMoves := []Move{
 		NewMove(G3, F1, WhiteKnight, NoPiece, NoType, 0),
 		NewMove(G3, E4, WhiteKnight, NoPiece, NoType, 0),
