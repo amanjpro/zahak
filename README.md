@@ -20,6 +20,21 @@ LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine). He is
 currently running on an old RaspberryPi device, so do not expect a truly
 amazing performance. But, hopefully he will be online 24/7.
 
+# Play Zahak on your Android Phone/Desktop
+
+Zahak is a bare chess engine AI, that means it doesn't come with any GUI
+interface.  That also means, it is easy to plug it into any chess GUI that
+supports UCI protocol.
+
+- [Arena Chess GUI](http://www.playwitharena.de/)
+- [CuteChess](https://cutechess.com/)
+- [Tarrasch](https://www.triplehappy.com/)
+- [The Shredder GUI](https://www.shredderchess.com/)
+- [Fritz / Chessbase series](https://en.chessbase.com/)
+- [Scid vs PC (database)](http://scidvspc.sourceforge.net/)
+- [Banksia GUI](https://banksiagui.com/)
+- [DroidFish](https://play.google.com/store/apps/details?id=org.petero.droidfish) is a good choice on Android
+
 # Rating
 
 Zahak is participating in some tournaments arranged by [Chess Engine
