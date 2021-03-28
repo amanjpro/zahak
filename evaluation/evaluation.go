@@ -203,7 +203,7 @@ func Evaluate(position *Position) int16 {
 	pieceIter := bbBlackPawn
 	for pieceIter > 0 {
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		blackPawnsCount++
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbBlackPawn, Black) {
@@ -236,7 +236,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whitePawnsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbWhitePawn, White) {
 			whiteCentipawns -= 25
@@ -406,7 +406,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			blackCentipawns += lateKnightPst[index]
 		} else {
@@ -419,7 +419,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			blackCentipawns += lateBishopPst[index]
 		} else {
@@ -432,7 +432,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackRooksCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		file := Square(index).File()
 		if blackPawnsPerFile[file] == 0 {
 			if whitePawnsPerFile[file] == 0 { // open file
@@ -461,7 +461,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			blackCentipawns += lateQueenPst[index]
 		} else {
@@ -473,7 +473,7 @@ func Evaluate(position *Position) int16 {
 	pieceIter = bbBlackKing
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			blackCentipawns += lateKingPst[index]
 		} else {
@@ -496,7 +496,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			whiteCentipawns += lateKnightPst[flip[index]]
 		} else {
@@ -509,7 +509,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			whiteCentipawns += lateBishopPst[flip[index]]
 		} else {
@@ -522,7 +522,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteRooksCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		file := Square(index).File()
 		if whitePawnsPerFile[file] == 0 {
 			if blackPawnsPerFile[file] == 0 { // open file
@@ -551,7 +551,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			whiteCentipawns += lateQueenPst[flip[index]]
 		} else {
@@ -563,7 +563,7 @@ func Evaluate(position *Position) int16 {
 	pieceIter = bbWhiteKing
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
-		mask := uint64(1 << index)
+		mask := SquareMask(uint64(index))
 		if isEndgame {
 			whiteCentipawns += lateKingPst[flip[index]]
 		} else {

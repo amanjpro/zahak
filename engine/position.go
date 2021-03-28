@@ -333,10 +333,10 @@ func (p *Position) Status() Status {
 			}
 			// both sides have a king and a bishop, the bishops being the same color
 			if wKnightsNum == 0 && bKnightsNum == 0 {
-				otherWB := wBishops ^ (1 << wBishops)
-				otherBB := bBishops ^ (1 << bBishops)
+				otherWB := p.Board.whiteBishop ^ (1 << wBishops)
+				otherBB := p.Board.blackBishop ^ (1 << bBishops)
 				if otherWB == 0 && otherBB == 0 &&
-					Square(1<<bBishops).GetColor() == Square(1<<wBishops).GetColor() {
+					Square(bBishops).GetColor() == Square(wBishops).GetColor() {
 					return Draw
 				}
 			}
@@ -394,10 +394,10 @@ func (p *Position) IsDraw() bool {
 			}
 			// both sides have a king and a bishop, the bishops being the same color
 			if wKnightsNum == 0 && bKnightsNum == 0 {
-				otherWB := wBishops ^ (1 << wBishops)
-				otherBB := bBishops ^ (1 << bBishops)
+				otherWB := p.Board.whiteBishop ^ (1 << wBishops)
+				otherBB := p.Board.blackBishop ^ (1 << bBishops)
 				if otherWB == 0 && otherBB == 0 &&
-					Square(1<<bBishops).GetColor() == Square(1<<wBishops).GetColor() {
+					Square(bBishops).GetColor() == Square(wBishops).GetColor() {
 					return true
 				}
 			}

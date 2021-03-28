@@ -13,7 +13,7 @@ func (b *Bitboard) attacksTo(occupied uint64, sq Square) uint64 {
 	rooksQueens |= b.blackRook | b.whiteRook
 	bishopsQueens |= b.blackBishop | b.whiteBishop
 
-	sqMask := uint64(1 << sq)
+	sqMask := squareMask[sq]
 	return wPawnsAble2CaptureAny(sqMask, b.blackPawn) |
 		bPawnsAble2CaptureAny(sqMask, b.whitePawn) |
 		(computedKnightAttacks[sq] & knights) |
@@ -48,7 +48,7 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	mayXray := b.blackBishop | b.whiteBishop |
 		b.blackRook | b.whiteRook | b.blackQueen | b.whiteQueen
 
-	fromSet := uint64(1 << frSq)
+	fromSet := squareMask[frSq]
 	occupied := b.whitePieces | b.blackPieces
 	attacks := b.attacksTo(occupied, toSq)
 
@@ -133,19 +133,19 @@ func (b *Bitboard) AllAttacks(color Color) uint64 {
 	for opB != 0 {
 		sq := bitScanForward(opB)
 		taboo |= bishopAttacks(Square(sq), occupiedBB, opPieces)
-		opB ^= (1 << sq)
+		opB ^= squareMask[sq]
 	}
 
 	for opR != 0 {
 		sq := bitScanForward(opR)
 		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
-		opR ^= (1 << sq)
+		opR ^= squareMask[sq]
 	}
 
 	for opQ != 0 {
 		sq := bitScanForward(opQ)
 		taboo |= queenAttacks(Square(sq), occupiedBB, opPieces)
-		opQ ^= (1 << sq)
+		opQ ^= squareMask[sq]
 	}
 
 	return taboo

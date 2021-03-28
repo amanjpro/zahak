@@ -20,7 +20,7 @@ Zahak is new to LiChess, you can play him and be impressed with him. His LiChess
 # Implemented Features:
 
 - UCI Support
-- Bitboards
+- (Magic) Bitboards
 - Transposition Table
 - Alpha-Beta search
 - Quiescence Search
