@@ -35,7 +35,7 @@ func (mp *MovePicker) generateMoves() {
 		return
 	}
 	if mp.isQuiescence {
-		mp.moves = mp.position.QuiesceneMoves(false)
+		mp.moves = mp.position.QuiesceneMoves()
 	} else {
 		mp.moves = mp.position.LegalMoves()
 	}

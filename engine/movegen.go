@@ -29,22 +29,20 @@ func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 func (p *Position) LegalMoves() []Move {
 	allMoves := make([]Move, 0, 256)
 
-	p.generateMoves(&allMoves, false, p.IsInCheck(), false)
+	p.generateMoves(&allMoves, false)
 
 	return allMoves
 }
 
-func (p *Position) QuiesceneMoves(withChecks bool) []Move {
+func (p *Position) QuiesceneMoves() []Move {
 	allMoves := make([]Move, 0, 256)
 
-	isChecked := p.IsInCheck()
-
-	p.generateMoves(&allMoves, !(withChecks || isChecked), isChecked, true)
+	p.generateMoves(&allMoves, true)
 
 	return allMoves
 }
 
-func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIsInCheck bool, isQuiescence bool) {
+func (p *Position) generateMoves(allMoves *[]Move, captureOnly bool) {
 
 	color := p.Turn()
 	board := p.Board
@@ -52,12 +50,12 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 	taboo := tabooSquares(board, color)
 
 	// If it is double check, only king can move
-	if positionIsInCheck && isDoubleCheck(board, color) {
+	if p.IsInCheck() && isDoubleCheck(board, color) {
 		if color == White {
 			p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
 				false, allMoves)
-			if !isQuiescence {
+			if !captureOnly {
 				p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 					taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
 					false, allMoves)
@@ -66,7 +64,7 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 			p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
 				false, allMoves)
-			if !isQuiescence {
+			if !captureOnly {
 				p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 					taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
 					false, allMoves)
@@ -88,7 +86,7 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 			p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
 				false, allMoves)
-			if !isQuiescence {
+			if !captureOnly {
 				p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
 					color, false, allMoves)
 				p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
@@ -117,7 +115,7 @@ func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIs
 			p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
 				false, allMoves)
-			if !isQuiescence {
+			if !captureOnly {
 				p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
 					color, false, allMoves)
 				p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
