@@ -45,9 +45,9 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()
 		if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
-			// SEE pruning
-			e.info.seeQuiescenceCounter += 1
 			if movePicker.scores[i] < 0 {
+				// SEE pruning
+				e.info.seeQuiescenceCounter += 1
 				continue
 			}
 		}
