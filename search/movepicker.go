@@ -10,92 +10,79 @@ type MovePicker struct {
 	hashmove     Move
 	moves        []Move
 	scores       []int32
-	useHashMove  bool
 	moveOrder    int8
 	next         int
 	isQuiescence bool
 }
 
 func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) *MovePicker {
-	startIndex := 0
-	if hashmove != EmptyMove {
-		startIndex = 1
-	}
 	mp := &MovePicker{
 		p,
 		e,
 		hashmove,
 		nil,
 		nil,
-		hashmove != EmptyMove,
 		moveOrder,
-		startIndex,
+		0,
 		isQuiescence,
-	}
-	if hashmove == EmptyMove {
-		mp.addMoves()
 	}
 	return mp
 }
 
-func (mp *MovePicker) addMoves() {
+func (mp *MovePicker) generateMoves() {
+	if mp.moves != nil {
+		return
+	}
 	if mp.isQuiescence {
 		mp.moves = mp.position.QuiesceneMoves(false)
 	} else {
 		mp.moves = mp.position.LegalMoves()
 	}
-	if mp.hashmove != EmptyMove {
-		hashIndex := 0
-		for i, m := range mp.moves {
-			if m == mp.hashmove {
-				hashIndex = i
-				break
-			}
-		}
-		mp.moves[0], mp.moves[hashIndex] = mp.moves[hashIndex], mp.moves[0]
-	}
+	mp.generateMoves()
 	mp.score()
 }
 
-func (mp *MovePicker) HasPVMove() bool {
-	return mp.hashmove != EmptyMove
+func (mp *MovePicker) HasNoPVMove() bool {
+	return mp.hashmove == EmptyMove
 }
 
 func (mp *MovePicker) Length() int {
 	if mp.moves == nil {
-		mp.addMoves()
+		mp.generateMoves()
 	}
 	return len(mp.moves)
 }
 
 func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
-	hashIndex := 0
-	for i, move := range mp.moves {
-		if move == pvMove {
-			hashIndex = i
+	if pvMove == EmptyMove {
+		return
+	}
+	mp.hashmove = pvMove
+	if mp.moves != nil {
+		for i := 0; i < len(mp.moves); i++ {
 			mp.scores[i] = 900_000_000
+			mp.scores[0], mp.scores[i] = mp.scores[i], mp.scores[0]
+			mp.moves[0], mp.moves[i] = mp.moves[i], mp.moves[0]
 			break
 		}
 	}
-	mp.moves[0], mp.moves[hashIndex] = mp.moves[hashIndex], mp.moves[0]
-	mp.scores[0], mp.scores[hashIndex] = mp.scores[hashIndex], mp.scores[0]
-	mp.hashmove = mp.moves[0]
-	mp.useHashMove = true
 }
 
 func (mp *MovePicker) score() {
 	// pv := mp.engine.pv
 	position := mp.position
-	hashmove := mp.hashmove
 	board := position.Board
 	engine := mp.engine
 	moveOrder := mp.moveOrder
 	mp.scores = make([]int32, len(mp.moves))
 
-	for i, move := range mp.moves {
+	for i := 0; i < len(mp.moves); i++ {
+		move := mp.moves[i]
 
-		if move == hashmove {
+		if move == mp.hashmove {
 			mp.scores[i] = 900_000_000
+			mp.scores[0], mp.scores[i] = mp.scores[i], mp.scores[0]
+			mp.moves[0], mp.moves[i] = mp.moves[i], mp.moves[0]
 			continue
 		}
 
@@ -108,7 +95,7 @@ func (mp *MovePicker) score() {
 		// 		continue
 		// 	}
 		// }
-		//
+
 		source := move.Source()
 		dest := move.Destination()
 		piece := move.MovingPiece()
@@ -175,21 +162,16 @@ func (mp *MovePicker) score() {
 }
 
 func (mp *MovePicker) Reset() {
-	startIndex := 0
-	if mp.hashmove != EmptyMove {
-		mp.useHashMove = true
-		startIndex = 1
-	}
-	mp.next = startIndex
+	mp.next = 0
 }
 
 func (mp *MovePicker) Next() Move {
-	if mp.useHashMove {
-		mp.useHashMove = false
+	if mp.hashmove != EmptyMove && mp.next == 0 {
+		mp.next = 1
 		return mp.hashmove
 	}
 	if mp.moves == nil {
-		mp.addMoves()
+		mp.generateMoves()
 	}
 
 	if mp.next >= len(mp.moves) {
