@@ -38,6 +38,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			if e.ShouldStop() {
 				break
 			}
+			e.innerLines[0].Recycle()
 			score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
 			if ok {
 				e.pv.Clone(e.innerLines[0])
@@ -82,7 +83,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
-		e.innerLines[searchHeight].Recycle()
 		return 0, true
 	}
 
@@ -92,7 +92,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	if depthLeft <= 0 {
-		e.innerLines[searchHeight].Recycle()
 		return e.quiescence(position, alpha, beta, currentMove, 0, Evaluate(position), searchHeight)
 	}
 
@@ -107,28 +106,23 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if found && nDepth >= depthLeft {
 		if nEval >= beta && (nType == UpperBound || nType == Exact) {
 			e.CacheHit()
-			e.innerLines[searchHeight].Recycle()
 			return beta, true
 		}
 		if nEval <= alpha && (nType == LowerBound || nType == Exact) {
 			e.CacheHit()
-			e.innerLines[searchHeight].Recycle()
 			return alpha, true
 		}
 	}
 
 	if nHashMove == EmptyMove && !position.HasLegalMoves() {
 		if isInCheck {
-			e.innerLines[searchHeight].Recycle()
 			return -CHECKMATE_EVAL, true
 		} else {
-			e.innerLines[searchHeight].Recycle()
 			return 0, true
 		}
 	}
 
 	if e.ShouldStop() {
-		e.innerLines[searchHeight].Recycle()
 		return -MAX_INT, false
 	}
 
@@ -143,17 +137,16 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		ep := position.MakeNullMove()
 		oldPred := e.pred
 		e.pred = NewPredecessors()
+		e.innerLines[searchHeight+1].Recycle()
 		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, -beta, -beta+1, ply, EmptyMove, !multiCutFlag, false)
 		score = -score
 		e.pred = oldPred
 		position.UnMakeNullMove(ep)
 		if !ok {
-			e.innerLines[searchHeight].Recycle()
 			return score, false
 		}
 		if score >= beta && abs16(score) < CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
-			e.innerLines[searchHeight].Recycle()
 			return beta, true // null move pruning
 		}
 	}
@@ -167,7 +160,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	reverseFutilityMargin := WhiteRook.Weight()
 	if !isRootNode && !isPvNode && !isInCheck && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
-		e.innerLines[searchHeight].Recycle()
 		return eval - reverseFutilityMargin, true /* fail soft */
 	}
 
@@ -179,12 +171,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
 		if !ok {
-			e.innerLines[searchHeight].Recycle()
 			return newEval, ok
 		}
 		if newEval < beta {
 			e.info.razoringCounter += 1
-			e.innerLines[searchHeight].Recycle()
 			return newEval, true
 		}
 	}
@@ -212,19 +202,18 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			newBeta := 1 - beta
 			// newBeta := -beta + 1
 			e.pred.Push(position.Hash())
+			e.innerLines[searchHeight+1].Recycle()
 			score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, move, !multiCutFlag, true)
 			score = -score
 			e.pred.Pop()
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 			if !ok {
-				e.innerLines[searchHeight].Recycle()
 				return score, ok
 			}
 			if score >= beta {
 				cutNodeCounter++
 				if cutNodeCounter == C {
 					e.info.multiCutCounter += 1
-					e.innerLines[searchHeight].Recycle()
 					return beta, ok // mc-prune
 				}
 			}
@@ -242,20 +231,19 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	move := movePicker.Next()
 	oldEnPassant, oldTag, hc := position.MakeMove(move)
 	e.pred.Push(position.Hash())
+	e.innerLines[searchHeight+1].Recycle()
 	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
 	bestscore = -bestscore
 	hashmove := move
 	e.pred.Pop()
 	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 	if !ok {
-		e.innerLines[searchHeight].Recycle()
 		return bestscore, ok
 	}
 	if bestscore > alpha {
 		if bestscore >= beta {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
 			e.AddKillerMove(move, searchHeight)
-			e.innerLines[searchHeight].Recycle()
 			return bestscore, true
 		}
 		alpha = bestscore
@@ -298,24 +286,24 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 		oldEnPassant, oldTag, hc := position.MakeMove(move)
 		e.pred.Push(position.Hash())
+		e.innerLines[searchHeight+1].Recycle()
 		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, move, !multiCutFlag, true)
 		score = -score
 		e.pred.Pop()
 		if !ok {
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-			e.innerLines[searchHeight].Recycle()
 			return score, ok
 		}
 		if score > alpha && score < beta {
 			e.info.researchCounter += 1
 			// research with window [alpha;beta]
 			e.pred.Push(position.Hash())
+			e.innerLines[searchHeight+1].Recycle()
 			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
 			score = -score
 			e.pred.Pop()
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-				e.innerLines[searchHeight].Recycle()
 				return score, ok
 			}
 			if score > alpha {
@@ -329,7 +317,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			if score >= beta {
 				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
 				e.AddKillerMove(move, searchHeight)
-				e.innerLines[searchHeight].Recycle()
 				return score, ok
 			}
 
