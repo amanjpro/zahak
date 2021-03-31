@@ -26,6 +26,7 @@ func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuie
 		0,
 		isQuiescence,
 	}
+	mp.generateMoves()
 	return mp
 }
 
@@ -38,7 +39,6 @@ func (mp *MovePicker) generateMoves() {
 	} else {
 		mp.moves = mp.position.LegalMoves()
 	}
-	mp.generateMoves()
 	mp.score()
 }
 
@@ -60,10 +60,13 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 	mp.hashmove = pvMove
 	if mp.moves != nil {
 		for i := 0; i < len(mp.moves); i++ {
-			mp.scores[i] = 900_000_000
-			mp.scores[0], mp.scores[i] = mp.scores[i], mp.scores[0]
-			mp.moves[0], mp.moves[i] = mp.moves[i], mp.moves[0]
-			break
+			move := mp.moves[i]
+			if move == mp.hashmove {
+				mp.scores[i] = 900_000_000
+				mp.scores[0], mp.scores[i] = mp.scores[i], mp.scores[0]
+				mp.moves[0], mp.moves[i] = mp.moves[i], mp.moves[0]
+				break
+			}
 		}
 	}
 }
@@ -178,15 +181,13 @@ func (mp *MovePicker) Next() Move {
 		return EmptyMove
 	}
 
-	var best = mp.moves[mp.next]
 	var bestIndex = mp.next
 	for i := mp.next + 1; i < len(mp.moves); i++ {
-		move := mp.moves[i]
 		if mp.scores[i] > mp.scores[bestIndex] {
-			best = move
 			bestIndex = i
 		}
 	}
+	var best = mp.moves[bestIndex]
 	mp.moves[mp.next], mp.moves[bestIndex] = mp.moves[bestIndex], mp.moves[mp.next]
 	mp.scores[mp.next], mp.scores[bestIndex] = mp.scores[bestIndex], mp.scores[mp.next]
 	mp.next += 1
