@@ -16,25 +16,32 @@ type MovePicker struct {
 	nextQuiet      int
 	nextCapture    int
 	canUseHashMove bool
-	hashIsQuiet    bool
 	isQuiescence   bool
 }
 
 func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) *MovePicker {
+	nextCapture := 0
+	nextQuiet := 0
+	if hashmove != EmptyMove {
+		if hashmove.IsCapture() {
+			nextCapture = 1
+		} else {
+			nextQuiet = 1
+		}
+	}
 	mp := &MovePicker{
-		p,
-		e,
-		hashmove,
-		nil,
-		nil,
-		nil,
-		nil,
-		moveOrder,
-		0,
-		0,
-		hashmove != EmptyMove,
-		false,
-		isQuiescence,
+		position:       p,
+		engine:         e,
+		hashmove:       hashmove,
+		quietMoves:     nil,
+		quietScores:    nil,
+		captureMoves:   nil,
+		captureScores:  nil,
+		moveOrder:      moveOrder,
+		nextQuiet:      nextQuiet,
+		nextCapture:    nextCapture,
+		canUseHashMove: hashmove != EmptyMove,
+		isQuiescence:   isQuiescence,
 	}
 	return mp
 }
@@ -70,6 +77,7 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 		return
 	}
 	mp.hashmove = pvMove
+	mp.canUseHashMove = true
 }
 
 func (mp *MovePicker) scoreCaptureMoves() {
@@ -126,7 +134,6 @@ func (mp *MovePicker) scoreQuietMoves() {
 			mp.quietScores[0], mp.quietScores[i] = mp.quietScores[i], mp.quietScores[0]
 			mp.quietMoves[0], mp.quietMoves[i] = mp.quietMoves[i], mp.quietMoves[0]
 			mp.nextQuiet = 1
-			mp.hashIsQuiet = true
 			continue
 		}
 
@@ -180,10 +187,10 @@ func (mp *MovePicker) Reset() {
 	mp.nextQuiet = 0
 	mp.nextCapture = 0
 	if mp.canUseHashMove {
-		if mp.hashIsQuiet {
-			mp.nextQuiet = 1
-		} else {
+		if mp.hashmove.IsCapture() {
 			mp.nextCapture = 1
+		} else {
+			mp.nextQuiet = 1
 		}
 	}
 }
@@ -221,17 +228,6 @@ func (mp *MovePicker) getNextCapture() Move {
 		if alt != EmptyMove {
 			return alt
 		}
-		// killer, ok := mp.getKiller()
-		// if ok {
-		// 	if killer != EmptyMove {
-		// 		return killer
-		// 	} else {
-		// 		history, ok := mp.getHistory()
-		// 		if ok && history != EmptyMove {
-		// 			return history
-		// 		}
-		// 	}
-		// }
 	}
 	best := mp.captureMoves[bestIndex]
 	mp.captureMoves[mp.nextCapture], mp.captureMoves[bestIndex] = mp.captureMoves[bestIndex], mp.captureMoves[mp.nextCapture]
