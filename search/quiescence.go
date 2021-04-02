@@ -68,10 +68,10 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		score := -v
 		if score >= beta {
 			e.AddKillerMove(move, searchHeight)
+			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 			return beta, true
 		}
 		if score > alpha {
-			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 			alpha = score
 		}
 	}

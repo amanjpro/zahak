@@ -158,7 +158,7 @@ func (e *Engine) AddKillerMove(move Move, ply int8) {
 }
 
 func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if e.searchHistory[movingPiece-1] == nil {
+	if e.searchHistory[movingPiece-1] == nil || e.searchHistory[movingPiece-1][destination] == 0 {
 		return 0
 	}
 	return 60_000 + e.searchHistory[movingPiece-1][destination]
@@ -167,7 +167,7 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
 	if !move.IsCapture() {
 		e.info.historyCounter += 1
-		e.searchHistory[movingPiece-1][destination] += int32(ply)
+		e.searchHistory[movingPiece-1][destination] += 2 * int32(ply)
 	}
 }
 

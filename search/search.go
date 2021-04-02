@@ -251,13 +251,13 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if bestscore >= beta {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
 			e.AddKillerMove(move, searchHeight)
+			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 			return bestscore, true
 		}
 		alpha = bestscore
 		e.innerLines[searchHeight].AddFirst(move)
 		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		hasSeenExact = true
-		e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 	}
 
 	for i := 1; ; i++ {
@@ -317,7 +317,6 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 				return score, ok
 			}
 			if score > alpha {
-				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 				alpha = score
 			}
 		}
@@ -327,7 +326,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			if score >= beta {
 				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
 				e.AddKillerMove(move, searchHeight)
-				return score, ok
+				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+				return score, true
 			}
 
 			bestscore = score
