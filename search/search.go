@@ -171,7 +171,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
 		if !ok {
-			return newEval, ok
+			return newEval, false
 		}
 		if newEval < beta {
 			e.info.razoringCounter += 1
@@ -245,7 +245,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	e.pred.Pop()
 	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 	if !ok {
-		return bestscore, ok
+		return bestscore, false
 	}
 	if bestscore > alpha {
 		if bestscore >= beta {
@@ -302,7 +302,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.pred.Pop()
 		if !ok {
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-			return score, ok
+			return score, false
 		}
 		if score > alpha && score < beta {
 			e.info.researchCounter += 1
@@ -314,7 +314,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			e.pred.Pop()
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-				return score, ok
+				return score, false
 			}
 			if score > alpha {
 				alpha = score
