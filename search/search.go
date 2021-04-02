@@ -199,10 +199,13 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	M := 6
 	C := 3
 	R = 4
-	if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag && movePicker.Length() > M {
+	if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag {
 		cutNodeCounter := 0
 		for i := 0; i < M; i++ {
 			move := movePicker.Next()
+			if move == EmptyMove {
+				break
+			}
 			oldEnPassant, oldTag, hc := position.MakeMove(move)
 			newBeta := 1 - beta
 			// newBeta := -beta + 1
@@ -213,22 +216,21 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			e.pred.Pop()
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 			if !ok {
-				return score, ok
+				return score, false
 			}
 			if score >= beta {
 				cutNodeCounter++
 				if cutNodeCounter == C {
 					e.info.multiCutCounter += 1
-					return beta, ok // mc-prune
+					return beta, true // mc-prune
 				}
 			}
 		}
+		movePicker.Reset()
 	}
 
 	// Extended Futility Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
-
-	movePicker.Reset()
 
 	hasSeenExact := false
 
@@ -258,8 +260,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 	}
 
-	for i := 1; i < movePicker.Length(); i++ {
+	for i := 1; ; i++ {
 		move := movePicker.Next()
+		if move == EmptyMove {
+			break
+		}
 		if isRootNode {
 			fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), i+1)
 		}

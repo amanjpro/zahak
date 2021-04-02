@@ -48,6 +48,7 @@ his current rating is around 1922.
 
 - UCI Support
 - (Magic) Bitboards
+- Multi-stage move generation
 - Transposition Table
 - Alpha-Beta search
 - Quiescence Search

@@ -29,15 +29,87 @@ func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 func (p *Position) LegalMoves() []Move {
 	allMoves := make([]Move, 0, 256)
 
-	p.generateMoves(&allMoves, false)
+	allMoves = append(allMoves, p.GetCaptureMoves()...)
+	allMoves = append(allMoves, p.GetQuietMoves()...)
 
 	return allMoves
 }
 
-func (p *Position) QuiesceneMoves() []Move {
-	allMoves := make([]Move, 0, 256)
+func (p *Position) GetQuietMoves() []Move {
+	allMoves := make([]Move, 0, 150)
+	color := p.Turn()
+	board := p.Board
 
-	p.generateMoves(&allMoves, true)
+	taboo := tabooSquares(board, color)
+	if color == White {
+		p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			color, false, &allMoves)
+		p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			false, &allMoves)
+		p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			color, WhiteBishop, false, &allMoves)
+		p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			color, WhiteRook, false, &allMoves)
+		p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			color, WhiteQueen, false, &allMoves)
+		p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+			false, &allMoves)
+	} else if color == Black {
+		p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			color, false, &allMoves)
+		p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			false, &allMoves)
+		p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			color, BlackBishop, false, &allMoves)
+		p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			color, BlackRook, false, &allMoves)
+		p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			color, BlackQueen, false, &allMoves)
+		p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+			false, &allMoves)
+	}
+
+	return allMoves
+}
+
+func (p *Position) GetCaptureMoves() []Move {
+	allMoves := make([]Move, 0, 150)
+	color := p.Turn()
+	board := p.Board
+
+	taboo := tabooSquares(board, color)
+
+	if color == White {
+		p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			color, false, &allMoves)
+		p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			false, &allMoves)
+		p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			color, WhiteBishop, false, &allMoves)
+		p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			color, WhiteRook, false, &allMoves)
+		p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			color, WhiteQueen, false, &allMoves)
+		p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+			false, &allMoves)
+	} else if color == Black {
+		p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			color, false, &allMoves)
+		p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			false, &allMoves)
+		p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			color, BlackBishop, false, &allMoves)
+		p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			color, BlackRook, false, &allMoves)
+		p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			color, BlackQueen, false, &allMoves)
+		p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+			false, &allMoves)
+	}
 
 	return allMoves
 }
@@ -49,87 +121,63 @@ func (p *Position) generateMoves(allMoves *[]Move, captureOnly bool) {
 
 	taboo := tabooSquares(board, color)
 
-	// If it is double check, only king can move
-	if p.IsInCheck() && isDoubleCheck(board, color) {
-		if color == White {
-			p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
-				false, allMoves)
-			if !captureOnly {
-				p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-					taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
-					false, allMoves)
-			}
-		} else if color == Black {
-			p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
-				false, allMoves)
-			if !captureOnly {
-				p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-					taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
-					false, allMoves)
-			}
-		}
-	} else {
-
-		if color == White {
-			p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+	if color == White {
+		p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			color, false, allMoves)
+		p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			false, allMoves)
+		p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			color, WhiteBishop, false, allMoves)
+		p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			color, WhiteRook, false, allMoves)
+		p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			color, WhiteQueen, false, allMoves)
+		p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+			false, allMoves)
+		if !captureOnly {
+			p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
 				color, false, allMoves)
-			p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
 				false, allMoves)
-			p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
 				color, WhiteBishop, false, allMoves)
-			p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
 				color, WhiteRook, false, allMoves)
-			p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
 				color, WhiteQueen, false, allMoves)
-			p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
 				false, allMoves)
-			if !captureOnly {
-				p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-					color, false, allMoves)
-				p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
-					false, allMoves)
-				p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
-					color, WhiteBishop, false, allMoves)
-				p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
-					color, WhiteRook, false, allMoves)
-				p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-					color, WhiteQueen, false, allMoves)
-				p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-					taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
-					false, allMoves)
-			}
-		} else if color == Black {
-			p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+		}
+	} else if color == Black {
+		p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			color, false, allMoves)
+		p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			false, allMoves)
+		p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			color, BlackBishop, false, allMoves)
+		p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			color, BlackRook, false, allMoves)
+		p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			color, BlackQueen, false, allMoves)
+		p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+			false, allMoves)
+		if !captureOnly {
+			p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
 				color, false, allMoves)
-			p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
 				false, allMoves)
-			p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
 				color, BlackBishop, false, allMoves)
-			p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
 				color, BlackRook, false, allMoves)
-			p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
 				color, BlackQueen, false, allMoves)
-			p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
 				false, allMoves)
-			if !captureOnly {
-				p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-					color, false, allMoves)
-				p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
-					false, allMoves)
-				p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
-					color, BlackBishop, false, allMoves)
-				p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
-					color, BlackRook, false, allMoves)
-				p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-					color, BlackQueen, false, allMoves)
-				p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-					taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
-					false, allMoves)
-			}
 		}
 	}
 }
@@ -152,74 +200,57 @@ func (p *Position) HasLegalMoves() bool {
 
 	taboo := tabooSquares(board, color)
 
-	// If it is double check, only king can move
-	if isDoubleCheck(board, color) {
-		if color == White {
-			return p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+	if color == White {
+		return p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil) ||
+			p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil) ||
-				p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-					taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil)
-		} else if color == Black {
-			return p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil) ||
-				p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-					taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil)
-		}
-		return false
-	} else {
+			p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+				true, nil) ||
+			p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+				true, nil) ||
+			p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+				color, WhiteBishop, true, nil) ||
+			p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+				color, WhiteBishop, true, nil) ||
+			p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+				color, WhiteRook, true, nil) ||
+			p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+				color, WhiteRook, true, nil) ||
+			p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+				color, WhiteQueen, true, nil) ||
+			p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+				color, WhiteQueen, true, nil) ||
+			p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+				color, true, nil) ||
+			p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+				color, true, nil)
 
-		if color == White {
-			return p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil) ||
-				p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-					taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil) ||
-				p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
-					true, nil) ||
-				p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
-					true, nil) ||
-				p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
-					color, WhiteBishop, true, nil) ||
-				p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
-					color, WhiteBishop, true, nil) ||
-				p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
-					color, WhiteRook, true, nil) ||
-				p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
-					color, WhiteRook, true, nil) ||
-				p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-					color, WhiteQueen, true, nil) ||
-				p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-					color, WhiteQueen, true, nil) ||
-				p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-					color, true, nil) ||
-				p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-					color, true, nil)
-
-		} else if color == Black {
-			return p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+	} else if color == Black {
+		return p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil) ||
+			p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil) ||
-				p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-					taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil) ||
-				p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
-					true, nil) ||
-				p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
-					true, nil) ||
-				p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
-					color, BlackBishop, true, nil) ||
-				p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
-					color, BlackBishop, true, nil) ||
-				p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
-					color, BlackRook, true, nil) ||
-				p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
-					color, BlackRook, true, nil) ||
-				p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-					color, BlackQueen, true, nil) ||
-				p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-					color, BlackQueen, true, nil) ||
-				p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-					color, true, nil) ||
-				p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-					color, true, nil)
-		}
+			p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+				true, nil) ||
+			p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+				true, nil) ||
+			p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+				color, BlackBishop, true, nil) ||
+			p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+				color, BlackBishop, true, nil) ||
+			p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+				color, BlackRook, true, nil) ||
+			p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
+				color, BlackRook, true, nil) ||
+			p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+				color, BlackQueen, true, nil) ||
+			p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+				color, BlackQueen, true, nil) ||
+			p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+				color, true, nil) ||
+			p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+				color, true, nil)
 	}
 	return false
 }
