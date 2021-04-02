@@ -233,7 +233,7 @@ func TestMovePickerNormalSearch(t *testing.T) {
 	}
 }
 
-func TestUpgradeMoveToHashmove(t *testing.T) {
+func TestUpgradeMoveToHashmoveQuiet(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
 	game := FromFen(fen, true)
@@ -414,6 +414,95 @@ func TestMovePickerNormalSearchCaptureHashmove(t *testing.T) {
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
 	mp := NewMovePicker(game.Position(), engine, 1, NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture), false)
+
+	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
+	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1) // this is no-op
+
+	moves := []Move{
+		NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture),
+		NewMove(E4, D5, WhitePawn, BlackPawn, NoType, Capture),
+		NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0),
+		NewMove(F1, B5, WhiteBishop, NoPiece, NoType, Check),
+		NewMove(F2, F4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(F2, F3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G2, G4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(H2, H3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(E4, E5, WhitePawn, NoPiece, NoType, 0),
+		NewMove(A2, A4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(A2, A3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G1, H3, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(C3, B1, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(C3, E2, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(C3, A4, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(C3, B5, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(G1, E2, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(G1, F3, WhiteKnight, NoPiece, NoType, 0),
+		NewMove(F1, D3, WhiteBishop, NoPiece, NoType, 0),
+		NewMove(C1, D2, WhiteBishop, NoPiece, NoType, 0),
+		NewMove(F1, E2, WhiteBishop, NoPiece, NoType, 0),
+		NewMove(F1, A6, WhiteBishop, NoPiece, NoType, 0),
+		NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0),
+		NewMove(D1, D2, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(D1, E2, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(D1, D3, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(D1, F3, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(D1, D4, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(D1, G4, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(D1, H5, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(E1, D2, WhiteKing, NoPiece, NoType, 0),
+		NewMove(E1, E2, WhiteKing, NoPiece, NoType, 0),
+		NewMove(D1, D5, WhiteQueen, BlackPawn, NoType, Capture),
+	}
+
+	i := 0
+
+	for ; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Move number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves!")
+	}
+	mp.Reset()
+
+	for i = 0; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves in reset!")
+	}
+}
+
+func TestMovePickerNormalSearchUpgradeToHashmoveCapture(t *testing.T) {
+	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
+
+	game := FromFen(fen, true)
+	engine := NewEngine(NewCache(2))
+	engine.ClearForSearch()
+	mp := NewMovePicker(game.Position(), engine, 1, EmptyMove, false)
+
+	mp.UpgradeToPvMove(NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture))
 
 	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
 	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
