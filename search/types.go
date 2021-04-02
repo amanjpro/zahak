@@ -30,7 +30,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
 	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
-	fmt.Printf("info string Mult-Cut: %d\n", i.multiCutCounter)
+	fmt.Printf("info string Multi-Cut: %d\n", i.multiCutCounter)
 	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
 	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
 	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
