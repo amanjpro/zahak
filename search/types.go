@@ -167,7 +167,7 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
 	if !move.IsCapture() {
 		e.info.historyCounter += 1
-		e.searchHistory[movingPiece-1][destination] += 2 * int32(ply)
+		e.searchHistory[movingPiece-1][destination] += int32(ply)
 	}
 }
 
