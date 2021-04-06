@@ -262,19 +262,16 @@ func perft(p *Position, depth int, currentMove Move, acc *PerftNodes) {
 func bulkyPerft(p *Position, depth int) int64 {
 	nodes := int64(0)
 
-	moves := p.LegalMoves()
-	l := len(moves)
-
 	if depth == 0 {
 		return 1
 	}
 
+	moves := p.LegalMoves()
 	if depth == 1 {
-		return int64(l)
+		return int64(len(moves))
 	}
 
-	for i := 0; i < l; i++ {
-		move := moves[i]
+	for _, move := range moves {
 		ep, tag, hc := p.MakeMove(move)
 		hash := p.Hash()
 		n, ok := cache[depth-1][hash]

@@ -26,100 +26,158 @@ func (p *Position) addAllMoves(allMoves *[]Move, ms ...Move) {
 	}
 }
 
-func (p *Position) addCaptureMoves(allMoves *[]Move, withChecks bool, isChecked bool, ms ...Move) {
-	color := p.Turn()
-	for _, m := range ms {
-		// make the move
-		p.partialMakeMove(m)
-
-		// Does the move puts the moving player in check
-		pNotInCheck := !isInCheck(p.Board, color)
-
-		if pNotInCheck {
-			isCheckMove := isInCheck(p.Board, p.Turn())
-
-			if isCheckMove {
-				m.AddCheckTag()
-			}
-
-			if withChecks && isCheckMove { // We put opponent in check
-				*allMoves = append(*allMoves, m)
-			} else if m.IsCapture() { // The move is a capture
-				*allMoves = append(*allMoves, m)
-			} else if isChecked { // Check replies are also considered
-				*allMoves = append(*allMoves, m)
-			}
-		}
-		p.partialUnMakeMove(m)
-	}
-}
-
 func (p *Position) LegalMoves() []Move {
 	allMoves := make([]Move, 0, 256)
 
-	p.generateMoves(&allMoves, false, p.IsInCheck(), false)
+	allMoves = append(allMoves, p.GetCaptureMoves()...)
+	allMoves = append(allMoves, p.GetQuietMoves()...)
 
 	return allMoves
 }
 
-func (p *Position) QuiesceneMoves(withChecks bool) []Move {
-	allMoves := make([]Move, 0, 256)
+func (p *Position) GetQuietMoves() []Move {
+	allMoves := make([]Move, 0, 150)
+	color := p.Turn()
+	board := p.Board
 
-	isChecked := p.IsInCheck()
-
-	p.generateMoves(&allMoves, !(withChecks || isChecked), isChecked, true)
+	taboo := tabooSquares(board, color)
+	if color == White {
+		p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			color, false, &allMoves)
+		p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			false, &allMoves)
+		p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			color, WhiteBishop, false, &allMoves)
+		p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			color, WhiteRook, false, &allMoves)
+		p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			color, WhiteQueen, false, &allMoves)
+		p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+			false, &allMoves)
+	} else if color == Black {
+		p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			color, false, &allMoves)
+		p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			false, &allMoves)
+		p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			color, BlackBishop, false, &allMoves)
+		p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			color, BlackRook, false, &allMoves)
+		p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			color, BlackQueen, false, &allMoves)
+		p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+			false, &allMoves)
+	}
 
 	return allMoves
 }
 
-func (p *Position) generateMoves(allMoves *[]Move, capturesOnly bool, positionIsInCheck bool, isQuiescence bool) {
+func (p *Position) GetCaptureMoves() []Move {
+	allMoves := make([]Move, 0, 150)
+	color := p.Turn()
+	board := p.Board
+
+	taboo := tabooSquares(board, color)
+
+	if color == White {
+		p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			color, false, &allMoves)
+		p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			false, &allMoves)
+		p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			color, WhiteBishop, false, &allMoves)
+		p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			color, WhiteRook, false, &allMoves)
+		p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			color, WhiteQueen, false, &allMoves)
+		p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+			false, &allMoves)
+	} else if color == Black {
+		p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			color, false, &allMoves)
+		p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			false, &allMoves)
+		p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			color, BlackBishop, false, &allMoves)
+		p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			color, BlackRook, false, &allMoves)
+		p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			color, BlackQueen, false, &allMoves)
+		p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+			false, &allMoves)
+	}
+
+	return allMoves
+}
+
+func (p *Position) generateMoves(allMoves *[]Move, captureOnly bool) {
 
 	color := p.Turn()
 	board := p.Board
 
 	taboo := tabooSquares(board, color)
 
-	// If it is double check, only king can move
-	if positionIsInCheck && isDoubleCheck(board, color) {
-		if color == White {
-			p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+	if color == White {
+		p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+			color, false, allMoves)
+		p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+			false, allMoves)
+		p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+			color, WhiteBishop, false, allMoves)
+		p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+			color, WhiteRook, false, allMoves)
+		p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+			color, WhiteQueen, false, allMoves)
+		p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
+			false, allMoves)
+		if !captureOnly {
+			p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+				color, false, allMoves)
+			p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+				false, allMoves)
+			p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+				color, WhiteBishop, false, allMoves)
+			p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+				color, WhiteRook, false, allMoves)
+			p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+				color, WhiteQueen, false, allMoves)
+			p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
 				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
-				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-		} else if color == Black {
-			p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
-				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
+				false, allMoves)
 		}
-	} else {
-
-		if color == White {
-			p.bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-				color, p.EnPassant, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbKnightMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
-				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
-				color, WhiteBishop, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbSlidingMoves(board.whiteRook, board.whitePieces, board.blackPieces,
-				color, WhiteRook, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-				color, WhiteQueen, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
-				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-		} else if color == Black {
-			p.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-				color, p.EnPassant, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbKnightMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
-				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbSlidingMoves(board.blackBishop, board.blackPieces, board.whitePieces,
-				color, BlackBishop, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbSlidingMoves(board.blackRook, board.blackPieces, board.whitePieces,
-				color, BlackRook, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbSlidingMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-				color, BlackQueen, capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
-			p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+	} else if color == Black {
+		p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+			color, false, allMoves)
+		p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+			false, allMoves)
+		p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+			color, BlackBishop, false, allMoves)
+		p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+			color, BlackRook, false, allMoves)
+		p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+			color, BlackQueen, false, allMoves)
+		p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
+			false, allMoves)
+		if !captureOnly {
+			p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+				color, false, allMoves)
+			p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+				false, allMoves)
+			p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+				color, BlackBishop, false, allMoves)
+			p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
+				color, BlackRook, false, allMoves)
+			p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+				color, BlackQueen, false, allMoves)
+			p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
 				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
-				capturesOnly, positionIsInCheck, false, isQuiescence, allMoves)
+				false, allMoves)
 		}
 	}
 }
@@ -142,45 +200,57 @@ func (p *Position) HasLegalMoves() bool {
 
 	taboo := tabooSquares(board, color)
 
-	// If it is double check, only king can move
-	if isDoubleCheck(board, color) {
-		if color == White {
-			return p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, true, false, nil)
-		} else if color == Black {
-			return p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), false, false, true, false, nil)
-		}
-		return false
-	} else {
+	if color == White {
+		return p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil) ||
+			p.kingCaptureMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
+				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), true, nil) ||
+			p.knightCaptureMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+				true, nil) ||
+			p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
+				true, nil) ||
+			p.slidingCaptureMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+				color, WhiteBishop, true, nil) ||
+			p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
+				color, WhiteBishop, true, nil) ||
+			p.slidingCaptureMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+				color, WhiteRook, true, nil) ||
+			p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
+				color, WhiteRook, true, nil) ||
+			p.slidingCaptureMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+				color, WhiteQueen, true, nil) ||
+			p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
+				color, WhiteQueen, true, nil) ||
+			p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+				color, true, nil) ||
+			p.pawnCaptureMoves(board.whitePawn, board.whitePieces, board.blackPieces,
+				color, true, nil)
 
-		if color == White {
-			return p.bbKingMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-				taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide), false, false, true, false, nil) ||
-				p.bbKnightMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
-					false, false, true, false, nil) ||
-				p.bbPawnMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-					color, p.EnPassant, false, false, true, false, nil) ||
-				p.bbSlidingMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
-					color, WhiteBishop, false, false, true, false, nil) ||
-				p.bbSlidingMoves(board.whiteRook, board.whitePieces, board.blackPieces,
-					color, WhiteRook, false, false, true, false, nil) ||
-				p.bbSlidingMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-					color, WhiteQueen, false, false, true, false, nil)
-		} else if color == Black {
-			return p.bbKingMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), false, false, true, false, nil) ||
-				p.bbKnightMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
-					false, false, true, false, nil) ||
-				p.bbPawnMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-					color, p.EnPassant, false, false, true, false, nil) ||
-				p.bbSlidingMoves(board.blackBishop, board.blackPieces, board.whitePieces,
-					color, BlackBishop, false, false, true, false, nil) ||
-				p.bbSlidingMoves(board.blackRook, board.blackPieces, board.whitePieces,
-					color, BlackRook, false, false, true, false, nil) ||
-				p.bbSlidingMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-					color, BlackQueen, false, false, true, false, nil)
-		}
+	} else if color == Black {
+		return p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil) ||
+			p.kingCaptureMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
+				taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide), true, nil) ||
+			p.knightCaptureMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+				true, nil) ||
+			p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
+				true, nil) ||
+			p.slidingCaptureMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+				color, BlackBishop, true, nil) ||
+			p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
+				color, BlackBishop, true, nil) ||
+			p.slidingCaptureMoves(board.blackRook, board.blackPieces, board.whitePieces,
+				color, BlackRook, true, nil) ||
+			p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
+				color, BlackRook, true, nil) ||
+			p.slidingCaptureMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+				color, BlackQueen, true, nil) ||
+			p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
+				color, BlackQueen, true, nil) ||
+			p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+				color, true, nil) ||
+			p.pawnCaptureMoves(board.blackPawn, board.blackPieces, board.whitePieces,
+				color, true, nil)
 	}
 	return false
 }
@@ -309,65 +379,236 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 	return taboo
 }
 
-// Pawns
+// Quiet moves
 
-func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color, enPassant Square,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
+func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color,
+	isLegalityCheck bool, allMoves *[]Move) bool {
 	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		for bbPawn != 0 {
 			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
 			pawn := squareMask[src]
-			if !capturesOnly {
-				if srcSq.Rank() == Rank2 {
-					dbl := wDoublePushTargets(pawn, emptySquares)
-					if dbl != 0 {
-						dest := Square(bitScanForward(dbl))
-						var tag MoveTag = 0
-						m := NewMove(srcSq, dest, WhitePawn, NoPiece, NoType, tag)
-						if isLegalityCheck && p.checkMove(m) {
-							return true
-						} else if !isLegalityCheck {
-							if isQuiescence {
-								p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-							} else {
-								p.addAllMoves(allMoves, m)
-							}
-						}
-					}
-				}
-				sngl := wSinglePushTargets(pawn, emptySquares)
-				if sngl != 0 {
-					dest := Square(bitScanForward(sngl))
-					if dest.Rank() == Rank8 {
-						m1 := NewMove(srcSq, dest, WhitePawn, NoPiece, Queen, 0)
-						m2 := NewMove(srcSq, dest, WhitePawn, NoPiece, Rook, 0)
-						m3 := NewMove(srcSq, dest, WhitePawn, NoPiece, Bishop, 0)
-						m4 := NewMove(srcSq, dest, WhitePawn, NoPiece, Knight, 0)
-						if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
-							return true
-						} else if !isLegalityCheck {
-							if isQuiescence {
-								p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m1, m2, m3, m4)
-							} else {
-								p.addAllMoves(allMoves, m1, m2, m3, m4)
-							}
-						}
-					} else {
-						m := NewMove(srcSq, dest, WhitePawn, NoPiece, NoType, 0)
-						if isLegalityCheck && p.checkMove(m) {
-							return true
-						} else if !isLegalityCheck {
-							if isQuiescence {
-								p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-							} else {
-								p.addAllMoves(allMoves, m)
-							}
-						}
+			if srcSq.Rank() == Rank2 {
+				dbl := wDoublePushTargets(pawn, emptySquares)
+				if dbl != 0 {
+					dest := Square(bitScanForward(dbl))
+					var tag MoveTag = 0
+					m := NewMove(srcSq, dest, WhitePawn, NoPiece, NoType, tag)
+					if isLegalityCheck && p.checkMove(m) {
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m)
 					}
 				}
 			}
+			sngl := wSinglePushTargets(pawn, emptySquares)
+			if sngl != 0 {
+				dest := Square(bitScanForward(sngl))
+				if dest.Rank() == Rank8 {
+					m1 := NewMove(srcSq, dest, WhitePawn, NoPiece, Queen, 0)
+					m2 := NewMove(srcSq, dest, WhitePawn, NoPiece, Rook, 0)
+					m3 := NewMove(srcSq, dest, WhitePawn, NoPiece, Bishop, 0)
+					m4 := NewMove(srcSq, dest, WhitePawn, NoPiece, Knight, 0)
+					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m1, m2, m3, m4)
+					}
+				} else {
+					m := NewMove(srcSq, dest, WhitePawn, NoPiece, NoType, 0)
+					if isLegalityCheck && p.checkMove(m) {
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m)
+					}
+				}
+			}
+			bbPawn ^= pawn
+		}
+	} else if color == Black {
+		for bbPawn != 0 {
+			src := bitScanForward(bbPawn)
+			srcSq := Square(src)
+			pawn := squareMask[src]
+			dbl := bDoublePushTargets(pawn, emptySquares)
+			if dbl != 0 {
+				dest := Square(bitScanForward(dbl))
+				var tag MoveTag = 0
+				m := NewMove(srcSq, dest, BlackPawn, NoPiece, NoType, tag)
+				if isLegalityCheck && p.checkMove(m) {
+					return true
+				} else if !isLegalityCheck {
+					p.addAllMoves(allMoves, m)
+				}
+			}
+			sngl := bSinglePushTargets(pawn, emptySquares)
+			if sngl != 0 {
+				dest := Square(bitScanForward(sngl))
+				if dest.Rank() == Rank1 {
+					m1 := NewMove(srcSq, dest, BlackPawn, NoPiece, Queen, 0)
+					m2 := NewMove(srcSq, dest, BlackPawn, NoPiece, Rook, 0)
+					m3 := NewMove(srcSq, dest, BlackPawn, NoPiece, Bishop, 0)
+					m4 := NewMove(srcSq, dest, BlackPawn, NoPiece, Knight, 0)
+					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m1, m2, m3, m4)
+					}
+				} else {
+					m := NewMove(srcSq, dest, BlackPawn, NoPiece, NoType, 0)
+					if isLegalityCheck && p.checkMove(m) {
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m)
+					}
+				}
+			}
+			bbPawn ^= pawn
+		}
+	}
+
+	return false
+}
+
+func (p *Position) knightQuietMoves(movingPiece Piece, bbPiece uint64, ownPieces uint64, otherPieces uint64,
+	isLegalityCheck bool, allMoves *[]Move) bool {
+	both := otherPieces | ownPieces
+	for bbPiece != 0 {
+		src := bitScanForward(bbPiece)
+		srcSq := Square(src)
+		knight := squareMask[src]
+		moves := knightMovesNoCaptures(srcSq, both)
+		for moves != 0 {
+			sq := bitScanForward(moves)
+			dest := Square(sq)
+			m := NewMove(srcSq, dest, movingPiece, NoPiece, NoType, 0)
+			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
+				return true
+			} else if !isLegalityCheck {
+				p.addAllMoves(allMoves, m)
+			}
+			moves ^= squareMask[sq]
+		}
+		bbPiece ^= knight
+	}
+
+	return false
+}
+
+func (p *Position) slidingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
+	color Color, movingPiece Piece, isLegalityCheck bool, allMoves *[]Move) bool {
+	both := otherPieces | ownPieces
+	var rayAttacks uint64
+	for bbPiece != 0 {
+		src := bitScanForward(bbPiece)
+		srcSq := Square(src)
+		switch movingPiece {
+		case WhiteBishop, BlackBishop:
+			rayAttacks = bishopAttacks(srcSq, both, ownPieces)
+		case WhiteRook, BlackRook:
+			rayAttacks = rookAttacks(srcSq, both, ownPieces)
+		case WhiteQueen, BlackQueen:
+			rayAttacks = queenAttacks(srcSq, both, ownPieces)
+		}
+		passiveMoves := rayAttacks &^ otherPieces
+		for passiveMoves != 0 {
+			sq := bitScanForward(passiveMoves)
+			dest := Square(sq)
+			m := NewMove(srcSq, dest, movingPiece, NoPiece, NoType, 0)
+			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
+				return true
+			} else if !isLegalityCheck {
+				p.addAllMoves(allMoves, m)
+			}
+			passiveMoves ^= squareMask[sq]
+		}
+
+		bbPiece ^= squareMask[src]
+	}
+	return false
+}
+
+func (p *Position) kingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
+	tabooSquares uint64, color Color, kingSideCastle bool, queenSideCastle bool,
+	isLegalityCheck bool, allMoves *[]Move) bool {
+	both := (otherPieces | ownPieces)
+	var movingPiece = BlackKing
+	if color == White {
+		movingPiece = WhiteKing
+	}
+	if bbPiece != 0 {
+		src := bitScanForward(bbPiece)
+		srcSq := Square(src)
+		moves := kingMovesNoCaptures(srcSq, both, tabooSquares)
+		for moves != 0 {
+			sq := bitScanForward(moves)
+			dest := Square(sq)
+			m := NewMove(srcSq, dest, movingPiece, NoPiece, NoType, 0)
+			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
+				return true
+			} else if !isLegalityCheck {
+				p.addAllMoves(allMoves, m)
+			}
+
+			moves ^= squareMask[sq]
+		}
+
+		E := E1
+		F := F1
+		G := G1
+		D := D1
+		C := C1
+		B := B1
+		if color == Black && srcSq.Rank() == Rank8 {
+			E = E8
+			F = F8
+			G = G8
+			D = D8
+			C = C8
+			B = B8
+		}
+
+		kingSide := uint64(squareMask[F] | squareMask[G])
+		queenSide := uint64(squareMask[D] | squareMask[C])
+
+		if srcSq == E && kingSideCastle &&
+			((ownPieces|otherPieces)&kingSide == 0) && // are empty
+			(tabooSquares&(kingSide|squareMask[E]) == 0) { // Not in check
+			m := NewMove(srcSq, G, movingPiece, NoPiece, NoType, KingSideCastle)
+			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
+				return true
+			} else if !isLegalityCheck {
+				p.addAllMoves(allMoves, m)
+			}
+		}
+
+		if srcSq == E && queenSideCastle &&
+			((ownPieces|otherPieces)&(queenSide|(squareMask[B])) == 0) && // are empty
+			(tabooSquares&(queenSide|squareMask[E]) == 0) { // Not in check
+			m := NewMove(srcSq, C, movingPiece, NoPiece, NoType, QueenSideCastle)
+			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
+				return true
+			} else if !isLegalityCheck {
+				p.addAllMoves(allMoves, m)
+			}
+
+		}
+	}
+
+	return false
+}
+
+// Capture moves
+
+func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color,
+	isLegalityCheck bool, allMoves *[]Move) bool {
+	enPassant := p.EnPassant
+	if color == White {
+		for bbPawn != 0 {
+			src := bitScanForward(bbPawn)
+			srcSq := Square(src)
+			pawn := squareMask[src]
 			attacks := wPawnsAble2CaptureAny(pawn, otherPieces)
 			for attacks != 0 {
 				sq := bitScanForward(attacks)
@@ -381,22 +622,14 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are
 						return true
 					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m1, m2, m3, m4)
-						} else {
-							p.addAllMoves(allMoves, m1, m2, m3, m4)
-						}
+						p.addAllMoves(allMoves, m1, m2, m3, m4)
 					}
 				} else {
 					m := NewMove(srcSq, dest, WhitePawn, cp, NoType, Capture)
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-						} else {
-							p.addAllMoves(allMoves, m)
-						}
+						p.addAllMoves(allMoves, m)
 					}
 				}
 				attacks ^= squareMask[sq]
@@ -411,11 +644,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-						} else {
-							p.addAllMoves(allMoves, m)
-						}
+						p.addAllMoves(allMoves, m)
 					}
 				}
 			}
@@ -426,53 +655,6 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
 			pawn := squareMask[src]
-			if !capturesOnly {
-				dbl := bDoublePushTargets(pawn, emptySquares)
-				if dbl != 0 {
-					dest := Square(bitScanForward(dbl))
-					var tag MoveTag = 0
-					m := NewMove(srcSq, dest, BlackPawn, NoPiece, NoType, tag)
-					if isLegalityCheck && p.checkMove(m) {
-						return true
-					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-						} else {
-							p.addAllMoves(allMoves, m)
-						}
-					}
-				}
-				sngl := bSinglePushTargets(pawn, emptySquares)
-				if sngl != 0 {
-					dest := Square(bitScanForward(sngl))
-					if dest.Rank() == Rank1 {
-						m1 := NewMove(srcSq, dest, BlackPawn, NoPiece, Queen, 0)
-						m2 := NewMove(srcSq, dest, BlackPawn, NoPiece, Rook, 0)
-						m3 := NewMove(srcSq, dest, BlackPawn, NoPiece, Bishop, 0)
-						m4 := NewMove(srcSq, dest, BlackPawn, NoPiece, Knight, 0)
-						if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
-							return true
-						} else if !isLegalityCheck {
-							if isQuiescence {
-								p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m1, m2, m3, m4)
-							} else {
-								p.addAllMoves(allMoves, m1, m2, m3, m4)
-							}
-						}
-					} else {
-						m := NewMove(srcSq, dest, BlackPawn, NoPiece, NoType, 0)
-						if isLegalityCheck && p.checkMove(m) {
-							return true
-						} else if !isLegalityCheck {
-							if isQuiescence {
-								p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-							} else {
-								p.addAllMoves(allMoves, m)
-							}
-						}
-					}
-				}
-			}
 			attacks := bPawnsAble2CaptureAny(pawn, otherPieces)
 			for attacks != 0 {
 				sq := bitScanForward(attacks)
@@ -486,11 +668,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m1, m2, m3, m4)
-						} else {
-							p.addAllMoves(allMoves, m1, m2, m3, m4)
-						}
+						p.addAllMoves(allMoves, m1, m2, m3, m4)
 					}
 				} else {
 					var tag MoveTag = Capture
@@ -498,11 +676,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-						} else {
-							p.addAllMoves(allMoves, m)
-						}
+						p.addAllMoves(allMoves, m)
 					}
 				}
 				attacks ^= squareMask[sq]
@@ -517,11 +691,7 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 					if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						if isQuiescence {
-							p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-						} else {
-							p.addAllMoves(allMoves, m)
-						}
+						p.addAllMoves(allMoves, m)
 					}
 				}
 			}
@@ -532,10 +702,34 @@ func (p *Position) bbPawnMoves(bbPawn uint64, ownPieces uint64, otherPieces uint
 	return false
 }
 
-// Sliding moves, for rooks, queens and bishops
-func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
-	color Color, movingPiece Piece,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
+func (p *Position) knightCaptureMoves(movingPiece Piece, bbPiece uint64, ownPieces uint64, otherPieces uint64,
+	isLegalityCheck bool, allMoves *[]Move) bool {
+	for bbPiece != 0 {
+		src := bitScanForward(bbPiece)
+		srcSq := Square(src)
+		knight := squareMask[src]
+		captures := knightCaptures(srcSq, otherPieces)
+		for captures != 0 {
+			sq := bitScanForward(captures)
+			dest := Square(sq)
+			cp := p.Board.PieceAt(dest)
+			m := NewMove(srcSq, dest, movingPiece, cp, NoType, Capture)
+			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
+				return true
+			} else if !isLegalityCheck {
+				p.addAllMoves(allMoves, m)
+			}
+
+			captures ^= squareMask[sq]
+		}
+		bbPiece ^= knight
+	}
+
+	return false
+}
+
+func (p *Position) slidingCaptureMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
+	color Color, movingPiece Piece, isLegalityCheck bool, allMoves *[]Move) bool {
 	both := otherPieces | ownPieces
 	var rayAttacks uint64
 	for bbPiece != 0 {
@@ -550,24 +744,6 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 			rayAttacks = queenAttacks(srcSq, both, ownPieces)
 		}
 		captureMoves := rayAttacks & otherPieces
-		if !capturesOnly {
-			passiveMoves := rayAttacks &^ otherPieces
-			for passiveMoves != 0 {
-				sq := bitScanForward(passiveMoves)
-				dest := Square(sq)
-				m := NewMove(srcSq, dest, movingPiece, NoPiece, NoType, 0)
-				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
-					return true
-				} else if !isLegalityCheck {
-					if isQuiescence {
-						p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-					} else {
-						p.addAllMoves(allMoves, m)
-					}
-				}
-				passiveMoves ^= squareMask[sq]
-			}
-		}
 		for captureMoves != 0 {
 			sq := bitScanForward(captureMoves)
 			dest := Square(sq)
@@ -576,11 +752,7 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				if isQuiescence {
-					p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-				} else {
-					p.addAllMoves(allMoves, m)
-				}
+				p.addAllMoves(allMoves, m)
 			}
 
 			captureMoves ^= squareMask[sq]
@@ -590,62 +762,9 @@ func (p *Position) bbSlidingMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 	return false
 }
 
-// Knights
-func (p *Position) bbKnightMoves(movingPiece Piece, bbPiece uint64, ownPieces uint64, otherPieces uint64,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
-	both := otherPieces | ownPieces
-	for bbPiece != 0 {
-		src := bitScanForward(bbPiece)
-		srcSq := Square(src)
-		knight := squareMask[src]
-		if !capturesOnly {
-			moves := knightMovesNoCaptures(srcSq, both)
-			for moves != 0 {
-				sq := bitScanForward(moves)
-				dest := Square(sq)
-				m := NewMove(srcSq, dest, movingPiece, NoPiece, NoType, 0)
-				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
-					return true
-				} else if !isLegalityCheck {
-					if isQuiescence {
-						p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-					} else {
-						p.addAllMoves(allMoves, m)
-					}
-				}
-
-				moves ^= squareMask[sq]
-			}
-		}
-		captures := knightCaptures(srcSq, otherPieces)
-		for captures != 0 {
-			sq := bitScanForward(captures)
-			dest := Square(sq)
-			cp := p.Board.PieceAt(dest)
-			m := NewMove(srcSq, dest, movingPiece, cp, NoType, Capture)
-			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
-				return true
-			} else if !isLegalityCheck {
-				if isQuiescence {
-					p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-				} else {
-					p.addAllMoves(allMoves, m)
-				}
-			}
-
-			captures ^= squareMask[sq]
-		}
-		bbPiece ^= knight
-	}
-
-	return false
-}
-
-// Kings
-func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
+func (p *Position) kingCaptureMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
 	tabooSquares uint64, color Color, kingSideCastle bool, queenSideCastle bool,
-	capturesOnly bool, isPosInCheck bool, isLegalityCheck bool, isQuiescence bool, allMoves *[]Move) bool {
-	both := (otherPieces | ownPieces)
+	isLegalityCheck bool, allMoves *[]Move) bool {
 	var movingPiece = BlackKing
 	if color == White {
 		movingPiece = WhiteKing
@@ -653,74 +772,6 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 	if bbPiece != 0 {
 		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
-		moves := kingMovesNoCaptures(srcSq, both, tabooSquares)
-		if !capturesOnly {
-			for moves != 0 {
-				sq := bitScanForward(moves)
-				dest := Square(sq)
-				m := NewMove(srcSq, dest, movingPiece, NoPiece, NoType, 0)
-				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
-					return true
-				} else if !isLegalityCheck {
-					if isQuiescence {
-						p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-					} else {
-						p.addAllMoves(allMoves, m)
-					}
-				}
-
-				moves ^= squareMask[sq]
-			}
-
-			E := E1
-			F := F1
-			G := G1
-			D := D1
-			C := C1
-			B := B1
-			if color == Black && srcSq.Rank() == Rank8 {
-				E = E8
-				F = F8
-				G = G8
-				D = D8
-				C = C8
-				B = B8
-			}
-
-			kingSide := uint64(squareMask[F] | squareMask[G])
-			queenSide := uint64(squareMask[D] | squareMask[C])
-
-			if srcSq == E && kingSideCastle &&
-				((ownPieces|otherPieces)&kingSide == 0) && // are empty
-				(tabooSquares&(kingSide|squareMask[E]) == 0) { // Not in check
-				m := NewMove(srcSq, G, movingPiece, NoPiece, NoType, KingSideCastle)
-				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
-					return true
-				} else if !isLegalityCheck {
-					if isQuiescence {
-						p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-					} else {
-						p.addAllMoves(allMoves, m)
-					}
-				}
-			}
-
-			if srcSq == E && queenSideCastle &&
-				((ownPieces|otherPieces)&(queenSide|(squareMask[B])) == 0) && // are empty
-				(tabooSquares&(queenSide|squareMask[E]) == 0) { // Not in check
-				m := NewMove(srcSq, C, movingPiece, NoPiece, NoType, QueenSideCastle)
-				if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
-					return true
-				} else if !isLegalityCheck {
-					if isQuiescence {
-						p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-					} else {
-						p.addAllMoves(allMoves, m)
-					}
-				}
-
-			}
-		}
 		captures := kingCaptures(srcSq, otherPieces, tabooSquares)
 		for captures != 0 {
 			sq := bitScanForward(captures)
@@ -730,13 +781,8 @@ func (p *Position) bbKingMoves(bbPiece uint64, ownPieces uint64, otherPieces uin
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				if isQuiescence {
-					p.addCaptureMoves(allMoves, !capturesOnly, isPosInCheck, m)
-				} else {
-					p.addAllMoves(allMoves, m)
-				}
+				p.addAllMoves(allMoves, m)
 			}
-
 			captures ^= squareMask[sq]
 		}
 	}

@@ -30,7 +30,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
 	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
-	fmt.Printf("info string Mult-Cut: %d\n", i.multiCutCounter)
+	fmt.Printf("info string Multi-Cut: %d\n", i.multiCutCounter)
 	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
 	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
 	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
@@ -158,7 +158,7 @@ func (e *Engine) AddKillerMove(move Move, ply int8) {
 }
 
 func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if e.searchHistory[movingPiece-1] == nil {
+	if e.searchHistory[movingPiece-1] == nil || e.searchHistory[movingPiece-1][destination] == 0 {
 		return 0
 	}
 	return 60_000 + e.searchHistory[movingPiece-1][destination]
@@ -193,8 +193,9 @@ func (e *Engine) SendPv(depth int8) {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d score cp %d time %d pv %s\n",
-		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(), e.nodesVisited, e.score,
+	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d, score cp %d time %d pv %s\n",
+		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
+		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
 }
 

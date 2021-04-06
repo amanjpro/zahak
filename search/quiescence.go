@@ -37,19 +37,20 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		alpha = standPat
 	}
 
-	withChecks := false && ply < 4
-	legalMoves := position.QuiesceneMoves(withChecks)
+	// withChecks := false && ply < 4
+	movePicker := NewMovePicker(position, e, searchHeight, EmptyMove, !isInCheck)
 
-	movePicker := NewMovePicker(position, e, legalMoves, searchHeight, EmptyMove)
-
-	for i := 0; i < len(legalMoves); i++ {
+	for i := 0; ; i++ {
 		move := movePicker.Next()
+		if move == EmptyMove {
+			break
+		}
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()
 		if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
-			// SEE pruning
-			e.info.seeQuiescenceCounter += 1
-			if movePicker.scores[i] < 0 {
+			if movePicker.captureScores[i] < 0 {
+				// SEE pruning
+				e.info.seeQuiescenceCounter += 1
 				continue
 			}
 		}
@@ -67,10 +68,10 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		score := -v
 		if score >= beta {
 			e.AddKillerMove(move, searchHeight)
+			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 			return beta, true
 		}
 		if score > alpha {
-			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 			alpha = score
 		}
 	}

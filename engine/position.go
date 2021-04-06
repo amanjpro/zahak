@@ -1,5 +1,9 @@
 package engine
 
+import (
+	"math/bits"
+)
+
 type Position struct {
 	Board         Bitboard
 	EnPassant     Square
@@ -390,7 +394,15 @@ func (p *Position) IsDraw() bool {
 			// one side has a king and a minor piece against a bare king
 
 			if all <= 1 {
-				return true
+				if wKnightsNum != 0 {
+					return bits.OnesCount64(p.Board.whiteKnight) == 1
+				} else if bKnightsNum != 0 {
+					return bits.OnesCount64(p.Board.blackKnight) == 1
+				} else if wBishopsNum != 0 {
+					return bits.OnesCount64(p.Board.whiteBishop) == 1
+				} else if bBishopsNum != 0 {
+					return bits.OnesCount64(p.Board.blackBishop) == 1
+				}
 			}
 			// both sides have a king and a bishop, the bishops being the same color
 			if wKnightsNum == 0 && bKnightsNum == 0 {
