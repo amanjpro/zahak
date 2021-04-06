@@ -193,7 +193,7 @@ func (e *Engine) SendPv(depth int8) {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d, score cp %d time %d pv %s\n",
+	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score cp %d time %d pv %s\n",
 		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
 		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), e.score,
 		thinkTime.Milliseconds(), e.pv.ToString())
