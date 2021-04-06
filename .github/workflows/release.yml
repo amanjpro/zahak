@@ -29,7 +29,8 @@ jobs:
         run: |
           make dist
           mv bin/zahak-linux-amd64 bin/zahak-linux-amd64-"$TAG_NAME"
-          mv bin/zahak-linux-arm bin/zahak-linux-arm-"$TAG_NAME"
+          mv bin/zahak-linux-arm32 bin/zahak-linux-arm32-"$TAG_NAME"
+          mv bin/zahak-linux-arm64 bin/zahak-linux-arm64-"$TAG_NAME"
           mv bin/zahak-darwin-amd64 bin/zahak-darwin-amd64-"$TAG_NAME"
           mv bin/zahak-windows-amd64.exe bin/zahak-windows-amd64-"$TAG_NAME".exe
           mv bin/zahak-windows-386.exe bin/zahak-windows-386-"$TAG_NAME".exe

@@ -24,7 +24,8 @@ clean:
 
 dist:
 	echo "Compiling for every OS and Platform"
-	GOOS=linux GOARCH=arm go build -ldflags "-X 'main.version=$(version)'" -o bin ./... && mv bin/zahak bin/zahak-linux-arm
+	GOOS=linux GOARCH=arm go build -ldflags "-X 'main.version=$(version)'" -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
+	GOOS=linux GOARCH=arm64 go build -ldflags "-X 'main.version=$(version)'" -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
 	GOOS=linux GOARCH=amd64 go build -ldflags "-X 'main.version=${version}'" -o bin ./... && mv bin/zahak bin/zahak-linux-amd64
 	GOOS=darwin GOARCH=amd64 go build -ldflags "-X 'main.version=${version}'" -o bin ./... && mv bin/zahak bin/zahak-darwin-amd64
 	GOOS=windows GOARCH=amd64 go build -ldflags "-X 'main.version=${version}'" -o bin ./... && mv bin/zahak.exe bin/zahak-windows-amd64.exe
