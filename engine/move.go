@@ -15,14 +15,16 @@ Given 32 bit int: 00000 000 0000 0000 0000 000000 000000
 	- the next 4 bits represent The moving piece
 	- the next 4 bits represent The captured piece
 	- the next 3 bits represent The promotion type
-	- then next 5 bits are for the move tags
+	- then next 7 bits are for the move tags
 	   - first bit is king-side-castle
 	   - second bit is queen-side-castle
 	   - third bit is capture
 	   - fourth bit is enpassant
 	   - fifth bit is check
+	   - sixth bit is set if legal
+		 - seventh bit is set if illegal
 
-	6+6+4+4+3+5 = 28 bits, that leaves us 4 more bits in case
+	6+6+4+4+3+7 = 30 bits, that leaves us 4 more bits in case
 	more tags were needed
 */
 
@@ -52,6 +54,11 @@ const (
 	EnPassant
 	// Check indicates that the move puts the opposing player in check.
 	Check
+	// A move can be neither legal, nor legal. That is when we have not check its legality yet
+	// Is the move legal
+	Legal
+	// Is the move illegal
+	Illegal
 )
 
 func (m Move) Source() Square {
@@ -98,8 +105,24 @@ func (m Move) IsCheck() bool {
 	return uint32(m)&0x8000000 != 0
 }
 
+func (m Move) IsLegal() bool {
+	return uint32(m)&0x10000000 != 0
+}
+
+func (m Move) IsIllegal() bool {
+	return uint32(m)&0x20000000 != 0
+}
+
 func (m *Move) AddCheckTag() {
 	*m = Move(uint32(*m) | 0x8000000)
+}
+
+func (m *Move) MarkLegal() {
+	*m = Move(uint32(*m) | 0x10000000)
+}
+
+func (m *Move) MarkIllegal() {
+	*m = Move(uint32(*m) | 0x20000000)
 }
 
 func (m Move) ToString() string {
