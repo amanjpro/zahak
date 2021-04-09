@@ -13,7 +13,7 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 27)
-	expected := NewMove(D7, D6, BlackKing, NoPiece, NoType, 0)
+	expected := NewMove(D7, D6, BlackKing, NoPiece, NoType, Legal)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -26,7 +26,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
-	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, Check)
+	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, Check|Legal)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -39,7 +39,7 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
-	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, Check)
+	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, Check|Legal)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -52,7 +52,7 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
-	expected := NewMove(D1, C1, WhiteKing, NoPiece, NoType, 0)
+	expected := NewMove(D1, C1, WhiteKing, NoPiece, NoType, Legal)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -65,7 +65,7 @@ func TestSearchOnlyMove(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
-	expected := NewMove(G7, G6, BlackPawn, NoPiece, NoType, 0)
+	expected := NewMove(G7, G6, BlackPawn, NoPiece, NoType, Legal)
 	mv := e.Move()
 	score := e.Score()
 	mvStr := mv.ToString()
@@ -82,7 +82,7 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 7, 1)
-	expected := NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0)
+	expected := NewMove(E1, F1, WhiteKing, NoPiece, NoType, Legal)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -100,23 +100,23 @@ func TestNestedMakeUnMake(t *testing.T) {
 	p := g.Position()
 	originalHash := p.Hash()
 
-	m1 := NewMove(G8, E7, BlackKnight, NoPiece, NoType, 0)
-	ep1, tg1, hc1 := p.MakeMove(m1)
+	m1 := NewMove(G8, E7, BlackKnight, NoPiece, NoType, Legal)
+	ep1, tg1, hc1, _ := p.MakeMove(&m1)
 
-	m2 := NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0)
-	ep2, tg2, hc2 := p.MakeMove(m2)
+	m2 := NewMove(G2, G3, WhitePawn, NoPiece, NoType, Legal)
+	ep2, tg2, hc2, _ := p.MakeMove(&m2)
 
-	m3 := NewMove(H4, G5, BlackQueen, NoPiece, NoType, 0)
-	ep3, tg3, hc3 := p.MakeMove(m3)
+	m3 := NewMove(H4, G5, BlackQueen, NoPiece, NoType, Legal)
+	ep3, tg3, hc3, _ := p.MakeMove(&m3)
 
-	m4 := NewMove(G3, G4, WhitePawn, NoPiece, NoType, 0)
-	ep4, tg4, hc4 := p.MakeMove(m4)
+	m4 := NewMove(G3, G4, WhitePawn, NoPiece, NoType, Legal)
+	ep4, tg4, hc4, _ := p.MakeMove(&m4)
 
-	m5 := NewMove(C8, B7, BlackBishop, WhiteQueen, NoType, Capture)
-	ep5, tg5, hc5 := p.MakeMove(m5)
+	m5 := NewMove(C8, B7, BlackBishop, WhiteQueen, NoType, Capture|Legal)
+	ep5, tg5, hc5, _ := p.MakeMove(&m5)
 
-	m6 := NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0)
-	ep6, tg6, hc6 := p.MakeMove(m6)
+	m6 := NewMove(B2, B4, WhitePawn, NoPiece, NoType, Legal)
+	ep6, tg6, hc6, _ := p.MakeMove(&m6)
 
 	actualFen := g.Fen()
 	expectedFen := "rn2kb1r/pbppnppp/4p3/6q1/1P4P1/2P5/P2PPP1P/RNB1KBNR b KQkq b3 0 1"
@@ -148,7 +148,7 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 17, 1)
-	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
+	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, Legal)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -163,11 +163,11 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Search(game.Position(), 13, 1)
 	expected := []Move{
-		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check),
-		NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0),
-		NewMove(A3, B3, BlackQueen, NoPiece, NoType, Check),
-		NewMove(B1, A1, WhiteKing, NoPiece, NoType, 0),
-		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check)}
+		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Legal|Check),
+		NewMove(A1, B1, WhiteKing, NoPiece, NoType, Legal),
+		NewMove(A3, B3, BlackQueen, NoPiece, NoType, Legal|Check),
+		NewMove(B1, A1, WhiteKing, NoPiece, NoType, Legal),
+		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Legal|Check)}
 	actual := e.pv.line
 	if equalMoves(expected, actual) {
 		actualString := e.pv.ToString()

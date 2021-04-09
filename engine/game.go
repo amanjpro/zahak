@@ -14,7 +14,7 @@ type Game struct {
 func (g *Game) IsLegalMove(m Move) bool {
 	// Very inefficient, but doesn't really matter
 	for _, move := range g.position.LegalMoves() {
-		if move == m {
+		if move.EqualTo(m) {
 			return true
 		}
 	}
@@ -26,7 +26,7 @@ func (g *Game) Move(m Move) {
 
 	if g.IsLegalMove(m) {
 		g.moves = append(g.moves, m)
-		pos.MakeMove(m)
+		pos.MakeMove(&m)
 		if pos.Turn() == White {
 			g.numberOfMoves += 1
 		}

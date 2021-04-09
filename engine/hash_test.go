@@ -198,14 +198,15 @@ func TestZobristCollisions(t *testing.T) {
 	for _, pos := range positions {
 		for _, mov := range pos.LegalMoves() {
 			tests++
-			ep, tg, hc := pos.MakeMove(mov)
-			hash := pos.Hash()
-			fen := pos.Fen()
-			pos.UnMakeMove(mov, tg, ep, hc)
-			if dumps, ok := collisions[hash]; ok {
-				dumps[fen]++
-			} else {
-				collisions[hash] = make(map[string]uint64)
+			if ep, tg, hc, legal := pos.MakeMove(&mov); legal {
+				hash := pos.Hash()
+				fen := pos.Fen()
+				pos.UnMakeMove(mov, tg, ep, hc)
+				if dumps, ok := collisions[hash]; ok {
+					dumps[fen]++
+				} else {
+					collisions[hash] = make(map[string]uint64)
+				}
 			}
 		}
 	}
@@ -230,18 +231,19 @@ func TestUpdateZobristHash(t *testing.T) {
 		pos.hash = 0 // Reset the positions
 		originalHash := pos.Hash()
 		for _, mov := range pos.LegalMoves() {
-			ep, tg, hc := pos.MakeMove(mov)
-			incrementHash := pos.Hash()
-			pos.hash = 0
-			freshHash := pos.Hash()
-			pos.UnMakeMove(mov, tg, ep, hc)
-			unmadeHash := pos.Hash()
-			pos.hash = originalHash
-			if incrementHash != freshHash {
-				t.Errorf("Updated hash != Fresh hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
-			}
-			if unmadeHash != originalHash {
-				t.Errorf("Undone hash (reverse from unmake) != original hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
+			if ep, tg, hc, legal := pos.MakeMove(&mov); legal {
+				incrementHash := pos.Hash()
+				pos.hash = 0
+				freshHash := pos.Hash()
+				pos.UnMakeMove(mov, tg, ep, hc)
+				unmadeHash := pos.Hash()
+				pos.hash = originalHash
+				if incrementHash != freshHash {
+					t.Errorf("Updated hash != Fresh hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
+				}
+				if unmadeHash != originalHash {
+					t.Errorf("Undone hash (reverse from unmake) != original hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
+				}
 			}
 		}
 	}

@@ -21,7 +21,7 @@ type PerftNodes struct {
 func PerftTree(game Game, depth int, moves []Move) {
 	sum := int64(0)
 	for _, move := range moves {
-		game.Position().MakeMove(move)
+		game.Position().MakeMove(&move)
 	}
 	if depth > 0 {
 		depth -= 1
@@ -31,11 +31,12 @@ func PerftTree(game Game, depth int, moves []Move) {
 		}
 		moves = game.Position().LegalMoves()
 		for _, move := range moves {
-			ep, tg, hc := game.Position().MakeMove(move)
-			nodes := bulkyPerft(game.Position(), depth)
-			fmt.Printf("%s %d\n", move.ToString(), nodes)
-			sum += nodes
-			game.Position().UnMakeMove(move, tg, ep, hc)
+			if ep, tg, hc, legal := game.Position().MakeMove(&move); legal {
+				nodes := bulkyPerft(game.Position(), depth)
+				fmt.Printf("%s %d\n", move.ToString(), nodes)
+				sum += nodes
+				game.Position().UnMakeMove(move, tg, ep, hc)
+			}
 		}
 	}
 
@@ -253,9 +254,10 @@ func perft(p *Position, depth int, currentMove Move, acc *PerftNodes) {
 	moves := p.LegalMoves()
 
 	for _, move := range moves {
-		ep, tag, hc := p.MakeMove(move)
-		perft(p, depth-1, move, acc)
-		p.UnMakeMove(move, tag, ep, hc)
+		if ep, tag, hc, legal := p.MakeMove(&move); legal {
+			perft(p, depth-1, move, acc)
+			p.UnMakeMove(move, tag, ep, hc)
+		}
 	}
 }
 
@@ -268,21 +270,29 @@ func bulkyPerft(p *Position, depth int) int64 {
 
 	moves := p.LegalMoves()
 	if depth == 1 {
-		return int64(len(moves))
+		count := int64(0)
+		for _, move := range moves {
+			if ep, tag, hc, legal := p.MakeMove(&move); legal {
+				count += 1
+				p.UnMakeMove(move, tag, ep, hc)
+			}
+		}
+		return int64(count)
 	}
 
 	for _, move := range moves {
-		ep, tag, hc := p.MakeMove(move)
-		hash := p.Hash()
-		n, ok := cache[depth-1][hash]
-		if ok {
-			nodes += n
-		} else {
-			n := bulkyPerft(p, depth-1)
-			cache[depth-1][hash] = n
-			nodes += n
+		if ep, tag, hc, legal := p.MakeMove(&move); legal {
+			hash := p.Hash()
+			n, ok := cache[depth-1][hash]
+			if ok {
+				nodes += n
+			} else {
+				n := bulkyPerft(p, depth-1)
+				cache[depth-1][hash] = n
+				nodes += n
+			}
+			p.UnMakeMove(move, tag, ep, hc)
 		}
-		p.UnMakeMove(move, tag, ep, hc)
 	}
 	return nodes
 }

@@ -49,7 +49,7 @@ func TestAllPieces(t *testing.T) {
 	}
 
 	m := NewMove(H3, G5, WhiteKnight, BlackPawn, NoType, Capture)
-	ep, ot, hc := g.position.MakeMove(m)
+	ep, ot, hc, _ := g.position.MakeMove(&m)
 	g.position.UnMakeMove(m, ot, ep, hc)
 
 	actual = g.position.Board.AllPieces()
@@ -59,7 +59,7 @@ func TestAllPieces(t *testing.T) {
 	}
 
 	m = NewMove(G1, G3, WhiteRook, NoPiece, NoType, 0)
-	ep, ot, hc = g.position.MakeMove(m)
+	ep, ot, hc, _ = g.position.MakeMove(&m)
 	g.position.UnMakeMove(m, ot, ep, hc)
 
 	actual = g.position.Board.AllPieces()

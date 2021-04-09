@@ -125,7 +125,10 @@ func (p *Position) partialUnMakeMove(move Move) {
 	}
 }
 
-func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
+func (p *Position) MakeMove(move *Move) (Square, PositionTag, uint8, bool) {
+	if move.IsIllegal() {
+		return NoSquare, 0, 0, false
+	}
 	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
@@ -147,7 +150,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 	// EnPassant flag is a form of capture, captures do not result in enpassant allowance
 	if move.IsEnPassant() {
 		p.EnPassant = NoSquare
-		ep := findEnPassantCaptureSquare(move)
+		ep := findEnPassantCaptureSquare(*move)
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
 	} else if move.IsCapture() {
@@ -199,6 +202,20 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 		p.ClearTag(WhiteCanCastleKingSide)
 	}
 
+	if !move.IsLegal() {
+		inCheck := isInCheck(p.Board, p.Turn())
+		if inCheck {
+			move.MarkIllegal()
+			p.UnMakeMove(*move, tag, ep, hc)
+			return NoSquare, 0, 0, false
+		} else {
+			if isInCheck(p.Board, p.Turn().Other()) {
+				move.AddCheckTag()
+			}
+			move.MarkLegal()
+		}
+	}
+
 	// Set check tag
 	if move.IsCheck() {
 		p.SetTag(InCheck)
@@ -207,8 +224,8 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 	}
 
 	p.ToggleTurn()
-	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	return ep, tag, hc
+	updateHash(p, *move, captureSquare, p.EnPassant, ep, promoPiece, tag)
+	return ep, tag, hc, true
 }
 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
@@ -256,7 +273,9 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, half
 			p.Board.Move(F8, H8, BlackRook, NoPiece)
 		}
 	}
-	updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
+	if move.IsLegal() {
+		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
+	}
 }
 
 type Status uint8

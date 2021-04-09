@@ -88,7 +88,7 @@ func (mp *MovePicker) scoreCaptureMoves() {
 	for i := 0; i < len(mp.captureMoves); i++ {
 		move := mp.captureMoves[i]
 
-		if move == mp.hashmove {
+		if move.EqualTo(mp.hashmove) {
 			mp.captureScores[i] = 900_000_000
 			mp.captureScores[0], mp.captureScores[i] = mp.captureScores[i], mp.captureScores[0]
 			mp.captureMoves[0], mp.captureMoves[i] = mp.captureMoves[i], mp.captureMoves[0]
@@ -103,21 +103,31 @@ func (mp *MovePicker) scoreCaptureMoves() {
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
-			if !move.IsEnPassant() {
+			cweight := capPiece.Weight()
+			pweight := piece.Weight()
+			if cweight <= pweight {
 				// SEE for ordering
 				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 				if gain < 0 {
 					mp.captureScores[i] = -90_000_000 + gain
 				} else if gain == 0 {
-					mp.captureScores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
+					mp.captureScores[i] = 100_000_000 + int32(cweight-pweight)
 				} else {
 					mp.captureScores[i] = 100_100_000 + gain
 				}
 			} else {
-				mp.captureScores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				mp.captureScores[i] = 100_100_000 + int32(cweight-pweight)
 			}
 			continue
 		}
+
+		promoType := move.PromoType()
+		if promoType != NoType {
+			p := GetPiece(promoType, White)
+			mp.captureScores[i] = 50_000_000 + int32(p.Weight())
+			continue
+		}
+
 	}
 }
 
@@ -129,7 +139,7 @@ func (mp *MovePicker) scoreQuietMoves() {
 	for i := 0; i < len(mp.quietMoves); i++ {
 		move := mp.quietMoves[i]
 
-		if move == mp.hashmove {
+		if move.EqualTo(mp.hashmove) {
 			mp.quietScores[i] = 900_000_000
 			mp.quietScores[0], mp.quietScores[i] = mp.quietScores[i], mp.quietScores[0]
 			mp.quietMoves[0], mp.quietMoves[i] = mp.quietMoves[i], mp.quietMoves[0]
@@ -152,18 +162,11 @@ func (mp *MovePicker) scoreQuietMoves() {
 			continue
 		}
 
-		promoType := move.PromoType()
-		if promoType != NoType {
-			p := GetPiece(promoType, White)
-			mp.quietScores[i] = 50_000 + int32(p.Weight())
-			continue
-		}
-
 		// prefer checks
-		if move.IsCheck() {
-			mp.quietScores[i] = 10_000
-			continue
-		}
+		// if move.IsCheck() {
+		// 	mp.quietScores[i] = 10_000
+		// 	continue
+		// }
 
 		// King safety (castling)
 		isCastling := move.IsKingSideCastle() || move.IsQueenSideCastle()

@@ -312,6 +312,34 @@ func TestMarkIllegal(t *testing.T) {
 	}
 }
 
+func TestUnMarkCheckAndLegal(t *testing.T) {
+	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, Check|Legal)
+
+	move.UnMarkCheckAndLegal()
+
+	if move.IsIllegal() {
+		t.Error("NewMove doesn't set illegality flag properly, Expected false, got true")
+	}
+	if move.IsLegal() {
+		t.Error("NewMove doesn't set legality flag properly, Expected false, got true")
+	}
+	if move.IsCheck() {
+		t.Error("NewMove doesn't set check flag properly, Expected false, got true")
+	}
+	if move.IsCapture() {
+		t.Error("NewMove doesn't set capture flag properly, Expected false, got true")
+	}
+	if move.IsEnPassant() {
+		t.Error("NewMove doesn't set enpassant flag properly, Expected false, got true")
+	}
+	if move.IsQueenSideCastle() {
+		t.Error("NewMove doesn't set queen-side castle flag properly, Expected false, got true")
+	}
+	if move.IsKingSideCastle() {
+		t.Error("NewMove doesn't set king-side castle flag properly, Expected false, got true")
+	}
+}
+
 func TestNewMoveWithPromo(t *testing.T) {
 	m1 := NewMove(E2, F1, BlackPawn, WhiteKnight, Queen, Capture)
 	m2 := NewMove(E2, F1, BlackPawn, WhiteKnight, Knight, Capture)

@@ -21,7 +21,7 @@ func TestBishopMoves(t *testing.T) {
 		NewMove(E2, H5, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, D3, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, C4, WhiteBishop, NoPiece, NoType, 0),
-		NewMove(E2, B5, WhiteBishop, NoPiece, NoType, Check),
+		NewMove(E2, B5, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, A6, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E3, D2, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E3, F4, WhiteBishop, NoPiece, NoType, 0),
@@ -61,7 +61,7 @@ func TestRookMoves(t *testing.T) {
 		NewMove(C1, C4, WhiteRook, NoPiece, NoType, 0),
 		NewMove(C1, C5, WhiteRook, NoPiece, NoType, 0),
 		NewMove(C1, C6, WhiteRook, NoPiece, NoType, 0),
-		NewMove(C1, C7, WhiteRook, BlackPawn, NoType, Capture|Check),
+		NewMove(C1, C7, WhiteRook, BlackPawn, NoType, Capture),
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -93,7 +93,7 @@ func TestQueenMoves(t *testing.T) {
 		NewMove(D1, D4, WhiteQueen, BlackPawn, NoType, Capture),
 		NewMove(D1, C2, WhiteQueen, NoPiece, NoType, 0),
 		NewMove(D1, B3, WhiteQueen, NoPiece, NoType, 0),
-		NewMove(D1, A4, WhiteQueen, NoPiece, NoType, Check),
+		NewMove(D1, A4, WhiteQueen, NoPiece, NoType, 0),
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -227,7 +227,7 @@ func TestPawnMovesForWhite(t *testing.T) {
 		NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0),
 		NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture),
-		NewMove(E6, F7, WhitePawn, BlackPawn, NoType, Capture|Check),
+		NewMove(E6, F7, WhitePawn, BlackPawn, NoType, Capture),
 		NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture),
 		NewMove(B7, A8, WhitePawn, BlackRook, Rook, Capture),
 		NewMove(B7, A8, WhitePawn, BlackRook, Bishop, Capture),
@@ -307,10 +307,10 @@ func TestKnightMoves(t *testing.T) {
 		NewMove(G3, H5, WhiteKnight, NoPiece, NoType, 0),
 		NewMove(B5, A7, WhiteKnight, BlackPawn, NoType, Capture),
 		NewMove(B5, A3, WhiteKnight, NoPiece, NoType, 0),
-		NewMove(B5, C7, WhiteKnight, BlackPawn, NoType, Capture|Check),
+		NewMove(B5, C7, WhiteKnight, BlackPawn, NoType, Capture),
 		NewMove(B5, C3, WhiteKnight, NoPiece, NoType, 0),
 		NewMove(B5, D4, WhiteKnight, BlackPawn, NoType, Capture),
-		NewMove(B5, D6, WhiteKnight, NoPiece, NoType, Check),
+		NewMove(B5, D6, WhiteKnight, NoPiece, NoType, 0),
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -332,7 +332,7 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 	g := FromFen(fen, true)
 	p := g.position
 	legalMoves := p.LegalMoves()
-	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, Check|KingSideCastle)
+	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
 	if !containsMove(legalMoves, move) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
@@ -340,7 +340,7 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 		}
 		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.Tag()))
 	}
-	move = NewMove(E1, D2, WhiteKing, BlackRook, NoType, Check|Capture)
+	move = NewMove(E1, D2, WhiteKing, BlackRook, NoType, Capture)
 	if !containsMove(legalMoves, move) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
@@ -390,8 +390,8 @@ func TestLegalMoves(t *testing.T) {
 		NewMove(H1, G1, WhiteRook, NoPiece, NoType, 0),
 		NewMove(H1, F1, WhiteRook, NoPiece, NoType, 0),
 		NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0),
-		NewMove(E1, G1, WhiteKing, NoPiece, NoType, Check|KingSideCastle),
-		NewMove(E1, D2, WhiteKing, BlackRook, NoType, Check|Capture),
+		NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle),
+		NewMove(E1, D2, WhiteKing, BlackRook, NoType, Capture),
 		NewMove(H2, H3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(G2, G4, WhitePawn, NoPiece, NoType, 0),
@@ -457,9 +457,6 @@ func TestDoubleCheckResponses(t *testing.T) {
 	}
 	if !p.IsInCheck() {
 		t.Errorf("Position is wrongfully considered not check for: %s", fen)
-	}
-	if !isDoubleCheck(p.Board, White) {
-		t.Errorf("Position is wrongfully considered not double-check for: %s", fen)
 	}
 	if p.Status() != Unknown {
 		t.Errorf("Position is wrongfully considered ended: %b", p.Status())
@@ -565,6 +562,7 @@ func TestLegalMovesInOpenning(t *testing.T) {
 
 func equalMoves(moves1 []Move, moves2 []Move) bool {
 	if len(moves1) != len(moves2) {
+		fmt.Println("different sizes")
 		return false
 	}
 	for _, m1 := range moves1 {

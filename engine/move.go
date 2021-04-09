@@ -121,8 +121,17 @@ func (m *Move) MarkLegal() {
 	*m = Move(uint32(*m) | 0x10000000)
 }
 
+func (m *Move) UnMarkCheckAndLegal() {
+	*m = Move(uint32(*m) &^ (0x10000000 | 0x8000000))
+}
+
 func (m *Move) MarkIllegal() {
 	*m = Move(uint32(*m) | 0x20000000)
+}
+
+func (m *Move) EqualTo(other Move) bool {
+	other.UnMarkCheckAndLegal()
+	return *m == other
 }
 
 func (m Move) ToString() string {

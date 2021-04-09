@@ -45,34 +45,36 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		if move == EmptyMove {
 			break
 		}
-		isCheckMove := move.IsCheck()
-		isCaptureMove := move.IsCapture()
-		if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
-			if movePicker.captureScores[i] < 0 {
-				// SEE pruning
-				e.info.seeQuiescenceCounter += 1
-				continue
+		if ep, tg, hc, legal := position.MakeMove(&move); legal {
+			isCheckMove := move.IsCheck()
+			isCaptureMove := move.IsCapture()
+			if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
+				if movePicker.captureScores[i] < 0 {
+					// SEE pruning
+					e.info.seeQuiescenceCounter += 1
+					position.UnMakeMove(move, tg, ep, hc)
+					continue
+				}
 			}
-		}
 
-		ep, tg, hc := position.MakeMove(move)
-		sp := Evaluate(position)
+			sp := Evaluate(position)
 
-		e.pred.Push(position.Hash())
-		v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
-		e.pred.Pop()
-		position.UnMakeMove(move, tg, ep, hc)
-		if !ok {
-			return v, ok
-		}
-		score := -v
-		if score >= beta {
-			e.AddKillerMove(move, searchHeight)
-			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
-			return beta, true
-		}
-		if score > alpha {
-			alpha = score
+			e.pred.Push(position.Hash())
+			v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
+			e.pred.Pop()
+			position.UnMakeMove(move, tg, ep, hc)
+			if !ok {
+				return v, ok
+			}
+			score := -v
+			if score >= beta {
+				e.AddKillerMove(move, searchHeight)
+				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+				return beta, true
+			}
+			if score > alpha {
+				alpha = score
+			}
 		}
 	}
 	return alpha, true

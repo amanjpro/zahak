@@ -140,10 +140,10 @@ func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 	if e.killerMoves[ply] == nil {
 		return 0
 	}
-	if e.killerMoves[ply][0] != EmptyMove && e.killerMoves[ply][0] == move {
+	if e.killerMoves[ply][0] != EmptyMove && move.EqualTo(e.killerMoves[ply][0]) {
 		return 100_000
 	}
-	if e.killerMoves[ply][1] != EmptyMove && e.killerMoves[ply][1] == move {
+	if e.killerMoves[ply][1] != EmptyMove && move.EqualTo(e.killerMoves[ply][1]) {
 		return 90_000
 	}
 	return 0
