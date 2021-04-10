@@ -99,11 +99,15 @@ func (mp *MovePicker) scoreCaptureMoves() {
 		source := move.Source()
 		dest := move.Destination()
 		piece := move.MovingPiece()
+		promoType := move.PromoType()
 		//
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
-			if !move.IsEnPassant() {
+			if promoType != NoType {
+				p := GetPiece(promoType, White)
+				mp.captureScores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+			} else if !move.IsEnPassant() {
 				// SEE for ordering
 				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 				if gain < 0 {
@@ -116,6 +120,12 @@ func (mp *MovePicker) scoreCaptureMoves() {
 			} else {
 				mp.captureScores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
 			}
+			continue
+		}
+
+		if promoType != NoType {
+			p := GetPiece(promoType, White)
+			mp.captureScores[i] = 150_000_000 + int32(p.Weight())
 			continue
 		}
 	}
@@ -149,13 +159,6 @@ func (mp *MovePicker) scoreQuietMoves() {
 		history := engine.MoveHistoryScore(piece, dest, moveOrder)
 		if history != 0 {
 			mp.quietScores[i] = history
-			continue
-		}
-
-		promoType := move.PromoType()
-		if promoType != NoType {
-			p := GetPiece(promoType, White)
-			mp.quietScores[i] = 50_000 + int32(p.Weight())
 			continue
 		}
 
