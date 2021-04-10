@@ -4,19 +4,40 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
+type MoveList struct {
+	moves  []Move
+	scores []int32
+	size   int
+	next   int
+}
+
+func (ml *MoveList) IsEmpty() bool {
+	return ml.moves == nil
+}
+
+func (ml *MoveList) SwapWith(best int) {
+	ml.moves[ml.next], ml.moves[best] = ml.moves[best], ml.moves[ml.next]
+	ml.scores[ml.next], ml.scores[best] = ml.scores[best], ml.scores[ml.next]
+}
+
+func (ml *MoveList) Swap(first int, second int) {
+	ml.moves[first], ml.moves[second] = ml.moves[second], ml.moves[first]
+	ml.scores[first], ml.scores[second] = ml.scores[second], ml.scores[first]
+}
+
+func (ml *MoveList) Next() {
+	ml.next += 1
+}
+
 type MovePicker struct {
-	position       *Position
-	engine         *Engine
-	hashmove       Move
-	quietMoves     []Move
-	quietScores    []int32
-	captureMoves   []Move
-	captureScores  []int32
-	moveOrder      int8
-	nextQuiet      int
-	nextCapture    int
-	canUseHashMove bool
-	isQuiescence   bool
+	position        *Position
+	engine          *Engine
+	hashmove        Move
+	quietMoveList   MoveList
+	captureMoveList MoveList
+	moveOrder       int8
+	canUseHashMove  bool
+	isQuiescence    bool
 }
 
 func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) *MovePicker {
@@ -30,41 +51,33 @@ func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuie
 		}
 	}
 	mp := &MovePicker{
-		position:       p,
-		engine:         e,
-		hashmove:       hashmove,
-		quietMoves:     nil,
-		quietScores:    nil,
-		captureMoves:   nil,
-		captureScores:  nil,
-		moveOrder:      moveOrder,
-		nextQuiet:      nextQuiet,
-		nextCapture:    nextCapture,
-		canUseHashMove: hashmove != EmptyMove,
-		isQuiescence:   isQuiescence,
+		position:        p,
+		engine:          e,
+		hashmove:        hashmove,
+		quietMoveList:   MoveList{next: nextQuiet},
+		captureMoveList: MoveList{next: nextCapture},
+		moveOrder:       moveOrder,
+		canUseHashMove:  hashmove != EmptyMove,
+		isQuiescence:    isQuiescence,
 	}
 	return mp
 }
 
-func (mp *MovePicker) Length() int {
-	mp.generateQuietMoves()
-	mp.generateCaptureMoves()
-	return len(mp.captureMoves) + len(mp.quietMoves)
-}
-
 func (mp *MovePicker) generateQuietMoves() {
-	if mp.isQuiescence || mp.quietMoves != nil {
+	if mp.isQuiescence || !mp.quietMoveList.IsEmpty() {
 		return
 	}
-	mp.quietMoves = mp.position.GetQuietMoves()
+	mp.quietMoveList.moves = mp.position.GetQuietMoves()
+	mp.quietMoveList.size = len(mp.quietMoveList.moves)
 	mp.scoreQuietMoves()
 }
 
 func (mp *MovePicker) generateCaptureMoves() {
-	if mp.captureMoves != nil || mp.quietMoves != nil {
+	if !mp.captureMoveList.IsEmpty() || !mp.quietMoveList.IsEmpty() {
 		return
 	}
-	mp.captureMoves = mp.position.GetCaptureMoves()
+	mp.captureMoveList.moves = mp.position.GetCaptureMoves()
+	mp.captureMoveList.size = len(mp.captureMoveList.moves)
 	mp.scoreCaptureMoves()
 }
 
@@ -73,7 +86,7 @@ func (mp *MovePicker) HasNoPVMove() bool {
 }
 
 func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
-	if pvMove == EmptyMove || mp.captureMoves != nil || mp.quietMoves != nil {
+	if pvMove == EmptyMove || !mp.captureMoveList.IsEmpty() || !mp.quietMoveList.IsEmpty() {
 		return
 	}
 	mp.hashmove = pvMove
@@ -83,16 +96,15 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 func (mp *MovePicker) scoreCaptureMoves() {
 	position := mp.position
 	board := position.Board
-	mp.captureScores = make([]int32, len(mp.captureMoves))
+	mp.captureMoveList.scores = make([]int32, mp.captureMoveList.size)
 
-	for i := 0; i < len(mp.captureMoves); i++ {
-		move := mp.captureMoves[i]
+	for i := 0; i < mp.captureMoveList.size; i++ {
+		move := mp.captureMoveList.moves[i]
 
 		if move == mp.hashmove {
-			mp.captureScores[i] = 900_000_000
-			mp.captureScores[0], mp.captureScores[i] = mp.captureScores[i], mp.captureScores[0]
-			mp.captureMoves[0], mp.captureMoves[i] = mp.captureMoves[i], mp.captureMoves[0]
-			mp.nextCapture = 1
+			mp.captureMoveList.scores[i] = 900_000_000
+			mp.captureMoveList.Swap(0, i)
+			mp.captureMoveList.next = 1
 			continue
 		}
 
@@ -106,26 +118,26 @@ func (mp *MovePicker) scoreCaptureMoves() {
 			capPiece := move.CapturedPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				mp.captureScores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+				mp.captureMoveList.scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
 				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 				if gain < 0 {
-					mp.captureScores[i] = -90_000_000 + gain
+					mp.captureMoveList.scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
-					mp.captureScores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
+					mp.captureMoveList.scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
 				} else {
-					mp.captureScores[i] = 100_100_000 + gain
+					mp.captureMoveList.scores[i] = 100_100_000 + gain
 				}
 			} else {
-				mp.captureScores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				mp.captureMoveList.scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
 			}
 			continue
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			mp.captureScores[i] = 150_000_000 + int32(p.Weight())
+			mp.captureMoveList.scores[i] = 150_000_000 + int32(p.Weight())
 			continue
 		}
 	}
@@ -134,16 +146,15 @@ func (mp *MovePicker) scoreCaptureMoves() {
 func (mp *MovePicker) scoreQuietMoves() {
 	engine := mp.engine
 	moveOrder := mp.moveOrder
-	mp.quietScores = make([]int32, len(mp.quietMoves))
+	mp.quietMoveList.scores = make([]int32, mp.quietMoveList.size)
 
-	for i := 0; i < len(mp.quietMoves); i++ {
-		move := mp.quietMoves[i]
+	for i := 0; i < mp.quietMoveList.size; i++ {
+		move := mp.quietMoveList.moves[i]
 
 		if move == mp.hashmove {
-			mp.quietScores[i] = 900_000_000
-			mp.quietScores[0], mp.quietScores[i] = mp.quietScores[i], mp.quietScores[0]
-			mp.quietMoves[0], mp.quietMoves[i] = mp.quietMoves[i], mp.quietMoves[0]
-			mp.nextQuiet = 1
+			mp.quietMoveList.scores[i] = 900_000_000
+			mp.quietMoveList.Swap(0, i)
+			mp.quietMoveList.next = 1
 			continue
 		}
 
@@ -152,48 +163,48 @@ func (mp *MovePicker) scoreQuietMoves() {
 
 		killer := engine.KillerMoveScore(move, moveOrder)
 		if killer != 0 {
-			mp.quietScores[i] = killer
+			mp.quietMoveList.scores[i] = killer
 			continue
 		}
 
 		history := engine.MoveHistoryScore(piece, dest, moveOrder)
 		if history != 0 {
-			mp.quietScores[i] = history
+			mp.quietMoveList.scores[i] = history
 			continue
 		}
 
 		// prefer checks
 		if move.IsCheck() {
-			mp.quietScores[i] = 10_000
+			mp.quietMoveList.scores[i] = 10_000
 			continue
 		}
 
 		// King safety (castling)
 		isCastling := move.IsKingSideCastle() || move.IsQueenSideCastle()
 		if isCastling {
-			mp.quietScores[i] = 3_000
+			mp.quietMoveList.scores[i] = 3_000
 			continue
 		}
 
 		// Prefer smaller pieces
 		if piece.Type() == King {
-			mp.quietScores[i] = 0
+			mp.quietMoveList.scores[i] = 0
 			continue
 		}
 
-		mp.quietScores[i] = 1100 - int32(piece.Weight())
+		mp.quietMoveList.scores[i] = 1100 - int32(piece.Weight())
 	}
 }
 
 func (mp *MovePicker) Reset() {
 	mp.canUseHashMove = mp.hashmove != EmptyMove
-	mp.nextQuiet = 0
-	mp.nextCapture = 0
+	mp.quietMoveList.next = 0
+	mp.captureMoveList.next = 0
 	if mp.canUseHashMove {
 		if mp.hashmove.IsCapture() {
-			mp.nextCapture = 1
+			mp.captureMoveList.next = 1
 		} else {
-			mp.nextQuiet = 1
+			mp.quietMoveList.next = 1
 		}
 	}
 }
@@ -212,51 +223,49 @@ func (mp *MovePicker) Next() Move {
 }
 
 func (mp *MovePicker) getNextCapture() Move {
-	if mp.captureMoves == nil {
+	if mp.captureMoveList.IsEmpty() {
 		mp.generateCaptureMoves()
 	}
 
-	if mp.nextCapture >= len(mp.captureMoves) {
+	if mp.captureMoveList.next >= mp.captureMoveList.size {
 		return EmptyMove
 	}
 
-	bestIndex := mp.nextCapture
-	for i := mp.nextCapture + 1; i < len(mp.captureMoves); i++ {
-		if mp.captureScores[i] > mp.captureScores[bestIndex] {
+	bestIndex := mp.captureMoveList.next
+	for i := bestIndex + 1; i < mp.captureMoveList.size; i++ {
+		if mp.captureMoveList.scores[i] > mp.captureMoveList.scores[bestIndex] {
 			bestIndex = i
 		}
 	}
-	if mp.captureScores[bestIndex] < 0 {
+	if mp.captureMoveList.scores[bestIndex] < 0 {
 		alt := mp.getNextQuiet()
 		if alt != EmptyMove {
 			return alt
 		}
 	}
-	best := mp.captureMoves[bestIndex]
-	mp.captureMoves[mp.nextCapture], mp.captureMoves[bestIndex] = mp.captureMoves[bestIndex], mp.captureMoves[mp.nextCapture]
-	mp.captureScores[mp.nextCapture], mp.captureScores[bestIndex] = mp.captureScores[bestIndex], mp.captureScores[mp.nextCapture]
-	mp.nextCapture += 1
+	best := mp.captureMoveList.moves[bestIndex]
+	mp.captureMoveList.SwapWith(bestIndex)
+	mp.captureMoveList.Next()
 	return best
 }
 
 func (mp *MovePicker) getNextQuiet() Move {
-	if mp.quietMoves == nil {
+	if mp.quietMoveList.IsEmpty() {
 		mp.generateQuietMoves()
 	}
 
-	if mp.nextQuiet >= len(mp.quietMoves) {
+	if mp.quietMoveList.next >= mp.quietMoveList.size {
 		return EmptyMove
 	}
 
-	bestIndex := mp.nextQuiet
-	for i := mp.nextQuiet + 1; i < len(mp.quietMoves); i++ {
-		if mp.quietScores[i] > mp.quietScores[bestIndex] {
+	bestIndex := mp.quietMoveList.next
+	for i := bestIndex + 1; i < mp.quietMoveList.size; i++ {
+		if mp.quietMoveList.scores[i] > mp.quietMoveList.scores[bestIndex] {
 			bestIndex = i
 		}
 	}
-	best := mp.quietMoves[bestIndex]
-	mp.quietMoves[mp.nextQuiet], mp.quietMoves[bestIndex] = mp.quietMoves[bestIndex], mp.quietMoves[mp.nextQuiet]
-	mp.quietScores[mp.nextQuiet], mp.quietScores[bestIndex] = mp.quietScores[bestIndex], mp.quietScores[mp.nextQuiet]
-	mp.nextQuiet += 1
+	best := mp.quietMoveList.moves[bestIndex]
+	mp.quietMoveList.SwapWith(bestIndex)
+	mp.quietMoveList.Next()
 	return best
 }

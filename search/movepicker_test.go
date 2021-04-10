@@ -12,12 +12,18 @@ func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
 		nil,
 		nil,
 		10,
-		[]Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
-		[]int32{10000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
-		[]Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
-		[]int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
-		0,
-		1,
+		MoveList{
+			moves:  []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
+			scores: []int32{10000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
+			size:   10,
+			next:   1,
+		},
+		MoveList{
+			moves:  []Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
+			scores: []int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
+			size:   10,
+			next:   0,
+		},
 		0,
 		true,
 		false,
@@ -50,13 +56,19 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 		nil,
 		nil,
 		capture,
-		[]Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
-		[]int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
-		[]Move{capture, 20, 15, 14, 13, 12, 11, 16, 17, 19},
-		[]int32{18000, 2000, 1500, 1400, 1300, 1200, 1100, 1600, 1700, -1900},
+		MoveList{
+			moves:  []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
+			scores: []int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
+			size:   10,
+			next:   0,
+		},
+		MoveList{
+			moves:  []Move{capture, 20, 15, 14, 13, 12, 11, 16, 17, 19},
+			scores: []int32{18000, 2000, 1500, 1400, 1300, 1200, 1100, 1600, 1700, -1900},
+			size:   10,
+			next:   1,
+		},
 		0,
-		0,
-		1,
 		true,
 		false,
 	}
@@ -101,12 +113,18 @@ func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 		nil,
 		nil,
 		0,
-		[]Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
-		[]int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
-		[]Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
-		[]int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
-		0,
-		0,
+		MoveList{
+			moves:  []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
+			scores: []int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
+			size:   10,
+			next:   0,
+		},
+		MoveList{
+			moves:  []Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
+			scores: []int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
+			size:   10,
+			next:   0,
+		},
 		0,
 		false,
 		false,
@@ -641,14 +659,14 @@ func (mp *MovePicker) getScore(m Move) int32 {
 		return 900_000_000
 	}
 	if m.IsCapture() {
-		for i, s := range mp.captureScores {
-			if mp.captureMoves[i] == m {
+		for i, s := range mp.captureMoveList.scores {
+			if mp.captureMoveList.moves[i] == m {
 				return s
 			}
 		}
 	}
-	for i, s := range mp.quietScores {
-		if mp.quietMoves[i] == m {
+	for i, s := range mp.quietMoveList.scores {
+		if mp.quietMoveList.moves[i] == m {
 			return s
 		}
 	}
