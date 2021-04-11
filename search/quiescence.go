@@ -38,7 +38,8 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 	}
 
 	// withChecks := false && ply < 4
-	movePicker := NewMovePicker(position, e, searchHeight, EmptyMove, !isInCheck)
+	movePicker := e.MovePickers[searchHeight]
+	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, !isInCheck)
 
 	for i := 0; ; i++ {
 		move := movePicker.Next()

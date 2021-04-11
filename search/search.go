@@ -179,21 +179,21 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	movePicker := NewMovePicker(position, e, searchHeight, nHashMove, false)
-
 	// Internal Iterative Deepening
-	if depthLeft >= 8 && movePicker.HasNoPVMove() {
+	if depthLeft >= 8 && nHashMove == EmptyMove {
 		e.innerLines[searchHeight].Recycle()
 		score, ok := e.alphaBeta(position, depthLeft-7, searchHeight, alpha, beta, ply, currentMove, false, false)
 		line := e.innerLines[searchHeight]
 		if ok && line.moveCount != 0 && score > alpha && score < beta {
 			hashmove := e.innerLines[searchHeight].MoveAt(0)
-			movePicker.UpgradeToPvMove(hashmove)
+			nHashMove = hashmove // movePicker.UpgradeToPvMove(hashmove)
 		} else if !ok {
 			return score, false
 		}
 		e.innerLines[searchHeight].Recycle()
 	}
+	movePicker := e.MovePickers[searchHeight]
+	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
 
 	// Multi-Cut Pruning
 	M := 6

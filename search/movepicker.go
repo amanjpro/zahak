@@ -8,14 +8,37 @@ type MovePicker struct {
 	position        *Position
 	engine          *Engine
 	hashmove        Move
-	quietMoveList   MoveList
-	captureMoveList MoveList
+	quietMoveList   *MoveList
+	captureMoveList *MoveList
 	moveOrder       int8
 	canUseHashMove  bool
 	isQuiescence    bool
 }
 
-func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) *MovePicker {
+func EmptyMovePicker() *MovePicker {
+	qml := NewMoveList(150)
+	cml := NewMoveList(150)
+	mp := &MovePicker{
+		position:        nil,
+		engine:          nil,
+		hashmove:        EmptyMove,
+		quietMoveList:   qml,
+		captureMoveList: cml,
+		moveOrder:       0,
+		canUseHashMove:  false,
+		isQuiescence:    false,
+	}
+	return mp
+
+}
+
+func (mp *MovePicker) RecycleWith(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) {
+	mp.engine = e
+	mp.position = p
+	mp.moveOrder = moveOrder
+	mp.hashmove = hashmove
+	mp.isQuiescence = isQuiescence
+	mp.canUseHashMove = hashmove != EmptyMove
 	nextCapture := 0
 	nextQuiet := 0
 	if hashmove != EmptyMove {
@@ -25,25 +48,17 @@ func NewMovePicker(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuie
 			nextQuiet = 1
 		}
 	}
-	mp := &MovePicker{
-		position:        p,
-		engine:          e,
-		hashmove:        hashmove,
-		quietMoveList:   MoveList{Next: nextQuiet},
-		captureMoveList: MoveList{Next: nextCapture},
-		moveOrder:       moveOrder,
-		canUseHashMove:  hashmove != EmptyMove,
-		isQuiescence:    isQuiescence,
-	}
-	return mp
+	mp.quietMoveList.Size = 0
+	mp.quietMoveList.Next = nextQuiet
+	mp.captureMoveList.Size = 0
+	mp.captureMoveList.Next = nextCapture
 }
 
 func (mp *MovePicker) generateQuietMoves() {
 	if mp.isQuiescence || !mp.quietMoveList.IsEmpty() {
 		return
 	}
-	mp.quietMoveList.Moves = mp.position.GetQuietMoves()
-	mp.quietMoveList.Size = len(mp.quietMoveList.Moves)
+	mp.position.GetQuietMoves(mp.quietMoveList)
 	mp.scoreQuietMoves()
 }
 
@@ -51,8 +66,7 @@ func (mp *MovePicker) generateCaptureMoves() {
 	if !mp.captureMoveList.IsEmpty() || !mp.quietMoveList.IsEmpty() {
 		return
 	}
-	mp.captureMoveList.Moves = mp.position.GetCaptureMoves()
-	mp.captureMoveList.Size = len(mp.captureMoveList.Moves)
+	mp.position.GetCaptureMoves(mp.captureMoveList)
 	mp.scoreCaptureMoves()
 }
 
@@ -71,7 +85,6 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 func (mp *MovePicker) scoreCaptureMoves() {
 	position := mp.position
 	board := position.Board
-	mp.captureMoveList.Scores = make([]int32, mp.captureMoveList.Size)
 
 	for i := 0; i < mp.captureMoveList.Size; i++ {
 		move := mp.captureMoveList.Moves[i]
@@ -121,7 +134,6 @@ func (mp *MovePicker) scoreCaptureMoves() {
 func (mp *MovePicker) scoreQuietMoves() {
 	engine := mp.engine
 	moveOrder := mp.moveOrder
-	mp.quietMoveList.Scores = make([]int32, mp.quietMoveList.Size)
 
 	for i := 0; i < mp.quietMoveList.Size; i++ {
 		move := mp.quietMoveList.Moves[i]
@@ -206,8 +218,9 @@ func (mp *MovePicker) getNextCapture() Move {
 		return EmptyMove
 	}
 
-	bestIndex := mp.captureMoveList.Next
-	for i := bestIndex + 1; i < mp.captureMoveList.Size; i++ {
+	next := mp.captureMoveList.Next
+	bestIndex := next
+	for i := next + 1; i < mp.captureMoveList.Size; i++ {
 		if mp.captureMoveList.Scores[i] > mp.captureMoveList.Scores[bestIndex] {
 			bestIndex = i
 		}
@@ -219,7 +232,7 @@ func (mp *MovePicker) getNextCapture() Move {
 		}
 	}
 	best := mp.captureMoveList.Moves[bestIndex]
-	mp.captureMoveList.SwapWith(bestIndex)
+	mp.captureMoveList.Swap(next, bestIndex)
 	mp.captureMoveList.IncNext()
 	return best
 }
@@ -233,14 +246,15 @@ func (mp *MovePicker) getNextQuiet() Move {
 		return EmptyMove
 	}
 
-	bestIndex := mp.quietMoveList.Next
-	for i := bestIndex + 1; i < mp.quietMoveList.Size; i++ {
+	next := mp.quietMoveList.Next
+	bestIndex := next
+	for i := next + 1; i < mp.quietMoveList.Size; i++ {
 		if mp.quietMoveList.Scores[i] > mp.quietMoveList.Scores[bestIndex] {
 			bestIndex = i
 		}
 	}
 	best := mp.quietMoveList.Moves[bestIndex]
-	mp.quietMoveList.SwapWith(bestIndex)
+	mp.quietMoveList.Swap(next, bestIndex)
 	mp.quietMoveList.IncNext()
 	return best
 }
