@@ -184,7 +184,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.innerLines[searchHeight].Recycle()
 		score, ok := e.alphaBeta(position, depthLeft-7, searchHeight, alpha, beta, ply, currentMove, false, false)
 		line := e.innerLines[searchHeight]
-		if ok && line.moveCount != 0 && score > alpha && score < beta {
+		if ok && line.moveCount != 0 { // }&& score > alpha && score < beta {
 			hashmove := e.innerLines[searchHeight].MoveAt(0)
 			nHashMove = hashmove // movePicker.UpgradeToPvMove(hashmove)
 		} else if !ok {
