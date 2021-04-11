@@ -15,6 +15,7 @@ type Info struct {
 	multiCutCounter       int
 	nullMoveCounter       int
 	lmrCounter            int
+	lmpCounter            int
 	deltaPruningCounter   int
 	seeQuiescenceCounter  int
 	mainSearchCounter     int
@@ -27,6 +28,7 @@ type Info struct {
 
 func (i *Info) Print() {
 	// fmt.Printf("info string EFP: %d\n", i.efpCounter)
+	fmt.Printf("info string LMP: %d\n", i.lmpCounter)
 	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
 	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
@@ -97,7 +99,7 @@ func NewEngine(tt *Cache) *Engine {
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.StopSearchFlag {
