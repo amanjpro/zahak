@@ -276,18 +276,18 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		promoType := move.PromoType()
 
 		// Extended Futility Pruning
-		if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
-			alpha != abs16(CHECKMATE_EVAL) && beta != abs16(CHECKMATE_EVAL) &&
-			promoType == NoType {
-			margin := BlackBishop.Weight()
-			if depthLeft == 2 {
-				margin = WhiteRook.Weight()
-			}
-			if eval+margin <= alpha {
-				e.info.efpCounter += 1
-				continue
-			}
-		}
+		// if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
+		// 	alpha != abs16(CHECKMATE_EVAL) && beta != abs16(CHECKMATE_EVAL) &&
+		// 	promoType == NoType {
+		// 	margin := BlackBishop.Weight()
+		// 	if depthLeft == 2 {
+		// 		margin = WhiteRook.Weight()
+		// 	}
+		// 	if eval+margin <= alpha {
+		// 		e.info.efpCounter += 1
+		// 		continue
+		// 	}
+		// }
 
 		// Late Move Reduction
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
