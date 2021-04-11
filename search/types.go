@@ -52,6 +52,7 @@ type Engine struct {
 	score              int16
 	killerMoves        [][]Move
 	searchHistory      [][]int32
+	MovePickers        []*MovePicker
 	StartTime          time.Time
 	ThinkTime          int64
 	info               Info
@@ -71,6 +72,10 @@ func NewEngine(tt *Cache) *Engine {
 		line := NewPVLine(MAX_DEPTH)
 		innerLines[i] = line
 	}
+	movePickers := make([]*MovePicker, MAX_DEPTH)
+	for i := int8(0); i < MAX_DEPTH; i++ {
+		movePickers[i] = EmptyMovePicker()
+	}
 	return &Engine{
 		0,
 		0,
@@ -80,6 +85,7 @@ func NewEngine(tt *Cache) *Engine {
 		0,
 		make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
 		make([][]int32, 12), // We have 12 pieces only
+		movePickers,
 		time.Now(),
 		0,
 		NoInfo,

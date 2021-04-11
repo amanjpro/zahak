@@ -38,7 +38,8 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 	}
 
 	// withChecks := false && ply < 4
-	movePicker := NewMovePicker(position, e, searchHeight, EmptyMove, !isInCheck)
+	movePicker := e.MovePickers[searchHeight]
+	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, !isInCheck)
 
 	for i := 0; ; i++ {
 		move := movePicker.Next()
@@ -48,7 +49,7 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()
 		if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
-			if movePicker.captureScores[i] < 0 {
+			if movePicker.captureMoveList.Scores[i] < 0 {
 				// SEE pruning
 				e.info.seeQuiescenceCounter += 1
 				continue

@@ -7,17 +7,25 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
+var mp = EmptyMovePicker()
+
 func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
 	mp := &MovePicker{
 		nil,
 		nil,
 		10,
-		[]Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
-		[]int32{10000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
-		[]Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
-		[]int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
-		0,
-		1,
+		&MoveList{
+			Moves:  []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
+			Scores: []int32{10000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
+			Size:   10,
+			Next:   1,
+		},
+		&MoveList{
+			Moves:  []Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
+			Scores: []int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
+			Size:   10,
+			Next:   0,
+		},
 		0,
 		true,
 		false,
@@ -50,13 +58,19 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 		nil,
 		nil,
 		capture,
-		[]Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
-		[]int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
-		[]Move{capture, 20, 15, 14, 13, 12, 11, 16, 17, 19},
-		[]int32{18000, 2000, 1500, 1400, 1300, 1200, 1100, 1600, 1700, -1900},
+		&MoveList{
+			Moves:  []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
+			Scores: []int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
+			Size:   10,
+			Next:   0,
+		},
+		&MoveList{
+			Moves:  []Move{capture, 20, 15, 14, 13, 12, 11, 16, 17, 19},
+			Scores: []int32{18000, 2000, 1500, 1400, 1300, 1200, 1100, 1600, 1700, -1900},
+			Size:   10,
+			Next:   1,
+		},
 		0,
-		0,
-		1,
 		true,
 		false,
 	}
@@ -101,12 +115,18 @@ func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 		nil,
 		nil,
 		0,
-		[]Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
-		[]int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
-		[]Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
-		[]int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
-		0,
-		0,
+		&MoveList{
+			Moves:  []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
+			Scores: []int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
+			Size:   10,
+			Next:   0,
+		},
+		&MoveList{
+			Moves:  []Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
+			Scores: []int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
+			Size:   10,
+			Next:   0,
+		},
 		0,
 		false,
 		false,
@@ -153,7 +173,7 @@ func TestMovePickerNormalSearch(t *testing.T) {
 	game := FromFen(fen, true)
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
-	mp := NewMovePicker(game.Position(), engine, 1, NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0), false)
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0), false)
 
 	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
 	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
@@ -239,7 +259,7 @@ func TestUpgradeMoveToHashmoveQuiet(t *testing.T) {
 	game := FromFen(fen, true)
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
-	mp := NewMovePicker(game.Position(), engine, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 
 	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
 	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
@@ -327,7 +347,7 @@ func TestMovePickerNormalSearchNoHashmove(t *testing.T) {
 	game := FromFen(fen, true)
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
-	mp := NewMovePicker(game.Position(), engine, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 
 	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
 	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
@@ -413,7 +433,7 @@ func TestMovePickerNormalSearchCaptureHashmove(t *testing.T) {
 	game := FromFen(fen, true)
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
-	mp := NewMovePicker(game.Position(), engine, 1, NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture), false)
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture), false)
 
 	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
 	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
@@ -500,7 +520,7 @@ func TestMovePickerNormalSearchUpgradeToHashmoveCapture(t *testing.T) {
 	game := FromFen(fen, true)
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
-	mp := NewMovePicker(game.Position(), engine, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 
 	mp.UpgradeToPvMove(NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture))
 
@@ -589,7 +609,7 @@ func TestMovePickerQuiescenceSearch(t *testing.T) {
 	game := FromFen(fen, true)
 	engine := NewEngine(NewCache(2))
 	engine.ClearForSearch()
-	mp := NewMovePicker(game.Position(), engine, 1, EmptyMove, true)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, true)
 
 	// all these are no-op
 	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
@@ -641,14 +661,14 @@ func (mp *MovePicker) getScore(m Move) int32 {
 		return 900_000_000
 	}
 	if m.IsCapture() {
-		for i, s := range mp.captureScores {
-			if mp.captureMoves[i] == m {
+		for i, s := range mp.captureMoveList.Scores {
+			if mp.captureMoveList.Moves[i] == m {
 				return s
 			}
 		}
 	}
-	for i, s := range mp.quietScores {
-		if mp.quietMoves[i] == m {
+	for i, s := range mp.quietMoveList.Scores {
+		if mp.quietMoveList.Moves[i] == m {
 			return s
 		}
 	}
