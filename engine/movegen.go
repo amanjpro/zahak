@@ -385,6 +385,7 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 	isLegalityCheck bool, allMoves *[]Move) bool {
 	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
+		bbPawn &^= rank7
 		for bbPawn != 0 {
 			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
@@ -405,28 +406,17 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 			sngl := wSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanForward(sngl))
-				if dest.Rank() == Rank8 {
-					m1 := NewMove(srcSq, dest, WhitePawn, NoPiece, Queen, 0)
-					m2 := NewMove(srcSq, dest, WhitePawn, NoPiece, Rook, 0)
-					m3 := NewMove(srcSq, dest, WhitePawn, NoPiece, Bishop, 0)
-					m4 := NewMove(srcSq, dest, WhitePawn, NoPiece, Knight, 0)
-					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
-						return true
-					} else if !isLegalityCheck {
-						p.addAllMoves(allMoves, m1, m2, m3, m4)
-					}
-				} else {
-					m := NewMove(srcSq, dest, WhitePawn, NoPiece, NoType, 0)
-					if isLegalityCheck && p.checkMove(m) {
-						return true
-					} else if !isLegalityCheck {
-						p.addAllMoves(allMoves, m)
-					}
+				m := NewMove(srcSq, dest, WhitePawn, NoPiece, NoType, 0)
+				if isLegalityCheck && p.checkMove(m) {
+					return true
+				} else if !isLegalityCheck {
+					p.addAllMoves(allMoves, m)
 				}
 			}
 			bbPawn ^= pawn
 		}
 	} else if color == Black {
+		bbPawn &^= rank2
 		for bbPawn != 0 {
 			src := bitScanForward(bbPawn)
 			srcSq := Square(src)
@@ -445,23 +435,11 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 			sngl := bSinglePushTargets(pawn, emptySquares)
 			if sngl != 0 {
 				dest := Square(bitScanForward(sngl))
-				if dest.Rank() == Rank1 {
-					m1 := NewMove(srcSq, dest, BlackPawn, NoPiece, Queen, 0)
-					m2 := NewMove(srcSq, dest, BlackPawn, NoPiece, Rook, 0)
-					m3 := NewMove(srcSq, dest, BlackPawn, NoPiece, Bishop, 0)
-					m4 := NewMove(srcSq, dest, BlackPawn, NoPiece, Knight, 0)
-					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
-						return true
-					} else if !isLegalityCheck {
-						p.addAllMoves(allMoves, m1, m2, m3, m4)
-					}
-				} else {
-					m := NewMove(srcSq, dest, BlackPawn, NoPiece, NoType, 0)
-					if isLegalityCheck && p.checkMove(m) {
-						return true
-					} else if !isLegalityCheck {
-						p.addAllMoves(allMoves, m)
-					}
+				m := NewMove(srcSq, dest, BlackPawn, NoPiece, NoType, 0)
+				if isLegalityCheck && p.checkMove(m) {
+					return true
+				} else if !isLegalityCheck {
+					p.addAllMoves(allMoves, m)
 				}
 			}
 			bbPawn ^= pawn
@@ -603,6 +581,7 @@ func (p *Position) kingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 
 func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color,
 	isLegalityCheck bool, allMoves *[]Move) bool {
+	emptySquares := (otherPieces | ownPieces) ^ universal
 	enPassant := p.EnPassant
 	if color == White {
 		for bbPawn != 0 {
@@ -645,6 +624,22 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 						return true
 					} else if !isLegalityCheck {
 						p.addAllMoves(allMoves, m)
+					}
+				}
+			}
+			if srcSq.Rank() == Rank7 {
+				sngl := wSinglePushTargets(pawn, emptySquares)
+				if sngl != 0 {
+					sq := bitScanForward(sngl)
+					dest := Square(sq)
+					m1 := NewMove(srcSq, dest, WhitePawn, NoPiece, Queen, 0)
+					m2 := NewMove(srcSq, dest, WhitePawn, NoPiece, Rook, 0)
+					m3 := NewMove(srcSq, dest, WhitePawn, NoPiece, Bishop, 0)
+					m4 := NewMove(srcSq, dest, WhitePawn, NoPiece, Knight, 0)
+					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m1, m2, m3, m4)
 					}
 				}
 			}
@@ -692,6 +687,21 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 						return true
 					} else if !isLegalityCheck {
 						p.addAllMoves(allMoves, m)
+					}
+				}
+			}
+			if srcSq.Rank() == Rank2 {
+				sngl := bSinglePushTargets(pawn, emptySquares)
+				if sngl != 0 {
+					dest := Square(bitScanForward(sngl))
+					m1 := NewMove(srcSq, dest, BlackPawn, NoPiece, Queen, 0)
+					m2 := NewMove(srcSq, dest, BlackPawn, NoPiece, Rook, 0)
+					m3 := NewMove(srcSq, dest, BlackPawn, NoPiece, Bishop, 0)
+					m4 := NewMove(srcSq, dest, BlackPawn, NoPiece, Knight, 0)
+					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
+						return true
+					} else if !isLegalityCheck {
+						p.addAllMoves(allMoves, m1, m2, m3, m4)
 					}
 				}
 			}
@@ -1057,8 +1067,10 @@ const notGFile = uint64(0xbfbfbfbfbfbfbfbf)
 const notHFile = uint64(0x7f7f7f7f7f7f7f7f) // ~0x8080808080808080
 const notABFile = notAFile & notBFile
 const notGHFile = notGFile & notHFile
+const rank2 = uint64(0x000000000000FF00)
 const rank4 = uint64(0x00000000FF000000)
 const rank5 = uint64(0x000000FF00000000)
+const rank7 = uint64(0x00FF000000000000)
 
 // I took those from CounterGo, which in turn takes them from Chess Programming Wiki
 func bishopAttacks(sq Square, occ uint64, ownPieces uint64) uint64 {
