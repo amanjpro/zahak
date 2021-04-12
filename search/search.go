@@ -131,7 +131,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if depthLeft == 4 {
 		R = 3
 	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft > R && !position.IsEndGame() && !isInCheck
+	isEndgame := position.IsEndGame()
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft > R && !isEndgame && !isInCheck
 
 	if isNullMoveAllowed {
 		ep := position.MakeNullMove()
@@ -158,9 +159,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
-	if !isRootNode && !isPvNode && !isInCheck && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
+	if !isRootNode && !isPvNode && !isInCheck && !isEndgame && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
-		return eval - reverseFutilityMargin, true /* fail soft */
+		return eval, true /* fail soft */
 	}
 
 	// Razoring
