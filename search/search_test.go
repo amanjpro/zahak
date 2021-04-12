@@ -147,7 +147,7 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	game := FromFen(fen, true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 17, 1)
+	e.Search(game.Position(), 25, 1)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()

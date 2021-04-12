@@ -60,6 +60,7 @@ type Engine struct {
 	info               Info
 	pred               Predecessors
 	innerLines         []PVLine
+	staticEvals        []int16
 	TranspositionTable *Cache
 	DebugMode          bool
 	Pondering          bool
@@ -93,6 +94,7 @@ func NewEngine(tt *Cache) *Engine {
 		NoInfo,
 		NewPredecessors(),
 		innerLines,
+		make([]int16, MAX_DEPTH),
 		tt,
 		false,
 		false,
@@ -112,6 +114,7 @@ func (e *Engine) ShouldStop() bool {
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
 		e.innerLines[i].Recycle()
+		e.staticEvals[i] = 0
 	}
 	for i := 0; i < len(e.killerMoves); i++ {
 		if e.killerMoves[i] == nil {

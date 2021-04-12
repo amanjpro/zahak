@@ -151,10 +151,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		}
 	}
 
-	var eval int16
-	if !isInCheck {
-		eval = Evaluate(position)
-	}
+	eval := Evaluate(position)
+	e.staticEvals[searchHeight] = eval
+	improving := currentMove != EmptyMove ||
+		searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2]
 
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
@@ -165,10 +165,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// Razoring
 	razoringMargin := 3 * WhitePawn.Weight()
-	if depthLeft == 1 {
-		razoringMargin = 2 * WhitePawn.Weight()
-	}
-	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
+	// if depthLeft == 1 {
+	// 	razoringMargin = 2 * WhitePawn.Weight()
+	// }
+	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
 		if !ok {
 			return newEval, false
@@ -260,7 +260,10 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		hasSeenExact = true
 	}
 
-	pruningThreashold := int(depthLeft * depthLeft)
+	pruningThreashold := int(5 + depthLeft*depthLeft)
+	if !improving {
+		pruningThreashold /= 2
+	}
 
 	for i := 1; ; i++ {
 		move := movePicker.Next()
@@ -291,7 +294,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		// Late Move Pruning
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 {
+			i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 {
 			e.info.lmpCounter += 1
 			continue // LMP
 		}
