@@ -106,11 +106,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if found && nDepth >= depthLeft {
 		if nEval >= beta && (nType == UpperBound || nType == Exact) {
 			e.CacheHit()
-			return beta, true
+			return nEval, true
 		}
 		if nEval <= alpha && (nType == LowerBound || nType == Exact) {
 			e.CacheHit()
-			return alpha, true
+			return nEval, true
 		}
 	}
 
