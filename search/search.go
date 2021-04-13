@@ -197,38 +197,38 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
 
 	// Multi-Cut Pruning
-	M := 6
-	C := 3
-	R = 4
-	if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag {
-		cutNodeCounter := 0
-		for i := 0; i < M; i++ {
-			move := movePicker.Next()
-			if move == EmptyMove {
-				break
-			}
-			oldEnPassant, oldTag, hc := position.MakeMove(move)
-			newBeta := 1 - beta
-			// newBeta := -beta + 1
-			e.pred.Push(position.Hash())
-			e.innerLines[searchHeight+1].Recycle()
-			score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, move, !multiCutFlag, true)
-			score = -score
-			e.pred.Pop()
-			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-			if !ok {
-				return score, false
-			}
-			if score >= beta {
-				cutNodeCounter++
-				if cutNodeCounter == C {
-					e.info.multiCutCounter += 1
-					return beta, true // mc-prune
-				}
-			}
-		}
-		movePicker.Reset()
-	}
+	// M := 6
+	// C := 3
+	// R = 4
+	// if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag {
+	// 	cutNodeCounter := 0
+	// 	for i := 0; i < M; i++ {
+	// 		move := movePicker.Next()
+	// 		if move == EmptyMove {
+	// 			break
+	// 		}
+	// 		oldEnPassant, oldTag, hc := position.MakeMove(move)
+	// 		newBeta := 1 - beta
+	// 		// newBeta := -beta + 1
+	// 		e.pred.Push(position.Hash())
+	// 		e.innerLines[searchHeight+1].Recycle()
+	// 		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, move, !multiCutFlag, true)
+	// 		score = -score
+	// 		e.pred.Pop()
+	// 		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+	// 		if !ok {
+	// 			return score, false
+	// 		}
+	// 		if score >= beta {
+	// 			cutNodeCounter++
+	// 			if cutNodeCounter == C {
+	// 				e.info.multiCutCounter += 1
+	// 				return beta, true // mc-prune
+	// 			}
+	// 		}
+	// 	}
+	// 	movePicker.Reset()
+	// }
 
 	// Extended Futility Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
