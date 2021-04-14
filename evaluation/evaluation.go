@@ -442,12 +442,14 @@ func Evaluate(position *Position) int16 {
 			}
 		}
 		sq := Square(index)
-		if board.IsVerticalDoubleRook(sq, bbBlackRook, all) {
-			// double-rook vertical
-			blackCentipawns += 25
-		} else if board.IsHorizontalDoubleRook(sq, bbBlackRook, all) {
-			// double-rook horizontal
-			blackCentipawns += 15
+		if blackRooksCount == 1 {
+			if board.IsVerticalDoubleRook(sq, bbBlackRook, all) {
+				// double-rook vertical
+				blackCentipawns += 25
+			} else if board.IsHorizontalDoubleRook(sq, bbBlackRook, all) {
+				// double-rook horizontal
+				blackCentipawns += 15
+			}
 		}
 		if isEndgame {
 			blackCentipawns += lateRookPst[index]
@@ -532,12 +534,14 @@ func Evaluate(position *Position) int16 {
 			}
 		}
 		sq := Square(index)
-		if board.IsVerticalDoubleRook(sq, bbWhiteRook, all) {
-			// double-rook vertical
-			whiteCentipawns += 25
-		} else if board.IsHorizontalDoubleRook(sq, bbWhiteRook, all) {
-			// double-rook horizontal
-			whiteCentipawns += 15
+		if whiteRooksCount == 1 {
+			if board.IsVerticalDoubleRook(sq, bbWhiteRook, all) {
+				// double-rook vertical
+				whiteCentipawns += 25
+			} else if board.IsHorizontalDoubleRook(sq, bbWhiteRook, all) {
+				// double-rook horizontal
+				whiteCentipawns += 15
+			}
 		}
 		if isEndgame {
 			whiteCentipawns += lateRookPst[flip[index]]
