@@ -106,11 +106,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	if found && nDepth >= depthLeft {
 		if nEval >= beta && (nType == UpperBound || nType == Exact) {
 			e.CacheHit()
-			return nEval, true
+			return beta, true
 		}
 		if nEval <= alpha && (nType == LowerBound || nType == Exact) {
 			e.CacheHit()
-			return nEval, true
+			return alpha, true
 		}
 	}
 
@@ -159,26 +159,26 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
-	if !isRootNode && !isPvNode && !isInCheck && !isEndgame && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
+	if !isRootNode && !isPvNode && !isInCheck && depthLeft <= 2 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
 		return eval, true /* fail soft */
 	}
 
 	// Razoring
-	razoringMargin := 3 * WhitePawn.Weight()
-	// if depthLeft == 1 {
-	// 	razoringMargin = 2 * WhitePawn.Weight()
+	// razoringMargin := 3 * WhitePawn.Weight()
+	// // if depthLeft == 1 {
+	// // 	razoringMargin = 2 * WhitePawn.Weight()
+	// // }
+	// if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
+	// 	newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
+	// 	if !ok {
+	// 		return newEval, false
+	// 	}
+	// 	if newEval < beta {
+	// 		e.info.razoringCounter += 1
+	// 		return newEval, true
+	// 	}
 	// }
-	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
-		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
-		if !ok {
-			return newEval, false
-		}
-		if newEval < beta {
-			e.info.razoringCounter += 1
-			return newEval, true
-		}
-	}
 
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && nHashMove == EmptyMove {
@@ -295,7 +295,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		// Late Move Pruning
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && alpha > -CHECKMATE_EVAL {
+			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && bestscore > -CHECKMATE_EVAL {
 			e.info.lmpCounter += 1
 			continue // LMP
 		}
