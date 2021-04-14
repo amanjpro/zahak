@@ -15,8 +15,8 @@ const MAX_NON_CHECKMATE int16 = 25000
 var earlyPawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	80, 80, 80, 80, 80, 80, 80, 80,
-	50, 50, 50, 50, 50, 50, 50, 50,
-	0, 0, 0, 30, 30, 0, 0, 0,
+	-10, -10, -10, 50, 50, -10, -10, -10,
+	-20, -20, -20, 30, 30, -20, -20, -20,
 	-10, -10, 0, 20, 20, 0, -10, -10,
 	0, 0, 0, 10, 10, 0, 0, 0,
 	0, 0, 0, -5, -5, 0, 0, 0,
@@ -445,10 +445,10 @@ func Evaluate(position *Position) int16 {
 		if blackRooksCount == 1 {
 			if board.IsVerticalDoubleRook(sq, bbBlackRook, all) {
 				// double-rook vertical
-				blackCentipawns += 25
+				blackCentipawns += 2 * 25
 			} else if board.IsHorizontalDoubleRook(sq, bbBlackRook, all) {
 				// double-rook horizontal
-				blackCentipawns += 15
+				blackCentipawns += 2 * 15
 			}
 		}
 		if isEndgame {
@@ -537,10 +537,10 @@ func Evaluate(position *Position) int16 {
 		if whiteRooksCount == 1 {
 			if board.IsVerticalDoubleRook(sq, bbWhiteRook, all) {
 				// double-rook vertical
-				whiteCentipawns += 25
+				whiteCentipawns += 2 * 25
 			} else if board.IsHorizontalDoubleRook(sq, bbWhiteRook, all) {
 				// double-rook horizontal
-				whiteCentipawns += 15
+				whiteCentipawns += 2 * 15
 			}
 		}
 		if isEndgame {
