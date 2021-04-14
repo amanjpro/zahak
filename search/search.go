@@ -139,14 +139,17 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		oldPred := e.pred
 		e.pred = NewPredecessors()
 		e.innerLines[searchHeight+1].Recycle()
-		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, -beta, -beta+1, ply, EmptyMove, !multiCutFlag, false)
+		bound := beta - 20
+		newBeta := 1 - bound
+		newAlpha := newBeta - 1
+		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newAlpha, newBeta, ply, EmptyMove, !multiCutFlag, false)
 		score = -score
 		e.pred = oldPred
 		position.UnMakeNullMove(ep)
 		if !ok {
 			return score, false
 		}
-		if score >= beta && abs16(score) < CHECKMATE_EVAL {
+		if score >= bound && abs16(score) < CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
 			return beta, true // null move pruning
 		}
