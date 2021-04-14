@@ -162,6 +162,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
+	if improving {
+		reverseFutilityMargin += 2 * WhitePawn.Weight()
+	}
 	if !isRootNode && !isPvNode && !isInCheck && !isEndgame && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
 		return eval, true /* fail soft */
