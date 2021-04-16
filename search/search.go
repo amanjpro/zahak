@@ -208,20 +208,20 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	}
 
 	// Razoring
-	// razoringMargin := 3 * WhitePawn.Weight()
-	// // if depthLeft == 1 {
-	// // 	razoringMargin = 2 * WhitePawn.Weight()
-	// // }
-	// if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
-	// 	newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
-	// 	if !ok {
-	// 		return newEval, false
-	// 	}
-	// 	if newEval < beta {
-	// 		e.info.razoringCounter += 1
-	// 		return newEval, true
-	// 	}
-	// }
+	razoringMargin := WhitePawn.Weight() + WhiteRook.Weight()
+	if improving {
+		razoringMargin = 2 * int16(depthLeft) * WhitePawn.Weight()
+	}
+	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
+		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
+		if !ok {
+			return newEval, false
+		}
+		if newEval < beta {
+			e.info.razoringCounter += 1
+			return newEval, true
+		}
+	}
 
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && nHashMove == EmptyMove {
