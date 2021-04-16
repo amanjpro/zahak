@@ -226,7 +226,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && nHashMove == EmptyMove {
 		e.innerLines[searchHeight].Recycle()
-		score, ok := e.alphaBeta(position, depthLeft-7, searchHeight, alpha, beta, ply, currentMove, false, false)
+		score, ok := e.alphaBeta(position, depthLeft-7, searchHeight, alpha, beta, ply, currentMove, true, true)
 		line := e.innerLines[searchHeight]
 		if ok && line.moveCount != 0 { // }&& score > alpha && score < beta {
 			hashmove := e.innerLines[searchHeight].MoveAt(0)
