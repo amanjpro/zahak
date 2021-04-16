@@ -337,7 +337,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 		// Late Move Pruning
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && bestscore > -CHECKMATE_EVAL {
+			i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 { // }&& alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
 			e.info.lmpCounter += 1
 			continue // LMP
 		}
@@ -364,8 +364,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			// research with window [alpha;beta]
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
-			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
-			score = -score
+			v, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
+			score = -v
 			e.pred.Pop()
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
