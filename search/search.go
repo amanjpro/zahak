@@ -279,28 +279,27 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	hasSeenExact := false
 
 	// using fail soft with negamax:
-	move := movePicker.Next()
-	oldEnPassant, oldTag, hc := position.MakeMove(move)
+	hashmove := movePicker.Next()
+	oldEnPassant, oldTag, hc := position.MakeMove(hashmove)
 	e.pred.Push(position.Hash())
 	e.innerLines[searchHeight+1].Recycle()
-	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
-	bestscore = -bestscore
-	hashmove := move
+	score, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, hashmove, !multiCutFlag, true)
+	bestscore := -score
 	e.pred.Pop()
-	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 	if !ok {
 		return bestscore, false
 	}
 	if bestscore > alpha {
+		e.innerLines[searchHeight].AddFirst(hashmove)
+		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		if bestscore >= beta {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
-			e.AddKillerMove(move, searchHeight)
-			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+			e.AddKillerMove(hashmove, searchHeight)
+			e.AddMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), searchHeight)
 			return bestscore, true
 		}
 		alpha = bestscore
-		e.innerLines[searchHeight].AddFirst(move)
-		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		hasSeenExact = true
 	}
 
