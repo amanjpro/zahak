@@ -164,15 +164,15 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		return -MAX_INT, false
 	}
 
+	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && !isInCheck && !position.IsEndGame()
+
 	// NullMove pruning
 	R := int8(4)
 	if depthLeft == 4 {
 		R = 3
 	}
-	isEndgame := position.IsEndGame()
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft > R && !isEndgame && !isInCheck
 
-	if isNullMoveAllowed {
+	if isNullMoveAllowed && depthLeft > R {
 		ep := position.MakeNullMove()
 		oldPred := e.pred
 		e.pred = NewPredecessors()
@@ -184,9 +184,11 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		if !ok {
 			return score, false
 		}
-		if score >= beta && abs16(score) < CHECKMATE_EVAL {
+		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
-			return beta, true // null move pruning
+			return score, true // null move pruning
+			// } else if score >= beta {
+			// 	return beta, true // null move pruning
 		}
 	}
 
@@ -197,9 +199,12 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
-	if !isRootNode && !isPvNode && !isInCheck && depthLeft <= 2 && eval-reverseFutilityMargin >= beta {
+	if improving {
+		reverseFutilityMargin = 2 * int16(depthLeft) * WhitePawn.Weight()
+	}
+	if isNullMoveAllowed && abs16(beta) < CHECKMATE_EVAL && depthLeft <= 3 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
-		return eval, true /* fail soft */
+		return eval - reverseFutilityMargin, true /* fail soft */
 	}
 
 	// Razoring
