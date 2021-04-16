@@ -16,11 +16,11 @@ func (e *Engine) Search(position *Position, depth int8, ply uint16) {
 func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 
 	var previousBestMove Move
-	alpha := -MAX_INT
-	beta := MAX_INT
+	// alpha := -MAX_INT
+	// beta := MAX_INT
 
 	e.move = EmptyMove
-	e.score = alpha
+	e.score = -MAX_INT //alpha
 	fruitelessIterations := 0
 
 	bookmove := GetBookMove(position)
@@ -39,7 +39,9 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 				break
 			}
 			e.innerLines[0].Recycle()
-			score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
+			score, ok := e.aspirationWindow(position, e.score, iterationDepth, ply)
+			// score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
+
 			if ok {
 				e.pv.Clone(e.innerLines[0])
 				e.score = score
@@ -71,6 +73,42 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 		allMoves := position.LegalMoves()
 		e.move = allMoves[0]
 	}
+}
+
+func (e *Engine) aspirationWindow(position *Position, score int16, iterationDepth int8, ply uint16) (int16, bool) {
+	var ok bool
+	if iterationDepth <= 6 {
+		alpha := -MAX_INT
+		beta := MAX_INT
+		score, ok = e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
+	} else {
+		var alpha, beta int16
+		alphaMargin := int16(25)
+		betaMargin := int16(25)
+		// counter := 0
+		for i := 0; ; i++ {
+			if i < 2 {
+				alpha = max16(score-alphaMargin, -MAX_INT)
+				beta = min16(score+betaMargin, MAX_INT)
+			} else {
+				alpha = -MAX_INT
+				beta = MAX_INT
+			}
+			score, ok = e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
+			if !ok {
+				return score, false
+			}
+			if score <= alpha {
+				// beta = (alpha + beta) / 2
+				alphaMargin *= 2
+			} else if score >= beta {
+				betaMargin *= 2
+			} else {
+				return score, true
+			}
+		}
+	}
+	return score, ok
 }
 
 func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, currentMove Move, multiCutFlag bool, nullMove bool) (int16, bool) {
