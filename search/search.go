@@ -378,18 +378,17 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 
 		if score > bestscore {
+			// Potential PV move, lets copy it to the current pv-line
+			e.innerLines[searchHeight].AddFirst(move)
+			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			if score >= beta {
 				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
 				e.AddKillerMove(move, searchHeight)
 				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 				return score, true
 			}
-
 			bestscore = score
 			hashmove = move
-			// Potential PV move, lets copy it to the current pv-line
-			e.innerLines[searchHeight].AddFirst(move)
-			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			hasSeenExact = true
 		}
 	}
