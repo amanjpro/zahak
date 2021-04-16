@@ -57,7 +57,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			} else {
 				fruitelessIterations = 0
 			}
-			if e.score == CHECKMATE_EVAL {
+			if IsCheckmateEval(e.score) {
 				break
 			}
 			previousBestMove = e.move
@@ -117,7 +117,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	isRootNode := searchHeight == 0
 	isPvNode := alpha != beta-1
 
-	var isInCheck = currentMove.IsCheck()
+	var isInCheck = position.IsInCheck()
 
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
@@ -154,7 +154,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	if nHashMove == EmptyMove && !position.HasLegalMoves() {
 		if isInCheck {
-			return -CHECKMATE_EVAL, true
+			return -CHECKMATE_EVAL + int16(searchHeight), true
 		} else {
 			return 0, true
 		}
@@ -400,4 +400,12 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, ply)
 	}
 	return bestscore, true
+}
+
+func IsCheckmateEval(eval int16) bool {
+	absEval := abs16(eval)
+	if absEval == MAX_INT {
+		return false
+	}
+	return absEval >= CHECKMATE_EVAL-int16(MAX_DEPTH)
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/evaluation"
 )
 
 type Info struct {
@@ -204,10 +205,21 @@ func (e *Engine) SendPv(depth int8) {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score cp %d time %d pv %s\n",
+	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
 		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
-		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), e.score,
+		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), ScoreToCp(e.score),
 		thinkTime.Milliseconds(), e.pv.ToString())
+}
+
+func ScoreToCp(score int16) string {
+	if IsCheckmateEval(score) {
+		if score < 0 {
+			return fmt.Sprintf("mate -%d", (CHECKMATE_EVAL+score)/2)
+		} else {
+			return fmt.Sprintf("mate +%d", (CHECKMATE_EVAL-score)/2)
+		}
+	}
+	return fmt.Sprintf("cp %d", score)
 }
 
 func (e *Engine) VisitNode() {
@@ -267,6 +279,20 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 func abs16(x int16) int16 {
 	if x < 0 {
 		return -x
+	}
+	return x
+}
+
+func max16(x int16, y int16) int16 {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+func min16(x int16, y int16) int16 {
+	if x >= y {
+		return y
 	}
 	return x
 }
