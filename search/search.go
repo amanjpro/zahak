@@ -347,7 +347,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// Late Move Reduction
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
 			e.info.lmrCounter += 1
-			LMR = 1
+			LMR = 2
 		}
 
 		oldEnPassant, oldTag, hc := position.MakeMove(move)
