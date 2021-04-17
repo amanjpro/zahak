@@ -338,7 +338,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// Late Move Pruning
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-			i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 { // }&& alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
+			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
 			e.info.lmpCounter += 1
 			continue // LMP
 		}
