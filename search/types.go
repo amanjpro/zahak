@@ -47,6 +47,8 @@ func (i *Info) Print() {
 }
 
 type Engine struct {
+	Position           *Position
+	Ply                uint16
 	nodesVisited       int64
 	cacheHits          int64
 	pv                 PVLine
@@ -81,6 +83,8 @@ func NewEngine(tt *Cache) *Engine {
 		movePickers[i] = EmptyMovePicker()
 	}
 	return &Engine{
+		nil,
+		0,
 		0,
 		0,
 		line,

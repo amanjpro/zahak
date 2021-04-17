@@ -5,8 +5,7 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) quiescence(position *Position, alpha int16, beta int16, currentMove Move, ply int8,
-	standPat int16, searchHeight int8) (int16, bool) {
+func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat int16, searchHeight int8) (int16, bool) {
 
 	e.info.quiesceCounter += 1
 	e.VisitNode()
@@ -37,6 +36,8 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		alpha = standPat
 	}
 
+	position := e.Position
+
 	// withChecks := false && ply < 4
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, !isInCheck)
@@ -60,7 +61,7 @@ func (e *Engine) quiescence(position *Position, alpha int16, beta int16, current
 		sp := Evaluate(position)
 
 		e.pred.Push(position.Hash())
-		v, ok := e.quiescence(position, -beta, -alpha, move, ply+1, sp, searchHeight+1)
+		v, ok := e.quiescence(-beta, -alpha, move, sp, searchHeight+1)
 		e.pred.Pop()
 		position.UnMakeMove(move, tg, ep, hc)
 		if !ok {

@@ -80,7 +80,8 @@ func RunTestPositions(path string) {
 		e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 		e.ThinkTime = 15000 //120000
 		pos := game.Position()
-		e.Search(pos, MAX_DEPTH, 0)
+		e.Position = pos
+		e.Search(MAX_DEPTH)
 		mv := pos.MoveToPGN(e.Move())
 
 		// back to normal state
