@@ -40,7 +40,7 @@ func (e *Engine) rootSearch(depth int8) {
 			}
 			e.innerLines[0].Recycle()
 			score, ok := e.aspirationWindow(e.score, iterationDepth)
-			// score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
+			// score, ok := e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT, EmptyMove)
 
 			if ok {
 				e.pv.Clone(e.innerLines[0])
@@ -99,7 +99,6 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) (int16, bool
 				return score, false
 			}
 			if score <= alpha {
-				// beta = (alpha + beta) / 2
 				alphaMargin *= 2
 			} else if score >= beta {
 				betaMargin *= 2
