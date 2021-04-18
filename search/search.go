@@ -208,11 +208,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// Razoring
-	razoringMargin := WhitePawn.Weight() + WhiteRook.Weight()
+	razoringMargin := WhiteRook.Weight()
 	if improving {
-		razoringMargin = 2 * int16(depthLeft) * WhitePawn.Weight()
+		razoringMargin = int16(depthLeft) * WhitePawn.Weight()
 	}
-	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
+	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
 		if !ok {
 			return newEval, false
