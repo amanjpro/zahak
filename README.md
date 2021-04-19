@@ -42,7 +42,15 @@ Diaries](https://chessengines.blogspot.com/), he recently advanced to the E7 in
 the 44th edition of JCER competition.
 
 He is also listed in the [CCRL ratings](https://ccrl.chessdom.com/ccrl/404/),
-his current rating is around 1922.
+his current rating is around 2004.
+
+Here is the history of his Elo rating (according to CCRL):
+
+| **version** | **rating** |
+|-------------|------------|
+| 1.0.0       | 2004       |
+| 0.3.0       | 1922       |
+| 0.2.1       | 1824       |
 
 # Implemented Features:
 
