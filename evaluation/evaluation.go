@@ -157,6 +157,42 @@ var flip = [64]int16{
 	0, 1, 2, 3, 4, 5, 6, 7,
 }
 
+func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
+	switch piece {
+	case WhitePawn:
+		return earlyPawnPst[flip[int(sq)]]
+	case WhiteKnight:
+		return earlyKnightPst[flip[int(sq)]]
+	case WhiteBishop:
+		return earlyBishopPst[flip[int(sq)]]
+	case WhiteRook:
+		return earlyRookPst[flip[int(sq)]]
+	case WhiteQueen:
+		return earlyQueenPst[flip[int(sq)]]
+	case WhiteKing:
+		if isEndgame {
+			return lateKingPst[flip[int(sq)]]
+		}
+		return earlyKingPst[flip[int(sq)]]
+	case BlackPawn:
+		return earlyPawnPst[int(sq)]
+	case BlackKnight:
+		return earlyKnightPst[int(sq)]
+	case BlackBishop:
+		return earlyBishopPst[int(sq)]
+	case BlackRook:
+		return earlyRookPst[int(sq)]
+	case BlackQueen:
+		return earlyQueenPst[int(sq)]
+	case BlackKing:
+		if isEndgame {
+			return lateKingPst[int(sq)]
+		}
+		return earlyKingPst[int(sq)]
+	}
+	return 0
+}
+
 func Evaluate(position *Position) int16 {
 	board := position.Board
 	turn := position.Turn()

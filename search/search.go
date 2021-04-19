@@ -164,7 +164,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return -MAX_INT, false
 	}
 
-	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
+	isEndgame := position.IsEndGame()
+	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !isEndgame
 
 	// NullMove pruning
 	R := int8(4)
@@ -272,6 +273,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		pruningThreashold /= 2
 	}
 
+	futilityMargin := WhiteBishop.Weight()
+	if improving || depthLeft == 2 {
+		futilityMargin = int16(depthLeft) * WhitePawn.Weight()
+	}
+
 	for i := 1; ; i++ {
 		move := movePicker.Next()
 		if move == EmptyMove {
@@ -286,11 +292,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		promoType := move.PromoType()
 
 		// Futility Pruning
-		if reductionsAllowed && !isCheckMove && depthLeft == 1 && !isCaptureMove &&
-			abs16(alpha) < CHECKMATE_EVAL && abs16(alpha) < CHECKMATE_EVAL &&
-			promoType == NoType {
-			margin := BlackBishop.Weight()
-			if eval+margin <= alpha {
+		if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
+			abs16(alpha) < CHECKMATE_EVAL && currentMove != EmptyMove && promoType == NoType {
+			toPSQT := PSQT(move.MovingPiece(), move.Destination(), isEndgame)
+			fromPSQT := PSQT(move.MovingPiece(), move.Source(), isEndgame)
+			if eval+futilityMargin+toPSQT-fromPSQT <= alpha {
 				e.info.fpCounter += 1
 				continue
 			}
