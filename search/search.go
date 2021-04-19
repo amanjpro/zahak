@@ -187,8 +187,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
 			return score, true // null move pruning
-			// } else if score >= beta {
-			// 	return beta, true // null move pruning
 		}
 	}
 
@@ -239,41 +237,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
 
-	// Multi-Cut Pruning
-	// M := 6
-	// C := 3
-	// R = 4
-	// if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag {
-	// 	cutNodeCounter := 0
-	// 	for i := 0; i < M; i++ {
-	// 		move := movePicker.Next()
-	// 		if move == EmptyMove {
-	// 			break
-	// 		}
-	// 		oldEnPassant, oldTag, hc := position.MakeMove(move)
-	// 		newBeta := 1 - beta
-	// 		// newBeta := -beta + 1
-	// 		e.pred.Push(position.Hash())
-	// 		e.innerLines[searchHeight+1].Recycle()
-	// 		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, move, !multiCutFlag, true)
-	// 		score = -score
-	// 		e.pred.Pop()
-	// 		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-	// 		if !ok {
-	// 			return score, false
-	// 		}
-	// 		if score >= beta {
-	// 			cutNodeCounter++
-	// 			if cutNodeCounter == C {
-	// 				e.info.multiCutCounter += 1
-	// 				return beta, true // mc-prune
-	// 			}
-	// 		}
-	// 	}
-	// 	movePicker.Reset()
-	// }
-
-	// Extended Futility Pruning
+	// Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
 	hasSeenExact := false
@@ -321,19 +285,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
 
-		// Extended Futility Pruning
-		// if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
-		// 	alpha != abs16(CHECKMATE_EVAL) && beta != abs16(CHECKMATE_EVAL) &&
-		// 	promoType == NoType {
-		// 	margin := BlackBishop.Weight()
-		// 	if depthLeft == 2 {
-		// 		margin = WhiteRook.Weight()
-		// 	}
-		// 	if eval+margin <= alpha {
-		// 		e.info.efpCounter += 1
-		// 		continue
-		// 	}
-		// }
+		// Futility Pruning
+		if reductionsAllowed && !isCheckMove && depthLeft == 1 && !isCaptureMove &&
+			abs16(alpha) < CHECKMATE_EVAL && abs16(alpha) < CHECKMATE_EVAL &&
+			promoType == NoType {
+			margin := BlackBishop.Weight()
+			if eval+margin <= alpha {
+				e.info.fpCounter += 1
+				continue
+			}
+		}
 
 		// Late Move Pruning
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&

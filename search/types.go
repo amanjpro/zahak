@@ -9,11 +9,10 @@ import (
 )
 
 type Info struct {
-	// efpCounter            int
 	rfpCounter            int
 	razoringCounter       int
 	checkExtentionCounter int
-	multiCutCounter       int
+	fpCounter             int
 	nullMoveCounter       int
 	lmrCounter            int
 	lmpCounter            int
@@ -28,12 +27,11 @@ type Info struct {
 }
 
 func (i *Info) Print() {
-	// fmt.Printf("info string EFP: %d\n", i.efpCounter)
+	fmt.Printf("info string FP: %d\n", i.fpCounter)
 	fmt.Printf("info string LMP: %d\n", i.lmpCounter)
 	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
 	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
-	fmt.Printf("info string Multi-Cut: %d\n", i.multiCutCounter)
 	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
 	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
 	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
