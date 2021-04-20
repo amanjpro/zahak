@@ -61,7 +61,6 @@ his current rating is around 1922.
 - Null-Move Pruning
 - Delta Pruning
 - Reverse Futility Pruning
-- Futility Pruning
 - Late Move Reduction
 - Razoring
 - Killer Moves Heuristics

@@ -285,17 +285,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
 
-		// Futility Pruning
-		if reductionsAllowed && !isCheckMove && depthLeft == 1 && !isCaptureMove &&
-			abs16(alpha) < CHECKMATE_EVAL && abs16(alpha) < CHECKMATE_EVAL &&
-			promoType == NoType {
-			margin := BlackBishop.Weight()
-			if eval+margin <= alpha {
-				e.info.fpCounter += 1
-				continue
-			}
-		}
-
 		// Late Move Pruning
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
 			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
