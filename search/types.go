@@ -5,16 +5,16 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/evaluation"
 )
 
 type Info struct {
-	efpCounter            int
 	rfpCounter            int
 	razoringCounter       int
 	checkExtentionCounter int
-	multiCutCounter       int
 	nullMoveCounter       int
 	lmrCounter            int
+	lmpCounter            int
 	deltaPruningCounter   int
 	seeQuiescenceCounter  int
 	mainSearchCounter     int
@@ -26,11 +26,10 @@ type Info struct {
 }
 
 func (i *Info) Print() {
-	fmt.Printf("info string EFP: %d\n", i.efpCounter)
+	fmt.Printf("info string LMP: %d\n", i.lmpCounter)
 	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
 	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
-	fmt.Printf("info string Multi-Cut: %d\n", i.multiCutCounter)
 	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
 	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
 	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
@@ -44,6 +43,8 @@ func (i *Info) Print() {
 }
 
 type Engine struct {
+	Position           *Position
+	Ply                uint16
 	nodesVisited       int64
 	cacheHits          int64
 	pv                 PVLine
@@ -58,6 +59,7 @@ type Engine struct {
 	info               Info
 	pred               Predecessors
 	innerLines         []PVLine
+	staticEvals        []int16
 	TranspositionTable *Cache
 	DebugMode          bool
 	Pondering          bool
@@ -77,6 +79,8 @@ func NewEngine(tt *Cache) *Engine {
 		movePickers[i] = EmptyMovePicker()
 	}
 	return &Engine{
+		nil,
+		0,
 		0,
 		0,
 		line,
@@ -91,13 +95,14 @@ func NewEngine(tt *Cache) *Engine {
 		NoInfo,
 		NewPredecessors(),
 		innerLines,
+		make([]int16, MAX_DEPTH),
 		tt,
 		false,
 		false,
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.StopSearchFlag {
@@ -110,6 +115,7 @@ func (e *Engine) ShouldStop() bool {
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
 		e.innerLines[i].Recycle()
+		e.staticEvals[i] = 0
 	}
 	for i := 0; i < len(e.killerMoves); i++ {
 		if e.killerMoves[i] == nil {
@@ -199,10 +205,21 @@ func (e *Engine) SendPv(depth int8) {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score cp %d time %d pv %s\n",
+	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
 		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
-		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), e.score,
+		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), ScoreToCp(e.score),
 		thinkTime.Milliseconds(), e.pv.ToString())
+}
+
+func ScoreToCp(score int16) string {
+	if IsCheckmateEval(score) {
+		if score < 0 {
+			return fmt.Sprintf("mate -%d", (CHECKMATE_EVAL+score)/2)
+		} else {
+			return fmt.Sprintf("mate +%d", (CHECKMATE_EVAL-score)/2)
+		}
+	}
+	return fmt.Sprintf("cp %d", score)
 }
 
 func (e *Engine) VisitNode() {
@@ -262,6 +279,20 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 func abs16(x int16) int16 {
 	if x < 0 {
 		return -x
+	}
+	return x
+}
+
+func max16(x int16, y int16) int16 {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+func min16(x int16, y int16) int16 {
+	if x >= y {
+		return y
 	}
 	return x
 }

@@ -200,6 +200,8 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 
 	var MAX_TIME int64 = 9_223_372_036_854_775_807
 
+	uci.engine.Position = game.Position()
+	uci.engine.Ply = ply
 	if !noTC {
 		if uci.engine.Pondering {
 			uci.thinkTime = uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
@@ -207,13 +209,13 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		} else {
 			uci.engine.ThinkTime = uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
 		}
-		uci.engine.Search(game.Position(), depth, ply)
+		uci.engine.Search(depth)
 		uci.engine.SendBestMove()
 		uci.engine.Pondering = false
 	} else {
 		uci.engine.ThinkTime = MAX_TIME
 		uci.thinkTime = uci.engine.ThinkTime
-		uci.engine.Search(game.Position(), depth, ply)
+		uci.engine.Search(depth)
 		uci.engine.SendBestMove()
 		uci.engine.Pondering = false
 	}

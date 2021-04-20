@@ -65,11 +65,10 @@ Here is the history of his Elo rating (according to CCRL):
 - Zero Windows
 - Aspiration Window with PVS
 - Static Exchange Evaluation
-- Multi-Cut Pruning
+- Late Move Pruning
 - Null-Move Pruning
 - Delta Pruning
 - Reverse Futility Pruning
-- Extended Futility Pruning
 - Late Move Reduction
 - Razoring
 - Killer Moves Heuristics

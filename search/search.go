@@ -8,22 +8,22 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) Search(position *Position, depth int8, ply uint16) {
+func (e *Engine) Search(depth int8) {
 	e.ClearForSearch()
-	e.rootSearch(position, depth, ply)
+	e.rootSearch(depth)
 }
 
-func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
+func (e *Engine) rootSearch(depth int8) {
 
 	var previousBestMove Move
-	alpha := -MAX_INT
-	beta := MAX_INT
+	// alpha := -MAX_INT
+	// beta := MAX_INT
 
 	e.move = EmptyMove
-	e.score = alpha
+	e.score = -MAX_INT //alpha
 	fruitelessIterations := 0
 
-	bookmove := GetBookMove(position)
+	bookmove := GetBookMove(e.Position)
 	lastDepth := int8(1)
 
 	if bookmove != EmptyMove {
@@ -39,7 +39,9 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 				break
 			}
 			e.innerLines[0].Recycle()
-			score, ok := e.alphaBeta(position, iterationDepth, 0, alpha, beta, ply, EmptyMove, true, true)
+			score, ok := e.aspirationWindow(e.score, iterationDepth)
+			// score, ok := e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT, EmptyMove)
+
 			if ok {
 				e.pv.Clone(e.innerLines[0])
 				e.score = score
@@ -55,7 +57,7 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 			} else {
 				fruitelessIterations = 0
 			}
-			if e.score == CHECKMATE_EVAL {
+			if IsCheckmateEval(e.score) {
 				break
 			}
 			previousBestMove = e.move
@@ -68,31 +70,67 @@ func (e *Engine) rootSearch(position *Position, depth int8, ply uint16) {
 
 	e.SendPv(lastDepth)
 	if e.move == EmptyMove { // we didn't have time to pick a move, pick a random one
-		allMoves := position.LegalMoves()
+		allMoves := e.Position.LegalMoves()
 		e.move = allMoves[0]
 	}
 }
 
-func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8, alpha int16, beta int16, ply uint16, currentMove Move, multiCutFlag bool, nullMove bool) (int16, bool) {
+func (e *Engine) aspirationWindow(score int16, iterationDepth int8) (int16, bool) {
+	var ok bool
+	if iterationDepth <= 6 {
+		alpha := -MAX_INT
+		beta := MAX_INT
+		score, ok = e.alphaBeta(iterationDepth, 0, alpha, beta, EmptyMove)
+	} else {
+		var alpha, beta int16
+		alphaMargin := int16(25)
+		betaMargin := int16(25)
+		// counter := 0
+		for i := 0; ; i++ {
+			if i < 2 {
+				alpha = max16(score-alphaMargin, -MAX_INT)
+				beta = min16(score+betaMargin, MAX_INT)
+			} else {
+				alpha = -MAX_INT
+				beta = MAX_INT
+			}
+			score, ok = e.alphaBeta(iterationDepth, 0, alpha, beta, EmptyMove)
+			if !ok {
+				return score, false
+			}
+			if score <= alpha {
+				alphaMargin *= 2
+			} else if score >= beta {
+				betaMargin *= 2
+			} else {
+				return score, true
+			}
+		}
+	}
+	return score, ok
+}
+
+func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16, currentMove Move) (int16, bool) {
 	e.VisitNode()
 
 	isRootNode := searchHeight == 0
 	isPvNode := alpha != beta-1
 
-	var isInCheck = currentMove.IsCheck()
+	position := e.Position
+	var isInCheck = position.IsInCheck()
 
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
 		return 0, true
 	}
 
-	if isInCheck && isPvNode {
+	if isInCheck {
 		e.info.checkExtentionCounter += 1
 		depthLeft += 1 // Singular Extension
 	}
 
 	if depthLeft <= 0 {
-		return e.quiescence(position, alpha, beta, currentMove, 0, Evaluate(position), searchHeight)
+		return e.quiescence(alpha, beta, currentMove, Evaluate(position), searchHeight)
 	}
 
 	if isPvNode {
@@ -116,7 +154,7 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 
 	if nHashMove == EmptyMove && !position.HasLegalMoves() {
 		if isInCheck {
-			return -CHECKMATE_EVAL, true
+			return -CHECKMATE_EVAL + int16(searchHeight), true
 		} else {
 			return 0, true
 		}
@@ -126,50 +164,54 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		return -MAX_INT, false
 	}
 
+	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
+
 	// NullMove pruning
 	R := int8(4)
 	if depthLeft == 4 {
 		R = 3
 	}
-	isNullMoveAllowed := !isRootNode && !isPvNode && nullMove && depthLeft > R && !position.IsEndGame() && !isInCheck
 
-	if isNullMoveAllowed {
+	if isNullMoveAllowed && depthLeft > R {
 		ep := position.MakeNullMove()
 		oldPred := e.pred
 		e.pred = NewPredecessors()
 		e.innerLines[searchHeight+1].Recycle()
-		score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, -beta, -beta+1, ply, EmptyMove, !multiCutFlag, false)
+		score, ok := e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1, EmptyMove)
 		score = -score
 		e.pred = oldPred
 		position.UnMakeNullMove(ep)
 		if !ok {
 			return score, false
 		}
-		if score >= beta && abs16(score) < CHECKMATE_EVAL {
+		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
-			return beta, true // null move pruning
+			return score, true // null move pruning
 		}
 	}
 
-	var eval int16
-	if !isInCheck {
-		eval = Evaluate(position)
-	}
+	eval := Evaluate(position)
+	e.staticEvals[searchHeight] = eval
+	improving := currentMove != EmptyMove ||
+		searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2]
 
 	// Reverse Futility Pruning
 	reverseFutilityMargin := WhiteRook.Weight()
-	if !isRootNode && !isPvNode && !isInCheck && depthLeft == 2 && eval-reverseFutilityMargin >= beta {
+	if improving {
+		reverseFutilityMargin = int16(depthLeft) * WhitePawn.Weight()
+	}
+	if isNullMoveAllowed && abs16(beta) < CHECKMATE_EVAL && depthLeft <= 3 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
 		return eval - reverseFutilityMargin, true /* fail soft */
 	}
 
 	// Razoring
-	razoringMargin := 3 * WhitePawn.Weight()
-	if depthLeft == 1 {
-		razoringMargin = 2 * WhitePawn.Weight()
+	razoringMargin := WhiteRook.Weight()
+	if improving {
+		razoringMargin = int16(depthLeft) * WhitePawn.Weight()
 	}
-	if !isRootNode && !isPvNode && depthLeft <= 2 && eval+razoringMargin < beta {
-		newEval, ok := e.quiescence(position, alpha, beta, currentMove, 0, eval, searchHeight)
+	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
+		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
 		if !ok {
 			return newEval, false
 		}
@@ -182,9 +224,9 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && nHashMove == EmptyMove {
 		e.innerLines[searchHeight].Recycle()
-		score, ok := e.alphaBeta(position, depthLeft-7, searchHeight, alpha, beta, ply, currentMove, false, false)
+		score, ok := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta, currentMove)
 		line := e.innerLines[searchHeight]
-		if ok && line.moveCount != 0 && score > alpha && score < beta {
+		if ok && line.moveCount != 0 { // }&& score > alpha && score < beta {
 			hashmove := e.innerLines[searchHeight].MoveAt(0)
 			nHashMove = hashmove // movePicker.UpgradeToPvMove(hashmove)
 		} else if !ok {
@@ -195,69 +237,39 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
 
-	// Multi-Cut Pruning
-	M := 6
-	C := 3
-	R = 4
-	if !isRootNode && !isPvNode && depthLeft > R && searchHeight > 3 && multiCutFlag {
-		cutNodeCounter := 0
-		for i := 0; i < M; i++ {
-			move := movePicker.Next()
-			if move == EmptyMove {
-				break
-			}
-			oldEnPassant, oldTag, hc := position.MakeMove(move)
-			newBeta := 1 - beta
-			// newBeta := -beta + 1
-			e.pred.Push(position.Hash())
-			e.innerLines[searchHeight+1].Recycle()
-			score, ok := e.alphaBeta(position, depthLeft-R, searchHeight+1, newBeta-1, newBeta, ply, move, !multiCutFlag, true)
-			score = -score
-			e.pred.Pop()
-			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-			if !ok {
-				return score, false
-			}
-			if score >= beta {
-				cutNodeCounter++
-				if cutNodeCounter == C {
-					e.info.multiCutCounter += 1
-					return beta, true // mc-prune
-				}
-			}
-		}
-		movePicker.Reset()
-	}
-
-	// Extended Futility Pruning
+	// Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
 	hasSeenExact := false
 
 	// using fail soft with negamax:
-	move := movePicker.Next()
-	oldEnPassant, oldTag, hc := position.MakeMove(move)
+	hashmove := movePicker.Next()
+	oldEnPassant, oldTag, hc := position.MakeMove(hashmove)
 	e.pred.Push(position.Hash())
 	e.innerLines[searchHeight+1].Recycle()
-	bestscore, ok := e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
-	bestscore = -bestscore
-	hashmove := move
+	score, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, hashmove)
+	bestscore := -score
 	e.pred.Pop()
-	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 	if !ok {
 		return bestscore, false
 	}
 	if bestscore > alpha {
+		e.innerLines[searchHeight].AddFirst(hashmove)
+		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		if bestscore >= beta {
-			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, ply)
-			e.AddKillerMove(move, searchHeight)
-			e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
+			e.AddKillerMove(hashmove, searchHeight)
+			e.AddMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), searchHeight)
 			return bestscore, true
 		}
 		alpha = bestscore
-		e.innerLines[searchHeight].AddFirst(move)
-		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		hasSeenExact = true
+	}
+
+	pruningThreashold := int(5 + depthLeft*depthLeft)
+	if !improving {
+		pruningThreashold /= 2
 	}
 
 	for i := 1; ; i++ {
@@ -269,35 +281,32 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), i+1)
 		}
 
-		LMR := int8(0)
-
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
 
-		// Extended Futility Pruning
-		if reductionsAllowed && !isCheckMove && depthLeft <= 2 && !isCaptureMove &&
-			alpha != abs16(CHECKMATE_EVAL) && beta != abs16(CHECKMATE_EVAL) &&
-			promoType == NoType {
-			margin := BlackBishop.Weight()
-			if depthLeft == 2 {
-				margin = WhiteRook.Weight()
-			}
-			if eval+margin <= alpha {
-				e.info.efpCounter += 1
-				continue
-			}
+		// Late Move Pruning
+		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
+			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
+			e.info.lmpCounter += 1
+			continue // LMP
 		}
 
+		LMR := int8(0)
 		// Late Move Reduction
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
 			e.info.lmrCounter += 1
-			LMR = 1
+			if i > 10 {
+				LMR = 2
+			} else {
+				LMR = 1
+			}
 		}
+
 		oldEnPassant, oldTag, hc := position.MakeMove(move)
 		e.pred.Push(position.Hash())
 		e.innerLines[searchHeight+1].Recycle()
-		score, ok := e.alphaBeta(position, depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, ply, move, !multiCutFlag, true)
+		score, ok := e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, move)
 		score = -score
 		e.pred.Pop()
 		if !ok {
@@ -309,8 +318,8 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 			// research with window [alpha;beta]
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
-			score, ok = e.alphaBeta(position, depthLeft-1, searchHeight+1, -beta, -alpha, ply, move, !multiCutFlag, true)
-			score = -score
+			v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, move)
+			score = -v
 			e.pred.Pop()
 			if !ok {
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
@@ -323,25 +332,32 @@ func (e *Engine) alphaBeta(position *Position, depthLeft int8, searchHeight int8
 		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 
 		if score > bestscore {
+			// Potential PV move, lets copy it to the current pv-line
+			e.innerLines[searchHeight].AddFirst(move)
+			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			if score >= beta {
-				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, ply)
+				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, e.Ply)
 				e.AddKillerMove(move, searchHeight)
 				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
 				return score, true
 			}
-
 			bestscore = score
 			hashmove = move
-			// Potential PV move, lets copy it to the current pv-line
-			e.innerLines[searchHeight].AddFirst(move)
-			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			hasSeenExact = true
 		}
 	}
 	if hasSeenExact {
-		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, ply)
+		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 	} else {
-		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, ply)
+		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 	}
 	return bestscore, true
+}
+
+func IsCheckmateEval(eval int16) bool {
+	absEval := abs16(eval)
+	if absEval == MAX_INT {
+		return false
+	}
+	return absEval >= CHECKMATE_EVAL-int16(MAX_DEPTH)
 }

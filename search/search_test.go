@@ -12,7 +12,9 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	game := FromFen("3rbbn1/BQ1kp3/2p1q2p/N4p2/8/3P4/P1P2PPP/5RK1 b - - 0 27", true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 7, 27)
+	e.Position = game.Position()
+	e.Ply = 27
+	e.Search(7)
 	expected := NewMove(D7, D6, BlackKing, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()
@@ -25,7 +27,9 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/2r4n/3K4 b - - 0 1", true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 7, 1)
+	e.Position = game.Position()
+	e.Ply = 1
+	e.Search(7)
 	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, Check)
 	mv := e.Move()
 	mvStr := mv.ToString()
@@ -38,7 +42,8 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/2K5 b - - 1 1", true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 7, 1)
+	e.Position = game.Position()
+	e.Search(7)
 	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, Check)
 	mv := e.Move()
 	mvStr := mv.ToString()
@@ -51,7 +56,8 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/3K4 w - - 0 1", true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 7, 1)
+	e.Position = game.Position()
+	e.Search(7)
 	expected := NewMove(D1, C1, WhiteKing, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()
@@ -64,7 +70,8 @@ func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1", true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 7, 1)
+	e.Position = game.Position()
+	e.Search(7)
 	expected := NewMove(G7, G6, BlackPawn, NoPiece, NoType, 0)
 	mv := e.Move()
 	score := e.Score()
@@ -72,8 +79,8 @@ func TestSearchOnlyMove(t *testing.T) {
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	if score != -CHECKMATE_EVAL {
-		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, score))
+	if score != -CHECKMATE_EVAL+2 {
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL+2, score))
 	}
 }
 
@@ -81,7 +88,8 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pbn2/3r4/4K3 w - - 2 2", true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 7, 1)
+	e.Position = game.Position()
+	e.Search(7)
 	expected := NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()
@@ -89,8 +97,8 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
 	score := e.Score()
-	if score != -CHECKMATE_EVAL {
-		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL, score))
+	if score != -CHECKMATE_EVAL+2 {
+		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL+2, score))
 	}
 }
 
@@ -147,7 +155,8 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	game := FromFen(fen, true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 17, 1)
+	e.Position = game.Position()
+	e.Search(25)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()
@@ -161,7 +170,8 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	game := FromFen(fen, true)
 	e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
 	e.ThinkTime = 400_000
-	e.Search(game.Position(), 13, 1)
+	e.Position = game.Position()
+	e.Search(13)
 	expected := []Move{
 		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check),
 		NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0),
