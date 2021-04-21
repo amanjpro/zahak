@@ -24,10 +24,12 @@ func (p *Position) ParseMoves(moveStr []string) []Move {
 		if parsed == 0 {
 			panic(fmt.Sprintf("Expected a valid move, %s is not valid", currentMove))
 		}
-		ep, tg, hc := p.MakeMove(parsed)
-		otherMoves := p.ParseMoves(moveStr[1:])
-		p.UnMakeMove(parsed, tg, ep, hc)
-		return append(append([]Move{}, parsed), otherMoves...)
+		if ep, tg, hc, legal := p.MakeMove(&parsed); legal {
+			otherMoves := p.ParseMoves(moveStr[1:])
+			p.UnMakeMove(parsed, tg, ep, hc)
+			return append(append([]Move{}, parsed), otherMoves...)
+		}
+		return nil
 	}
 }
 

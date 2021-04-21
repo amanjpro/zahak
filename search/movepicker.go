@@ -2,6 +2,7 @@ package search
 
 import (
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/evaluation"
 )
 
 type MovePicker struct {
@@ -11,6 +12,7 @@ type MovePicker struct {
 	quietMoveList   *MoveList
 	captureMoveList *MoveList
 	moveOrder       int8
+	isEndgame       bool
 	canUseHashMove  bool
 	isQuiescence    bool
 }
@@ -25,6 +27,7 @@ func EmptyMovePicker() *MovePicker {
 		quietMoveList:   qml,
 		captureMoveList: cml,
 		moveOrder:       0,
+		isEndgame:       false,
 		canUseHashMove:  false,
 		isQuiescence:    false,
 	}
@@ -32,13 +35,15 @@ func EmptyMovePicker() *MovePicker {
 
 }
 
-func (mp *MovePicker) RecycleWith(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) {
+func (mp *MovePicker) RecycleWith(p *Position, e *Engine, moveOrder int8, hashmove Move, isEndgame bool, isQuiescence bool) {
 	mp.engine = e
 	mp.position = p
 	mp.moveOrder = moveOrder
+	hashmove.UnMarkCheckAndLegal()
 	mp.hashmove = hashmove
 	mp.isQuiescence = isQuiescence
 	mp.canUseHashMove = hashmove != EmptyMove
+	mp.isEndgame = isEndgame
 	nextCapture := 0
 	nextQuiet := 0
 	if hashmove != EmptyMove {
@@ -104,21 +109,24 @@ func (mp *MovePicker) scoreCaptureMoves() {
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
+			cweight := capPiece.Weight()
+			pweight := piece.Weight()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				mp.captureMoveList.Scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
-			} else if !move.IsEnPassant() {
+				mp.captureMoveList.Scores[i] = 150_000_000 + int32(p.Weight()+cweight)
+				// } else if !move.IsEnPassant() {
+			} else if cweight <= pweight {
 				// SEE for ordering
 				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 				if gain < 0 {
 					mp.captureMoveList.Scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
-					mp.captureMoveList.Scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
+					mp.captureMoveList.Scores[i] = 100_000_000 + int32(cweight-pweight)
 				} else {
 					mp.captureMoveList.Scores[i] = 100_100_000 + gain
 				}
 			} else {
-				mp.captureMoveList.Scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				mp.captureMoveList.Scores[i] = 100_100_000 + int32(cweight-pweight)
 			}
 			continue
 		}
@@ -132,6 +140,7 @@ func (mp *MovePicker) scoreCaptureMoves() {
 }
 
 func (mp *MovePicker) scoreQuietMoves() {
+	isEndgame := mp.isEndgame
 	engine := mp.engine
 	moveOrder := mp.moveOrder
 
@@ -161,25 +170,27 @@ func (mp *MovePicker) scoreQuietMoves() {
 		}
 
 		// prefer checks
-		if move.IsCheck() {
-			mp.quietMoveList.Scores[i] = 10_000
-			continue
-		}
+		// if move.IsCheck() {
+		// 	mp.quietMoveList.Scores[i] = 10_000
+		// 	continue
+		// }
 
 		// King safety (castling)
 		isCastling := move.IsKingSideCastle() || move.IsQueenSideCastle()
 		if isCastling {
-			mp.quietMoveList.Scores[i] = 3_000
+			mp.quietMoveList.Scores[i] = 6_000
 			continue
 		}
 
-		// Prefer smaller pieces
-		if piece.Type() == King {
-			mp.quietMoveList.Scores[i] = 0
-			continue
-		}
-
-		mp.quietMoveList.Scores[i] = 1100 - int32(piece.Weight())
+		mp.quietMoveList.Scores[i] = int32(2000 + PSQT(piece, dest, isEndgame))
+		//
+		// // Prefer smaller pieces
+		// if piece.Type() == King {
+		// 	mp.quietMoveList.Scores[i] = 0
+		// 	continue
+		// }
+		//
+		// mp.quietMoveList.Scores[i] = 1100 - int32(piece.Weight())
 	}
 }
 

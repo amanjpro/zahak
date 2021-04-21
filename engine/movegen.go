@@ -5,25 +5,26 @@ import (
 )
 
 func (p *Position) addAllMoves(ml *MoveList, ms ...Move) {
-	color := p.Turn()
-	for _, m := range ms {
-		// make the move
-		p.partialMakeMove(m)
-
-		// Does the move puts the moving player in check
-		pNotInCheck := !isInCheck(p.Board, color)
-
-		if pNotInCheck {
-			if isInCheck(p.Board, p.Turn()) { // We put opponent in check
-				m.AddCheckTag()
-				ml.Add(m)
-			} else { // The move does not put us in check
-				// do nothing
-				ml.Add(m)
-			}
-		}
-		p.partialUnMakeMove(m)
-	}
+	ml.Add(ms...)
+	// color := p.Turn()
+	// for _, m := range ms {
+	// 	// make the move
+	// 	p.partialMakeMove(m)
+	//
+	// 	// Does the move puts the moving player in check
+	// 	pNotInCheck := !isInCheck(p.Board, color)
+	//
+	// 	if pNotInCheck {
+	// 		if isInCheck(p.Board, p.Turn()) { // We put opponent in check
+	// 			m.AddCheckTag()
+	// 			ml.Add(m)
+	// 		} else { // The move does not put us in check
+	// 			// do nothing
+	// 			ml.Add(m)
+	// 		}
+	// 	}
+	// 	p.partialUnMakeMove(m)
+	// }
 }
 
 func (p *Position) LegalMoves() []Move {
@@ -325,7 +326,7 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m)
+						ml.Add(m)
 					}
 				}
 			}
@@ -336,7 +337,7 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 				if isLegalityCheck && p.checkMove(m) {
 					return true
 				} else if !isLegalityCheck {
-					p.addAllMoves(ml, m)
+					ml.Add(m)
 				}
 			}
 			bbPawn ^= pawn
@@ -355,7 +356,7 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 				if isLegalityCheck && p.checkMove(m) {
 					return true
 				} else if !isLegalityCheck {
-					p.addAllMoves(ml, m)
+					ml.Add(m)
 				}
 			}
 			sngl := bSinglePushTargets(pawn, emptySquares)
@@ -365,7 +366,7 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 				if isLegalityCheck && p.checkMove(m) {
 					return true
 				} else if !isLegalityCheck {
-					p.addAllMoves(ml, m)
+					ml.Add(m)
 				}
 			}
 			bbPawn ^= pawn
@@ -390,7 +391,7 @@ func (p *Position) knightQuietMoves(movingPiece Piece, bbPiece uint64, ownPieces
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 			moves ^= squareMask[sq]
 		}
@@ -423,7 +424,7 @@ func (p *Position) slidingQuietMoves(bbPiece uint64, ownPieces uint64, otherPiec
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 			passiveMoves ^= squareMask[sq]
 		}
@@ -452,7 +453,7 @@ func (p *Position) kingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 
 			moves ^= squareMask[sq]
@@ -483,7 +484,7 @@ func (p *Position) kingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 		}
 
@@ -494,7 +495,7 @@ func (p *Position) kingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces 
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 
 		}
@@ -527,14 +528,14 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m1, m2, m3, m4)
+						ml.Add(m1, m2, m3, m4)
 					}
 				} else {
 					m := NewMove(srcSq, dest, WhitePawn, cp, NoType, Capture)
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m)
+						ml.Add(m)
 					}
 				}
 				attacks ^= squareMask[sq]
@@ -549,7 +550,7 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m) {
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m)
+						ml.Add(m)
 					}
 				}
 			}
@@ -565,7 +566,7 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m1, m2, m3, m4)
+						ml.Add(m1, m2, m3, m4)
 					}
 				}
 			}
@@ -589,7 +590,7 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m1, m2, m3, m4)
+						ml.Add(m1, m2, m3, m4)
 					}
 				} else {
 					var tag MoveTag = Capture
@@ -597,7 +598,7 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m)
+						ml.Add(m)
 					}
 				}
 				attacks ^= squareMask[sq]
@@ -612,7 +613,7 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m)
+						ml.Add(m)
 					}
 				}
 			}
@@ -627,7 +628,7 @@ func (p *Position) pawnCaptureMoves(bbPawn uint64, ownPieces uint64, otherPieces
 					if isLegalityCheck && p.checkMove(m1) { // if one is illegal, they all are illegal
 						return true
 					} else if !isLegalityCheck {
-						p.addAllMoves(ml, m1, m2, m3, m4)
+						ml.Add(m1, m2, m3, m4)
 					}
 				}
 			}
@@ -653,7 +654,7 @@ func (p *Position) knightCaptureMoves(movingPiece Piece, bbPiece uint64, ownPiec
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 
 			captures ^= squareMask[sq]
@@ -688,7 +689,7 @@ func (p *Position) slidingCaptureMoves(bbPiece uint64, ownPieces uint64, otherPi
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 
 			captureMoves ^= squareMask[sq]
@@ -717,7 +718,7 @@ func (p *Position) kingCaptureMoves(bbPiece uint64, ownPieces uint64, otherPiece
 			if isLegalityCheck && p.checkMove(m) { // if one is illegal, they all are illegal
 				return true
 			} else if !isLegalityCheck {
-				p.addAllMoves(ml, m)
+				ml.Add(m)
 			}
 			captures ^= squareMask[sq]
 		}
