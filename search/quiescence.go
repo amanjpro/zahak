@@ -75,12 +75,11 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 		if move == EmptyMove {
 			break
 		}
-		isCheckMove := move.IsCheck()
-		isCaptureMove := move.IsCapture()
-		if !isInCheck && isCaptureMove && !isCheckMove && !move.IsEnPassant() {
-			if movePicker.captureMoveList.Scores[i] < 0 {
-				// SEE pruning
-				e.info.seeQuiescenceCounter += 1
+		// isCheckMove := move.IsCheck()
+		// isCaptureMove := move.IsCapture()
+		if /*!isCheckMove && !isInCheck && /* isCaptureMove && */ movePicker.captureMoveList.Scores[i] < 0 {
+			// SEE pruning
+			e.info.seeQuiescenceCounter += 1
 				continue
 			}
 		}
