@@ -13,6 +13,11 @@ func (e *Engine) Search(depth int8) {
 	e.rootSearch(depth)
 }
 
+var p = WhitePawn.Weight()
+var r = WhiteRook.Weight()
+var b = WhiteBishop.Weight()
+var q = WhiteQueen.Weight()
+
 func (e *Engine) rootSearch(depth int8) {
 
 	var previousBestMove Move
