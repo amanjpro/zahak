@@ -191,7 +191,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
-			return score, true // null move pruning
+			if abs16(score) <= CHECKMATE_EVAL {
+				return score, true
+			}
+			return beta, true // null move pruning
 		}
 	}
 
