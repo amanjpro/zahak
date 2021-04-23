@@ -259,8 +259,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		if bestscore >= beta {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
-			e.AddKillerMove(hashmove, searchHeight)
-			e.AddMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), searchHeight)
+			// e.AddKillerMove(hashmove, searchHeight)
+			e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 			return bestscore, true
 		}
 		alpha = bestscore
@@ -337,14 +337,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			if score >= beta {
 				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, e.Ply)
-				e.AddKillerMove(move, searchHeight)
-				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+				// e.AddKillerMove(move, searchHeight)
+				e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 				return score, true
 			}
 			bestscore = score
 			hashmove = move
 			hasSeenExact = true
 		}
+		e.RemoveMoveHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 	}
 	if hasSeenExact {
 		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
