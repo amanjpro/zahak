@@ -204,9 +204,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2]
 
 	// Reverse Futility Pruning
-	reverseFutilityMargin := WhiteRook.Weight()
+	reverseFutilityMargin := r //p + int16(depthLeft)*(b-p)
 	if improving {
-		reverseFutilityMargin = int16(depthLeft) * WhitePawn.Weight()
+		reverseFutilityMargin += int16(depthLeft) * p
 	}
 	if isNullMoveAllowed && abs16(beta) < CHECKMATE_EVAL && depthLeft <= 3 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
