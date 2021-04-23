@@ -5,6 +5,38 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+const blackMask = uint64(0x0000000000FFFF00)
+const whiteMask = uint64(0x00FFFF0000000000)
+
+func dynamicMargin(pos *Position) int16 {
+
+	color := pos.Turn()
+	delta := p
+	if color == White {
+		if pos.Board.GetBitboardOf(WhitePawn)&whiteMask != 0 {
+			delta = q
+		}
+	} else {
+		if pos.Board.GetBitboardOf(BlackPawn)&blackMask != 0 {
+			delta = q
+		}
+	}
+
+	if pos.Board.GetBitboardOf(GetPiece(Queen, color)) != 0 {
+		return delta + q
+	}
+
+	if pos.Board.GetBitboardOf(GetPiece(Rook, color)) != 0 {
+		return delta + r
+	}
+
+	if pos.Board.GetBitboardOf(GetPiece(Bishop, color)) != 0 || pos.Board.GetBitboardOf(GetPiece(Knight, color)) != 0 {
+		return delta + b
+	}
+
+	return delta + p
+}
+
 func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat int16, searchHeight int8) (int16, bool) {
 
 	e.info.quiesceCounter += 1
@@ -20,14 +52,10 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 		return 0, false
 	}
 
+	position := e.Position
+
 	// Delta Pruning
-	deltaMargin := WhiteQueen.Weight()
-	promoType := currentMove.PromoType()
-	if promoType != NoType {
-		promo := GetPiece(promoType, White)
-		deltaMargin += promo.Weight()
-	}
-	if !isInCheck && standPat+deltaMargin < alpha {
+	if standPat+dynamicMargin(position) < alpha {
 		e.info.deltaPruningCounter += 1
 		return alpha, true
 	}
