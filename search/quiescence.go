@@ -80,6 +80,30 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 		if /*!isCheckMove && !isInCheck && /* isCaptureMove && */ movePicker.captureMoveList.Scores[i] < 0 {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
+			continue
+		}
+
+		canSkip := true
+		switch move.MovingPiece() {
+		case WhitePawn:
+			canSkip = move.Destination().Rank() < 5
+		case BlackPawn:
+			canSkip = move.Destination().Rank() > 4
+		}
+
+		if canSkip {
+			margin := p + move.CapturedPiece().Weight()
+			// promoType := move.PromoType()
+			// if isCaptureMove {
+			// 	margin += move.CapturedPiece().Weight()
+			// }
+			// if promoType != NoType {
+			// 	margin += GetPiece(promoType, White).Weight()
+			// }
+			// toPSQT := PSQT(move.MovingPiece(), move.Destination(), isEndgame)
+			if standPat+margin <= alpha {
+				// e.info.fpCounter += 1
+				// position.UnMakeMove(move, tg, ep, hc)
 				continue
 			}
 		}
