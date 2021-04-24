@@ -48,7 +48,7 @@ Here is the history of his Elo rating (according to CCRL):
 
 | **version** | **rating** |
 |-------------|------------|
-| 1.0.0       | 2004       |
+| 1.0.0       | 2011       |
 | 0.3.0       | 1922       |
 | 0.2.1       | 1824       |
 
