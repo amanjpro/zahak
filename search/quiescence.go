@@ -22,15 +22,16 @@ func dynamicMargin(pos *Position) int16 {
 		}
 	}
 
-	if pos.Board.GetBitboardOf(GetPiece(Queen, color)) != 0 {
+	other := color.Other()
+	if pos.Board.GetBitboardOf(GetPiece(Queen, other)) != 0 {
 		return delta + q
 	}
 
-	if pos.Board.GetBitboardOf(GetPiece(Rook, color)) != 0 {
+	if pos.Board.GetBitboardOf(GetPiece(Rook, other)) != 0 {
 		return delta + r
 	}
 
-	if pos.Board.GetBitboardOf(GetPiece(Bishop, color)) != 0 || pos.Board.GetBitboardOf(GetPiece(Knight, color)) != 0 {
+	if pos.Board.GetBitboardOf(GetPiece(Bishop, other)) != 0 || pos.Board.GetBitboardOf(GetPiece(Knight, other)) != 0 {
 		return delta + b
 	}
 
