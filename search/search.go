@@ -242,8 +242,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		e.innerLines[searchHeight].Recycle()
 	}
+
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
+	movePicker.RecycleWith(position, e, depthLeft, nHashMove, false)
 
 	// Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
@@ -274,6 +275,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		alpha = bestscore
 		hasSeenExact = true
 	}
+	e.RemoveMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 
 	pruningThreashold := int(5 + depthLeft*depthLeft)
 	if !improving {
