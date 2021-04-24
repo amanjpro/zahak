@@ -303,6 +303,17 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 	return false
 }
 
+func IsPromoting(move Move) bool {
+	switch move.MovingPiece() {
+	case WhitePawn:
+		return move.Destination().Rank() > 5
+	case BlackPawn:
+		return move.Destination().Rank() < 4
+	default:
+		return false
+	}
+}
+
 func abs16(x int16) int16 {
 	if x < 0 {
 		return -x

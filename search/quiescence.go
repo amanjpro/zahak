@@ -84,15 +84,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 			continue
 		}
 
-		canSkip := true
-		switch move.MovingPiece() {
-		case WhitePawn:
-			canSkip = move.Destination().Rank() < 5
-		case BlackPawn:
-			canSkip = move.Destination().Rank() > 4
-		}
-
-		if canSkip {
+		// promoType := move.PromoType()
+		if !IsPromoting(move) {
 			margin := p + move.CapturedPiece().Weight()
 			// promoType := move.PromoType()
 			// if isCaptureMove {
