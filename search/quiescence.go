@@ -96,7 +96,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 			// }
 			// toPSQT := PSQT(move.MovingPiece(), move.Destination(), isEndgame)
 			if standPat+margin <= alpha {
-				// e.info.fpCounter += 1
+				e.info.fpCounter += 1
 				// position.UnMakeMove(move, tg, ep, hc)
 				continue
 			}
