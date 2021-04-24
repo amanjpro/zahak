@@ -200,7 +200,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	eval := Evaluate(position)
 	e.staticEvals[searchHeight] = eval
-	improving := //(currentMove != EmptyMove) &&
+	improving := (currentMove == EmptyMove) ||
 		searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2]
 
 	// Reverse Futility Pruning
