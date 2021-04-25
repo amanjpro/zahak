@@ -218,7 +218,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// if improving {
 	// 	razoringMargin += int16(depthLeft) * p
 	// }
-	if !isRootNode && !isPvNode && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
+	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
 		if !ok {
 			return newEval, false
