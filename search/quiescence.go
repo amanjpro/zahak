@@ -56,7 +56,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 	position := e.Position
 
 	// Delta Pruning
-	if standPat+dynamicMargin(position) < alpha {
+	if !isInCheck && standPat+dynamicMargin(position) < alpha {
 		e.info.deltaPruningCounter += 1
 		return alpha, true
 	}
