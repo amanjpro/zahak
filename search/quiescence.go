@@ -5,8 +5,8 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-const blackMask = uint64(0x0000000000FFFF00)
-const whiteMask = uint64(0x00FFFF0000000000)
+const blackMask = uint64(0x000000000000FF00)
+const whiteMask = uint64(0x00FF000000000000)
 
 func dynamicMargin(pos *Position) int16 {
 
