@@ -301,10 +301,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
+		notPromoting := !IsPromoting(move)
 
 		// Late Move Pruning
-		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
+		if reductionsAllowed && notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
+			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && abs16(bestscore) < CHECKMATE_EVAL {
 			e.info.lmpCounter += 1
 			continue // LMP
 		}
@@ -313,7 +314,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// Late Move Reduction
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
 			e.info.lmrCounter += 1
-			if i >= 8 {
+			if i >= 8 && notPromoting {
 				LMR = 2
 			} else {
 				LMR = 1
