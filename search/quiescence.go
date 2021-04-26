@@ -86,7 +86,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 
 		// promoType := move.PromoType()
 		if !IsPromoting(move) {
-			margin := p/2 + move.CapturedPiece().Weight()
+			margin := p + move.CapturedPiece().Weight()
 			// promoType := move.PromoType()
 			// if isCaptureMove {
 			// 	margin += move.CapturedPiece().Weight()
