@@ -157,16 +157,47 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
-	if nHashMove == EmptyMove && !position.HasLegalMoves() {
-		if isInCheck {
-			return -CHECKMATE_EVAL + int16(searchHeight), true
-		} else {
-			return 0, true
+	// if nHashMove == EmptyMove && !position.HasLegalMoves() {
+	// 	if isInCheck {
+	// 		return -CHECKMATE_EVAL + int16(searchHeight), true
+	// 	} else {
+	// 		return 0, true
+	// 	}
+	// }
+	//
+	if e.ShouldStop() {
+		return -MAX_INT, false
+	}
+
+	eval := Evaluate(position)
+	e.staticEvals[searchHeight] = eval
+	improving := currentMove == EmptyMove ||
+		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
+
+	// Razoring
+	razoringMargin := r
+	// if improving {
+	// 	razoringMargin += p
+	// }
+	if !isRootNode && !isPvNode && !isInCheck && depthLeft < 2 && eval+razoringMargin < beta {
+		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
+		if !ok {
+			return newEval, false
+		}
+		if newEval < beta {
+			e.info.razoringCounter += 1
+			return newEval, true
 		}
 	}
 
-	if e.ShouldStop() {
-		return -MAX_INT, false
+	// Reverse Futility Pruning
+	reverseFutilityMargin := int16(depthLeft) * (b - p)
+	if improving {
+		reverseFutilityMargin += p
+	}
+	if !isPvNode && !isRootNode && currentMove != EmptyMove && !isInCheck && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+		e.info.rfpCounter += 1
+		return eval - reverseFutilityMargin, true /* fail soft */
 	}
 
 	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
@@ -191,41 +222,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
-			if abs16(score) <= CHECKMATE_EVAL {
-				return score, true
-			}
-			return beta, true // null move pruning
-		}
-	}
-
-	eval := Evaluate(position)
-	e.staticEvals[searchHeight] = eval
-	improving := (currentMove == EmptyMove) ||
-		searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2]
-
-	// Reverse Futility Pruning
-	reverseFutilityMargin := r //p + int16(depthLeft)*(b-p)
-	if improving {
-		reverseFutilityMargin += int16(depthLeft) * p
-	}
-	if isNullMoveAllowed && abs16(beta) < CHECKMATE_EVAL && depthLeft <= 3 && eval-reverseFutilityMargin >= beta {
-		e.info.rfpCounter += 1
-		return eval - reverseFutilityMargin, true /* fail soft */
-	}
-
-	// Razoring
-	razoringMargin := r
-	// if improving {
-	// 	razoringMargin += int16(depthLeft) * p
-	// }
-	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
-		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
-		if !ok {
-			return newEval, false
-		}
-		if newEval < beta {
-			e.info.razoringCounter += 1
-			return newEval, true
+			// if abs16(score) <= CHECKMATE_EVAL {
+			return score, true
+			// }
+			// return beta, true // null move pruning
 		}
 	}
 
@@ -253,6 +253,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	// using fail soft with negamax:
 	hashmove := movePicker.Next()
+	if hashmove == EmptyMove {
+		if isInCheck {
+			return -CHECKMATE_EVAL + int16(searchHeight), true
+		} else {
+			return 0, true
+		}
+	}
 	oldEnPassant, oldTag, hc := position.MakeMove(hashmove)
 	e.pred.Push(position.Hash())
 	e.innerLines[searchHeight+1].Recycle()
