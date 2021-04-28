@@ -146,14 +146,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, found := e.TranspositionTable.Get(hash)
-	if found && nDepth >= depthLeft {
-		if nEval >= beta && (nType == UpperBound || nType == Exact) {
+	if !isPvNode && found && nDepth >= depthLeft {
+		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
-			return beta, true
+			return nEval, true
 		}
-		if nEval <= alpha && (nType == LowerBound || nType == Exact) {
+		if nEval <= alpha && nType == UpperBound {
 			e.CacheHit()
-			return alpha, true
+			return nEval, true
 		}
 	}
 
@@ -177,9 +177,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Razoring
 	razoringMargin := r
 	// if improving {
-	// 	razoringMargin += p
+	// 	razoringMargin += int16(depthLeft) * p
 	// }
-	if !isRootNode && !isPvNode && !isInCheck && depthLeft < 2 && eval+razoringMargin < beta {
+	if !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
 		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
 		if !ok {
 			return newEval, false
@@ -190,17 +190,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
+	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
 	// Reverse Futility Pruning
 	reverseFutilityMargin := int16(depthLeft) * (b - p)
-	if improving {
-		reverseFutilityMargin += p
-	}
-	if !isPvNode && !isRootNode && currentMove != EmptyMove && !isInCheck && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+	// if improving {
+	// 	reverseFutilityMargin += int16(depthLeft) * p
+	// }
+	if isNullMoveAllowed && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
 		return eval - reverseFutilityMargin, true /* fail soft */
 	}
-
-	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
 
 	// NullMove pruning
 	R := int8(4)
@@ -263,8 +262,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	oldEnPassant, oldTag, hc := position.MakeMove(hashmove)
 	e.pred.Push(position.Hash())
 	e.innerLines[searchHeight+1].Recycle()
-	score, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, hashmove)
-	bestscore := -score
+	v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, hashmove)
+	bestscore := -v
 	e.pred.Pop()
 	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 	if !ok {
@@ -274,7 +273,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		e.innerLines[searchHeight].AddFirst(hashmove)
 		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		if bestscore >= beta {
-			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
+			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 			// e.AddKillerMove(hashmove, searchHeight)
 			e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 			return bestscore, true
@@ -354,7 +353,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.innerLines[searchHeight].AddFirst(move)
 			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			if score >= beta {
-				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, e.Ply)
+				e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 				// e.AddKillerMove(move, searchHeight)
 				e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 				return score, true
@@ -368,7 +367,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if hasSeenExact {
 		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 	} else {
-		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
 	}
 	return bestscore, true
 }

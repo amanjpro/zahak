@@ -71,6 +71,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 
 	// isEndgame := position.IsEndGame()
 
+	bestscore := standPat
 	for i := 0; ; i++ {
 		move := movePicker.Next()
 		if move == EmptyMove {
@@ -86,7 +87,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 
 		// promoType := move.PromoType()
 		if !IsPromoting(move) {
-			margin := p + move.CapturedPiece().Weight()
+			margin := b + move.CapturedPiece().Weight()
 			// promoType := move.PromoType()
 			// if isCaptureMove {
 			// 	margin += move.CapturedPiece().Weight()
@@ -113,14 +114,23 @@ func (e *Engine) quiescence(alpha int16, beta int16, currentMove Move, standPat 
 			return v, ok
 		}
 		score := -v
-		if score >= beta {
-			// e.AddKillerMove(move, searchHeight)
-			// e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
-			return beta, true
+		if score > bestscore {
+			bestscore = score
+			if score > alpha {
+				alpha = score
+				if score >= beta {
+					break
+				}
+			}
 		}
-		if score > alpha {
-			alpha = score
-		}
+		// if score >= beta {
+		// 	// e.AddKillerMove(move, searchHeight)
+		// 	// e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+		// 	return beta, true
+		// }
+		// if score > alpha {
+		// 	alpha = score
+		// }
 	}
-	return alpha, true
+	return bestscore, true
 }
