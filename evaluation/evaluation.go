@@ -14,13 +14,22 @@ const MAX_NON_CHECKMATE int16 = 25000
 // Middle game
 var earlyPawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	80, 80, 80, 80, 80, 80, 80, 80,
-	-10, -10, -10, 50, 50, -10, -10, -10,
-	-20, -20, -20, 30, 30, -20, -20, -20,
-	-10, -10, 0, 20, 20, 0, -10, -10,
-	0, 0, 0, 10, 10, 0, 0, 0,
-	0, 0, 0, -5, -5, 0, 0, 0,
+	50, 50, 50, 50, 50, 50, 50, 50,
+	10, 10, 20, 30, 30, 20, 10, 10,
+	5, 5, 10, 25, 25, 10, 5, 5,
+	0, 0, 0, 20, 20, 0, 0, 0,
+	5, -5, -10, 0, 0, -10, -5, 5,
+	5, 10, 10, -20, -20, 10, 10, 5,
 	0, 0, 0, 0, 0, 0, 0, 0,
+	//
+	// 0, 0, 0, 0, 0, 0, 0, 0,
+	// 50, 50, 50, 50, 50, 50, 50, 50,
+	// 30, 30, 30, 40, 40, 30, 30, 30,
+	// 5, 5, 5, 30, 30, 5, 5, 5,
+	// 0, 0, 0, 20, 20, 0, 0, 0,
+	// 0, 0, 0, 10, 10, 0, 0, 0,
+	// 0, 0, 0, -5, -5, 0, 0, 0,
+	// 0, 0, 0, 0, 0, 0, 0, 0,
 }
 
 var earlyKnightPst = [64]int16{
@@ -82,9 +91,9 @@ var earlyKingPst = [64]int16{
 
 var latePawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	200, 200, 200, 200, 200, 200, 200, 200,
-	150, 150, 150, 150, 150, 150, 150, 150,
-	50, 50, 50, 50, 50, 50, 50, 50,
+	80, 80, 80, 80, 80, 80, 80, 80,
+	60, 60, 60, 60, 60, 60, 60, 60,
+	40, 40, 40, 40, 40, 40, 40, 40,
 	10, 10, 10, 10, 10, 10, 10, 10,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -155,6 +164,42 @@ var flip = [64]int16{
 	16, 17, 18, 19, 20, 21, 22, 23,
 	8, 9, 10, 11, 12, 13, 14, 15,
 	0, 1, 2, 3, 4, 5, 6, 7,
+}
+
+func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
+	switch piece {
+	case WhitePawn:
+		return earlyPawnPst[flip[int(sq)]]
+	case WhiteKnight:
+		return earlyKnightPst[flip[int(sq)]]
+	case WhiteBishop:
+		return earlyBishopPst[flip[int(sq)]]
+	case WhiteRook:
+		return earlyRookPst[flip[int(sq)]]
+	case WhiteQueen:
+		return earlyQueenPst[flip[int(sq)]]
+	case WhiteKing:
+		if isEndgame {
+			return lateKingPst[flip[int(sq)]]
+		}
+		return earlyKingPst[flip[int(sq)]]
+	case BlackPawn:
+		return earlyPawnPst[int(sq)]
+	case BlackKnight:
+		return earlyKnightPst[int(sq)]
+	case BlackBishop:
+		return earlyBishopPst[int(sq)]
+	case BlackRook:
+		return earlyRookPst[int(sq)]
+	case BlackQueen:
+		return earlyQueenPst[int(sq)]
+	case BlackKing:
+		if isEndgame {
+			return lateKingPst[int(sq)]
+		}
+		return earlyKingPst[int(sq)]
+	}
+	return 0
 }
 
 func Evaluate(position *Position) int16 {

@@ -13,6 +13,11 @@ func (e *Engine) Search(depth int8) {
 	e.rootSearch(depth)
 }
 
+var p = WhitePawn.Weight()
+var r = WhiteRook.Weight()
+var b = WhiteBishop.Weight()
+var q = WhiteQueen.Weight()
+
 func (e *Engine) rootSearch(depth int8) {
 
 	var previousBestMove Move
@@ -141,30 +146,60 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, found := e.TranspositionTable.Get(hash)
-	if found && nDepth >= depthLeft {
-		if nEval >= beta && (nType == UpperBound || nType == Exact) {
+	if !isPvNode && found && nDepth >= depthLeft {
+		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
-			return beta, true
+			return nEval, true
 		}
-		if nEval <= alpha && (nType == LowerBound || nType == Exact) {
+		if nEval <= alpha && nType == UpperBound {
 			e.CacheHit()
-			return alpha, true
+			return nEval, true
 		}
 	}
 
-	if nHashMove == EmptyMove && !position.HasLegalMoves() {
-		if isInCheck {
-			return -CHECKMATE_EVAL + int16(searchHeight), true
-		} else {
-			return 0, true
-		}
-	}
-
+	// if nHashMove == EmptyMove && !position.HasLegalMoves() {
+	// 	if isInCheck {
+	// 		return -CHECKMATE_EVAL + int16(searchHeight), true
+	// 	} else {
+	// 		return 0, true
+	// 	}
+	// }
+	//
 	if e.ShouldStop() {
 		return -MAX_INT, false
 	}
 
+	eval := Evaluate(position)
+	e.staticEvals[searchHeight] = eval
+	improving := currentMove == EmptyMove ||
+		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
+
+	// Razoring
+	razoringMargin := r
+	// if improving {
+	// 	razoringMargin += int16(depthLeft) * p
+	// }
+	if !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
+		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
+		if !ok {
+			return newEval, false
+		}
+		if newEval < beta {
+			e.info.razoringCounter += 1
+			return newEval, true
+		}
+	}
+
 	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
+	// Reverse Futility Pruning
+	reverseFutilityMargin := int16(depthLeft) * (b - p)
+	// if improving {
+	// 	reverseFutilityMargin += int16(depthLeft) * p
+	// }
+	if isNullMoveAllowed && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+		e.info.rfpCounter += 1
+		return eval - reverseFutilityMargin, true /* fail soft */
+	}
 
 	// NullMove pruning
 	R := int8(4)
@@ -186,38 +221,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
-			return score, true // null move pruning
-		}
-	}
-
-	eval := Evaluate(position)
-	e.staticEvals[searchHeight] = eval
-	improving := currentMove != EmptyMove ||
-		searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2]
-
-	// Reverse Futility Pruning
-	reverseFutilityMargin := WhiteRook.Weight()
-	if improving {
-		reverseFutilityMargin = int16(depthLeft) * WhitePawn.Weight()
-	}
-	if isNullMoveAllowed && abs16(beta) < CHECKMATE_EVAL && depthLeft <= 3 && eval-reverseFutilityMargin >= beta {
-		e.info.rfpCounter += 1
-		return eval - reverseFutilityMargin, true /* fail soft */
-	}
-
-	// Razoring
-	razoringMargin := WhiteRook.Weight()
-	if improving {
-		razoringMargin = int16(depthLeft) * WhitePawn.Weight()
-	}
-	if !isRootNode && !isPvNode && depthLeft <= 3 && eval+razoringMargin < beta {
-		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
-		if !ok {
-			return newEval, false
-		}
-		if newEval < beta {
-			e.info.razoringCounter += 1
-			return newEval, true
+			// if abs16(score) <= CHECKMATE_EVAL {
+			return score, true
+			// }
+			// return beta, true // null move pruning
 		}
 	}
 
@@ -234,8 +241,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		e.innerLines[searchHeight].Recycle()
 	}
+
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
+	movePicker.RecycleWith(position, e, depthLeft, nHashMove, false)
 
 	// Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
@@ -244,11 +252,18 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	// using fail soft with negamax:
 	hashmove := movePicker.Next()
+	if hashmove == EmptyMove {
+		if isInCheck {
+			return -CHECKMATE_EVAL + int16(searchHeight), true
+		} else {
+			return 0, true
+		}
+	}
 	oldEnPassant, oldTag, hc := position.MakeMove(hashmove)
 	e.pred.Push(position.Hash())
 	e.innerLines[searchHeight+1].Recycle()
-	score, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, hashmove)
-	bestscore := -score
+	v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, hashmove)
+	bestscore := -v
 	e.pred.Pop()
 	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 	if !ok {
@@ -258,14 +273,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		e.innerLines[searchHeight].AddFirst(hashmove)
 		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		if bestscore >= beta {
-			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
-			e.AddKillerMove(hashmove, searchHeight)
-			e.AddMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), searchHeight)
+			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+			// e.AddKillerMove(hashmove, searchHeight)
+			e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 			return bestscore, true
 		}
 		alpha = bestscore
 		hasSeenExact = true
 	}
+	e.RemoveMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 
 	pruningThreashold := int(5 + depthLeft*depthLeft)
 	if !improving {
@@ -284,10 +300,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isCheckMove := move.IsCheck()
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
+		notPromoting := !IsPromoting(move)
 
 		// Late Move Pruning
-		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && alpha > -(CHECKMATE_EVAL-int16(MAX_DEPTH)) {
+		if reductionsAllowed && notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
+			searchHeight > 5 && i > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && abs16(bestscore) < CHECKMATE_EVAL {
 			e.info.lmpCounter += 1
 			continue // LMP
 		}
@@ -296,7 +313,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// Late Move Reduction
 		if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && i > 4 {
 			e.info.lmrCounter += 1
-			if i > 10 {
+			if i >= 8 && notPromoting {
 				LMR = 2
 			} else {
 				LMR = 1
@@ -336,20 +353,21 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.innerLines[searchHeight].AddFirst(move)
 			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			if score >= beta {
-				e.TranspositionTable.Set(hash, move, score, depthLeft, UpperBound, e.Ply)
-				e.AddKillerMove(move, searchHeight)
-				e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
+				e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
+				// e.AddKillerMove(move, searchHeight)
+				e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 				return score, true
 			}
 			bestscore = score
 			hashmove = move
 			hasSeenExact = true
 		}
+		e.RemoveMoveHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 	}
 	if hasSeenExact {
 		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 	} else {
-		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
 	}
 	return bestscore, true
 }

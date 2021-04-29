@@ -9,6 +9,7 @@ import (
 )
 
 type Info struct {
+	fpCounter             int
 	rfpCounter            int
 	razoringCounter       int
 	checkExtentionCounter int
@@ -27,6 +28,7 @@ type Info struct {
 
 func (i *Info) Print() {
 	fmt.Printf("info string LMP: %d\n", i.lmpCounter)
+	fmt.Printf("info string FP: %d\n", i.fpCounter)
 	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
 	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
@@ -102,7 +104,7 @@ func NewEngine(tt *Cache) *Engine {
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.StopSearchFlag {
@@ -149,7 +151,7 @@ func (e *Engine) ClearForSearch() {
 }
 
 func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
-	if e.killerMoves[ply] == nil {
+	if ply < 0 || e.killerMoves[ply] == nil {
 		return 0
 	}
 	if e.killerMoves[ply][0] != EmptyMove && e.killerMoves[ply][0] == move {
@@ -161,6 +163,33 @@ func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 	return 0
 }
 
+func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, ply int8) {
+	if ply >= 0 && !move.IsCapture() {
+		e.info.killerCounter += 1
+		if e.killerMoves[ply][0] != move {
+			e.killerMoves[ply][1] = e.killerMoves[ply][0]
+			e.killerMoves[ply][0] = move
+		}
+
+		if ply <= 1 {
+			return
+		}
+
+		e.info.historyCounter += 1
+		e.searchHistory[movingPiece-1][destination] += int32(ply * ply)
+	}
+}
+
+func (e *Engine) RemoveMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
+	if ply >= 0 && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
+		value := e.searchHistory[movingPiece-1][destination] - int32(ply*ply)
+		if value < 0 {
+			value = 0
+		}
+		e.searchHistory[movingPiece-1][destination] = value
+	}
+}
+
 func (e *Engine) AddKillerMove(move Move, ply int8) {
 	if !move.IsCapture() {
 		e.info.killerCounter += 1
@@ -170,7 +199,7 @@ func (e *Engine) AddKillerMove(move Move, ply int8) {
 }
 
 func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if e.searchHistory[movingPiece-1] == nil || e.searchHistory[movingPiece-1][destination] == 0 {
+	if ply < 0 || e.searchHistory[movingPiece-1] == nil || e.searchHistory[movingPiece-1][destination] == 0 {
 		return 0
 	}
 	return 60_000 + e.searchHistory[movingPiece-1][destination]
@@ -274,6 +303,17 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 		}
 	}
 	return false
+}
+
+func IsPromoting(move Move) bool {
+	switch move.MovingPiece() {
+	case WhitePawn:
+		return move.Destination().Rank() > 5
+	case BlackPawn:
+		return move.Destination().Rank() < 4
+	default:
+		return false
+	}
 }
 
 func abs16(x int16) int16 {
