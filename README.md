@@ -69,6 +69,7 @@ Here is the history of his Elo rating (according to CCRL):
 - Null-Move Pruning
 - Delta Pruning
 - Reverse Futility Pruning
+- Futility Pruning
 - Late Move Reduction
 - Razoring
 - Killer Moves Heuristics
