@@ -85,7 +85,7 @@ func (p *Position) MoveToPGN(move Move) string {
 	if isCheck {
 		// is Checkmate?
 		p.partialMakeMove(move)
-		if p.Status() == Checkmate {
+		if len(p.LegalMoves()) == 0 {
 			moveStr = fmt.Sprint(moveStr, "#")
 		} else {
 			moveStr = fmt.Sprint(moveStr, "+")

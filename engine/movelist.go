@@ -21,6 +21,13 @@ func (ml *MoveList) Add(m Move) {
 	ml.Size += 1
 }
 
+// func (ml *MoveList) Add(ms ...Move) {
+// 	for _, m := range ms {
+// 		ml.Moves[ml.Size] = m
+// 		ml.Size += 1
+// 	}
+// }
+
 func (ml *MoveList) IsEmpty() bool {
 	return ml.Size == 0
 }
