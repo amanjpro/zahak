@@ -40,35 +40,12 @@ func (p *Position) GetQuietMoves(ml *MoveList) {
 	board := p.Board
 
 	taboo := tabooSquares(board, color)
-	if color == White {
-		p.pawnQuietMoves(board.whitePawn, board.whitePieces, board.blackPieces,
-			color, ml)
-		p.knightQuietMoves(WhiteKnight, board.whiteKnight, board.whitePieces, board.blackPieces,
-			ml)
-		p.slidingQuietMoves(board.whiteBishop, board.whitePieces, board.blackPieces,
-			color, WhiteBishop, ml)
-		p.slidingQuietMoves(board.whiteRook, board.whitePieces, board.blackPieces,
-			color, WhiteRook, ml)
-		p.slidingQuietMoves(board.whiteQueen, board.whitePieces, board.blackPieces,
-			color, WhiteQueen, ml)
-		p.kingQuietMoves(board.whiteKing, board.whitePieces, board.blackPieces, board.blackKing,
-			taboo, color, p.HasTag(WhiteCanCastleKingSide), p.HasTag(WhiteCanCastleQueenSide),
-			ml)
-	} else if color == Black {
-		p.pawnQuietMoves(board.blackPawn, board.blackPieces, board.whitePieces,
-			color, ml)
-		p.knightQuietMoves(BlackKnight, board.blackKnight, board.blackPieces, board.whitePieces,
-			ml)
-		p.slidingQuietMoves(board.blackBishop, board.blackPieces, board.whitePieces,
-			color, BlackBishop, ml)
-		p.slidingQuietMoves(board.blackRook, board.blackPieces, board.whitePieces,
-			color, BlackRook, ml)
-		p.slidingQuietMoves(board.blackQueen, board.blackPieces, board.whitePieces,
-			color, BlackQueen, ml)
-		p.kingQuietMoves(board.blackKing, board.blackPieces, board.whitePieces, board.whiteKing,
-			taboo, color, p.HasTag(BlackCanCastleKingSide), p.HasTag(BlackCanCastleQueenSide),
-			ml)
-	}
+	p.pawnQuietMoves(color, ml)
+	p.knightQuietMoves(color, ml)
+	p.slidingQuietMoves(color, Bishop, ml)
+	p.slidingQuietMoves(color, Rook, ml)
+	p.slidingQuietMoves(color, Queen, ml)
+	p.kingQuietMoves(taboo, color, ml)
 }
 
 func (p *Position) GetCaptureMoves(ml *MoveList) {
@@ -199,8 +176,18 @@ func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
 
 // Quiet moves
 
-func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces uint64, color Color,
+func (p *Position) pawnQuietMoves(color Color,
 	ml *MoveList) {
+	var bbPawn, ownPieces, otherPieces uint64
+	if color == White {
+		bbPawn = p.Board.whitePawn
+		ownPieces = p.Board.whitePieces
+		otherPieces = p.Board.blackPieces
+	} else {
+		bbPawn = p.Board.blackPawn
+		ownPieces = p.Board.blackPieces
+		otherPieces = p.Board.whitePieces
+	}
 	emptySquares := (otherPieces | ownPieces) ^ universal
 	if color == White {
 		bbPawn &^= rank7
@@ -249,8 +236,20 @@ func (p *Position) pawnQuietMoves(bbPawn uint64, ownPieces uint64, otherPieces u
 	}
 }
 
-func (p *Position) knightQuietMoves(movingPiece Piece, bbPiece uint64, ownPieces uint64, otherPieces uint64,
-	ml *MoveList) {
+func (p *Position) knightQuietMoves(color Color, ml *MoveList) {
+	var movingPiece Piece
+	var bbPiece, ownPieces, otherPieces uint64
+	if color == White {
+		movingPiece = WhiteKnight
+		bbPiece = p.Board.whiteKnight
+		ownPieces = p.Board.whitePieces
+		otherPieces = p.Board.blackPieces
+	} else {
+		movingPiece = BlackKnight
+		bbPiece = p.Board.blackKnight
+		ownPieces = p.Board.blackPieces
+		otherPieces = p.Board.whitePieces
+	}
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
@@ -268,8 +267,17 @@ func (p *Position) knightQuietMoves(movingPiece Piece, bbPiece uint64, ownPieces
 	}
 }
 
-func (p *Position) slidingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64,
-	color Color, movingPiece Piece, ml *MoveList) {
+func (p *Position) slidingQuietMoves(color Color, pieceType PieceType, ml *MoveList) {
+	var ownPieces, otherPieces uint64
+	movingPiece := GetPiece(pieceType, color)
+	bbPiece := p.Board.GetBitboardOf(movingPiece)
+	if color == White {
+		ownPieces = p.Board.whitePieces
+		otherPieces = p.Board.blackPieces
+	} else {
+		ownPieces = p.Board.blackPieces
+		otherPieces = p.Board.whitePieces
+	}
 	both := otherPieces | ownPieces
 	var rayAttacks uint64
 	for bbPiece != 0 {
@@ -296,9 +304,22 @@ func (p *Position) slidingQuietMoves(bbPiece uint64, ownPieces uint64, otherPiec
 	}
 }
 
-func (p *Position) kingQuietMoves(bbPiece uint64, ownPieces uint64, otherPieces uint64, otherKing uint64,
-	tabooSquares uint64, color Color, kingSideCastle bool, queenSideCastle bool,
-	ml *MoveList) {
+func (p *Position) kingQuietMoves(tabooSquares uint64, color Color, ml *MoveList) {
+	var bbPiece, ownPieces, otherPieces uint64
+	var kingSideCastle, queenSideCastle bool
+	if color == White {
+		bbPiece = p.Board.whiteKing
+		ownPieces = p.Board.whitePieces
+		otherPieces = p.Board.blackPieces
+		kingSideCastle = p.HasTag(WhiteCanCastleKingSide)
+		queenSideCastle = p.HasTag(WhiteCanCastleQueenSide)
+	} else {
+		bbPiece = p.Board.blackKing
+		ownPieces = p.Board.blackPieces
+		otherPieces = p.Board.whitePieces
+		kingSideCastle = p.HasTag(BlackCanCastleKingSide)
+		queenSideCastle = p.HasTag(BlackCanCastleQueenSide)
+	}
 	both := (otherPieces | ownPieces)
 	var movingPiece = BlackKing
 	if color == White {
