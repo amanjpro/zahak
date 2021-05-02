@@ -53,6 +53,7 @@ type Engine struct {
 	StopSearchFlag     bool
 	move               Move
 	score              int16
+	positionMoves      []Move
 	killerMoves        [][]Move
 	searchHistory      [][]int32
 	MovePickers        []*MovePicker
@@ -89,6 +90,7 @@ func NewEngine(tt *Cache) *Engine {
 		false,
 		EmptyMove,
 		0,
+		make([]Move, MAX_DEPTH),
 		make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
 		make([][]int32, 12), // We have 12 pieces only
 		movePickers,

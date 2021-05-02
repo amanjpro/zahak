@@ -45,7 +45,7 @@ func (e *Engine) rootSearch(depth int8) {
 			}
 			e.innerLines[0].Recycle()
 			score, ok := e.aspirationWindow(e.score, iterationDepth)
-			// score, ok := e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT, EmptyMove)
+			// score, ok := e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
 
 			if ok {
 				e.pv.Clone(e.innerLines[0])
@@ -85,7 +85,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) (int16, bool
 	if iterationDepth <= 6 {
 		alpha := -MAX_INT
 		beta := MAX_INT
-		score, ok = e.alphaBeta(iterationDepth, 0, alpha, beta, EmptyMove)
+		score, ok = e.alphaBeta(iterationDepth, 0, alpha, beta)
 	} else {
 		var alpha, beta int16
 		alphaMargin := int16(25)
@@ -99,7 +99,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) (int16, bool
 				alpha = -MAX_INT
 				beta = MAX_INT
 			}
-			score, ok = e.alphaBeta(iterationDepth, 0, alpha, beta, EmptyMove)
+			score, ok = e.alphaBeta(iterationDepth, 0, alpha, beta)
 			if !ok {
 				return score, false
 			}
@@ -115,7 +115,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) (int16, bool
 	return score, ok
 }
 
-func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16, currentMove Move) (int16, bool) {
+func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16) (int16, bool) {
 	e.VisitNode()
 
 	isRootNode := searchHeight == 0
@@ -124,6 +124,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	position := e.Position
 	var isInCheck = position.IsInCheck()
 
+	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
 		return 0, true
@@ -135,7 +136,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if depthLeft <= 0 {
-		return e.quiescence(alpha, beta, currentMove, Evaluate(position), searchHeight)
+		e.staticEvals[searchHeight] = Evaluate(position)
+		return e.quiescence(alpha, beta, searchHeight)
 	}
 
 	if isPvNode {
@@ -180,7 +182,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// 	razoringMargin += int16(depthLeft) * p
 	// }
 	if !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
-		newEval, ok := e.quiescence(alpha, beta, currentMove, eval, searchHeight)
+		e.staticEvals[searchHeight] = eval
+		newEval, ok := e.quiescence(alpha, beta, searchHeight)
 		if !ok {
 			return newEval, false
 		}
@@ -212,7 +215,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		oldPred := e.pred
 		e.pred = NewPredecessors()
 		e.innerLines[searchHeight+1].Recycle()
-		score, ok := e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1, EmptyMove)
+		e.positionMoves[searchHeight+1] = EmptyMove
+		score, ok := e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
 		score = -score
 		e.pred = oldPred
 		position.UnMakeNullMove(ep)
@@ -231,7 +235,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && nHashMove == EmptyMove {
 		e.innerLines[searchHeight].Recycle()
-		score, ok := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta, currentMove)
+		score, ok := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
 		line := e.innerLines[searchHeight]
 		if ok && line.moveCount != 0 { // }&& score > alpha && score < beta {
 			hashmove := e.innerLines[searchHeight].MoveAt(0)
@@ -262,7 +266,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	oldEnPassant, oldTag, hc := position.MakeMove(hashmove)
 	e.pred.Push(position.Hash())
 	e.innerLines[searchHeight+1].Recycle()
-	v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, hashmove)
+	e.positionMoves[searchHeight+1] = hashmove
+	v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
 	bestscore := -v
 	e.pred.Pop()
 	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
@@ -323,7 +328,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		oldEnPassant, oldTag, hc := position.MakeMove(move)
 		e.pred.Push(position.Hash())
 		e.innerLines[searchHeight+1].Recycle()
-		score, ok := e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha, move)
+		e.positionMoves[searchHeight+1] = move
+		score, ok := e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
 		score = -score
 		e.pred.Pop()
 		if !ok {
@@ -335,7 +341,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// research with window [alpha;beta]
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
-			v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha, move)
+			v, ok := e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
 			score = -v
 			e.pred.Pop()
 			if !ok {
