@@ -40,8 +40,9 @@ func (p *Position) GetQuietMoves(ml *MoveList) {
 	board := p.Board
 
 	taboo := tabooSquares(board, color)
+	pinned := board.pinnedIndices(color)
 	p.pawnQuietMoves(color, ml)
-	p.knightQuietMoves(color, ml)
+	p.knightQuietMoves(color, pinned, ml)
 	p.slidingQuietMoves(color, Bishop, ml)
 	p.slidingQuietMoves(color, Rook, ml)
 	p.slidingQuietMoves(color, Queen, ml)
@@ -53,9 +54,10 @@ func (p *Position) GetCaptureMoves(ml *MoveList) {
 	board := p.Board
 
 	taboo := tabooSquares(board, color)
+	pinned := board.pinnedIndices(color)
 
 	p.pawnCaptureMoves(color, ml)
-	p.knightCaptureMoves(color, ml)
+	p.knightCaptureMoves(color, pinned, ml)
 	p.slidingCaptureMoves(color, Bishop, ml)
 	p.slidingCaptureMoves(color, Rook, ml)
 	p.slidingCaptureMoves(color, Queen, ml)
@@ -213,7 +215,7 @@ func (p *Position) pawnQuietMoves(color Color,
 	}
 }
 
-func (p *Position) knightQuietMoves(color Color, ml *MoveList) {
+func (p *Position) knightQuietMoves(color Color, pinned uint64, ml *MoveList) {
 	var movingPiece Piece
 	var bbPiece, ownPieces, otherPieces uint64
 	if color == White {
@@ -227,6 +229,7 @@ func (p *Position) knightQuietMoves(color Color, ml *MoveList) {
 		ownPieces = p.Board.blackPieces
 		otherPieces = p.Board.whitePieces
 	}
+	bbPiece &^= pinned
 	both := otherPieces | ownPieces
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
@@ -457,7 +460,7 @@ func (p *Position) pawnCaptureMoves(color Color,
 	}
 }
 
-func (p *Position) knightCaptureMoves(color Color, ml *MoveList) {
+func (p *Position) knightCaptureMoves(color Color, pinned uint64, ml *MoveList) {
 	var movingPiece Piece
 	var bbPiece, otherPieces uint64
 	if color == White {
@@ -469,6 +472,7 @@ func (p *Position) knightCaptureMoves(color Color, ml *MoveList) {
 		bbPiece = p.Board.blackKnight
 		otherPieces = p.Board.whitePieces
 	}
+	bbPiece &^= pinned
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
@@ -660,6 +664,51 @@ func bitScanForward(bb uint64) uint8 {
 
 func bitScanReverse(bb uint64) uint8 {
 	return uint8(bits.LeadingZeros64(bb) ^ 63)
+}
+
+func (b *Bitboard) pinnedIndices(colorOfKing Color) uint64 {
+	var ownKing, ownPieces, opRQ, opBQ uint64
+	var squareOfKing int
+	occupiedBB := b.whitePieces | b.blackPieces
+	if colorOfKing == White {
+		ownKing = b.whiteKing
+		squareOfKing = int(bitScanForward(ownKing))
+		ownPieces = b.whitePieces
+		opRQ = b.blackRook | b.blackQueen
+		opBQ = b.blackBishop | b.blackQueen
+	} else {
+		ownKing = b.blackKing
+		squareOfKing = int(bitScanForward(ownKing))
+		ownPieces = b.blackPieces
+		opRQ = b.whiteRook | b.whiteQueen
+		opBQ = b.whiteBishop | b.whiteQueen
+	}
+	pinned := uint64(0)
+	pinner := xrayBishopAttacks(occupiedBB, ownPieces, Square(squareOfKing)) & opBQ
+	for pinner != 0 {
+		sq := bitScanForward(pinner)
+		pinned |= inBetweenMaskArray[sq][squareOfKing] & ownPieces
+		pinner &= pinner - 1
+	}
+	pinner = xrayRookAttacks(occupiedBB, ownPieces, Square(squareOfKing)) & opRQ
+	for pinner != 0 {
+		sq := bitScanForward(pinner)
+		pinned |= inBetweenMaskArray[sq][squareOfKing] & ownPieces
+		pinner &= pinner - 1
+	}
+	return pinned
+}
+
+func xrayRookAttacks(occ uint64, blockers uint64, rookSq Square) uint64 {
+	attacks := rookAttacks(rookSq, occ, empty)
+	blockers &= attacks
+	return attacks ^ rookAttacks(rookSq, occ&^blockers, empty)
+}
+
+func xrayBishopAttacks(occ uint64, blockers uint64, bishopSq Square) uint64 {
+	attacks := bishopAttacks(bishopSq, occ, empty)
+	blockers &= attacks
+	return attacks ^ bishopAttacks(bishopSq, occ&^blockers, empty)
 }
 
 // directions
@@ -959,6 +1008,7 @@ func computeSlideAttacks(f int, occ uint64, fs []func(sq uint64) uint64) uint64 
 	return result
 }
 
+var inBetweenMaskArray [64][64]uint64
 var rookAttacksArray [64][1 << 12]uint64
 var bishopAttacksArray [64][1 << 9]uint64
 var squareMask = initSquareMask()
@@ -975,6 +1025,25 @@ func initSquareMask() [64]uint64 {
 	}
 	return sqm
 }
+
+func inBetween(sq1 uint64, sq2 uint64) uint64 {
+	m1 := int64(-1)
+	a2a7 := int64(0x0001010101010100)
+	b2g7 := int64(0x0040201008040200)
+	h1b7 := int64(0x0002040810204080)
+	var btwn, line, rank, file uint64
+
+	btwn = uint64((m1 << sq1) ^ (m1 << sq2))
+	file = uint64((sq2 & 7) - (sq1 & 7))
+	rank = uint64(((sq2 | 7) - sq1) >> 3)
+	line = uint64(((file & 7) - 1) & uint64(a2a7))    /* a2a7 if same file */
+	line += 2 * (((rank & 7) - 1) >> 58)              /* b1g1 if same rank */
+	line += (((rank - file) & 15) - 1) & uint64(b2g7) /* b2g7 if same diagonal */
+	line += (((rank + file) & 15) - 1) & uint64(h1b7) /* h1b7 if same antidiag */
+	line *= btwn & -btwn                              /* mul acts like shift by smaller square */
+	return line & btwn                                /* return the bits on that line in-between */
+}
+
 func init() {
 	var rookShifts = [...]func(uint64) uint64{nortOne, westOne, soutOne, eastOne}
 	var bishopShifts = [...]func(uint64) uint64{noWeOne, noEaOne, soWeOne, soEaOne}
@@ -1015,6 +1084,12 @@ func init() {
 			var occ = magicify(mask, i)
 			var attacks = computeSlideAttacks(sq, occ, bishopShifts[:])
 			bishopAttacksArray[sq][((bishopMask[sq]&occ)*bishopMult[sq])>>bishopShift] = attacks
+		}
+	}
+
+	for s1 := uint64(0); s1 < 64; s1++ {
+		for s2 := uint64(0); s2 < 64; s2++ {
+			inBetweenMaskArray[s1][s2] = inBetween(s1, s2)
 		}
 	}
 }

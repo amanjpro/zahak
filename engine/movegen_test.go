@@ -280,8 +280,8 @@ func TestKnightMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/1N1pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
 	g := FromFen(fen, true)
 	ml := NewMoveList(10)
-	g.position.knightQuietMoves(White, ml)
-	g.position.knightCaptureMoves(White, ml)
+	g.position.knightQuietMoves(White, 0, ml)
+	g.position.knightCaptureMoves(White, 0, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(G3, F1, WhiteKnight, NoPiece, NoType, 0),
@@ -452,6 +452,19 @@ func TestDoubleCheckResponses(t *testing.T) {
 		}
 		t.Errorf("Expected different number of moves to be generated%s",
 			fmt.Sprintf("\nExpected: %d\nGot: %d\n", expectedLen, len(legalMoves)))
+	}
+}
+
+func TestPinnedIndices(t *testing.T) {
+	fen := "k1r5/8/7q/8/8/b7/1BPN4/rRKBN2r w - - 0 1"
+	g := FromFen(fen, true)
+	p := g.position
+
+	actual := p.Board.pinnedIndices(White)
+	expected := squareMask[int(D2)] | squareMask[int(C2)] | squareMask[int(B1)] | squareMask[int(B2)]
+
+	if actual != expected {
+		t.Errorf("Wrong result for pinned indices\n%s", fmt.Sprintf("Expected: %b\nGot: %b", expected, actual))
 	}
 }
 
