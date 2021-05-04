@@ -137,3 +137,20 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) (int16, 
 	}
 	return bestscore, true
 }
+
+func TexelQuiescence(pos *Position) int16 {
+	move := EmptyMove
+
+	engine := NewEngine(nil) //NewCache(10))
+	engine.staticEvals[0] = Evaluate(pos)
+	engine.positionMoves[0] = move
+	engine.Position = pos
+	// score, _ := engine.quiescence(-MAX_INT, MAX_INT, 0)
+	// score = -score
+	// if pos.Turn() == Black {
+	// 	score = -score
+	// }
+
+	// return score
+	return engine.staticEvals[0]
+}

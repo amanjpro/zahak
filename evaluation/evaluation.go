@@ -12,7 +12,7 @@ const MAX_NON_CHECKMATE int16 = 25000
 // Piece Square Tables
 
 // Middle game
-var earlyPawnPst = [64]int16{
+var EarlyPawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	50, 50, 50, 50, 50, 50, 50, 50,
 	10, 10, 20, 30, 30, 20, 10, 10,
@@ -32,7 +32,7 @@ var earlyPawnPst = [64]int16{
 	// 0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var earlyKnightPst = [64]int16{
+var EarlyKnightPst = [64]int16{
 	-40, -25, -25, -25, -25, -25, -25, -40,
 	-30, 0, 0, 0, 0, 0, 0, -30,
 	-30, 0, 0, 0, 0, 0, 0, -30,
@@ -43,7 +43,7 @@ var earlyKnightPst = [64]int16{
 	-40, -30, -25, -25, -25, -25, -30, -40,
 }
 
-var earlyBishopPst = [64]int16{
+var EarlyBishopPst = [64]int16{
 	-10, 0, 0, 0, 0, 0, 0, -10,
 	-10, 5, 0, 0, 0, 0, 5, -10,
 	-10, 0, 5, 0, 0, 5, 0, -10,
@@ -54,7 +54,7 @@ var earlyBishopPst = [64]int16{
 	-10, -20, -20, -20, -20, -20, -20, -10,
 }
 
-var earlyRookPst = [64]int16{
+var EarlyRookPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	10, 10, 10, 10, 10, 10, 10, 10,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -65,7 +65,7 @@ var earlyRookPst = [64]int16{
 	0, 0, 0, 5, 5, 0, 0, 0,
 }
 
-var earlyQueenPst = [64]int16{
+var EarlyQueenPst = [64]int16{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -76,7 +76,7 @@ var earlyQueenPst = [64]int16{
 	5, 5, 10, 15, 15, 10, 5, 5,
 }
 
-var earlyKingPst = [64]int16{
+var EarlyKingPst = [64]int16{
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
 	-25, -25, -25, -25, -25, -25, -25, -25,
@@ -89,7 +89,7 @@ var earlyKingPst = [64]int16{
 
 // Endgame
 
-var latePawnPst = [64]int16{
+var LatePawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	80, 80, 80, 80, 80, 80, 80, 80,
 	60, 60, 60, 60, 60, 60, 60, 60,
@@ -100,7 +100,7 @@ var latePawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
-var lateKnightPst = [64]int16{
+var LateKnightPst = [64]int16{
 	-30, -20, -10, -20, -20, -20, -30, -30,
 	-10, -10, -10, -5, -5, -10, -10, -10,
 	-10, -10, 10, 10, -10, -10, -10, -10,
@@ -111,7 +111,7 @@ var lateKnightPst = [64]int16{
 	-30, -30, -30, -10, -10, -30, -30, -30,
 }
 
-var lateBishopPst = [64]int16{
+var LateBishopPst = [64]int16{
 	-10, -10, -10, -10, -10, -10, -10, -10,
 	-10, -5, 5, -10, -5, -10, -5, -10,
 	5, -10, 0, 0, 0, 5, 0, 5,
@@ -122,7 +122,7 @@ var lateBishopPst = [64]int16{
 	-15, -10, -15, -5, -10, -10, -5, -15,
 }
 
-var lateRookPst = [64]int16{
+var LateRookPst = [64]int16{
 	15, 10, 15, 15, 15, 15, 10, 5,
 	10, 10, 10, 10, 5, 5, 10, 5,
 	5, 5, 5, 5, 5, 5, 5, 5,
@@ -133,7 +133,7 @@ var lateRookPst = [64]int16{
 	-10, -10, -10, -10, -10, -10, -10, -10,
 }
 
-var lateQueenPst = [64]int16{
+var LateQueenPst = [64]int16{
 	-10, 20, 20, 25, 25, 20, 10, 20,
 	-15, 20, 30, 40, 40, 20, 20, 0,
 	-20, 5, 10, 30, 30, 30, 5, -20,
@@ -144,7 +144,7 @@ var lateQueenPst = [64]int16{
 	-30, -30, -20, -30, -5, -20, -20, -20,
 }
 
-var lateKingPst = [64]int16{
+var LateKingPst = [64]int16{
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-15, 15, 15, 15, 15, 15, 15, -15,
 	10, 15, 20, 15, 20, 20, 15, 10,
@@ -166,38 +166,54 @@ var flip = [64]int16{
 	0, 1, 2, 3, 4, 5, 6, 7,
 }
 
+var BackwardPawnAward = int16(25)
+var IsolatedPawnAward = int16(25)
+var DoublePawnAward = int16(25)
+var EndgamePassedPawnAward = int16(50)
+var MiddlegamePassedPawnAward = int16(20)
+var EndgameCandidatePassedPawnAward = int16(25)
+var MiddlegameCandidatePassedPawnAward = int16(10)
+var RookOpenFileAward = int16(25)
+var RookSemiOpenFileAward = int16(15)
+var VeritcalDoubleRookAward = int16(50)
+var HorizontalDoubleRookAward = int16(30)
+var PawnFactorCoeff = int16(2)
+var AggressivityFactorCoeff = int16(1)
+var MiddlegameAggressivityFactorCoeff = int16(2)
+var CastlingAward = int16(10)
+
 func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 	switch piece {
 	case WhitePawn:
-		return earlyPawnPst[flip[int(sq)]]
+		return EarlyPawnPst[flip[int(sq)]]
 	case WhiteKnight:
-		return earlyKnightPst[flip[int(sq)]]
+		return EarlyKnightPst[flip[int(sq)]]
 	case WhiteBishop:
-		return earlyBishopPst[flip[int(sq)]]
+		return EarlyBishopPst[flip[int(sq)]]
 	case WhiteRook:
-		return earlyRookPst[flip[int(sq)]]
+		return EarlyRookPst[flip[int(sq)]]
 	case WhiteQueen:
-		return earlyQueenPst[flip[int(sq)]]
+		return EarlyQueenPst[flip[int(sq)]]
 	case WhiteKing:
 		if isEndgame {
-			return lateKingPst[flip[int(sq)]]
+			return LateKingPst[flip[int(sq)]]
 		}
-		return earlyKingPst[flip[int(sq)]]
+		return EarlyKingPst[flip[int(sq)]]
 	case BlackPawn:
-		return earlyPawnPst[int(sq)]
+		return EarlyPawnPst[int(sq)]
 	case BlackKnight:
-		return earlyKnightPst[int(sq)]
+		return EarlyKnightPst[int(sq)]
 	case BlackBishop:
-		return earlyBishopPst[int(sq)]
+		return EarlyBishopPst[int(sq)]
 	case BlackRook:
-		return earlyRookPst[int(sq)]
+		return EarlyRookPst[int(sq)]
 	case BlackQueen:
-		return earlyQueenPst[int(sq)]
+		return EarlyQueenPst[int(sq)]
 	case BlackKing:
 		if isEndgame {
-			return lateKingPst[int(sq)]
+			return LateKingPst[int(sq)]
 		}
-		return earlyKingPst[int(sq)]
+		return EarlyKingPst[int(sq)]
 	}
 	return 0
 }
@@ -252,7 +268,7 @@ func Evaluate(position *Position) int16 {
 		blackPawnsCount++
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbBlackPawn, Black) {
-			blackCentipawns -= 25
+			blackCentipawns -= BackwardPawnAward
 		}
 		// pawn map
 		sq := Square(index)
@@ -266,9 +282,9 @@ func Evaluate(position *Position) int16 {
 			blackMostAdvancedPawnsPerFile[file] = rank
 		}
 		if isEndgame {
-			blackCentipawns += latePawnPst[index]
+			blackCentipawns += LatePawnPst[index]
 		} else {
-			blackCentipawns += earlyPawnPst[index]
+			blackCentipawns += EarlyPawnPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -284,7 +300,7 @@ func Evaluate(position *Position) int16 {
 		mask := SquareMask(uint64(index))
 		// backwards pawn
 		if board.IsBackwardPawn(mask, bbWhitePawn, White) {
-			whiteCentipawns -= 25
+			whiteCentipawns -= BackwardPawnAward
 		}
 		// pawn map
 		sq := Square(index)
@@ -298,15 +314,15 @@ func Evaluate(position *Position) int16 {
 			whiteMostAdvancedPawnsPerFile[file] = rank
 		}
 		if isEndgame {
-			whiteCentipawns += latePawnPst[flip[index]]
+			whiteCentipawns += LatePawnPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyPawnPst[flip[index]]
+			whiteCentipawns += EarlyPawnPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
 
 	for i := 0; i < 8; i++ {
-		// isolated pawn penalty - white
+		// isoLated pawn penalty - white
 		if whitePawnsPerFile[i] > 0 {
 			isIsolated := false
 			if i == 0 && whitePawnsPerFile[i+1] <= 0 {
@@ -317,11 +333,11 @@ func Evaluate(position *Position) int16 {
 				isIsolated = true
 			}
 			if isIsolated {
-				whiteCentipawns -= 25
+				whiteCentipawns -= IsolatedPawnAward
 			}
 		}
 
-		// isolated pawn penalty - black
+		// isoLated pawn penalty - black
 		if blackPawnsPerFile[i] > 0 {
 			isIsolated := false
 			if i == 0 && blackPawnsPerFile[i+1] <= 0 {
@@ -332,17 +348,17 @@ func Evaluate(position *Position) int16 {
 				isIsolated = true
 			}
 			if isIsolated {
-				blackCentipawns -= 25
+				blackCentipawns -= IsolatedPawnAward
 			}
 		}
 
 		// double pawn penalty - black
 		if blackPawnsPerFile[i] > 1 {
-			blackCentipawns -= 25
+			blackCentipawns -= DoublePawnAward
 		}
 		// double pawn penalty - white
 		if whitePawnsPerFile[i] > 1 {
-			whiteCentipawns -= 25
+			whiteCentipawns -= DoublePawnAward
 		}
 		// passed and candidate passed pawn award
 		rank := whiteMostAdvancedPawnsPerFile[i]
@@ -351,44 +367,44 @@ func Evaluate(position *Position) int16 {
 				if i == 0 {
 					if blackLeastAdvancedPawnsPerFile[i+1] == Rank8 || blackLeastAdvancedPawnsPerFile[i+1] < rank { // passed pawn
 						if isEndgame {
-							whiteCentipawns += 50 //passed pawn
+							whiteCentipawns += EndgamePassedPawnAward //passed pawn
 						} else {
-							whiteCentipawns += 20 //passed pawn
+							whiteCentipawns += MiddlegamePassedPawnAward //passed pawn
 						}
 					} else {
 						if isEndgame {
-							whiteCentipawns += 25 // candidate passed pawn
+							whiteCentipawns += EndgameCandidatePassedPawnAward // candidate passed pawn
 						} else {
-							whiteCentipawns += 10
+							whiteCentipawns += MiddlegameCandidatePassedPawnAward
 						}
 					}
 				} else if i == 7 {
 					if blackLeastAdvancedPawnsPerFile[i-1] == Rank8 || blackLeastAdvancedPawnsPerFile[i-1] < rank { // passed pawn
 						if isEndgame {
-							whiteCentipawns += 50 //passed pawn
+							whiteCentipawns += EndgamePassedPawnAward //passed pawn
 						} else {
-							whiteCentipawns += 20
+							whiteCentipawns += MiddlegamePassedPawnAward
 						}
 					} else {
 						if isEndgame {
-							whiteCentipawns += 25 // candidate passed pawn
+							whiteCentipawns += EndgameCandidatePassedPawnAward // candidate passed pawn
 						} else {
-							whiteCentipawns += 10
+							whiteCentipawns += MiddlegameCandidatePassedPawnAward
 						}
 					}
 				} else {
 					if (blackLeastAdvancedPawnsPerFile[i-1] == Rank8 || blackLeastAdvancedPawnsPerFile[i-1] < rank) &&
 						(blackLeastAdvancedPawnsPerFile[i+1] == Rank8 || blackLeastAdvancedPawnsPerFile[i+1] < rank) { // passed pawn
 						if isEndgame {
-							whiteCentipawns += 50 //passed pawn
+							whiteCentipawns += EndgamePassedPawnAward //passed pawn
 						} else {
-							whiteCentipawns += 20 //passed pawn
+							whiteCentipawns += MiddlegamePassedPawnAward //passed pawn
 						}
 					} else {
 						if isEndgame {
-							whiteCentipawns += 25 // candidate passed pawn
+							whiteCentipawns += EndgameCandidatePassedPawnAward // candidate passed pawn
 						} else {
-							whiteCentipawns += 10 // candidate passed pawn
+							whiteCentipawns += MiddlegameCandidatePassedPawnAward // candidate passed pawn
 						}
 					}
 				}
@@ -401,44 +417,44 @@ func Evaluate(position *Position) int16 {
 				if i == 0 {
 					if whiteLeastAdvancedPawnsPerFile[i+1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i+1] > rank { // passed pawn
 						if isEndgame {
-							blackCentipawns += 50 //passed pawn
+							blackCentipawns += EndgamePassedPawnAward //passed pawn
 						} else {
-							blackCentipawns += 20 //passed pawn
+							blackCentipawns += MiddlegamePassedPawnAward //passed pawn
 						}
 					} else {
 						if isEndgame {
-							blackCentipawns += 25 // candidate passed pawn
+							blackCentipawns += EndgameCandidatePassedPawnAward // candidate passed pawn
 						} else {
-							blackCentipawns += 10 // candidate passed pawn
+							blackCentipawns += MiddlegameCandidatePassedPawnAward // candidate passed pawn
 						}
 					}
 				} else if i == 7 {
 					if whiteLeastAdvancedPawnsPerFile[i-1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i-1] > rank { // passed pawn
 						if isEndgame {
-							blackCentipawns += 50 //passed pawn
+							blackCentipawns += EndgamePassedPawnAward //passed pawn
 						} else {
-							blackCentipawns += 20 //passed pawn
+							blackCentipawns += MiddlegamePassedPawnAward //passed pawn
 						}
 					} else {
 						if isEndgame {
-							blackCentipawns += 25 // candidate passed pawn
+							blackCentipawns += EndgameCandidatePassedPawnAward // candidate passed pawn
 						} else {
-							blackCentipawns += 10 // candidate passed pawn
+							blackCentipawns += MiddlegameCandidatePassedPawnAward // candidate passed pawn
 						}
 					}
 				} else {
 					if (whiteLeastAdvancedPawnsPerFile[i-1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i-1] > rank) &&
 						(whiteLeastAdvancedPawnsPerFile[i+1] == Rank1 || whiteLeastAdvancedPawnsPerFile[i+1] > rank) { // passed pawn
 						if isEndgame {
-							blackCentipawns += 50 //passed pawn
+							blackCentipawns += EndgamePassedPawnAward //passed pawn
 						} else {
-							blackCentipawns += 20 //passed pawn
+							blackCentipawns += MiddlegamePassedPawnAward //passed pawn
 						}
 					} else {
 						if isEndgame {
-							blackCentipawns += 25 // candidate passed pawn
+							blackCentipawns += EndgameCandidatePassedPawnAward // candidate passed pawn
 						} else {
-							blackCentipawns += 10 // candidate passed pawn
+							blackCentipawns += MiddlegameCandidatePassedPawnAward // candidate passed pawn
 						}
 					}
 				}
@@ -453,9 +469,9 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			blackCentipawns += lateKnightPst[index]
+			blackCentipawns += LateKnightPst[index]
 		} else {
-			blackCentipawns += earlyKnightPst[index]
+			blackCentipawns += EarlyKnightPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -466,9 +482,9 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			blackCentipawns += lateBishopPst[index]
+			blackCentipawns += LateBishopPst[index]
 		} else {
-			blackCentipawns += earlyBishopPst[index]
+			blackCentipawns += EarlyBishopPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -481,25 +497,25 @@ func Evaluate(position *Position) int16 {
 		file := Square(index).File()
 		if blackPawnsPerFile[file] == 0 {
 			if whitePawnsPerFile[file] == 0 { // open file
-				blackCentipawns += 25
+				blackCentipawns += RookOpenFileAward
 			} else { // semi-open file
-				blackCentipawns += 15
+				blackCentipawns += RookSemiOpenFileAward
 			}
 		}
 		sq := Square(index)
 		if blackRooksCount == 1 {
 			if board.IsVerticalDoubleRook(sq, bbBlackRook, all) {
 				// double-rook vertical
-				blackCentipawns += 2 * 25
+				blackCentipawns += VeritcalDoubleRookAward
 			} else if board.IsHorizontalDoubleRook(sq, bbBlackRook, all) {
 				// double-rook horizontal
-				blackCentipawns += 2 * 15
+				blackCentipawns += HorizontalDoubleRookAward
 			}
 		}
 		if isEndgame {
-			blackCentipawns += lateRookPst[index]
+			blackCentipawns += LateRookPst[index]
 		} else {
-			blackCentipawns += earlyRookPst[index]
+			blackCentipawns += EarlyRookPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -510,9 +526,9 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			blackCentipawns += lateQueenPst[index]
+			blackCentipawns += LateQueenPst[index]
 		} else {
-			blackCentipawns += earlyQueenPst[index]
+			blackCentipawns += EarlyQueenPst[index]
 		}
 		pieceIter ^= mask
 	}
@@ -522,14 +538,14 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			blackCentipawns += lateKingPst[index]
+			blackCentipawns += LateKingPst[index]
 		} else {
-			award := earlyKingPst[index]
+			award := EarlyKingPst[index]
 			if award <= 0 {
 				if !position.HasTag(BlackCanCastleKingSide) {
-					award -= 10
+					award -= CastlingAward
 				} else if !position.HasTag(BlackCanCastleQueenSide) {
-					award -= 10
+					award -= CastlingAward
 				}
 			}
 			blackCentipawns += award
@@ -545,9 +561,9 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			whiteCentipawns += lateKnightPst[flip[index]]
+			whiteCentipawns += LateKnightPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyKnightPst[flip[index]]
+			whiteCentipawns += EarlyKnightPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -558,9 +574,9 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			whiteCentipawns += lateBishopPst[flip[index]]
+			whiteCentipawns += LateBishopPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyBishopPst[flip[index]]
+			whiteCentipawns += EarlyBishopPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -573,25 +589,25 @@ func Evaluate(position *Position) int16 {
 		file := Square(index).File()
 		if whitePawnsPerFile[file] == 0 {
 			if blackPawnsPerFile[file] == 0 { // open file
-				whiteCentipawns += 25
+				whiteCentipawns += RookOpenFileAward
 			} else { // semi-open file
-				whiteCentipawns += 15
+				whiteCentipawns += RookSemiOpenFileAward
 			}
 		}
 		sq := Square(index)
 		if whiteRooksCount == 1 {
 			if board.IsVerticalDoubleRook(sq, bbWhiteRook, all) {
 				// double-rook vertical
-				whiteCentipawns += 2 * 25
+				whiteCentipawns += VeritcalDoubleRookAward
 			} else if board.IsHorizontalDoubleRook(sq, bbWhiteRook, all) {
 				// double-rook horizontal
-				whiteCentipawns += 2 * 15
+				whiteCentipawns += HorizontalDoubleRookAward
 			}
 		}
 		if isEndgame {
-			whiteCentipawns += lateRookPst[flip[index]]
+			whiteCentipawns += LateRookPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyRookPst[flip[index]]
+			whiteCentipawns += EarlyRookPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -602,9 +618,9 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			whiteCentipawns += lateQueenPst[flip[index]]
+			whiteCentipawns += LateQueenPst[flip[index]]
 		} else {
-			whiteCentipawns += earlyQueenPst[flip[index]]
+			whiteCentipawns += EarlyQueenPst[flip[index]]
 		}
 		pieceIter ^= mask
 	}
@@ -614,14 +630,14 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		if isEndgame {
-			whiteCentipawns += lateKingPst[flip[index]]
+			whiteCentipawns += LateKingPst[flip[index]]
 		} else {
-			award := earlyKingPst[flip[index]]
+			award := EarlyKingPst[flip[index]]
 			if award <= 0 {
 				if !position.HasTag(WhiteCanCastleKingSide) {
-					award -= 10
+					award -= CastlingAward
 				} else if !position.HasTag(WhiteCanCastleQueenSide) {
-					award -= 10
+					award -= CastlingAward
 				}
 			}
 			whiteCentipawns += award
@@ -630,7 +646,7 @@ func Evaluate(position *Position) int16 {
 		pieceIter ^= mask
 	}
 
-	pawnFactor := int16(16-blackPawnsCount-whitePawnsCount) * 2
+	pawnFactor := int16(16-blackPawnsCount-whitePawnsCount) * PawnFactorCoeff
 
 	blackCentipawns += blackPawnsCount * BlackPawn.Weight()
 	blackCentipawns += blackKnightsCount * (BlackKnight.Weight() - pawnFactor)
@@ -653,9 +669,9 @@ func Evaluate(position *Position) int16 {
 	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
 	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
 
-	aggressivityFactor := int16(1)
+	aggressivityFactor := AggressivityFactorCoeff
 	if !isEndgame {
-		aggressivityFactor = 2
+		aggressivityFactor = MiddlegameAggressivityFactorCoeff
 	}
 
 	whiteCentipawns += aggressivityFactor * int16(wAttackCounts-bAttackCounts)
