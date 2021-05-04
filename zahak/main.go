@@ -12,6 +12,7 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/perft"
 	. "github.com/amanjpro/zahak/strength"
+	. "github.com/amanjpro/zahak/tuning"
 	. "github.com/amanjpro/zahak/uci"
 )
 
@@ -20,6 +21,7 @@ var version = "dev"
 func main() {
 	var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
 	var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
+	var tuneFlag = flag.Bool("tune", false, "Peform texel tuning for optimal evaluation values")
 	var perftTreeFlag = flag.Bool("perft-tree", false, "Run the engine in prefttree mode")
 	var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
 	var bookPath = flag.String("book", "", "Path to openning book in PolyGlot (bin) format")
@@ -43,7 +45,9 @@ func main() {
 		defer pprof.StopCPUProfile()
 		defer mem.Close() // error handling omitted for example
 	}
-	if *epdPath != "" {
+	if *tuneFlag && *epdPath != "" {
+		Tune(*epdPath)
+	} else if *epdPath != "" {
 		RunTestPositions(*epdPath)
 	} else if *perftFlag {
 		StartPerftTest(*slowFlag)
