@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"strconv"
+	// "strconv"
 	"strings"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -21,7 +21,6 @@ type TestPosition struct {
 var testPositions []TestPosition
 var initialGuesses = computeInitialGuesses()
 var K_PRECISION = 10
-var RANGE_END = int16(250)
 var NUM_PROCESSORS = 8
 var initialK = 1.0
 var answers = make(chan float64)
@@ -82,6 +81,7 @@ func computeInitialGuesses() []int16 {
 	guesses = append(guesses, PawnFactorCoeff)                    // 779
 	guesses = append(guesses, AggressivityFactorCoeff)            // 780
 	guesses = append(guesses, MiddlegameAggressivityFactorCoeff)  // 781
+	guesses = append(guesses, CastlingAward)                      // 782
 	return guesses
 }
 
@@ -114,6 +114,7 @@ func updateEvalParams(guesses []int16) {
 	PawnFactorCoeff = guesses[779]
 	AggressivityFactorCoeff = guesses[780]
 	MiddlegameAggressivityFactorCoeff = guesses[781]
+	CastlingAward = guesses[782]
 }
 
 func printPst(pst []int16, varname string) {
@@ -157,66 +158,14 @@ func printOptimalGuesses(guesses []int16) {
 	fmt.Printf("var PawnFactorCoeff int16 = %d\n", guesses[779])
 	fmt.Printf("var AggressivityFactorCoeff int16 = %d\n", guesses[780])
 	fmt.Printf("var MiddlegameAggressivityFactorCoeff int16 = %d\n", guesses[781])
+	fmt.Printf("var CastlingAward int16 = %d\n", guesses[782])
 	fmt.Println("===================================================")
 }
-
-func updateSingleGradient(testPosition TestPosition, params []int16, K float64, gradient *[]float64) {
-
-	updateEvalParams(params)
-	err := linearEvaluation(testPosition)
-	sig := sigmoid(err, K)
-	x := (testPosition.outcome - sig) * sig * (1 - sig)
-
-	for i := 0; i < len(params); i++ {
-		(*gradient)[i] += x * float64(params[i])
-	}
-}
-
-func computeGradient(testPositions []TestPosition, gradient []float64, guesses []int16, K float64) []int16 {
-
-	var local = make([]float64, len(guesses))
-
-	for i := 0; i < len(guesses); i++ {
-		updateSingleGradient(testPositions[i], guesses, K, &local)
-	}
-
-	for i := 0; i < len(gradient); i++ {
-		gradient[i] += local[i]
-	}
-
-	return guesses
-}
-
-//
-// var MAXEPOCHS = 10000
-// func findOptimalParams(guesses []int16) {
-// 	for epoch := 1; epoch <= MAXEPOCHS; epoch++ {
-//         for int batch = 0; batch < NPOSITIONS / BATCHSIZE; batch++) {
-// 	var gradient = make([]float64, len(guesses))
-//
-//             computeGradient(entries, gradient, guesses, K);
-//
-//             for (int i = 0; i < NTERMS; i++) {
-//                 adagrad[i][MG] += pow((K / 200.0) * gradient[i][MG] / BATCHSIZE, 2.0);
-//                 adagrad[i][EG] += pow((K / 200.0) * gradient[i][EG] / BATCHSIZE, 2.0);
-//                 params[i][MG] += (K / 200.0) * (gradient[i][MG] / BATCHSIZE) * (rate / sqrt(1e-8 + adagrad[i][MG]));
-//                 params[i][EG] += (K / 200.0) * (gradient[i][EG] / BATCHSIZE) * (rate / sqrt(1e-8 + adagrad[i][EG]));
-//             }
-//         }
-//
-//         error = TunedEvaluationErrors(entries, params, K);
-//         printf("\rEpoch [%d] Error = [%.8f], Rate = [%g]", epoch, error, rate);
-//
-//         // Pre-scheduled Learning Rate drops
-//         if (epoch % LRSTEPRATE == 0) rate = rate / LRDROPRATE;
-//         if (epoch % REPORTING == 0) PrintParameters(params, currentParams);
-//     }
-// }
 
 func localOptimize(initialGuess []int16, K float64) []int16 {
 	nParams := len(initialGuess)
 	bestE := E(initialGuess, K)
-	bestParValues := initialGuess
+	bestParValues := append([]int16{}, initialGuess...)
 	improved := true
 	for improved {
 		improved = false
@@ -224,24 +173,23 @@ func localOptimize(initialGuess []int16, K float64) []int16 {
 			if _, ok := futileIndices[pi]; ok {
 				continue
 			}
-			newParValues := bestParValues
-			newParValues[pi] += 1
-			newE := E(newParValues, K)
+			bestParValues[pi] += 1
+			newE := E(bestParValues, K)
 			if newE < bestE {
 				bestE = newE
-				bestParValues = newParValues
 				fmt.Println("Best parameters so far")
 				printOptimalGuesses(bestParValues)
 				improved = true
 			} else {
-				newParValues[pi] -= 2
-				newE = E(newParValues, K)
+				bestParValues[pi] -= 2
+				newE = E(bestParValues, K)
 				if newE < bestE {
 					bestE = newE
-					bestParValues = newParValues
 					fmt.Println("Best parameters so far")
 					printOptimalGuesses(bestParValues)
 					improved = true
+				} else {
+					bestParValues[pi] += 1 // reset the guess
 				}
 			}
 		}
@@ -281,8 +229,7 @@ func findK() float64 {
 	return start
 }
 
-func linearEvaluation(testPosition TestPosition) int16 {
-	pos := testPosition.pos
+func linearEvaluation(pos *Position) int16 {
 	eval := Evaluate(pos)
 	if pos.Turn() == Black {
 		eval = -eval
@@ -293,9 +240,8 @@ func linearEvaluation(testPosition TestPosition) int16 {
 func processor(start int, end int, K float64) {
 	var acc float64 = 0
 	for i := start; i < end; i++ {
-		eval := linearEvaluation(testPositions[i])
-		e := testPositions[i].outcome - sigmoid(eval, K)
-		acc += e * e
+		eval := linearEvaluation(testPositions[i].pos)
+		acc = math.Pow(testPositions[i].outcome-sigmoid(eval, K), 2)
 	}
 
 	answers <- acc
@@ -309,7 +255,7 @@ func E(guess []int16, K float64) float64 {
 
 	for i := 0; i < NUM_PROCESSORS; i++ {
 		start := i * chunk
-		end := (i+1)*chunk - 1
+		end := (i + 1) * chunk
 		if i == NUM_PROCESSORS-1 {
 			end = len(testPositions)
 		}
@@ -320,7 +266,7 @@ func E(guess []int16, K float64) float64 {
 		ans := <-answers
 		acc += ans
 	}
-	return 1 * acc / float64(len(testPositions))
+	return (1 / float64(len(testPositions))) * acc
 }
 
 func sigmoid(E int16, K float64) float64 {
@@ -353,20 +299,34 @@ func loadPositions(path string, actionFn func(string)) {
 
 func parseLine(line string) (string, float64) {
 	fields := strings.Fields(line)
-	fen := strings.Trim(strings.Join(fields[:6], " "), ";")
+	fen := strings.Join(fields[:4], " ")
+	fen = fmt.Sprintf("%s 0 1", fen)
 
-	outcomeStr := strings.Replace(fields[8], "pgn=", "", -1)
-	outcome, e := strconv.ParseFloat(outcomeStr, 64)
-	if e != nil {
-		panic(e)
+	outcomeStr := strings.Trim(fields[5], "\";")
+	var outcome float64
+	if outcomeStr == "1/2-1/2" {
+		outcome = 0.5
+	} else if outcomeStr == "1-0" {
+		outcome = 1.0
+	} else if outcomeStr == "0-1" {
+		outcome = 0.0
+	} else {
+		panic(fmt.Sprintf("Unexpected output %s", outcomeStr))
 	}
-	if fields[1] == "b" && outcomeStr != "0.5" {
-		if outcomeStr == "0.0" {
-			outcome = 1
-		} else {
-			outcome = 0
-		}
-	}
+
+	// fen := strings.Trim(strings.Join(fields[:6], " "), ";")
+	//
+	// outcomeStr := strings.Replace(fields[8], "pgn=", "", -1)
+	// outcome, e := strconv.ParseFloat(outcomeStr, 64)
+	// if e != nil {
+	// 	panic(e)
+	// }
+	// if fields[1] == "b" && outcomeStr == "1.0" {
+	// 	outcome = 0
+	// } else if fields[1] == "b" && outcomeStr == "0.0" {
+	// 	outcome = 1
+	// }
+
 	return fen, outcome
 
 }
@@ -390,6 +350,10 @@ func PrepareTuningData(path string) {
 	})
 }
 
+// func gradientOptimize(K float64) {
+// 	theta := append([]int16{}, initialGuesses...)
+// }
+//
 func Tune(path string) {
 	loadPositions(path, func(line string) {
 		fen, outcome := parseLine(line)
