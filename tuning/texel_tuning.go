@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
-	// "strconv"
+	"strconv"
 	"strings"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -323,33 +323,33 @@ func loadPositions(path string, actionFn func(string)) {
 
 func parseLine(line string) (string, float64) {
 	fields := strings.Fields(line)
-	fen := strings.Join(fields[:4], " ")
-	fen = fmt.Sprintf("%s 0 1", fen)
-
-	outcomeStr := strings.Trim(fields[5], "\";")
-	var outcome float64
-	if outcomeStr == "1/2-1/2" {
-		outcome = 0.5
-	} else if outcomeStr == "1-0" {
-		outcome = 1.0
-	} else if outcomeStr == "0-1" {
-		outcome = 0.0
-	} else {
-		panic(fmt.Sprintf("Unexpected output %s", outcomeStr))
-	}
-
-	// fen := strings.Trim(strings.Join(fields[:6], " "), ";")
+	// fen := strings.Join(fields[:4], " ")
+	// fen = fmt.Sprintf("%s 0 1", fen)
 	//
-	// outcomeStr := strings.Replace(fields[8], "pgn=", "", -1)
-	// outcome, e := strconv.ParseFloat(outcomeStr, 64)
-	// if e != nil {
-	// 	panic(e)
+	// outcomeStr := strings.Trim(fields[5], "\";")
+	// var outcome float64
+	// if outcomeStr == "1/2-1/2" {
+	// 	outcome = 0.5
+	// } else if outcomeStr == "1-0" {
+	// 	outcome = 1.0
+	// } else if outcomeStr == "0-1" {
+	// 	outcome = 0.0
+	// } else {
+	// 	panic(fmt.Sprintf("Unexpected output %s", outcomeStr))
 	// }
-	// if fields[1] == "b" && outcomeStr == "1.0" {
-	// 	outcome = 0
-	// } else if fields[1] == "b" && outcomeStr == "0.0" {
-	// 	outcome = 1
-	// }
+
+	fen := strings.Trim(strings.Join(fields[:6], " "), ";")
+
+	outcomeStr := strings.Replace(fields[8], "pgn=", "", -1)
+	outcome, e := strconv.ParseFloat(outcomeStr, 64)
+	if e != nil {
+		panic(e)
+	}
+	if fields[1] == "b" && outcomeStr == "1.0" {
+		outcome = 0
+	} else if fields[1] == "b" && outcomeStr == "0.0" {
+		outcome = 1
+	}
 
 	return fen, outcome
 

@@ -521,8 +521,8 @@ func Evaluate(position *Position) int16 {
 			} else if !position.HasTag(BlackCanCastleQueenSide) {
 				award -= MiddlegameCastlingAward
 			}
-			blackCentipawnsMG += award
 		}
+		blackCentipawnsMG += award
 
 		pieceIter ^= mask
 	}
