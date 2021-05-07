@@ -55,33 +55,41 @@ func initFutileIndices() map[int]bool {
 
 func computeInitialGuesses() []int16 {
 	var guesses = make([]int16, 0, 800)
-	guesses = append(guesses, EarlyPawnPst[:]...)                 // 0-63
-	guesses = append(guesses, LatePawnPst[:]...)                  // 64-127
-	guesses = append(guesses, EarlyKnightPst[:]...)               // 128-191
-	guesses = append(guesses, LateKnightPst[:]...)                // 192-255
-	guesses = append(guesses, EarlyBishopPst[:]...)               // 256-319
-	guesses = append(guesses, LateBishopPst[:]...)                // 320-383
-	guesses = append(guesses, EarlyRookPst[:]...)                 // 384-447
-	guesses = append(guesses, LateRookPst[:]...)                  // 448-511
-	guesses = append(guesses, EarlyQueenPst[:]...)                // 512-575
-	guesses = append(guesses, LateQueenPst[:]...)                 // 576-639
-	guesses = append(guesses, EarlyKingPst[:]...)                 // 640-703
-	guesses = append(guesses, LateKingPst[:]...)                  // 704-767
-	guesses = append(guesses, BackwardPawnAward)                  // 768
-	guesses = append(guesses, IsolatedPawnAward)                  // 769
-	guesses = append(guesses, DoublePawnAward)                    // 770
-	guesses = append(guesses, EndgamePassedPawnAward)             // 771
-	guesses = append(guesses, MiddlegamePassedPawnAward)          // 772
-	guesses = append(guesses, EndgameCandidatePassedPawnAward)    // 773
-	guesses = append(guesses, MiddlegameCandidatePassedPawnAward) // 774
-	guesses = append(guesses, RookOpenFileAward)                  // 775
-	guesses = append(guesses, RookSemiOpenFileAward)              // 776
-	guesses = append(guesses, VeritcalDoubleRookAward)            // 777
-	guesses = append(guesses, HorizontalDoubleRookAward)          // 778
-	guesses = append(guesses, PawnFactorCoeff)                    // 779
-	guesses = append(guesses, AggressivityFactorCoeff)            // 780
-	guesses = append(guesses, MiddlegameAggressivityFactorCoeff)  // 781
-	guesses = append(guesses, CastlingAward)                      // 782
+	guesses = append(guesses, EarlyPawnPst[:]...)                  // 0-63
+	guesses = append(guesses, LatePawnPst[:]...)                   // 64-127
+	guesses = append(guesses, EarlyKnightPst[:]...)                // 128-191
+	guesses = append(guesses, LateKnightPst[:]...)                 // 192-255
+	guesses = append(guesses, EarlyBishopPst[:]...)                // 256-319
+	guesses = append(guesses, LateBishopPst[:]...)                 // 320-383
+	guesses = append(guesses, EarlyRookPst[:]...)                  // 384-447
+	guesses = append(guesses, LateRookPst[:]...)                   // 448-511
+	guesses = append(guesses, EarlyQueenPst[:]...)                 // 512-575
+	guesses = append(guesses, LateQueenPst[:]...)                  // 576-639
+	guesses = append(guesses, EarlyKingPst[:]...)                  // 640-703
+	guesses = append(guesses, LateKingPst[:]...)                   // 704-767
+	guesses = append(guesses, MiddlegameBackwardPawnAward)         // 768
+	guesses = append(guesses, EndgameBackwardPawnAward)            // 769
+	guesses = append(guesses, MiddlegameIsolatedPawnAward)         // 770
+	guesses = append(guesses, EndgameIsolatedPawnAward)            // 771
+	guesses = append(guesses, MiddlegameDoublePawnAward)           // 772
+	guesses = append(guesses, EndgameDoublePawnAward)              // 773
+	guesses = append(guesses, MiddlegamePassedPawnAward)           // 774
+	guesses = append(guesses, EndgamePassedPawnAward)              // 775
+	guesses = append(guesses, MiddlegameCandidatePassedPawnAward)  // 776
+	guesses = append(guesses, EndgameCandidatePassedPawnAward)     // 777
+	guesses = append(guesses, MiddlegameRookOpenFileAward)         // 778
+	guesses = append(guesses, EndgameRookOpenFileAward)            // 779
+	guesses = append(guesses, MiddlegameRookSemiOpenFileAward)     // 780
+	guesses = append(guesses, EndgameRookSemiOpenFileAward)        // 781
+	guesses = append(guesses, MiddlegameVeritcalDoubleRookAward)   // 782
+	guesses = append(guesses, EndgameVeritcalDoubleRookAward)      // 783
+	guesses = append(guesses, MiddlegameHorizontalDoubleRookAward) // 784
+	guesses = append(guesses, EndgameHorizontalDoubleRookAward)    // 785
+	guesses = append(guesses, MiddlegamePawnFactorCoeff)           // 786
+	guesses = append(guesses, EndgamePawnFactorCoeff)              // 787
+	guesses = append(guesses, MiddlegameAggressivityFactorCoeff)   // 788
+	guesses = append(guesses, EndgameAggressivityFactorCoeff)      // 789
+	guesses = append(guesses, MiddlegameCastlingAward)             // 790
 	return guesses
 }
 
@@ -100,21 +108,29 @@ func updateEvalParams(guesses []int16) {
 		EarlyKingPst[i] = guesses[i+10*64]
 		LateKingPst[i] = guesses[i+11*64]
 	}
-	BackwardPawnAward = guesses[768]
-	IsolatedPawnAward = guesses[769]
-	DoublePawnAward = guesses[770]
-	EndgamePassedPawnAward = guesses[771]
-	MiddlegamePassedPawnAward = guesses[772]
-	EndgameCandidatePassedPawnAward = guesses[773]
-	MiddlegameCandidatePassedPawnAward = guesses[774]
-	RookOpenFileAward = guesses[775]
-	RookSemiOpenFileAward = guesses[776]
-	VeritcalDoubleRookAward = guesses[777]
-	HorizontalDoubleRookAward = guesses[778]
-	PawnFactorCoeff = guesses[779]
-	AggressivityFactorCoeff = guesses[780]
-	MiddlegameAggressivityFactorCoeff = guesses[781]
-	CastlingAward = guesses[782]
+	MiddlegameBackwardPawnAward = guesses[768]
+	EndgameBackwardPawnAward = guesses[769]
+	MiddlegameIsolatedPawnAward = guesses[770]
+	EndgameIsolatedPawnAward = guesses[771]
+	MiddlegameDoublePawnAward = guesses[772]
+	EndgameDoublePawnAward = guesses[773]
+	MiddlegamePassedPawnAward = guesses[774]
+	EndgamePassedPawnAward = guesses[775]
+	MiddlegameCandidatePassedPawnAward = guesses[776]
+	EndgameCandidatePassedPawnAward = guesses[777]
+	MiddlegameRookOpenFileAward = guesses[778]
+	EndgameRookOpenFileAward = guesses[779]
+	MiddlegameRookSemiOpenFileAward = guesses[780]
+	EndgameRookSemiOpenFileAward = guesses[781]
+	MiddlegameVeritcalDoubleRookAward = guesses[782]
+	EndgameVeritcalDoubleRookAward = guesses[783]
+	MiddlegameHorizontalDoubleRookAward = guesses[784]
+	EndgameHorizontalDoubleRookAward = guesses[785]
+	MiddlegamePawnFactorCoeff = guesses[786]
+	EndgamePawnFactorCoeff = guesses[787]
+	MiddlegameAggressivityFactorCoeff = guesses[788]
+	EndgameAggressivityFactorCoeff = guesses[789]
+	MiddlegameCastlingAward = guesses[790]
 }
 
 func printPst(pst []int16, varname string) {
@@ -144,21 +160,29 @@ func printOptimalGuesses(guesses []int16) {
 	printPst(guesses[576:640], "LateQueenPst")
 	printPst(guesses[704:768], "LateKingPst")
 
-	fmt.Printf("var BackwardPawnAward int16 = %d\n", guesses[768])
-	fmt.Printf("var IsolatedPawnAward int16 = %d\n", guesses[769])
-	fmt.Printf("var DoublePawnAward int16 = %d\n", guesses[770])
-	fmt.Printf("var EndgamePassedPawnAward int16 = %d\n", guesses[771])
-	fmt.Printf("var MiddlegamePassedPawnAward int16 = %d\n", guesses[772])
-	fmt.Printf("var EndgameCandidatePassedPawnAward int16 = %d\n", guesses[773])
-	fmt.Printf("var MiddlegameCandidatePassedPawnAward int16 = %d\n", guesses[774])
-	fmt.Printf("var RookOpenFileAward int16 = %d\n", guesses[775])
-	fmt.Printf("var RookSemiOpenFileAward int16 = %d\n", guesses[776])
-	fmt.Printf("var VeritcalDoubleRookAward int16 = %d\n", guesses[777])
-	fmt.Printf("var HorizontalDoubleRookAward int16 = %d\n", guesses[778])
-	fmt.Printf("var PawnFactorCoeff int16 = %d\n", guesses[779])
-	fmt.Printf("var AggressivityFactorCoeff int16 = %d\n", guesses[780])
-	fmt.Printf("var MiddlegameAggressivityFactorCoeff int16 = %d\n", guesses[781])
-	fmt.Printf("var CastlingAward int16 = %d\n", guesses[782])
+	fmt.Printf("var MiddlegameBackwardPawnAward int16 = %d\n", guesses[768])
+	fmt.Printf("var EndgameBackwardPawnAward int16 = %d\n", guesses[769])
+	fmt.Printf("var MiddlegameIsolatedPawnAward int16 = %d\n", guesses[770])
+	fmt.Printf("var EndgameIsolatedPawnAward int16 = %d\n", guesses[771])
+	fmt.Printf("var MiddlegameDoublePawnAward int16 = %d\n", guesses[772])
+	fmt.Printf("var EndgameDoublePawnAward int16 = %d\n", guesses[773])
+	fmt.Printf("var MiddlegamePassedPawnAward int16 = %d\n", guesses[774])
+	fmt.Printf("var EndgamePassedPawnAward int16 = %d\n", guesses[775])
+	fmt.Printf("var MiddlegameCandidatePassedPawnAward int16 = %d\n", guesses[776])
+	fmt.Printf("var EndgameCandidatePassedPawnAward int16 = %d\n", guesses[777])
+	fmt.Printf("var MiddlegameRookOpenFileAward int16 = %d\n", guesses[778])
+	fmt.Printf("var EndgameRookOpenFileAward int16 = %d\n", guesses[779])
+	fmt.Printf("var MiddlegameRookSemiOpenFileAward int16 = %d\n", guesses[780])
+	fmt.Printf("var EndgameRookSemiOpenFileAward int16 = %d\n", guesses[781])
+	fmt.Printf("var MiddlegameVeritcalDoubleRookAward int16 = %d\n", guesses[782])
+	fmt.Printf("var EndgameVeritcalDoubleRookAward int16 = %d\n", guesses[783])
+	fmt.Printf("var MiddlegameHorizontalDoubleRookAward int16 = %d\n", guesses[784])
+	fmt.Printf("var EndgameHorizontalDoubleRookAward int16 = %d\n", guesses[785])
+	fmt.Printf("var MiddlegamePawnFactorCoeff int16 = %d\n", guesses[786])
+	fmt.Printf("var EndgamePawnFactorCoeff int16 = %d\n", guesses[787])
+	fmt.Printf("var MiddlegameAggressivityFactorCoeff int16 = %d\n", guesses[788])
+	fmt.Printf("var EndgameAggressivityFactorCoeff int16 = %d\n", guesses[789])
+	fmt.Printf("var MiddlegameCastlingAward int16 = %d\n", guesses[790])
 	fmt.Println("===================================================")
 }
 
