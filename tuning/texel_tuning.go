@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
+	// "sync"
 
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
@@ -209,6 +209,9 @@ func localOptimize(initialGuess []int16, K float64) []int16 {
 	for improved {
 		improved = false
 		for pi := 0; pi < nParams; pi++ {
+			// if pi < 768 {
+			// 	continue
+			// }
 			if _, ok := futileIndices[pi]; ok {
 				continue
 			}
@@ -290,11 +293,9 @@ func E(guess []int16, K float64) float64 {
 	acc := float64(0)
 	updateEvalParams(guess)
 
-	chunk := len(testPositions) / NUM_PROCESSORS
-
 	for i := 0; i < NUM_PROCESSORS; i++ {
-		start := i * chunk
-		end := (i + 1) * chunk
+		start := i * BATCHSIZE
+		end := (i + 1) * BATCHSIZE
 		if i == NUM_PROCESSORS-1 {
 			end = len(testPositions)
 		}
@@ -385,7 +386,6 @@ func PrepareTuningData(path string) {
 		if ml.Size > 0 {
 			return
 		}
-		fmt.Println(line)
 	})
 }
 
@@ -403,8 +403,14 @@ func updateSingleGradient(testPosition TestPosition, gradient *[]float64, params
 
 func computeGradient(gradient *[]float64, params []float64, K float64, batch int) {
 
-	local := make([]float64, 0, len(initialGuesses))
-	for i := batch * BATCHSIZE; i < (batch+1)*BATCHSIZE; i++ {
+	local := make([]float64, len(initialGuesses))
+	start := batch * BATCHSIZE
+	end := (batch + 1) * BATCHSIZE
+	if batch == NUM_PROCESSORS-1 {
+		end = len(testPositions)
+	}
+	start = 0
+	for i := start; i < end; i++ {
 		entry := testPositions[i]
 		updateSingleGradient(entry, &local, params, K)
 	}
@@ -415,28 +421,28 @@ func computeGradient(gradient *[]float64, params []float64, K float64, batch int
 }
 
 func gradientOptimize(K float64) {
-	params := make([]float64, 0, len(initialGuesses))
-	adagrad := make([]float64, 0, len(initialGuesses))
+	params := make([]float64, len(initialGuesses))
+	adagrad := make([]float64, len(initialGuesses))
 	rate := LRATE
 	for epoch := 1; epoch <= MAXEPOCHS; epoch++ {
-		var waitGroup sync.WaitGroup
-		waitGroup.Add(BATCHSIZE)
-		for batch := 0; batch < len(testPositions)/BATCHSIZE; batch++ {
-			gradient := make([]float64, 0, len(initialGuesses))
-			go func(batch int) {
-				defer waitGroup.Done()
-				computeGradient(&gradient, params, K, batch)
-				for i := 0; i < len(initialGuesses); i++ {
-					adagrad[i] += math.Pow((K/200.0)*gradient[i]/float64(BATCHSIZE), 2.0)
-					adagrad[i] += math.Pow((K/200.0)*gradient[i]/float64(BATCHSIZE), 2.0)
-					params[i] += (K / 200.0) * (gradient[i] / float64(BATCHSIZE)) * (rate / math.Sqrt(1e-8+adagrad[i]))
-					params[i] += (K / 200.0) * (gradient[i] / float64(BATCHSIZE)) * (rate / math.Sqrt(1e-8+adagrad[i]))
-				}
-
-			}(batch)
+		// var waitGroup sync.WaitGroup
+		// waitGroup.Add(NUM_PROCESSORS)
+		for batch := 0; batch < NUM_PROCESSORS; batch++ {
+			gradient := make([]float64, len(initialGuesses))
+			// go func(batch int) {
+			// 	defer waitGroup.Done()
+			computeGradient(&gradient, params, K, batch)
+			for i := 0; i < len(initialGuesses); i++ {
+				adagrad[i] += math.Pow((K/200.0)*gradient[i]/float64(BATCHSIZE), 2.0)
+				adagrad[i] += math.Pow((K/200.0)*gradient[i]/float64(BATCHSIZE), 2.0)
+				params[i] += (K / 200.0) * (gradient[i] / float64(BATCHSIZE)) * (rate / math.Sqrt(1e-8+adagrad[i]))
+				params[i] += (K / 200.0) * (gradient[i] / float64(BATCHSIZE)) * (rate / math.Sqrt(1e-8+adagrad[i]))
+			}
+			//
+			// }(batch)
 		}
 
-		waitGroup.Wait()
+		// waitGroup.Wait()
 
 		err := E(toEvalParams(params), K)
 		fmt.Printf("\rEpoch [%d] Error = [%.8f], Rate = [%g]\n", epoch, err, rate)
@@ -463,10 +469,10 @@ func Tune(path string) {
 	fmt.Printf("%d positions loaded\n", len(testPositions))
 	K := findK()
 	fmt.Printf("Optimal K is %f\n", K)
-	// optimalGuesses := localOptimize(initialGuesses, K)
-	gradientOptimize(K)
+	optimalGuesses := localOptimize(initialGuesses, K)
+	// gradientOptimize(K)
 	fmt.Println("Optimal Parameters have been found!!")
 	fmt.Println("===================================================")
-	// printOptimalGuesses(optimalGuesses)
+	printOptimalGuesses(optimalGuesses)
 	close(answers)
 }
