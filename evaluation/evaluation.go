@@ -680,7 +680,11 @@ func Evaluate(position *Position) int16 {
 		evalMG = blackCentipawnsMG - whiteCentipawnsMG
 	}
 
-	return (((evalMG * (256 - phase)) + (evalEG * phase)) / 256) + Tempo
+	mg := int32(evalMG)
+	eg := int32(evalEG)
+	phs := int32(phase)
+	taperedEval := int16(((mg * (256 - phs)) + eg*phs) / 256)
+	return toEval(taperedEval + Tempo)
 }
 
 func toEval(eval int16) int16 {
