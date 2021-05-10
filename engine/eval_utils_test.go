@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"math/bits"
 	"testing"
 )
 
@@ -50,6 +51,32 @@ func TestSlidingPiecesStaticExchangeEvalPositive(t *testing.T) {
 
 	actual := board.StaticExchangeEval(E4, WhitePawn, D5, BlackPawn)
 	expected := int16(100)
+
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestAllAttacksWhite(t *testing.T) {
+	fen := "3k4/8/8/8/8/2Q5/8/2K5 w - - 0 1"
+	game := FromFen(fen, true)
+	board := game.position.Board
+
+	actual := bits.OnesCount64(board.AllAttacksOn(Black))
+	expected := 26
+
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestAllAttacksBlack(t *testing.T) {
+	fen := "3k4/8/8/8/8/2Q5/8/2K5 w - - 0 1"
+	game := FromFen(fen, true)
+	board := game.position.Board
+
+	actual := bits.OnesCount64(board.AllAttacksOn(White))
+	expected := 5
 
 	if actual != expected {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))

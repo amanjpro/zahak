@@ -636,8 +636,8 @@ func Evaluate(position *Position) int16 {
 	whiteCentipawnsEG += whiteQueensCount * WhiteQueen.Weight()
 
 	// mobility and attacks
-	whiteAttacks := board.AllAttacks(Black) // get the squares that are taboo for black (white's reach)
-	blackAttacks := board.AllAttacks(White) // get the squares that are taboo for whtie (black's reach)
+	whiteAttacks := board.AllAttacksOn(Black) // get the squares that are taboo for black (white's reach)
+	blackAttacks := board.AllAttacksOn(White) // get the squares that are taboo for whtie (black's reach)
 	wAttackCounts := bits.OnesCount64(whiteAttacks)
 	bAttackCounts := bits.OnesCount64(blackAttacks)
 
