@@ -180,7 +180,7 @@ func FromFen(fen string, clearCache bool) Game {
 
 	return NewGame(
 		&p,
-		*p.copy(),
+		*p.Copy(),
 		[]Move{},
 		uint16(moveCount),
 		clearCache,

@@ -105,7 +105,7 @@ func (b *Bitboard) IsVerticalDoubleRook(sq Square, otherRooks uint64, occupied u
 	return (horizontalAttacks & otherRooks) != 0
 }
 
-func (b *Bitboard) AllAttacks(color Color) uint64 {
+func (b *Bitboard) AllAttacksOn(color Color) uint64 {
 	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
 	occupiedBB := b.whitePieces | b.blackPieces
 	if color == White {
