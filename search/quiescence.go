@@ -38,7 +38,7 @@ func dynamicMargin(pos *Position) int16 {
 	return delta + p
 }
 
-func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) (int16, bool) {
+func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	e.info.quiesceCounter += 1
 	e.VisitNode()
@@ -48,11 +48,11 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) (int16, 
 	standPat := e.staticEvals[searchHeight]
 
 	if standPat >= beta {
-		return beta, true // fail hard
+		return beta // fail hard
 	}
 
 	if e.ShouldStop() {
-		return 0, false
+		return 0
 	}
 
 	position := e.Position
@@ -60,7 +60,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) (int16, 
 	// Delta Pruning
 	if standPat+dynamicMargin(position) < alpha {
 		e.info.deltaPruningCounter += 1
-		return alpha, true
+		return alpha
 	}
 
 	if alpha < standPat {
@@ -110,13 +110,9 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) (int16, 
 		e.staticEvals[searchHeight+1] = Evaluate(position)
 
 		e.pred.Push(position.Hash())
-		v, ok := e.quiescence(-beta, -alpha, searchHeight+1)
+		score := -e.quiescence(-beta, -alpha, searchHeight+1)
 		e.pred.Pop()
 		position.UnMakeMove(move, tg, ep, hc)
-		if !ok {
-			return v, ok
-		}
-		score := -v
 		if score > bestscore {
 			bestscore = score
 			if score > alpha {
@@ -135,5 +131,5 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) (int16, 
 		// 	alpha = score
 		// }
 	}
-	return bestscore, true
+	return bestscore
 }

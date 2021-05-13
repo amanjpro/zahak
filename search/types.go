@@ -51,6 +51,7 @@ type Engine struct {
 	cacheHits          int64
 	pv                 PVLine
 	StopSearchFlag     bool
+	AbruptStop         bool
 	move               Move
 	score              int16
 	positionMoves      []Move
@@ -88,6 +89,7 @@ func NewEngine(tt *Cache) *Engine {
 		0,
 		line,
 		false,
+		false,
 		EmptyMove,
 		0,
 		make([]Move, MAX_DEPTH),
@@ -109,11 +111,8 @@ func NewEngine(tt *Cache) *Engine {
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
-	if e.StopSearchFlag {
-		return true
-	}
-	now := time.Now()
-	return now.Sub(e.StartTime).Milliseconds() >= e.ThinkTime
+	e.AbruptStop = e.StopSearchFlag || time.Now().Sub(e.StartTime).Milliseconds() >= e.ThinkTime
+	return e.AbruptStop
 }
 
 func (e *Engine) ClearForSearch() {
@@ -140,6 +139,7 @@ func (e *Engine) ClearForSearch() {
 	}
 
 	e.StopSearchFlag = false
+	e.AbruptStop = false
 	e.nodesVisited = 0
 	e.cacheHits = 0
 	e.pv.Pop() // pop our move
