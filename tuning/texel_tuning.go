@@ -25,13 +25,9 @@ var initialGuesses = computeInitialGuesses()
 var K_PRECISION = 10
 var NUM_PROCESSORS = 8
 var initialK = 1.0
+var skipParams map[int]bool
 var answers = make(chan float64)
 var ml = NewMoveList(500)
-var MAXEPOCHS = 10000
-var REPORTING = 50
-var LRSTEPRATE = 250
-var LRATE = 1.00
-var LRDROPRATE = 1.00
 
 func initEngines() []*Engine {
 	res := make([]*Engine, NUM_PROCESSORS)
@@ -215,7 +211,7 @@ func localOptimize(initialGuess []int16, K float64) []int16 {
 	for improved {
 		improved = false
 		for pi := 0; pi < nParams; pi++ {
-			if pi < 788 {
+			if _, ok := skipParams[pi]; ok {
 				continue
 			}
 			if _, ok := futileIndices[pi]; ok {
@@ -400,7 +396,8 @@ func PrepareTuningData(path string) {
 	})
 }
 
-func Tune(path string) {
+func Tune(path string, toExclude map[int]bool) {
+	skipParams = toExclude
 	loadPositions(path, func(line string) {
 		fen, outcome := parseLine(line)
 		game := FromFen(fen, true)
