@@ -77,23 +77,32 @@ Here is the history of his Elo rating (according to CCRL):
 - Check Extensions
 - Internal Iterative Deepening
 - PolyGlot opening book
+- Tapered Eval
+- Tuned Evaluation using Texel Method
 
 # Command line options
 
 ```
+bash-3.2$ bin/zahak -help
 Usage of bin/zahak:
   -book string
-    Path to openning book in PolyGlot (bin) format
+        Path to openning book in PolyGlot (bin) format
+  -exclude-params string
+        Exclude parameters when tuning, format: 1, 9, 10, 11 or 1, 9-11
   -perft
-    Provide this to run perft tests
+        Provide this to run perft tests
   -perft-tree
-    Run the engine in prefttree mode
+        Run the engine in prefttree mode
+  -prepare-tuning-data
+        Prepare quiet EPDs for tuning
   -profile
-    Run the engine in profiling mode
+        Run the engine in profiling mode
   -slow
-    Run all perft tests, even the very slow tests
-  -test-positions
-    Path to EPD positions, used to test the strength of the engine
+        Run all perft tests, even the very slow tests
+  -test-positions string
+        Path to EPD positions, used to test the strength of the engine
+  -tune
+        Peform texel tuning for optimal evaluation values
 ```
 
 # Opening Books
@@ -112,5 +121,7 @@ You can also run it in perfttree mode with `./zahak -preft-tree`.
 
 # Acknowledgement
 
-Zahak wouldn't have been possible without [VICE videos](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
-and [Chess Programming Wiki](https://www.chessprogramming.org/)
+Zahak wouldn't have been possible without:
+- [VICE videos](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
+- [Chess Programming Wiki](https://www.chessprogramming.org/)
+- Niels Abildskov the author of [Loki](https://github.com/BimmerBass/Loki), who helped me with Texel Tuning
