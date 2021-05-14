@@ -115,6 +115,10 @@ func (e *Engine) ShouldStop() bool {
 	return e.AbruptStop
 }
 
+func (e *Engine) CanFinishSearch(lastIterationTime int64) bool {
+	return time.Now().Sub(e.StartTime).Milliseconds()+3*lastIterationTime < e.ThinkTime
+}
+
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
 		e.innerLines[i].Recycle()
