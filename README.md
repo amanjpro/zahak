@@ -2,7 +2,8 @@
 
 ![Build Status](https://github.com/amanjpro/zahak/workflows/Go/badge.svg) [![Join the chat at https://gitter.im/Zahak-Chess-Engine/zahak](https://badges.gitter.im/Zahak-Chess-Engine/zahak.svg)](https://gitter.im/Zahak-Chess-Engine/zahak?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A UCI compatible chess AI written in Go. Still work in progress.
+A UCI compatible chess AI written in Go. Still work in progress. Zahak is also
+compliant with [open-benchmark](https://github.com/AndyGrant/OpenBench).
 
 # The name
 
@@ -79,6 +80,7 @@ Here is the history of his Elo rating (according to CCRL):
 - PolyGlot opening book
 - Tapered Eval
 - Tuned Evaluation using Texel Method
+- Compliant with OpenBench
 
 # Command line options
 

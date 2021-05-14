@@ -4,6 +4,9 @@ version := $(shell git tag | sort -r | head -n1)
 build:
 	mkdir -p bin
 	go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
+ifdef EXE
+	mv bin/zahak bin/$(EXE)
+endif
 
 run_perft:
 	mkdir -p bin
