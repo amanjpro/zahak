@@ -57,7 +57,7 @@ func (e *Engine) rootSearch(depth int8) {
 			e.pv.Clone(e.innerLines[0])
 			e.score = score
 			e.move = e.pv.MoveAt(0)
-			e.SendPv(iterationDepth)
+			e.SendPv(iterationDepth, false)
 			lastDepth = iterationDepth
 			if !e.Pondering && iterationDepth >= 35 && e.move == previousBestMove {
 				fruitelessIterations++
@@ -88,7 +88,7 @@ func (e *Engine) rootSearch(depth int8) {
 
 	}
 
-	e.SendPv(lastDepth)
+	e.SendPv(lastDepth, e.IsBench)
 	if e.move == EmptyMove { // we didn't have time to pick a move, pick a random one
 		allMoves := e.Position.LegalMoves()
 		e.move = allMoves[0]
