@@ -80,6 +80,7 @@ Here is the history of his Elo rating (according to CCRL):
 - PolyGlot opening book
 - Tapered Eval
 - Tuned Evaluation using Texel Method
+- Compliant with OpenBench
 
 # Command line options
 
