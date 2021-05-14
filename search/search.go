@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"time"
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
@@ -43,6 +44,9 @@ func (e *Engine) rootSearch(depth int8) {
 			if e.ShouldStop() {
 				break
 			}
+
+			iterStartTime := time.Now()
+
 			e.innerLines[0].Recycle()
 			score := e.aspirationWindow(e.score, iterationDepth)
 			// score := e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
@@ -71,7 +75,17 @@ func (e *Engine) rootSearch(depth int8) {
 			if !e.Pondering && e.DebugMode {
 				e.info.Print()
 			}
+
+			lastIterationTime := time.Now().Sub(iterStartTime).Milliseconds()
+
+			// We expect the next iteration will take around three times as much as this iteration
+			// And, if that means we will exceed the allocated time before we can finish the search,
+			// we will be wasting time, this condition tries to avoid this.
+			if !e.CanFinishSearch(lastIterationTime) {
+				break
+			}
 		}
+
 	}
 
 	e.SendPv(lastDepth)
