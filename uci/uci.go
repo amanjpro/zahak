@@ -23,19 +23,15 @@ type UCI struct {
 	thinkTime int64
 	withBook  bool
 	bookPath  string
-	isBench   bool
 }
 
-func NewUCI(version string, withBook bool, bookPath string, isBench bool) *UCI {
-	engine := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
-	engine.IsBench = isBench
+func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
-		engine,
+		NewEngine(NewCache(DEFAULT_CACHE_SIZE)),
 		0,
 		withBook,
 		bookPath,
-		isBench,
 	}
 }
 
@@ -60,7 +56,7 @@ func (uci *UCI) Start() {
 				uci.engine.Pondering = false
 				uci.engine.ThinkTime = uci.thinkTime
 				uci.thinkTime = 0
-				uci.engine.SendPv(-1, false)
+				uci.engine.SendPv(-1)
 			case "quit":
 				return
 			case "eval":
@@ -126,19 +122,19 @@ func (uci *UCI) Start() {
 					game = FromFen(startFen, false)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
-					parts := strings.Fields(cmd)
+					cmd := strings.Fields(cmd)
 					var fen string
-					if len(parts) < 8 {
-						fen = fmt.Sprintf("%s %s %s %s %d %d", parts[2], parts[3], parts[4], parts[5], 0, 1)
+					if len(cmd) < 8 {
+						fen = fmt.Sprintf("%s %s %s %s %d %d", cmd[2], cmd[3], cmd[4], cmd[5], 0, 1)
 					} else {
-						fen = fmt.Sprintf("%s %s %s %s %s %s", parts[2], parts[3], parts[4], parts[5], parts[6], parts[7])
+						fen = fmt.Sprintf("%s %s %s %s %s %s", cmd[2], cmd[3], cmd[4], cmd[5], cmd[6], cmd[7])
 					}
 					moves := []string{}
-					if len(parts) > 9 {
-						moves = parts[9:]
-						game = FromFen(fen, !strings.Contains(cmd, "moves"))
+					if len(cmd) > 9 {
+						moves = cmd[9:]
+						game = FromFen(fen, false)
 					} else {
-						game = FromFen(fen, !strings.Contains(cmd, "moves"))
+						game = FromFen(fen, false)
 					}
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)

@@ -67,7 +67,6 @@ type Engine struct {
 	TranspositionTable *Cache
 	DebugMode          bool
 	Pondering          bool
-	IsBench            bool
 }
 
 var MAX_DEPTH int8 = int8(100)
@@ -104,7 +103,6 @@ func NewEngine(tt *Cache) *Engine {
 		innerLines,
 		make([]int16, MAX_DEPTH),
 		tt,
-		false,
 		false,
 		false,
 	}
@@ -237,20 +235,15 @@ func (e *Engine) Score() int16 {
 	return e.score
 }
 
-func (e *Engine) SendPv(depth int8, isBench bool) {
+func (e *Engine) SendPv(depth int8) {
 	if depth == -1 {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Now().Sub(e.StartTime)
-	nps := int64(float64(e.nodesVisited) / thinkTime.Seconds())
 	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
 		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
-		e.nodesVisited, nps, ScoreToCp(e.score),
+		e.nodesVisited, int64(float64(e.nodesVisited)/thinkTime.Seconds()), ScoreToCp(e.score),
 		thinkTime.Milliseconds(), e.pv.ToString())
-	if isBench {
-		fmt.Printf("NPS %d\n", nps)
-		fmt.Printf("NODES %d\n", e.nodesVisited)
-	}
 }
 
 func ScoreToCp(score int16) string {
