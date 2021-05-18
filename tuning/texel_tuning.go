@@ -58,43 +58,55 @@ func initFutileIndices() map[int]bool {
 
 func computeInitialGuesses() []int16 {
 	var guesses = make([]int16, 0, 800)
-	guesses = append(guesses, EarlyPawnPst[:]...)                  // 0-63
-	guesses = append(guesses, LatePawnPst[:]...)                   // 64-127
-	guesses = append(guesses, EarlyKnightPst[:]...)                // 128-191
-	guesses = append(guesses, LateKnightPst[:]...)                 // 192-255
-	guesses = append(guesses, EarlyBishopPst[:]...)                // 256-319
-	guesses = append(guesses, LateBishopPst[:]...)                 // 320-383
-	guesses = append(guesses, EarlyRookPst[:]...)                  // 384-447
-	guesses = append(guesses, LateRookPst[:]...)                   // 448-511
-	guesses = append(guesses, EarlyQueenPst[:]...)                 // 512-575
-	guesses = append(guesses, LateQueenPst[:]...)                  // 576-639
-	guesses = append(guesses, EarlyKingPst[:]...)                  // 640-703
-	guesses = append(guesses, LateKingPst[:]...)                   // 704-767
-	guesses = append(guesses, MiddlegameBackwardPawnPenalty)       // 768
-	guesses = append(guesses, EndgameBackwardPawnPenalty)          // 769
-	guesses = append(guesses, MiddlegameIsolatedPawnPenalty)       // 770
-	guesses = append(guesses, EndgameIsolatedPawnPenalty)          // 771
-	guesses = append(guesses, MiddlegameDoublePawnPenalty)         // 772
-	guesses = append(guesses, EndgameDoublePawnPenalty)            // 773
-	guesses = append(guesses, MiddlegamePassedPawnAward)           // 774
-	guesses = append(guesses, EndgamePassedPawnAward)              // 775
-	guesses = append(guesses, MiddlegameCandidatePassedPawnAward)  // 776
-	guesses = append(guesses, EndgameCandidatePassedPawnAward)     // 777
-	guesses = append(guesses, MiddlegameRookOpenFileAward)         // 778
-	guesses = append(guesses, EndgameRookOpenFileAward)            // 779
-	guesses = append(guesses, MiddlegameRookSemiOpenFileAward)     // 780
-	guesses = append(guesses, EndgameRookSemiOpenFileAward)        // 781
-	guesses = append(guesses, MiddlegameVeritcalDoubleRookAward)   // 782
-	guesses = append(guesses, EndgameVeritcalDoubleRookAward)      // 783
-	guesses = append(guesses, MiddlegameHorizontalDoubleRookAward) // 784
-	guesses = append(guesses, EndgameHorizontalDoubleRookAward)    // 785
-	guesses = append(guesses, MiddlegamePawnFactorCoeff)           // 786
-	guesses = append(guesses, EndgamePawnFactorCoeff)              // 787
-	guesses = append(guesses, MiddlegameMobilityFactorCoeff)       // 788
-	guesses = append(guesses, EndgameMobilityFactorCoeff)          // 789
-	guesses = append(guesses, MiddlegameAggressivityFactorCoeff)   // 790
-	guesses = append(guesses, EndgameAggressivityFactorCoeff)      // 791
-	// guesses = append(guesses, MiddlegameCastlingAward)             // 792
+	guesses = append(guesses, EarlyPawnPst[:]...)                    // 0-63
+	guesses = append(guesses, LatePawnPst[:]...)                     // 64-127
+	guesses = append(guesses, EarlyKnightPst[:]...)                  // 128-191
+	guesses = append(guesses, LateKnightPst[:]...)                   // 192-255
+	guesses = append(guesses, EarlyBishopPst[:]...)                  // 256-319
+	guesses = append(guesses, LateBishopPst[:]...)                   // 320-383
+	guesses = append(guesses, EarlyRookPst[:]...)                    // 384-447
+	guesses = append(guesses, LateRookPst[:]...)                     // 448-511
+	guesses = append(guesses, EarlyQueenPst[:]...)                   // 512-575
+	guesses = append(guesses, LateQueenPst[:]...)                    // 576-639
+	guesses = append(guesses, EarlyKingPst[:]...)                    // 640-703
+	guesses = append(guesses, LateKingPst[:]...)                     // 704-767
+	guesses = append(guesses, MiddlegameBackwardPawnPenalty)         // 768
+	guesses = append(guesses, EndgameBackwardPawnPenalty)            // 769
+	guesses = append(guesses, MiddlegameIsolatedPawnPenalty)         // 770
+	guesses = append(guesses, EndgameIsolatedPawnPenalty)            // 771
+	guesses = append(guesses, MiddlegameDoublePawnPenalty)           // 772
+	guesses = append(guesses, EndgameDoublePawnPenalty)              // 773
+	guesses = append(guesses, MiddlegamePassedPawnAward)             // 774
+	guesses = append(guesses, EndgamePassedPawnAward)                // 775
+	guesses = append(guesses, MiddlegameCandidatePassedPawnAward)    // 776
+	guesses = append(guesses, EndgameCandidatePassedPawnAward)       // 777
+	guesses = append(guesses, MiddlegameRookOpenFileAward)           // 778
+	guesses = append(guesses, EndgameRookOpenFileAward)              // 779
+	guesses = append(guesses, MiddlegameRookSemiOpenFileAward)       // 780
+	guesses = append(guesses, EndgameRookSemiOpenFileAward)          // 781
+	guesses = append(guesses, MiddlegameVeritcalDoubleRookAward)     // 782
+	guesses = append(guesses, EndgameVeritcalDoubleRookAward)        // 783
+	guesses = append(guesses, MiddlegameHorizontalDoubleRookAward)   // 784
+	guesses = append(guesses, EndgameHorizontalDoubleRookAward)      // 785
+	guesses = append(guesses, MiddlegamePawnFactorCoeff)             // 786
+	guesses = append(guesses, EndgamePawnFactorCoeff)                // 787
+	guesses = append(guesses, MiddlegameMobilityFactorCoeff)         // 788
+	guesses = append(guesses, EndgameMobilityFactorCoeff)            // 789
+	guesses = append(guesses, MiddlegameAggressivityFactorCoeff)     // 790
+	guesses = append(guesses, EndgameAggressivityFactorCoeff)        // 791
+	guesses = append(guesses, MiddlegameInnerPawnToKingAttackCoeff)  // 792
+	guesses = append(guesses, EndgameInnerPawnToKingAttackCoeff)     // 793
+	guesses = append(guesses, MiddlegameOuterPawnToKingAttackCoeff)  // 794
+	guesses = append(guesses, EndgameOuterPawnToKingAttackCoeff)     // 795
+	guesses = append(guesses, MiddlegameInnerMinorToKingAttackCoeff) // 796
+	guesses = append(guesses, EndgameInnerMinorToKingAttackCoeff)    // 797
+	guesses = append(guesses, MiddlegameOuterMinorToKingAttackCoeff) // 798
+	guesses = append(guesses, EndgameOuterMinorToKingAttackCoeff)    // 799
+	guesses = append(guesses, MiddlegameInnerMajorToKingAttackCoeff) // 800
+	guesses = append(guesses, EndgameInnerMajorToKingAttackCoeff)    // 801
+	guesses = append(guesses, MiddlegameOuterMajorToKingAttackCoeff) // 802
+	guesses = append(guesses, EndgameOuterMajorToKingAttackCoeff)    // 803
+
 	return guesses
 }
 
@@ -137,6 +149,19 @@ func updateEvalParams(guesses []int16) {
 	EndgameMobilityFactorCoeff = guesses[789]
 	MiddlegameAggressivityFactorCoeff = guesses[790]
 	EndgameAggressivityFactorCoeff = guesses[791]
+	MiddlegameInnerPawnToKingAttackCoeff = guesses[792]
+	EndgameInnerPawnToKingAttackCoeff = guesses[793]
+	MiddlegameOuterPawnToKingAttackCoeff = guesses[794]
+	EndgameOuterPawnToKingAttackCoeff = guesses[795]
+	MiddlegameInnerMinorToKingAttackCoeff = guesses[796]
+	EndgameInnerMinorToKingAttackCoeff = guesses[797]
+	MiddlegameOuterMinorToKingAttackCoeff = guesses[798]
+	EndgameOuterMinorToKingAttackCoeff = guesses[799]
+	MiddlegameInnerMajorToKingAttackCoeff = guesses[800]
+	EndgameInnerMajorToKingAttackCoeff = guesses[801]
+	MiddlegameOuterMajorToKingAttackCoeff = guesses[802]
+	EndgameOuterMajorToKingAttackCoeff = guesses[803]
+
 	// MiddlegameCastlingAward = guesses[792]
 }
 
@@ -199,6 +224,19 @@ func printOptimalGuesses(guesses []int16) {
 	fmt.Printf("var EndgameMobilityFactorCoeff int16 = %d\n", guesses[789])
 	fmt.Printf("var MiddlegameAggressivityFactorCoeff int16 = %d\n", guesses[790])
 	fmt.Printf("var EndgameAggressivityFactorCoeff int16 = %d\n", guesses[791])
+	fmt.Printf("var MiddlegameInnerPawnToKingAttackCoeff int16 = %d\n", guesses[792])
+	fmt.Printf("var EndgameInnerPawnToKingAttackCoeff int16 = %d\n", guesses[793])
+	fmt.Printf("var MiddlegameOuterPawnToKingAttackCoeff int16 = %d\n", guesses[794])
+	fmt.Printf("var EndgameOuterPawnToKingAttackCoeff int16 = %d\n", guesses[795])
+	fmt.Printf("var MiddlegameInnerMinorToKingAttackCoeff int16 = %d\n", guesses[796])
+	fmt.Printf("var EndgameInnerMinorToKingAttackCoeff int16 = %d\n", guesses[797])
+	fmt.Printf("var MiddlegameOuterMinorToKingAttackCoeff int16 = %d\n", guesses[798])
+	fmt.Printf("var EndgameOuterMinorToKingAttackCoeff int16 = %d\n", guesses[799])
+	fmt.Printf("var MiddlegameInnerMajorToKingAttackCoeff int16 = %d\n", guesses[800])
+	fmt.Printf("var EndgameInnerMajorToKingAttackCoeff int16 = %d\n", guesses[801])
+	fmt.Printf("var MiddlegameOuterMajorToKingAttackCoeff int16 = %d\n", guesses[802])
+	fmt.Printf("var EndgameOuterMajorToKingAttackCoeff int16 = %d\n", guesses[803])
+
 	// fmt.Printf("var MiddlegameCastlingAward int16 = %d\n", guesses[792])
 	fmt.Println("===================================================")
 }
