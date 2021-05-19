@@ -149,52 +149,6 @@ func (b *Bitboard) AllAttacks(color Color) (uint64, uint64, uint64) {
 	return pawnAttacks, minorAttacks, otherAttacks
 }
 
-func (b *Bitboard) AllAttacksOn(color Color) uint64 {
-	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
-	occupiedBB := b.whitePieces | b.blackPieces
-	if color == White {
-		opPieces = b.blackPieces
-		ownPieces := b.whitePieces
-		emptySquares := (opPieces | ownPieces) ^ universal
-		opPawns = bPawnsAble2CaptureAny(b.blackPawn, universal) | bDoublePushTargets(b.blackPawn, emptySquares) | bSinglePushTargets(b.blackPawn, emptySquares)
-		opKnights = b.blackKnight
-		opR = b.blackRook
-		opB = b.blackBishop
-		opQ = b.blackQueen
-		opKing = b.blackKing
-	} else {
-		opPieces = b.whitePieces
-		ownPieces := b.blackPieces
-		emptySquares := (opPieces | ownPieces) ^ universal
-		opPawns = wPawnsAble2CaptureAny(b.whitePawn, universal) | wDoublePushTargets(b.whitePawn, emptySquares) | wSinglePushTargets(b.whitePawn, emptySquares)
-		opKnights = b.whiteKnight
-		opR = b.whiteRook
-		opB = b.whiteBishop
-		opQ = b.whiteQueen
-		opKing = b.whiteKing
-	}
-	taboo := opPawns | (knightAttacks(opKnights)) | kingAttacks(opKing)
-	for opB != 0 {
-		sq := bitScanForward(opB)
-		taboo |= bishopAttacks(Square(sq), occupiedBB, opPieces)
-		opB ^= squareMask[sq]
-	}
-
-	for opR != 0 {
-		sq := bitScanForward(opR)
-		taboo |= rookAttacks(Square(sq), occupiedBB, opPieces)
-		opR ^= squareMask[sq]
-	}
-
-	for opQ != 0 {
-		sq := bitScanForward(opQ)
-		taboo |= queenAttacks(Square(sq), occupiedBB, opPieces)
-		opQ ^= squareMask[sq]
-	}
-
-	return taboo
-}
-
 func QueenAttacks(sq Square, occ uint64, own uint64) uint64 {
 	return queenAttacks(sq, occ, own)
 }

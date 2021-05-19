@@ -62,7 +62,8 @@ func TestAllAttacksWhite(t *testing.T) {
 	game := FromFen(fen, true)
 	board := game.position.Board
 
-	actual := bits.OnesCount64(board.AllAttacksOn(Black))
+	actualP, actualM, actualO := board.AllAttacks(White)
+	actual := bits.OnesCount64(actualP | actualM | actualO)
 	expected := 26
 
 	if actual != expected {
@@ -75,7 +76,8 @@ func TestAllAttacksBlack(t *testing.T) {
 	game := FromFen(fen, true)
 	board := game.position.Board
 
-	actual := bits.OnesCount64(board.AllAttacksOn(White))
+	actualP, actualM, actualO := board.AllAttacks(Black)
+	actual := bits.OnesCount64(actualP | actualM | actualO)
 	expected := 5
 
 	if actual != expected {

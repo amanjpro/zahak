@@ -192,71 +192,33 @@ var MiddlegameHorizontalDoubleRookAward int16 = 19
 var EndgameHorizontalDoubleRookAward int16 = 0
 
 // tuning doesn't like pawn coeff
-var MiddlegamePawnFactorCoeff = int16(0)
-var EndgamePawnFactorCoeff = int16(0)
+var MiddlegamePawnFactorCoeff int16 = 0
+var EndgamePawnFactorCoeff int16 = 0
 
 var MiddlegameMobilityFactorCoeff int16 = 4
 var EndgameMobilityFactorCoeff int16 = 2
+
 var MiddlegameAggressivityFactorCoeff int16 = 0
 var EndgameAggressivityFactorCoeff int16 = 3
+
 var MiddlegameInnerPawnToKingAttackCoeff int16 = 0
 var EndgameInnerPawnToKingAttackCoeff int16 = 0
+
 var MiddlegameOuterPawnToKingAttackCoeff int16 = 4
 var EndgameOuterPawnToKingAttackCoeff int16 = 0
+
 var MiddlegameInnerMinorToKingAttackCoeff int16 = 9
 var EndgameInnerMinorToKingAttackCoeff int16 = 0
+
 var MiddlegameOuterMinorToKingAttackCoeff int16 = 5
 var EndgameOuterMinorToKingAttackCoeff int16 = 0
+
 var MiddlegameInnerMajorToKingAttackCoeff int16 = 11
 var EndgameInnerMajorToKingAttackCoeff int16 = 0
+
 var MiddlegameOuterMajorToKingAttackCoeff int16 = 3
 var EndgameOuterMajorToKingAttackCoeff int16 = 3
 
-//
-// var MiddlegameMobilityFactorCoeff int16 = 4
-// var EndgameMobilityFactorCoeff int16 = 1
-// var MiddlegameAggressivityFactorCoeff int16 = 0
-// var EndgameAggressivityFactorCoeff int16 = 2
-// var MiddlegameInnerPawnToKingAttackCoeff int16 = 0
-// var EndgameInnerPawnToKingAttackCoeff int16 = 0
-// var MiddlegameOuterPawnToKingAttackCoeff int16 = 2
-// var EndgameOuterPawnToKingAttackCoeff int16 = 1
-// var MiddlegameInnerMinorToKingAttackCoeff int16 = 5
-// var EndgameInnerMinorToKingAttackCoeff int16 = 3
-// var MiddlegameOuterMinorToKingAttackCoeff int16 = 3
-// var EndgameOuterMinorToKingAttackCoeff int16 = 2
-// var MiddlegameInnerMajorToKingAttackCoeff int16 = 6
-// var EndgameInnerMajorToKingAttackCoeff int16 = 5
-// var MiddlegameOuterMajorToKingAttackCoeff int16 = 3
-// var EndgameOuterMajorToKingAttackCoeff int16 = 2
-
-//
-//
-// var MiddlegameMobilityFactorCoeff int16 = 2
-// var EndgameMobilityFactorCoeff int16 = 1
-//
-// // tuning doesn't like aggressivity
-// var MiddlegameAggressivityFactorCoeff int16 = 0
-// var EndgameAggressivityFactorCoeff int16 = 0
-//
-// var MiddlegameInnerPawnToKingAttackCoeff = int16(0)
-// var EndgameInnerPawnToKingAttackCoeff = int16(0)
-//
-// var MiddlegameOuterPawnToKingAttackCoeff = int16(0)
-// var EndgameOuterPawnToKingAttackCoeff = int16(0)
-//
-// var MiddlegameInnerMinorToKingAttackCoeff = int16(0)
-// var EndgameInnerMinorToKingAttackCoeff = int16(0)
-//
-// var MiddlegameOuterMinorToKingAttackCoeff = int16(0)
-// var EndgameOuterMinorToKingAttackCoeff = int16(0)
-//
-// var MiddlegameInnerMajorToKingAttackCoeff = int16(0)
-// var EndgameInnerMajorToKingAttackCoeff = int16(0)
-//
-// var MiddlegameOuterMajorToKingAttackCoeff = int16(0)
-// var EndgameOuterMajorToKingAttackCoeff = int16(0)
-//
 func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 	if isEndgame {
 		switch piece {
@@ -596,18 +558,8 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		blackCentipawnsEG += LateKingPst[index]
-		award := EarlyKingPst[index]
-		// if award <= 0 {
-		// 	if !position.HasTag(BlackCanCastleKingSide) {
-		// 		award -= MiddlegameCastlingAward
-		// 	} else if !position.HasTag(BlackCanCastleQueenSide) {
-		// 		award -= MiddlegameCastlingAward
-		// 	}
-		// }
-		blackCentipawnsMG += award
-
+		blackCentipawnsMG += EarlyKingPst[index]
 		blackKingIndex = index
-
 		pieceIter ^= mask
 	}
 
@@ -679,18 +631,8 @@ func Evaluate(position *Position) int16 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask(uint64(index))
 		whiteCentipawnsEG += LateKingPst[flip[index]]
-		award := EarlyKingPst[flip[index]]
-		// if award <= 0 {
-		// 	if !position.HasTag(WhiteCanCastleKingSide) {
-		// 		award -= MiddlegameCastlingAward
-		// 	} else if !position.HasTag(WhiteCanCastleQueenSide) {
-		// 		award -= MiddlegameCastlingAward
-		// 	}
-		// }
-		whiteCentipawnsMG += award
-
+		whiteCentipawnsMG += EarlyKingPst[flip[index]]
 		whiteKingIndex = index
-
 		pieceIter ^= mask
 	}
 
@@ -750,15 +692,6 @@ func Evaluate(position *Position) int16 {
 	blackCentipawnsMG += MiddlegameAggressivityFactorCoeff * int16(blackAggressivity)
 	blackCentipawnsEG += EndgameAggressivityFactorCoeff * int16(blackAggressivity)
 
-	// whiteCentipawns += 2 * int16(wQuietAttacks)
-	// blackCentipawns += 2 * int16(bQuietAttacks)
-	//
-	// whiteCentipawns += 4 * int16(whiteAggressivity)
-	// blackCentipawns += 4 * int16(blackAggressivity)
-	//
-	// if !isEndgame {
-	//
-
 	whiteCentipawnsMG +=
 		MiddlegameInnerPawnToKingAttackCoeff*int16(bits.OnesCount64(whitePawnAttacks&SquareInnerRingMask[blackKingIndex])) +
 			MiddlegameOuterPawnToKingAttackCoeff*int16(bits.OnesCount64(whitePawnAttacks&SquareOuterRingMask[blackKingIndex])) +
@@ -791,42 +724,6 @@ func Evaluate(position *Position) int16 {
 			EndgameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(blackOtherAttacks&SquareInnerRingMask[whiteKingIndex])) +
 			EndgameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(blackOtherAttacks&SquareOuterRingMask[whiteKingIndex]))
 
-		//
-	// blackAttacksToKing :=
-	// 	7*bits.OnesCount64(blackPawnAttacks&SquareInnerRingMask[whiteKingIndex]) +
-	// 		7*bits.OnesCount64(blackPawnAttacks&SquareOuterRingMask[whiteKingIndex]) +
-	// 		7*bits.OnesCount64(blackMinorAttacks&SquareInnerRingMask[whiteKingIndex]) +
-	// 		6*bits.OnesCount64(blackMinorAttacks&SquareOuterRingMask[whiteKingIndex]) +
-	// 		5*bits.OnesCount64(blackOtherAttacks&SquareInnerRingMask[whiteKingIndex]) +
-	// 		4*bits.OnesCount64(blackOtherAttacks&SquareOuterRingMask[whiteKingIndex])
-	//
-	// blackCentipawns += int16(blackAttacksToKing)
-	// whiteCentipawns += int16(whiteAttacksToKing)
-	//
-	// blackCentipawns += blackKingSafetyCentiPawns
-	// whiteCentipawns += whiteKingSafetyCentiPawns
-	// }
-
-	// whiteAttacks := board.AllAttacksOn(Black) // get the squares that are taboo for black (white's reach)
-	// blackAttacks := board.AllAttacksOn(White) // get the squares that are taboo for whtie (black's reach)
-	// wAttackCounts := bits.OnesCount64(whiteAttacks)
-	// bAttackCounts := bits.OnesCount64(blackAttacks)
-	//
-	// whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only (black's half)
-	// blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only (white's half)
-	//
-	// whiteCentipawnsMG += MiddlegameMobilityFactorCoeff * int16(wAttackCounts)
-	// whiteCentipawnsEG += EndgameMobilityFactorCoeff * int16(wAttackCounts)
-	//
-	// blackCentipawnsMG += MiddlegameMobilityFactorCoeff * int16(bAttackCounts)
-	// blackCentipawnsEG += EndgameMobilityFactorCoeff * int16(bAttackCounts)
-	//
-	// whiteCentipawnsMG += MiddlegameAggressivityFactorCoeff * int16(whiteAggressivity)
-	// whiteCentipawnsEG += EndgameAggressivityFactorCoeff * int16(whiteAggressivity)
-	//
-	// blackCentipawnsMG += MiddlegameAggressivityFactorCoeff * int16(blackAggressivity)
-	// blackCentipawnsEG += EndgameAggressivityFactorCoeff * int16(blackAggressivity)
-	//
 	phase := TotalPhase -
 		whitePawnsCount*PawnPhase -
 		blackPawnsCount*PawnPhase -
