@@ -45,11 +45,12 @@ the 44th edition of JCER competition.
 He is also listed in the [CCRL ratings](https://ccrl.chessdom.com/ccrl/404/),
 his current rating is around 2004.
 
-Here is the history of his Elo rating (according to CCRL):
+The history of Zahak's CCRL Elo rating is summerized here, taken from
+[this](https://ccrl.chessdom.com/ccrl/404/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
 
 | **version** | **rating** |
 |-------------|------------|
-| 1.0.0       | 2010       |
+| 1.0.0       | 2011       |
 | 0.3.0       | 1922       |
 | 0.2.1       | 1824       |
 
