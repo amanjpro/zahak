@@ -90,6 +90,27 @@ func main() {
 			}
 			PerftTree(game, depth, moves)
 		} else {
+			fmt.Print(`
+
+ZZZZZZZZZZZZZZZZZZZ                 hhhhhhh                               kkkkkkkk
+Z:::::::::::::::::Z                 h:::::h                               k::::::k
+Z:::::::::::::::::Z                 h:::::h                               k::::::k
+Z:::ZZZZZZZZ:::::Z                  h:::::h                               k::::::k
+ZZZZZ     Z:::::Z    aaaaaaaaaaaaa   h::::h hhhhh         aaaaaaaaaaaaa    k:::::k    kkkkkkk
+        Z:::::Z      a::::::::::::a  h::::hh:::::hhh      a::::::::::::a   k:::::k   k:::::k
+       Z:::::Z       aaaaaaaaa:::::a h::::::::::::::hh    aaaaaaaaa:::::a  k:::::k  k:::::k
+      Z:::::Z                 a::::a h:::::::hhh::::::h            a::::a  k:::::k k:::::k
+     Z:::::Z           aaaaaaa:::::a h::::::h   h::::::h    aaaaaaa:::::a  k::::::k:::::k
+    Z:::::Z          aa::::::::::::a h:::::h     h:::::h  aa::::::::::::a  k:::::::::::k
+   Z:::::Z          a::::aaaa::::::a h:::::h     h:::::h a::::aaaa::::::a  k:::::::::::k
+ZZZ:::::Z     ZZZZZa::::a    a:::::a h:::::h     h:::::ha::::a    a:::::a  k::::::k:::::k
+Z::::::ZZZZZZZZ:::Za::::a    a:::::a h:::::h     h:::::ha::::a    a:::::a k::::::k k:::::k
+Z:::::::::::::::::Za:::::aaaa::::::a h:::::h     h:::::ha:::::aaaa::::::a k::::::k  k:::::k
+Z:::::::::::::::::Z a::::::::::aa:::ah:::::h     h:::::h a::::::::::aa:::ak::::::k   k:::::k
+ZZZZZZZZZZZZZZZZZZZ  aaaaaaaaaa  aaaahhhhhhh     hhhhhhh  aaaaaaaaaa  aaaakkkkkkkk    kkkkkkk
+
+
+`)
 			NewUCI(version, *bookPath != "", *bookPath).Start()
 		}
 	}
