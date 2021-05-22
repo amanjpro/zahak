@@ -32,6 +32,7 @@ jobs:
           mv bin/zahak-linux-arm32 bin/zahak-linux-arm32-"$TAG_NAME"
           mv bin/zahak-linux-arm64 bin/zahak-linux-arm64-"$TAG_NAME"
           mv bin/zahak-darwin-amd64 bin/zahak-darwin-amd64-"$TAG_NAME"
+          mv bin/zahak-darwin-m1-arm64 bin/zahak-darwin-m1-arm64-"$TAG_NAME"
           mv bin/zahak-windows-amd64.exe bin/zahak-windows-amd64-"$TAG_NAME".exe
           mv bin/zahak-windows-386.exe bin/zahak-windows-386-"$TAG_NAME".exe
       - name: Create Release and Upload Assets
