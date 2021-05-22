@@ -75,7 +75,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(-12)
+	expected := int16(-14)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -86,7 +86,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(-12)
+	expected = int16(-14)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -99,7 +99,7 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(35)
+	expected := int16(40)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -110,7 +110,7 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(35)
+	expected = int16(40)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
