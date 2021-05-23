@@ -1,5 +1,9 @@
 package engine
 
+import (
+	"math/bits"
+)
+
 /**
 A bunch of bittwiddling functions mainly meant for evaluation and search
 This is not about move generation
@@ -185,4 +189,282 @@ func initOuterRingMask() [64]uint64 {
 		masks[i] = masks[i] &^ innerMask
 	}
 	return masks
+}
+
+// Pawn attacks/structure
+
+func (p *Position) CountBackwardPawns(color Color) int {
+	switch color {
+	case White:
+		return bits.OnesCount64(wBackward(p.Board.whitePawn, p.Board.blackPawn))
+	case Black:
+		return bits.OnesCount64(bBackward(p.Board.blackPawn, p.Board.whitePawn))
+	}
+	return 0
+}
+
+func (p *Position) CountCandidatePawns(color Color) int {
+	switch color {
+	case White:
+		return bits.OnesCount64(wCandidatesOn5th(p.Board.whitePawn, p.Board.blackPawn))
+	case Black:
+		return bits.OnesCount64(bCandidatesOn4th(p.Board.blackPawn, p.Board.whitePawn))
+	}
+	return 0
+}
+
+func (p *Position) CountDoublePawns(color Color) int {
+	switch color {
+	case White:
+		return bits.OnesCount64(wPawnsBehindOwn(p.Board.whitePawn))
+	case Black:
+		return bits.OnesCount64(bPawnsBehindOwn(p.Board.blackPawn))
+	}
+	return 0
+}
+
+func (p *Position) CountIsolatedPawns(color Color) int {
+	switch color {
+	case White:
+		return bits.OnesCount64(isolanis(p.Board.whitePawn))
+	case Black:
+		return bits.OnesCount64(isolanis(p.Board.blackPawn))
+	}
+	return 0
+}
+
+func (p *Position) CountPassedPawns(color Color) int {
+	switch color {
+	case White:
+		return bits.OnesCount64(wPassedPawns(p.Board.whitePawn, p.Board.blackPawn))
+	case Black:
+		return bits.OnesCount64(bPassedPawns(p.Board.blackPawn, p.Board.whitePawn))
+	}
+	return 0
+}
+
+// pawn utils
+
+func nortFill(gen uint64) uint64 {
+	gen |= (gen << 8)
+	gen |= (gen << 16)
+	gen |= (gen << 32)
+	return gen
+}
+
+func soutFill(gen uint64) uint64 {
+	gen |= (gen >> 8)
+	gen |= (gen >> 16)
+	gen |= (gen >> 32)
+	return gen
+}
+
+func wFrontFill(wpawns uint64) uint64 {
+	return nortFill(wpawns)
+}
+
+func wRearFill(wpawns uint64) uint64 {
+	return soutFill(wpawns)
+}
+
+func bFrontFill(bpawns uint64) uint64 {
+	return soutFill(bpawns)
+}
+
+func bRearFill(bpawns uint64) uint64 {
+	return nortFill(bpawns)
+}
+
+func fileFill(gen uint64) uint64 {
+	return nortFill(gen) | soutFill(gen)
+}
+
+func wStop(wpawns uint64) uint64 {
+	return nortOne(wpawns)
+}
+
+func bStop(bpawns uint64) uint64 {
+	return soutOne(bpawns)
+}
+
+func wFrontSpan(wpawns uint64) uint64 {
+	return nortFill(wStop(wpawns))
+}
+
+func bFrontSpan(bpawns uint64) uint64 {
+	return soutFill(bStop(bpawns))
+}
+
+func wEastAttackFrontSpans(wpawns uint64) uint64 {
+	return eastOne(wFrontSpan(wpawns))
+}
+
+func wWestAttackFrontSpans(wpawns uint64) uint64 {
+	return westOne(wFrontSpan(wpawns))
+}
+
+func bEastAttackFrontSpans(bpawns uint64) uint64 {
+	return eastOne(bFrontSpan(bpawns))
+}
+
+func bWestAttackFrontSpans(bpawns uint64) uint64 {
+	return westOne(bFrontSpan(bpawns))
+}
+
+func wEastAttackRearSpans(wpawns uint64) uint64 {
+	return eastOne(wRearFill(wpawns))
+}
+
+func wWestAttackRearSpans(wpawns uint64) uint64 {
+	return westOne(wRearFill(wpawns))
+}
+
+func bEastAttackRearSpans(bpawns uint64) uint64 {
+	return eastOne(bRearFill(bpawns))
+}
+
+func bWestAttackRearSpans(bpawns uint64) uint64 {
+	return westOne(bRearFill(bpawns))
+}
+
+func eastAttackFileFill(pawns uint64) uint64 {
+	return eastOne(fileFill(pawns))
+}
+
+func westAttackFileFill(pawns uint64) uint64 {
+	return westOne(fileFill(pawns))
+}
+
+func wBackward(wpawns uint64, bpawns uint64) uint64 {
+	stops := wStop(wpawns)
+	wAttackSpans := wEastAttackFrontSpans(wpawns) | wWestAttackFrontSpans(wpawns)
+	bAttacks := bPawnAnyAttacks(bpawns)
+	return (stops & bAttacks &^ wAttackSpans) >> 8
+}
+
+func bBackward(bpawns uint64, wpawns uint64) uint64 {
+	stops := bStop(bpawns)
+	bAttackSpans := bEastAttackFrontSpans(bpawns) | bWestAttackFrontSpans(bpawns)
+	wAttacks := wPawnAnyAttacks(wpawns)
+	return (stops & wAttacks &^ bAttackSpans) << 8
+}
+
+func bCandidatesOn4th(bpawns uint64, wpawns uint64) uint64 {
+	wPawnAnyAttacks := wPawnAnyAttacks(wpawns)
+	bSafeSquares := bSafePawnSquares(bpawns, wpawns)
+	bSafeAttacked := wPawnAnyAttacks & bSafeSquares
+	whiteFrontSpan := (wpawns << 8) | (wpawns << 16) // only for 5th rank
+	return bpawns & rank4 &^ whiteFrontSpan & (bSafeAttacked << 8)
+}
+
+func wCandidatesOn5th(wpawns uint64, bpawns uint64) uint64 {
+	bPawnAnyAttacks := bPawnAnyAttacks(bpawns)
+	wSafeSquares := wSafePawnSquares(wpawns, bpawns)
+	wSafeAttacked := bPawnAnyAttacks & wSafeSquares
+	blackFrontSpan := (bpawns >> 8) | (bpawns >> 16) // only for 5th rank
+	return wpawns & rank5 &^ blackFrontSpan & (wSafeAttacked >> 8)
+}
+
+func wPawnEastAttacks(wpawns uint64) uint64 {
+	return noEaOne(wpawns)
+}
+
+func wPawnWestAttacks(wpawns uint64) uint64 {
+	return noWeOne(wpawns)
+}
+
+func bPawnEastAttacks(bpawns uint64) uint64 {
+	return soEaOne(bpawns)
+}
+
+func bPawnWestAttacks(wpawns uint64) uint64 {
+	return soWeOne(wpawns)
+}
+
+func wSafePawnSquares(wpawns uint64, bpawns uint64) uint64 {
+	wPawnEastAttacks := wPawnEastAttacks(wpawns)
+	wPawnWestAttacks := wPawnWestAttacks(wpawns)
+	bPawnEastAttacks := bPawnEastAttacks(bpawns)
+	bPawnWestAttacks := bPawnWestAttacks(bpawns)
+	wPawnDblAttacks := wPawnEastAttacks & wPawnWestAttacks
+	wPawnOddAttacks := wPawnEastAttacks ^ wPawnWestAttacks
+	bPawnDblAttacks := bPawnEastAttacks & bPawnWestAttacks
+	bPawnAnyAttacks := bPawnEastAttacks | bPawnWestAttacks
+	return wPawnDblAttacks | ^bPawnAnyAttacks | (wPawnOddAttacks &^ bPawnDblAttacks)
+}
+
+func bSafePawnSquares(bpawns uint64, wpawns uint64) uint64 {
+	bPawnEastAttacks := bPawnEastAttacks(bpawns)
+	bPawnWestAttacks := bPawnWestAttacks(bpawns)
+	wPawnEastAttacks := wPawnEastAttacks(wpawns)
+	wPawnWestAttacks := wPawnWestAttacks(wpawns)
+	bPawnDblAttacks := bPawnEastAttacks & bPawnWestAttacks
+	bPawnOddAttacks := bPawnEastAttacks ^ bPawnWestAttacks
+	wPawnDblAttacks := wPawnEastAttacks & wPawnWestAttacks
+	wPawnAnyAttacks := wPawnEastAttacks | wPawnWestAttacks
+	return bPawnDblAttacks | ^wPawnAnyAttacks | (bPawnOddAttacks &^ wPawnDblAttacks)
+}
+
+func wFrontSpans(wpawns uint64) uint64 {
+	return nortOne(nortFill(wpawns))
+}
+
+func bRearSpans(bpawns uint64) uint64 {
+	return nortOne(nortFill(bpawns))
+}
+
+func bFrontSpans(bpawns uint64) uint64 {
+	return soutOne(soutFill(bpawns))
+}
+
+func wRearSpans(wpawns uint64) uint64 {
+	return soutOne(soutFill(wpawns))
+}
+
+// pawns with at least one pawn in front on the same file
+func wPawnsBehindOwn(wpawns uint64) uint64 {
+	return wpawns & wRearSpans(wpawns)
+}
+
+// pawns with at least one pawn behind on the same file
+func wPawnsInfrontOwn(wpawns uint64) uint64 {
+	return wpawns & wFrontSpans(wpawns)
+}
+
+// pawns with at least one pawn in front on the same file
+func bPawnsBehindOwn(bpawns uint64) uint64 {
+	return bpawns & bRearSpans(bpawns)
+}
+
+// pawns with at least one pawn behind on the same file
+func bPawnsInfrontOwn(bpawns uint64) uint64 {
+	return bpawns & bFrontSpans(bpawns)
+}
+
+func noNeighborOnEastFile(pawns uint64) uint64 {
+	return pawns &^ westAttackFileFill(pawns)
+}
+
+func noNeighborOnWestFile(pawns uint64) uint64 {
+	return pawns &^ eastAttackFileFill(pawns)
+}
+
+func isolanis(pawns uint64) uint64 {
+	return noNeighborOnEastFile(pawns) & noNeighborOnWestFile(pawns)
+}
+
+func halfIsolanis(pawns uint64) uint64 {
+	return noNeighborOnEastFile(pawns) ^ noNeighborOnWestFile(pawns)
+}
+
+func wPassedPawns(wpawns uint64, bpawns uint64) uint64 {
+	allFrontSpans := bFrontSpans(bpawns)
+	allFrontSpans |= eastOne(allFrontSpans) | westOne(allFrontSpans)
+	return wpawns &^ allFrontSpans
+}
+
+func bPassedPawns(bpawns uint64, wpawns uint64) uint64 {
+	allFrontSpans := wFrontSpans(wpawns)
+	allFrontSpans |= eastOne(allFrontSpans) | westOne(allFrontSpans)
+	return bpawns &^ allFrontSpans
 }
