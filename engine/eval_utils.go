@@ -193,52 +193,52 @@ func initOuterRingMask() [64]uint64 {
 
 // Pawn attacks/structure
 
-func (p *Position) CountBackwardPawns(color Color) int {
+func (p *Position) CountBackwardPawns(color Color) int16 {
 	switch color {
 	case White:
-		return bits.OnesCount64(wBackward(p.Board.whitePawn, p.Board.blackPawn))
+		return int16(bits.OnesCount64(wBackward(p.Board.whitePawn, p.Board.blackPawn)))
 	case Black:
-		return bits.OnesCount64(bBackward(p.Board.blackPawn, p.Board.whitePawn))
+		return int16(bits.OnesCount64(bBackward(p.Board.blackPawn, p.Board.whitePawn)))
 	}
 	return 0
 }
 
-func (p *Position) CountCandidatePawns(color Color) int {
+func (p *Position) CountCandidatePawns(color Color) int16 {
 	switch color {
 	case White:
-		return bits.OnesCount64(wCandidatesOn5th(p.Board.whitePawn, p.Board.blackPawn))
+		return int16(bits.OnesCount64(wCandidatesOn5th(p.Board.whitePawn, p.Board.blackPawn)))
 	case Black:
-		return bits.OnesCount64(bCandidatesOn4th(p.Board.blackPawn, p.Board.whitePawn))
+		return int16(bits.OnesCount64(bCandidatesOn4th(p.Board.blackPawn, p.Board.whitePawn)))
 	}
 	return 0
 }
 
-func (p *Position) CountDoublePawns(color Color) int {
+func (p *Position) CountDoublePawns(color Color) int16 {
 	switch color {
 	case White:
-		return bits.OnesCount64(wPawnsBehindOwn(p.Board.whitePawn))
+		return int16(bits.OnesCount64(wPawnsBehindOwn(p.Board.whitePawn)))
 	case Black:
-		return bits.OnesCount64(bPawnsBehindOwn(p.Board.blackPawn))
+		return int16(bits.OnesCount64(bPawnsBehindOwn(p.Board.blackPawn)))
 	}
 	return 0
 }
 
-func (p *Position) CountIsolatedPawns(color Color) int {
+func (p *Position) CountIsolatedPawns(color Color) int16 {
 	switch color {
 	case White:
-		return bits.OnesCount64(isolanis(p.Board.whitePawn))
+		return int16(bits.OnesCount64(isolanis(p.Board.whitePawn)))
 	case Black:
-		return bits.OnesCount64(isolanis(p.Board.blackPawn))
+		return int16(bits.OnesCount64(isolanis(p.Board.blackPawn)))
 	}
 	return 0
 }
 
-func (p *Position) CountPassedPawns(color Color) int {
+func (p *Position) CountPassedPawns(color Color) int16 {
 	switch color {
 	case White:
-		return bits.OnesCount64(wPassedPawns(p.Board.whitePawn, p.Board.blackPawn))
+		return int16(bits.OnesCount64(wPassedPawns(p.Board.whitePawn, p.Board.blackPawn)))
 	case Black:
-		return bits.OnesCount64(bPassedPawns(p.Board.blackPawn, p.Board.whitePawn))
+		return int16(bits.OnesCount64(bPassedPawns(p.Board.blackPawn, p.Board.whitePawn)))
 	}
 	return 0
 }
@@ -467,4 +467,8 @@ func bPassedPawns(bpawns uint64, wpawns uint64) uint64 {
 	allFrontSpans := wFrontSpans(wpawns)
 	allFrontSpans |= eastOne(allFrontSpans) | westOne(allFrontSpans)
 	return bpawns &^ allFrontSpans
+}
+
+func FileFill(fset uint64) uint64 {
+	return nortFill(fset) | soutFill(fset)
 }
