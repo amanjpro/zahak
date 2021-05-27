@@ -84,3 +84,87 @@ func TestAllAttacksBlack(t *testing.T) {
 		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
 	}
 }
+
+func TestBackwardPawns(t *testing.T) {
+	fen := "rnbqkbnr/5ppp/p2p4/P2P1P2/1P2P3/8/6PP/RNBQKBNR w KQkq - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(2)
+	actual := game.Position().CountBackwardPawns(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(2)
+	actual = game.Position().CountBackwardPawns(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestCandidatePawns(t *testing.T) {
+	fen := "7k/p7/8/PP6/5ppp/8/5P1P/K7 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(1)
+	actual := game.Position().CountCandidatePawns(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(1)
+	actual = game.Position().CountCandidatePawns(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestDoublePawns(t *testing.T) {
+	fen := "7k/1p6/8/PP3p1p/P4p1p/PP6/8/K7 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(3)
+	actual := game.Position().CountDoublePawns(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(2)
+	actual = game.Position().CountDoublePawns(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestIsolatedPawns(t *testing.T) {
+	fen := "7k/8/2p1P3/P2p1p1p/5p2/6P1/7P/K7 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(2)
+	actual := game.Position().CountIsolatedPawns(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(3)
+	actual = game.Position().CountIsolatedPawns(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestPassedPawns(t *testing.T) {
+	fen := "7k/8/1Pp1P3/3p1p1p/P4p2/1p4P1/7P/K7 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expectedF, expectedS := int16(1), int16(2)
+	actualF, actualS := game.Position().CountPassedPawns(White)
+	if actualF != expectedF || actualS != expectedS {
+		t.Error(fmt.Sprintf("Expected: (%d, %d)\n, Got: (%d, %d)\n", expectedF, expectedS, actualF, actualS))
+	}
+	expectedF, expectedS = int16(2), int16(1)
+	actualF, actualS = game.Position().CountPassedPawns(Black)
+	if actualF != expectedF || actualS != expectedS {
+		t.Error(fmt.Sprintf("Expected: (%d, %d)\n, Got: (%d, %d)\n", expectedF, expectedS, actualF, actualS))
+	}
+}
