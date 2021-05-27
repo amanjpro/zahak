@@ -117,3 +117,26 @@ func TestRookStructureEval(t *testing.T) {
 		t.Errorf(err)
 	}
 }
+
+func TestRookFilesEval(t *testing.T) {
+	fen := "kr1rr2r/7p/8/8/1P6/8/8/KR1R3R w - - 0 1"
+	game := FromFen(fen, false)
+
+	whiteRook := game.Position().Board.GetBitboardOf(WhiteRook)
+	blackRook := game.Position().Board.GetBitboardOf(BlackRook)
+	whitePawn := game.Position().Board.GetBitboardOf(WhitePawn)
+	blackPawn := game.Position().Board.GetBitboardOf(BlackPawn)
+
+	actual := RookFilesEval(blackRook, whiteRook, blackPawn, whitePawn)
+	expected := Eval{
+		blackMG: MiddlegameRookOpenFileAward*2 + MiddlegameRookSemiOpenFileAward*1,
+		whiteMG: MiddlegameRookOpenFileAward*1 + MiddlegameRookSemiOpenFileAward*1,
+		blackEG: EndgameRookOpenFileAward*2 + EndgameRookSemiOpenFileAward*1,
+		whiteEG: EndgameRookOpenFileAward*1 + EndgameRookSemiOpenFileAward*1,
+	}
+
+	if actual != expected {
+		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}

@@ -233,14 +233,19 @@ func (p *Position) CountIsolatedPawns(color Color) int16 {
 	return 0
 }
 
-func (p *Position) CountPassedPawns(color Color) int16 {
+var lowHalf uint64 = 0x00000000FFFFFFFF
+var hiHalf uint64 = 0xFFFFFFFF00000000
+
+func (p *Position) CountPassedPawns(color Color) (int16, int16) {
 	switch color {
 	case White:
-		return int16(bits.OnesCount64(wPassedPawns(p.Board.whitePawn, p.Board.blackPawn)))
+		passers := wPassedPawns(p.Board.whitePawn, p.Board.blackPawn)
+		return int16(bits.OnesCount64(passers & lowHalf)), int16(bits.OnesCount64(passers & hiHalf))
 	case Black:
-		return int16(bits.OnesCount64(bPassedPawns(p.Board.blackPawn, p.Board.whitePawn)))
+		passers := bPassedPawns(p.Board.blackPawn, p.Board.whitePawn)
+		return int16(bits.OnesCount64(passers & hiHalf)), int16(bits.OnesCount64(passers & lowHalf))
 	}
-	return 0
+	return 0, 0
 }
 
 // pawn utils
