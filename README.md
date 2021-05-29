@@ -48,11 +48,13 @@ his current rating is around 2004.
 The history of Zahak's CCRL Elo rating is summerized here, taken from
 [this](https://ccrl.chessdom.com/ccrl/404/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
 
-| **version** | **rating** |
-|-------------|------------|
-| 1.0.0       | 2011       |
-| 0.3.0       | 1922       |
-| 0.2.1       | 1824       |
+| **version** |    **rating**    |
+|-------------|------------------|
+| 3.0         | 2415             |
+| 2.0.0       | 2105 (unstable)  |
+| 1.0.0       | 2011             |
+| 0.3.0       | 1922             |
+| 0.2.1       | 1824             |
 
 # Implemented Features:
 
