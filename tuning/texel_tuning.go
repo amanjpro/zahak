@@ -108,6 +108,10 @@ func computeInitialGuesses() []int16 {
 	guesses = append(guesses, EndgameInnerMajorToKingAttackCoeff)    // 803
 	guesses = append(guesses, MiddlegameOuterMajorToKingAttackCoeff) // 804
 	guesses = append(guesses, EndgameOuterMajorToKingAttackCoeff)    // 805
+	guesses = append(guesses, MiddlegamePawnShieldPenalty)           // 806
+	guesses = append(guesses, EndgamePawnShieldPenalty)              // 807
+	guesses = append(guesses, MiddlegameKingZoneOpenFilePenalty)     // 808
+	guesses = append(guesses, EndgameKingZoneOpenFilePenalty)        // 809
 
 	return guesses
 }
@@ -165,6 +169,10 @@ func updateEvalParams(guesses []int16) {
 	EndgameInnerMajorToKingAttackCoeff = guesses[803]
 	MiddlegameOuterMajorToKingAttackCoeff = guesses[804]
 	EndgameOuterMajorToKingAttackCoeff = guesses[805]
+	MiddlegamePawnShieldPenalty = guesses[806]
+	EndgamePawnShieldPenalty = guesses[807]
+	MiddlegameKingZoneOpenFilePenalty = guesses[808]
+	EndgameKingZoneOpenFilePenalty = guesses[809]
 }
 
 func toEvalParams(guesses []float64) []int16 {
@@ -240,6 +248,10 @@ func printOptimalGuesses(guesses []int16) {
 	fmt.Printf("var EndgameInnerMajorToKingAttackCoeff int16 = %d\n", guesses[803])
 	fmt.Printf("var MiddlegameOuterMajorToKingAttackCoeff int16 = %d\n", guesses[804])
 	fmt.Printf("var EndgameOuterMajorToKingAttackCoeff int16 = %d\n", guesses[805])
+	fmt.Printf("var MiddlegamePawnShieldPenalty int16 = %d\n", guesses[806])
+	fmt.Printf("var EndgamePawnShieldPenalty int16 = %d\n", guesses[807])
+	fmt.Printf("var MiddlegameKingZoneOpenFilePenalty int16 = %d\n", guesses[808])
+	fmt.Printf("var EndgameKingZoneOpenFilePenalty int16 = %d\n", guesses[809])
 
 	// fmt.Printf("var MiddlegameCastlingAward int16 = %d\n", guesses[792])
 	fmt.Println("===================================================")
