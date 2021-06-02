@@ -142,7 +142,7 @@ func TestRookFilesEval(t *testing.T) {
 }
 
 func TestKingSafetyWhiteOnG(t *testing.T) {
-	fen := "1k6/1pp4p/8/8/5P2/6P1/P7/6K1 w - - 0 1"
+	fen := "1k6/1pp3p1/8/8/5P2/6P1/P7/6K1 w - - 0 1"
 	game := FromFen(fen, false)
 
 	whiteKing := game.Position().Board.GetBitboardOf(WhiteKing)
@@ -152,10 +152,10 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn)
 	expected := Eval{
-		blackMG: -(MiddlegamePawnShieldPenalty*1 + 2*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty*1 + 2*EndgameKingZoneOpenFilePenalty),
-		whiteMG: -(MiddlegamePawnShieldPenalty*2 + 2*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty*2 + 2*EndgameKingZoneOpenFilePenalty),
+		blackMG: -(MiddlegamePawnShieldPenalty * 1),
+		blackEG: -(EndgamePawnShieldPenalty * 1),
+		whiteMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
+		whiteEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
@@ -165,7 +165,7 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 }
 
 func TestKingSafetyBlackOnG(t *testing.T) {
-	fen := "6k1/p7/6p1/5p2/8/8/1PP4P/1K6 w - - 0 1"
+	fen := "6k1/p7/6p1/5p2/8/8/1PP3P1/1K6 w - - 0 1"
 	game := FromFen(fen, false)
 
 	whiteKing := game.Position().Board.GetBitboardOf(WhiteKing)
@@ -175,10 +175,10 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn)
 	expected := Eval{
-		whiteMG: -(MiddlegamePawnShieldPenalty*1 + 2*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty*1 + 2*EndgameKingZoneOpenFilePenalty),
-		blackMG: -(MiddlegamePawnShieldPenalty*2 + 2*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty*2 + 2*EndgameKingZoneOpenFilePenalty),
+		whiteMG: -(MiddlegamePawnShieldPenalty * 1),
+		whiteEG: -(EndgamePawnShieldPenalty * 1),
+		blackMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
+		blackEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
