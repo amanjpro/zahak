@@ -150,12 +150,12 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 	whitePawn := game.Position().Board.GetBitboardOf(WhitePawn)
 	blackPawn := game.Position().Board.GetBitboardOf(BlackPawn)
 
-	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn)
+	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
 		blackMG: -(MiddlegamePawnShieldPenalty * 1),
 		blackEG: -(EndgamePawnShieldPenalty * 1),
-		whiteMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
+		whiteMG: -(MiddlegamePawnShieldPenalty * 2), // + 1*MiddlegameKingZoneOpenFilePenalty),
+		whiteEG: -(EndgamePawnShieldPenalty * 2),    //+ 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
@@ -173,12 +173,35 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 	whitePawn := game.Position().Board.GetBitboardOf(WhitePawn)
 	blackPawn := game.Position().Board.GetBitboardOf(BlackPawn)
 
-	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn)
+	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
 		whiteMG: -(MiddlegamePawnShieldPenalty * 1),
 		whiteEG: -(EndgamePawnShieldPenalty * 1),
-		blackMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
+		blackMG: -(MiddlegamePawnShieldPenalty * 2), //+ 1*MiddlegameKingZoneOpenFilePenalty),
+		blackEG: -(EndgamePawnShieldPenalty * 2),    //+ 1*EndgameKingZoneOpenFilePenalty),
+	}
+
+	if actual != expected {
+		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
+
+func TestKingSafetyBlackNotCastling(t *testing.T) {
+	fen := "rnbq1bnr/pppppppp/3k4/8/8/3K4/PPPPPPPP/RNBQ1BNR w - - 0 1"
+	game := FromFen(fen, false)
+
+	whiteKing := game.Position().Board.GetBitboardOf(WhiteKing)
+	blackKing := game.Position().Board.GetBitboardOf(BlackKing)
+	whitePawn := game.Position().Board.GetBitboardOf(WhitePawn)
+	blackPawn := game.Position().Board.GetBitboardOf(BlackPawn)
+
+	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
+	expected := Eval{
+		whiteMG: -MiddlegameNotCastlingPenalty,
+		whiteEG: -EndgameNotCastlingPenalty,
+		blackMG: -MiddlegameNotCastlingPenalty,
+		blackEG: -EndgameNotCastlingPenalty,
 	}
 
 	if actual != expected {
