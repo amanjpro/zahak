@@ -36,16 +36,19 @@ supports UCI protocol.
 - [Banksia GUI](https://banksiagui.com/)
 - [DroidFish](https://play.google.com/store/apps/details?id=org.petero.droidfish) is a good choice on Android
 
+# Tournaments
+
+Zahak is participating in [ZaTour tournament series](https://zatour.amanj.me) for open source and original chess engines
+that are rated lower than 2800 as per CCRL.
+
+He is also participating in the tournaments arranged by [Chess Engine
+Diaries](https://chessengines.blogspot.com/), and several others.
+
 # Rating
 
-Zahak is participating in some tournaments arranged by [Chess Engine
-Diaries](https://chessengines.blogspot.com/), he recently advanced to the E7 in
-the 44th edition of JCER competition.
+Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/).
 
-He is also listed in the [CCRL ratings](https://ccrl.chessdom.com/ccrl/404/),
-his current rating is around 2004.
-
-The history of Zahak's CCRL Elo rating is summerized here, taken from
+The history of Zahak's CCRL Blitz rating is summerized here, taken from
 [this](https://ccrl.chessdom.com/ccrl/404/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
 
 | **version** |    **rating**    |
@@ -55,6 +58,9 @@ The history of Zahak's CCRL Elo rating is summerized here, taken from
 | 1.0.0       | 2011             |
 | 0.3.0       | 1922             |
 | 0.2.1       | 1824             |
+
+He is also listed in [Rebel's Gambit rating](http://rebel13.nl/grl-40-2.html), which is around 2379 in time control
+40 moves in 2 minutes.
 
 # Implemented Features:
 
