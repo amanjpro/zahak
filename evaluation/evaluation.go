@@ -339,32 +339,13 @@ func Evaluate(position *Position) int16 {
 	blacks := board.GetBlackPieces()
 	all := whites | blacks
 
+	blackPawnsCount = int16(bits.OnesCount64(bbBlackPawn))
+	whitePawnsCount = int16(bits.OnesCount64(bbWhitePawn))
+
 	var whiteKingIndex, blackKingIndex int
 
-	// PST for black pawns
-	pieceIter := bbBlackPawn
-	for pieceIter > 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackPawnsCount++
-		blackCentipawnsEG += LatePawnPst[index]
-		blackCentipawnsMG += EarlyPawnPst[index]
-		pieceIter ^= mask
-	}
-
-	// PST for white pawns
-	pieceIter = bbWhitePawn
-	for pieceIter != 0 {
-		whitePawnsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePawnPst[flip[index]]
-		whiteCentipawnsMG += EarlyPawnPst[flip[index]]
-		pieceIter ^= mask
-	}
-
 	// PST for other black pieces
-	pieceIter = bbBlackKnight
+	pieceIter := bbBlackKnight
 	for pieceIter != 0 {
 		blackKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
@@ -539,11 +520,7 @@ func Evaluate(position *Position) int16 {
 	blackCentipawnsMG += rookEval.blackMG
 	blackCentipawnsEG += rookEval.blackEG
 
-	pawnStructureEval := PawnStructureEval(position)
-	whiteCentipawnsMG += pawnStructureEval.whiteMG
-	whiteCentipawnsEG += pawnStructureEval.whiteEG
-	blackCentipawnsMG += pawnStructureEval.blackMG
-	blackCentipawnsEG += pawnStructureEval.blackEG
+	pawnMG, pawnEG := CachedPawnStructureEval(position)
 
 	kingSafetyEval := KingSafety(bbBlackKing, bbWhiteKing, bbBlackPawn, bbWhitePawn,
 		position.HasTag(BlackCanCastleQueenSide) || position.HasTag(BlackCanCastleKingSide),
@@ -577,11 +554,11 @@ func Evaluate(position *Position) int16 {
 	var evalEG, evalMG int16
 
 	if turn == White {
-		evalEG = whiteCentipawnsEG - blackCentipawnsEG
-		evalMG = whiteCentipawnsMG - blackCentipawnsMG
+		evalEG = whiteCentipawnsEG - blackCentipawnsEG + pawnEG
+		evalMG = whiteCentipawnsMG - blackCentipawnsMG + pawnMG
 	} else {
-		evalEG = blackCentipawnsEG - whiteCentipawnsEG
-		evalMG = blackCentipawnsMG - whiteCentipawnsMG
+		evalEG = blackCentipawnsEG - whiteCentipawnsEG - pawnEG
+		evalMG = blackCentipawnsMG - whiteCentipawnsMG - pawnMG
 	}
 
 	// The following formula overflows if I do not convert to int32 first
@@ -648,6 +625,22 @@ func RookFilesEval(blackRook uint64, whiteRook uint64, blackPawns uint64, whiteP
 	return Eval{blackMG: blackMG, whiteMG: whiteMG, blackEG: blackEG, whiteEG: whiteEG}
 }
 
+func CachedPawnStructureEval(p *Position) (int16, int16) {
+	hash := GenerateZobristPawnHash(p)
+	mg, eg, ok := Pawnhash.Get(hash)
+
+	if ok {
+		return mg, eg
+	}
+
+	eval := PawnStructureEval(p)
+	mg = eval.whiteMG - eval.blackMG
+	eg = eval.whiteEG - eval.blackEG
+	Pawnhash.Set(hash, mg, eg)
+
+	return mg, eg
+}
+
 func PawnStructureEval(p *Position) Eval {
 	var blackMG, whiteMG, blackEG, whiteEG int16
 
@@ -701,6 +694,26 @@ func PawnStructureEval(p *Position) Eval {
 	count = p.CountDoublePawns(White)
 	whiteMG -= MiddlegameDoublePawnPenalty * count
 	whiteEG -= EndgameDoublePawnPenalty * count
+
+	// PST for black pawns
+	pieceIter := p.Board.GetBitboardOf(BlackPawn)
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackEG += LatePawnPst[index]
+		blackMG += EarlyPawnPst[index]
+		pieceIter ^= mask
+	}
+
+	// PST for white pawns
+	pieceIter = p.Board.GetBitboardOf(WhitePawn)
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteEG += LatePawnPst[flip[index]]
+		whiteMG += EarlyPawnPst[flip[index]]
+		pieceIter ^= mask
+	}
 
 	return Eval{blackMG: blackMG, whiteMG: whiteMG, blackEG: blackEG, whiteEG: whiteEG}
 }

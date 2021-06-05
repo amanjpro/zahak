@@ -70,6 +70,7 @@ func (uci *UCI) Start() {
 				fmt.Print("id author Amanj\n")
 				fmt.Print("option name Ponder type check default false\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
+				fmt.Printf("option name Pawnhash type spin default %d min 1 max %d\n", DEFAULT_PAWNHASH_SIZE, MAX_PAWNHASH_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
 				fmt.Print("uciok\n")
 			case "isready":
@@ -80,9 +81,12 @@ func (uci *UCI) Start() {
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
 				size := uci.engine.TranspositionTable.Size()
+				pawnSize := Pawnhash.Size()
+				Pawnhash = nil
 				uci.engine.TranspositionTable = nil
 				runtime.GC()
 				uci.engine.TranspositionTable = NewCache(size)
+				Pawnhash = NewPawnCache(pawnSize)
 				game = FromFen(startFen, true)
 			case "stop":
 				if uci.engine.Pondering {
@@ -101,6 +105,13 @@ func (uci *UCI) Start() {
 					} else if !IsBoookLoaded() && opt == "true" { // if it is loaded, no need to reload
 						InitBook(uci.bookPath)
 					}
+				} else if strings.HasPrefix(cmd, "setoption name Pawnhash value") {
+					options := strings.Fields(cmd)
+					mg := options[len(options)-1]
+					hashSize, _ := strconv.Atoi(mg)
+					Pawnhash = nil
+					runtime.GC()
+					Pawnhash = NewPawnCache(hashSize)
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]

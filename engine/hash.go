@@ -69,6 +69,31 @@ func generateZobristHash(pos *Position) uint64 {
 	return hash
 }
 
+func GenerateZobristPawnHash(pos *Position) uint64 {
+	var hash uint64 = 0
+
+	/* Board */
+	board := pos.Board
+	blackPawn := board.GetBitboardOf(BlackPawn)
+	whitePawn := board.GetBitboardOf(WhitePawn)
+
+	iter := blackPawn
+	for iter != 0 {
+		index := bitScanForward(iter)
+		hash ^= piecesZC[6][index]
+		iter ^= SquareMask[index]
+	}
+
+	iter = whitePawn
+	for iter != 0 {
+		index := bitScanForward(iter)
+		hash ^= piecesZC[0][index]
+		iter ^= SquareMask[index]
+	}
+
+	return hash
+}
+
 func updateHashForNullMove(pos *Position, newEnPassant Square, oldEnPassant Square) {
 	if pos.hash == 0 {
 		pos.Hash()

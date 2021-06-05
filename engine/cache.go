@@ -95,10 +95,10 @@ func NewCache(megabytes uint32) *Cache {
 	}
 	size := int(megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE)
 
-	return &Cache{make([]CachedEval, roundPowerOfTwo(size)), megabytes, 0}
+	return &Cache{make([]CachedEval, RoundPowerOfTwo(size)), megabytes, 0}
 }
 
-func roundPowerOfTwo(size int) int {
+func RoundPowerOfTwo(size int) int {
 	var x = 1
 	for (x << 1) <= size {
 		x <<= 1

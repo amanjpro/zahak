@@ -342,6 +342,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if move == EmptyMove {
 			break
 		}
+
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
 		if isCaptureMove || promoType != NoType {
@@ -352,7 +353,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
 			legalMoves += 1
-			if isRootNode {
+
+			if e.DebugMode && isRootNode {
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
