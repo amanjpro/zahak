@@ -9,6 +9,7 @@ type Position struct {
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
+	pawnhash      uint64
 	Positions     map[uint64]int
 	HalfMoveClock uint8
 }
@@ -213,6 +214,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		p.ClearTag(InCheck)
 	}
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
+	updatePawnHash(p, move, captureSquare, promoPiece)
 	return ep, tag, hc, true
 }
 
@@ -265,8 +267,10 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 			p.Board.Move(F8, H8, BlackRook, NoPiece)
 		}
 	}
+
 	if isLegal {
 		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
+		updatePawnHash(p, move, captureSquare, promoPiece)
 	}
 }
 
@@ -360,6 +364,14 @@ func (p *Position) IsFIDEDrawRule() bool {
 	return (ok && value >= 3)
 }
 
+func (p *Position) Pawnhash() uint64 {
+	if p.pawnhash == 0 {
+		hash := generateZobristPawnHash(p)
+		p.pawnhash = hash
+	}
+	return p.pawnhash
+}
+
 func (p *Position) Hash() uint64 {
 	if p.hash == 0 {
 		hash := generateZobristHash(p)
@@ -384,6 +396,7 @@ func (p *Position) Copy() *Position {
 		p.EnPassant,
 		p.Tag,
 		p.hash,
+		p.pawnhash,
 		copyMap,
 		p.HalfMoveClock,
 	}

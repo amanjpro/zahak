@@ -626,7 +626,7 @@ func RookFilesEval(blackRook uint64, whiteRook uint64, blackPawns uint64, whiteP
 }
 
 func CachedPawnStructureEval(p *Position) (int16, int16) {
-	hash := GenerateZobristPawnHash(p)
+	hash := p.Pawnhash()
 	mg, eg, ok := Pawnhash.Get(hash)
 
 	if ok {

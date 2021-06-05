@@ -119,6 +119,7 @@ func positionFromFen(fen string) Position {
 		NoSquare,
 		0,
 		0,
+		0,
 		make(map[uint64]int, 100),
 		uint8(halfMoveClock),
 	}
