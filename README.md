@@ -53,7 +53,7 @@ The history of Zahak's CCRL Blitz rating is summerized here, taken from
 
 | **version** |    **rating**    |
 |-------------|------------------|
-| 3.0         | 2415             |
+| 3.0         | 2408             |
 | 2.0.0       | 2105 (unstable)  |
 | 1.0.0       | 2011             |
 | 0.3.0       | 1922             |
