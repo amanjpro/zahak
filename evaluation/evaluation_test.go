@@ -75,7 +75,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(-12)
+	expected := int16(-11)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -86,7 +86,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(-12)
+	expected = int16(-11)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -99,7 +99,7 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(49)
+	expected := int16(51)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -110,7 +110,7 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(49)
+	expected = int16(51)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -154,8 +154,8 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 	expected := Eval{
 		blackMG: -(MiddlegamePawnShieldPenalty * 1),
 		blackEG: -(EndgamePawnShieldPenalty * 1),
-		whiteMG: -(MiddlegamePawnShieldPenalty * 2), // + 1*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty * 2),    //+ 1*EndgameKingZoneOpenFilePenalty),
+		whiteMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
+		whiteEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
@@ -177,8 +177,8 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 	expected := Eval{
 		whiteMG: -(MiddlegamePawnShieldPenalty * 1),
 		whiteEG: -(EndgamePawnShieldPenalty * 1),
-		blackMG: -(MiddlegamePawnShieldPenalty * 2), //+ 1*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty * 2),    //+ 1*EndgameKingZoneOpenFilePenalty),
+		blackMG: -(MiddlegamePawnShieldPenalty*2 + +1*MiddlegameKingZoneOpenFilePenalty),
+		blackEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
