@@ -256,7 +256,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
-	hasSeenExact := false
+	oldAlpha := alpha
 
 	// using fail soft with negamax:
 	hashmove := movePicker.Next()
@@ -284,7 +284,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			return bestscore
 		}
 		alpha = bestscore
-		hasSeenExact = true
 	}
 	e.RemoveMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 
@@ -356,11 +355,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 			bestscore = score
 			hashmove = move
-			hasSeenExact = true
 		}
 		e.RemoveMoveHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 	}
-	if hasSeenExact {
+	if alpha > oldAlpha {
 		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 	} else {
 		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
