@@ -256,6 +256,17 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Pruning
 	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
+	futilityMargin := eval + int16(depthLeft)*p
+	if improving {
+		futilityMargin += p
+	}
+	allowFutilityPruning := false
+	if depthLeft < 7 && reductionsAllowed &&
+		abs16(alpha) < CHECKMATE_EVAL &&
+		abs16(beta) < CHECKMATE_EVAL && futilityMargin <= alpha {
+		allowFutilityPruning = true
+	}
+
 	oldAlpha := alpha
 
 	// using fail soft with negamax:
@@ -305,6 +316,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
 		notPromoting := !IsPromoting(move)
+
+		if allowFutilityPruning &&
+			((!isCheckMove && !isCaptureMove && notPromoting) ||
+				(depthLeft <= 1 && movePicker.captureMoveList.Scores[i] < 0)) {
+			e.info.efpCounter += 1
+			continue
+		}
 
 		// Late Move Pruning
 		if reductionsAllowed && notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
