@@ -64,32 +64,47 @@ He is also listed in [Rebel's Gambit rating](http://rebel13.nl/grl-40-2.html), w
 
 # Implemented Features:
 
+## Basics
+
 - UCI Support
 - (Magic) Bitboards
 - Multi-stage move generation
 - Transposition Table
+- PolyGlot opening book
+- Compliant with OpenBench
+
+## Search
+
 - Alpha-Beta search
 - Quiescence Search
 - Iterative Deepening
 - PV Search and PV
-- Zero Windows
+- Search with Zero Windows
 - Aspiration Window with PVS
 - Static Exchange Evaluation
 - Late Move Pruning
 - Null-Move Pruning
 - Delta Pruning
 - Reverse Futility Pruning
-- Futility Pruning
+- Futility Pruning in quiescence search
+- Enhanced Futility Pruning
 - Late Move Reduction
 - Razoring
 - Killer Moves Heuristics
 - Move History Heuristics
 - Check Extensions
 - Internal Iterative Deepening
-- PolyGlot opening book
+
+## Evaluation
+
 - Tapered Eval
 - Tuned Evaluation using Texel Method
-- Compliant with OpenBench
+- Mobility and Aggressivity
+- King safety and attacking kings
+- Rook structure
+- Pawn structure
+- Tuned Piece Square Table (PST)
+- Material balance
 
 # Command line options
 

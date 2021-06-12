@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math/bits"
 )
 
 type Bitboard struct {
@@ -328,24 +327,12 @@ func StartingBoard() Bitboard {
 	return bitboard
 }
 
-func (b *Bitboard) IsEndGame() bool {
-	if b.blackPawn == 0 && b.whitePawn == 0 { // pawns are off? then endgame
-		return true
+func (b *Bitboard) IsEndGame(turn Color) bool {
+	if turn == White {
+		return b.whiteKnight+b.whiteBishop+b.whiteRook+b.whiteQueen == 0
+	} else if turn == Black {
+		return b.blackKnight+b.blackBishop+b.blackRook+b.blackQueen == 0
 	}
-
-	noRooks := bits.OnesCount64(b.blackRook | b.whiteRook)
-	noKnights := bits.OnesCount64(b.blackKnight | b.whiteKnight)
-	noBishops := bits.OnesCount64(b.blackBishop | b.whiteBishop)
-	noQueens := bits.OnesCount64(b.blackQueen | b.whiteQueen)
-
-	if noQueens == 0 && noRooks == 0 {
-		return true
-	} else if noQueens != 0 && noRooks == 0 && noKnights+noBishops <= 2 {
-		return true
-	} else if noQueens == 0 && noRooks != 0 && noKnights+noBishops <= 2 {
-		return true
-	}
-
 	return false
 }
 
