@@ -268,7 +268,7 @@ const (
 )
 
 func (p *Position) IsEndGame() bool {
-	return p.Board.IsEndGame()
+	return p.Board.IsEndGame(p.Turn())
 }
 
 func (p *Position) IsCheckMove(move Move) bool {
