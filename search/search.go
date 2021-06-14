@@ -192,7 +192,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// 	razoringMargin += int16(depthLeft) * p
 	// }
 	if !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
-		e.staticEvals[searchHeight] = eval
 		newEval := e.quiescence(alpha, beta, searchHeight)
 		if newEval < beta {
 			e.info.razoringCounter += 1
@@ -286,14 +285,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	e.pred.Pop()
 	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 	if bestscore > alpha {
-		e.innerLines[searchHeight].AddFirst(hashmove)
-		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		if bestscore >= beta {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 			// e.AddKillerMove(hashmove, searchHeight)
 			e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
 			return bestscore
 		}
+		// Potential PV move, lets copy it to the current pv-line
+		e.innerLines[searchHeight].AddFirst(hashmove)
+		e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 		alpha = bestscore
 	}
 	e.RemoveMoveHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
@@ -362,15 +362,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 
 		if score > bestscore {
-			// Potential PV move, lets copy it to the current pv-line
-			e.innerLines[searchHeight].AddFirst(move)
-			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			if score >= beta {
 				e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 				// e.AddKillerMove(move, searchHeight)
 				e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 				return score
 			}
+			// Potential PV move, lets copy it to the current pv-line
+			e.innerLines[searchHeight].AddFirst(move)
+			e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 			bestscore = score
 			hashmove = move
 		}
