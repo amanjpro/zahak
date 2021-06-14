@@ -23,7 +23,7 @@ type TestPosition struct {
 var testPositions []TestPosition
 var initialGuesses = computeInitialGuesses()
 var K_PRECISION = 10
-var NUM_PROCESSORS = 8
+var NUM_PROCESSORS = 16
 var initialK = 1.0
 var skipParams map[int]bool
 var answers = make(chan float64)
