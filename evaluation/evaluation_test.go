@@ -187,6 +187,29 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 	}
 }
 
+func TestKingSafetySemiOpenFile(t *testing.T) {
+	fen := "6k1/ppp3pp/8/8/8/8/P4PPP/1K6 w - - 0 1"
+	game := FromFen(fen, false)
+
+	whiteKing := game.Position().Board.GetBitboardOf(WhiteKing)
+	blackKing := game.Position().Board.GetBitboardOf(BlackKing)
+	whitePawn := game.Position().Board.GetBitboardOf(WhitePawn)
+	blackPawn := game.Position().Board.GetBitboardOf(BlackPawn)
+
+	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
+	expected := Eval{
+		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty * 2),
+		whiteEG: -(EndgameKingZoneMissingPawnPenalty * 2),
+		blackMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
+		blackEG: -(EndgameKingZoneMissingPawnPenalty * 1),
+	}
+
+	if actual != expected {
+		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
+
 func TestKingSafetyBlackNotCastling(t *testing.T) {
 	fen := "rnbq1bnr/pppppppp/3k4/8/8/3K4/PPPPPPPP/RNBQ1BNR w - - 0 1"
 	game := FromFen(fen, false)
