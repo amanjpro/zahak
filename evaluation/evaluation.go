@@ -61,183 +61,185 @@ const WhiteOuterHShield = uint64(1 << H3)
 // Middle-game
 var EarlyPawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	97, 129, 69, 102, 92, 128, 12, -30,
-	-15, -10, 19, 19, 59, 71, 10, -20,
-	-24, -5, -5, 16, 17, 14, -1, -31,
-	-34, -22, -12, 5, 10, 4, -10, -35,
-	-35, -30, -20, -21, -9, -8, 6, -26,
-	-43, -25, -33, -34, -29, 12, 10, -34,
+	92, 125, 64, 101, 95, 127, 15, -27,
+	-12, -12, 18, 18, 58, 72, 15, -20,
+	-23, -5, -4, 16, 16, 14, 2, -30,
+	-33, -22, -13, 5, 8, 4, -8, -32,
+	-34, -30, -20, -22, -10, -9, 8, -22,
+	-42, -25, -33, -35, -32, 11, 12, -31,
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
 var EarlyKnightPst = [64]int16{
-	-207, -79, -51, -47, 54, -116, -26, -137,
-	-78, -43, 80, 42, 29, 73, 6, -14,
-	-35, 71, 48, 63, 96, 139, 72, 57,
-	6, 31, 24, 52, 24, 75, 15, 30,
-	6, 34, 33, 23, 43, 25, 35, 7,
-	-2, 12, 28, 35, 45, 33, 47, 8,
-	-3, -28, 13, 23, 21, 39, 16, 15,
-	-101, 7, -31, -15, 16, 3, 12, 2,
+	-209, -86, -50, -48, 50, -114, -26, -137,
+	-75, -42, 77, 38, 33, 74, 9, -9,
+	-37, 71, 47, 64, 94, 140, 71, 55,
+	4, 29, 25, 53, 25, 72, 15, 32,
+	7, 31, 32, 24, 42, 27, 36, 7,
+	-4, 11, 26, 33, 45, 32, 45, 7,
+	-6, -30, 13, 21, 20, 37, 16, 14,
+	-99, 5, -32, -15, 14, 1, 11, 3,
 }
 
 var EarlyBishopPst = [64]int16{
-	-24, 29, -83, -43, -15, -34, 11, 2,
-	4, 47, 14, 3, 57, 76, 40, -28,
-	20, 67, 78, 65, 64, 75, 52, 21,
-	30, 38, 43, 69, 58, 50, 32, 21,
-	32, 51, 46, 59, 67, 46, 45, 37,
-	31, 53, 53, 51, 54, 73, 56, 42,
-	43, 62, 57, 44, 55, 64, 81, 46,
-	3, 38, 34, 27, 36, 32, 3, 18,
+	-26, 25, -77, -47, -14, -38, 10, 3,
+	4, 48, 12, 2, 56, 71, 39, -26,
+	19, 68, 79, 64, 65, 74, 51, 22,
+	29, 36, 43, 70, 58, 50, 32, 22,
+	34, 51, 46, 59, 67, 46, 47, 40,
+	30, 52, 54, 51, 54, 73, 55, 42,
+	46, 61, 55, 43, 54, 60, 80, 44,
+	6, 37, 33, 26, 35, 33, 2, 18,
 }
 
 var EarlyRookPst = [64]int16{
-	-3, 13, -14, 18, 20, -12, -2, -8,
-	4, 4, 33, 30, 55, 61, -4, 24,
-	-35, -8, -2, -3, -24, 32, 42, -14,
-	-45, -31, -16, 2, -14, 18, -20, -36,
-	-51, -44, -26, -26, -16, -29, -1, -35,
-	-53, -32, -31, -31, -19, -11, -10, -32,
-	-48, -25, -34, -23, -16, 1, -13, -68,
-	-19, -21, -12, -3, -1, -3, -34, -13,
+	-2, 14, -14, 23, 21, -13, -2, -6,
+	3, 4, 34, 30, 57, 62, -1, 27,
+	-33, -8, -1, -2, -25, 33, 44, -14,
+	-44, -31, -16, 4, -15, 17, -18, -39,
+	-49, -43, -29, -28, -14, -28, 1, -38,
+	-51, -32, -29, -31, -19, -8, -11, -33,
+	-48, -25, -32, -25, -15, 0, -15, -69,
+	-18, -19, -12, -3, 0, -4, -35, -14,
 }
 
 var EarlyQueenPst = [64]int16{
-	-66, -29, -11, -21, 34, 34, 31, 8,
-	-33, -61, -26, -26, -62, 27, -2, 20,
-	-18, -27, -16, -38, -9, 28, 2, 18,
-	-40, -39, -39, -50, -34, -19, -36, -28,
-	-11, -43, -25, -25, -22, -18, -17, -16,
-	-25, 6, -11, -4, -7, 0, 7, -2,
-	-23, -1, 18, 9, 16, 24, 7, 15,
-	16, -4, 8, 22, -4, -10, -11, -33,
+	-65, -28, -10, -19, 35, 36, 27, 10,
+	-34, -59, -25, -27, -62, 28, -4, 22,
+	-17, -24, -15, -40, -8, 28, 2, 21,
+	-41, -39, -36, -47, -34, -19, -33, -26,
+	-10, -42, -24, -24, -22, -19, -16, -13,
+	-25, 6, -12, -4, -6, -1, 6, -3,
+	-24, -2, 17, 8, 15, 23, 4, 13,
+	14, -6, 6, 22, -5, -10, -12, -34,
 }
 
 var EarlyKingPst = [64]int16{
-	-45, 92, 85, 43, -43, -11, 47, 39,
-	85, 33, 24, 60, 18, -1, -15, -61,
-	39, 34, 44, 11, 27, 52, 53, -13,
-	-15, -9, 11, -18, -21, -21, -20, -57,
-	-41, 11, -34, -73, -73, -49, -55, -69,
-	-2, -14, -25, -55, -57, -45, -18, -33,
-	9, 13, -15, -62, -41, -18, 9, 16,
-	-15, 33, 9, -64, 2, -38, 24, 24,
+	-46, 96, 85, 47, -47, -14, 42, 41,
+	91, 38, 25, 56, 15, -4, -16, -67,
+	37, 35, 42, 8, 23, 53, 51, -15,
+	-21, -11, 10, -20, -19, -23, -21, -51,
+	-46, 10, -34, -71, -69, -50, -56, -71,
+	-3, -14, -25, -57, -57, -47, -21, -34,
+	10, 14, -15, -57, -32, -18, 9, 15,
+	-13, 34, 11, -59, 2, -37, 26, 25,
 }
 
 // Endgame
 var LatePawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	167, 149, 133, 106, 118, 108, 153, 189,
-	87, 83, 62, 36, 20, 24, 61, 71,
-	22, 5, -6, -25, -18, -12, 2, 8,
-	19, 8, -2, -8, -9, -8, -4, 2,
-	4, 2, -7, -4, -3, -6, -15, -11,
-	15, 0, 6, 5, 8, -6, -12, -10,
+	170, 150, 134, 108, 117, 105, 155, 188,
+	87, 83, 63, 35, 22, 24, 61, 73,
+	23, 5, -7, -25, -17, -14, 2, 10,
+	20, 9, -1, -9, -9, -9, -2, 3,
+	4, 1, -8, -4, -4, -7, -14, -11,
+	16, -1, 6, 5, 11, -7, -11, -8,
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
 var LateKnightPst = [64]int16{
-	-45, -52, -16, -39, -44, -34, -73, -98,
-	-30, -12, -47, -18, -26, -51, -37, -61,
-	-38, -41, -13, -12, -30, -38, -39, -63,
-	-24, -9, 7, 9, 16, -6, -1, -25,
-	-26, -25, 0, 14, 3, 5, -7, -24,
-	-31, -13, -19, 0, -6, -18, -33, -28,
-	-45, -25, -18, -14, -10, -30, -28, -51,
-	-24, -57, -27, -13, -26, -25, -57, -73,
+	-47, -50, -17, -38, -42, -35, -75, -100,
+	-33, -12, -44, -18, -29, -50, -36, -61,
+	-36, -40, -10, -11, -28, -37, -39, -61,
+	-24, -8, 6, 9, 16, -6, 0, -27,
+	-28, -24, 0, 14, 3, 4, -7, -25,
+	-33, -14, -19, 0, -7, -19, -33, -33,
+	-43, -25, -20, -16, -12, -31, -29, -53,
+	-24, -57, -30, -16, -28, -25, -58, -76,
 }
 
 var LateBishopPst = [64]int16{
-	-10, -27, -4, -9, -6, -7, -13, -22,
-	-11, -15, -2, -16, -14, -23, -16, -12,
-	-5, -19, -17, -18, -16, -12, -9, 2,
-	-5, 2, 2, -3, 0, 0, -5, 1,
-	-10, -9, 2, 5, -9, 0, -12, -11,
-	-9, -6, 0, 1, 5, -11, -9, -13,
-	-15, -23, -11, -4, 0, -15, -21, -32,
-	-18, -7, -15, -3, -8, -11, -3, -14,
+	-11, -27, -7, -7, -8, -8, -14, -21,
+	-10, -14, 0, -16, -14, -20, -16, -13,
+	-4, -19, -17, -16, -17, -13, -8, 1,
+	-6, 3, 1, -2, 0, -1, -6, 0,
+	-12, -9, 3, 6, -9, 0, -12, -12,
+	-10, -8, 0, 1, 5, -12, -8, -13,
+	-17, -25, -11, -3, 0, -13, -20, -30,
+	-19, -7, -17, -4, -9, -12, -6, -14,
 }
 
 var LateRookPst = [64]int16{
-	7, 2, 12, 3, 5, 11, 6, 7,
-	8, 10, 2, 3, -14, -7, 11, 3,
-	11, 8, 2, 4, 4, -9, -9, 0,
-	15, 7, 14, -1, 5, 4, 3, 14,
-	16, 18, 17, 13, 5, 8, -1, 4,
-	13, 12, 8, 12, 3, 0, 3, -2,
-	10, 4, 12, 12, 2, -2, -3, 16,
-	4, 12, 9, 1, -2, -2, 10, -12,
+	10, 3, 15, 4, 6, 13, 8, 7,
+	9, 11, 4, 4, -14, -6, 13, 2,
+	12, 8, 2, 6, 3, -9, -8, 0,
+	16, 9, 16, 0, 7, 3, 4, 15,
+	15, 18, 18, 12, 3, 6, -4, 4,
+	12, 11, 7, 11, 2, -2, 2, -2,
+	9, 3, 11, 13, 0, -1, -6, 14,
+	4, 11, 9, 0, -2, -2, 9, -12,
 }
 
 var LateQueenPst = [64]int16{
-	31, 55, 51, 53, 43, 34, 23, 59,
-	3, 45, 51, 64, 88, 39, 53, 36,
-	-2, 23, 18, 81, 65, 48, 50, 29,
-	42, 42, 44, 67, 81, 58, 91, 66,
-	0, 58, 44, 65, 52, 55, 64, 48,
-	25, -25, 29, 17, 31, 35, 43, 37,
-	-10, -12, -21, -1, 5, -7, -14, -12,
-	-23, -18, -10, -30, 20, -12, 1, -27,
+	31, 54, 49, 53, 41, 33, 25, 57,
+	4, 44, 51, 65, 89, 41, 57, 36,
+	-4, 24, 19, 80, 68, 48, 54, 33,
+	44, 45, 44, 68, 80, 58, 89, 65,
+	0, 56, 43, 65, 51, 57, 63, 50,
+	24, -22, 30, 17, 28, 34, 45, 39,
+	-10, -13, -22, -1, 5, -8, -18, -13,
+	-23, -16, -11, -29, 19, -14, -3, -28,
 }
 
 var LateKingPst = [64]int16{
-	-69, -50, -29, -27, 0, 20, 1, -9,
-	-25, 5, 3, 1, 8, 34, 17, 24,
-	6, 8, 9, 6, 7, 33, 31, 19,
-	-5, 15, 17, 23, 21, 30, 23, 14,
-	-11, -11, 20, 29, 31, 24, 11, 1,
-	-17, -4, 11, 23, 26, 19, 4, 1,
-	-31, -22, 1, 15, 17, 1, -14, -22,
-	-55, -48, -24, 8, -21, -5, -36, -57,
+	-75, -53, -33, -31, -2, 18, -3, -14,
+	-29, 1, 1, 0, 7, 32, 17, 25,
+	4, 8, 9, 7, 6, 31, 31, 15,
+	-6, 14, 16, 23, 20, 29, 21, 10,
+	-13, -12, 20, 28, 30, 23, 9, -2,
+	-20, -7, 9, 23, 26, 19, 3, -1,
+	-30, -21, 5, 15, 14, 3, -13, -21,
+	-54, -49, -23, 3, -23, -4, -38, -56,
 }
 
-var MiddlegameBackwardPawnPenalty int16 = 10
+var MiddlegameBackwardPawnPenalty int16 = 11
 var EndgameBackwardPawnPenalty int16 = 3
-var MiddlegameIsolatedPawnPenalty int16 = 10
+var MiddlegameIsolatedPawnPenalty int16 = 11
 var EndgameIsolatedPawnPenalty int16 = 6
 var MiddlegameDoublePawnPenalty int16 = 2
 var EndgameDoublePawnPenalty int16 = 26
 var MiddlegamePassedPawnAward int16 = 0
 var EndgamePassedPawnAward int16 = 9
-var MiddlegameAdvancedPassedPawnAward int16 = 10
-var EndgameAdvancedPassedPawnAward int16 = 59
-var MiddlegameCandidatePassedPawnAward int16 = 32
-var EndgameCandidatePassedPawnAward int16 = 48
+var MiddlegameAdvancedPassedPawnAward int16 = 9
+var EndgameAdvancedPassedPawnAward int16 = 58
+var MiddlegameCandidatePassedPawnAward int16 = 34
+var EndgameCandidatePassedPawnAward int16 = 47
 var MiddlegameRookOpenFileAward int16 = 45
 var EndgameRookOpenFileAward int16 = 0
-var MiddlegameRookSemiOpenFileAward int16 = 14
+var MiddlegameRookSemiOpenFileAward int16 = 13
 var EndgameRookSemiOpenFileAward int16 = 20
 var MiddlegameVeritcalDoubleRookAward int16 = 9
-var EndgameVeritcalDoubleRookAward int16 = 11
+var EndgameVeritcalDoubleRookAward int16 = 10
 var MiddlegameHorizontalDoubleRookAward int16 = 29
-var EndgameHorizontalDoubleRookAward int16 = 8
+var EndgameHorizontalDoubleRookAward int16 = 7
 var MiddlegamePawnFactorCoeff int16 = 0
 var EndgamePawnFactorCoeff int16 = 0
 var MiddlegameMobilityFactorCoeff int16 = 6
 var EndgameMobilityFactorCoeff int16 = 3
 var MiddlegameAggressivityFactorCoeff int16 = 1
-var EndgameAggressivityFactorCoeff int16 = 6
+var EndgameAggressivityFactorCoeff int16 = 5
 var MiddlegameInnerPawnToKingAttackCoeff int16 = 0
 var EndgameInnerPawnToKingAttackCoeff int16 = 0
 var MiddlegameOuterPawnToKingAttackCoeff int16 = 2
 var EndgameOuterPawnToKingAttackCoeff int16 = 0
 var MiddlegameInnerMinorToKingAttackCoeff int16 = 17
 var EndgameInnerMinorToKingAttackCoeff int16 = 0
-var MiddlegameOuterMinorToKingAttackCoeff int16 = 11
+var MiddlegameOuterMinorToKingAttackCoeff int16 = 10
 var EndgameOuterMinorToKingAttackCoeff int16 = 0
 var MiddlegameInnerMajorToKingAttackCoeff int16 = 16
 var EndgameInnerMajorToKingAttackCoeff int16 = 0
 var MiddlegameOuterMajorToKingAttackCoeff int16 = 7
 var EndgameOuterMajorToKingAttackCoeff int16 = 5
-var MiddlegameInnerPawnShieldReward int16 = 7
+var MiddlegameInnerPawnShieldReward int16 = 8
 var EndgameInnerPawnShieldReward int16 = 0
-var MiddlegameOuterPawnShieldReward int16 = 6
+var MiddlegameOuterPawnShieldReward int16 = 8
 var EndgameOuterPawnShieldReward int16 = 0
-var MiddlegameNotCastlingPenalty int16 = 19
-var EndgameNotCastlingPenalty int16 = 1
-var MiddlegameKingZoneMissingOwnPawnPenalty int16 = 19
+var MiddlegameNotCastlingPenalty int16 = 23
+var EndgameNotCastlingPenalty int16 = 3
+var MiddlegameKingZoneMissingOwnPawnPenalty int16 = 21
 var EndgameKingZoneMissingOwnPawnPenalty int16 = 0
+var MiddlegameKingZoneOpponentPawnMissingPenalty int16 = 21
+var EndgameKingZoneOpponentPawnMissingPenalty int16 = 1
 
 // // Middle-game
 // var EarlyPawnPst = [64]int16{
@@ -419,7 +421,6 @@ var EndgameKingZoneMissingOwnPawnPenalty int16 = 0
 // var EndgameNotCastlingPenalty int16 = 2
 // var MiddlegameKingZoneMissingOwnPawnPenalty int16 = 24
 // var EndgameKingZoneMissingOwnPawnPenalty int16 = 0
-//
 // var MiddlegameKingZoneOpponentPawnMissingPenalty int16 = 24
 // var EndgameKingZoneOpponentPawnMissingPenalty int16 = 0
 
@@ -871,7 +872,7 @@ func PawnStructureEval(p *Position) Eval {
 	return Eval{blackMG: blackMG, whiteMG: whiteMG, blackEG: blackEG, whiteEG: whiteEG}
 }
 
-func kingSafetyPenalty(color Color, side PieceType, ownPawn uint64 /* , opPawn uint64 */) (int16, int16) {
+func kingSafetyPenalty(color Color, side PieceType, ownPawn uint64, opPawn uint64) (int16, int16) {
 	var mg, eg int16
 	var a_inner_shield, b_inner_shield, c_inner_shield, f_inner_shield, g_inner_shield, h_inner_shield,
 		a_outer_shield, b_outer_shield, c_outer_shield, f_outer_shield, g_outer_shield, h_outer_shield uint64
@@ -908,10 +909,10 @@ func kingSafetyPenalty(color Color, side PieceType, ownPawn uint64 /* , opPawn u
 
 	}
 	if side == King {
-		// if H_FileFill&opPawn == 0 {
-		// 	mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
-		// 	eg -= EndgameKingZoneOpponentPawnMissingPenalty
-		// }
+		if H_FileFill&opPawn == 0 {
+			mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
+			eg -= EndgameKingZoneOpponentPawnMissingPenalty
+		}
 
 		if H_FileFill&ownPawn == 0 {
 			mg -= MiddlegameKingZoneMissingOwnPawnPenalty
@@ -926,10 +927,10 @@ func kingSafetyPenalty(color Color, side PieceType, ownPawn uint64 /* , opPawn u
 			}
 		}
 
-		// if G_FileFill&opPawn == 0 {
-		// 	mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
-		// 	eg -= EndgameKingZoneOpponentPawnMissingPenalty
-		// }
+		if G_FileFill&opPawn == 0 {
+			mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
+			eg -= EndgameKingZoneOpponentPawnMissingPenalty
+		}
 
 		if G_FileFill&ownPawn == 0 {
 			mg -= MiddlegameKingZoneMissingOwnPawnPenalty
@@ -980,10 +981,10 @@ func kingSafetyPenalty(color Color, side PieceType, ownPawn uint64 /* , opPawn u
 			eg += EndgameOuterPawnShieldReward
 		}
 
-		// if B_FileFill&opPawn == 0 {
-		// 	mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
-		// 	eg -= EndgameKingZoneOpponentPawnMissingPenalty
-		// }
+		if B_FileFill&opPawn == 0 {
+			mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
+			eg -= EndgameKingZoneOpponentPawnMissingPenalty
+		}
 
 		if B_FileFill&ownPawn == 0 {
 			mg -= MiddlegameKingZoneMissingOwnPawnPenalty
@@ -998,10 +999,10 @@ func kingSafetyPenalty(color Color, side PieceType, ownPawn uint64 /* , opPawn u
 			}
 		}
 
-		// if A_FileFill&opPawn == 0 {
-		// 	mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
-		// 	eg -= EndgameKingZoneOpponentPawnMissingPenalty
-		// }
+		if A_FileFill&opPawn == 0 {
+			mg -= MiddlegameKingZoneOpponentPawnMissingPenalty
+			eg -= EndgameKingZoneOpponentPawnMissingPenalty
+		}
 
 		if A_FileFill&ownPawn == 0 {
 			mg -= MiddlegameKingZoneMissingOwnPawnPenalty
@@ -1027,13 +1028,13 @@ func KingSafety(blackKing uint64, whiteKing uint64, blackPawn uint64,
 	if blackKing&BlackKingSideMask != 0 {
 		blackCastle = true
 		// Missing pawn shield
-		mg, eg := kingSafetyPenalty(Black, King, blackPawn) //, whitePawn)
+		mg, eg := kingSafetyPenalty(Black, King, blackPawn, whitePawn)
 		blackCentipawnsMG += mg
 		blackCentipawnsEG += eg
 	} else if blackKing&BlackQueenSideMask != 0 {
 		blackCastle = true
 		// Missing pawn shield
-		mg, eg := kingSafetyPenalty(Black, Queen, blackPawn) //, whitePawn)
+		mg, eg := kingSafetyPenalty(Black, Queen, blackPawn, whitePawn)
 		blackCentipawnsMG += mg
 		blackCentipawnsEG += eg
 	}
@@ -1041,13 +1042,13 @@ func KingSafety(blackKing uint64, whiteKing uint64, blackPawn uint64,
 	if whiteKing&WhiteKingSideMask != 0 {
 		whiteCastle = true
 		// Missing pawn shield
-		mg, eg := kingSafetyPenalty(White, King, whitePawn) //, blackPawn)
+		mg, eg := kingSafetyPenalty(White, King, whitePawn, blackPawn)
 		whiteCentipawnsMG += mg
 		whiteCentipawnsEG += eg
 	} else if whiteKing&WhiteQueenSideMask != 0 {
 		whiteCastle = true
 		// Missing pawn shield
-		mg, eg := kingSafetyPenalty(White, Queen, whitePawn) //, blackPawn)
+		mg, eg := kingSafetyPenalty(White, Queen, whitePawn, blackPawn)
 		whiteCentipawnsMG += mg
 		whiteCentipawnsEG += eg
 	}
