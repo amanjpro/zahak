@@ -286,9 +286,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 	if bestscore > alpha {
 		if bestscore >= beta {
-			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
-			// e.AddKillerMove(hashmove, searchHeight)
-			e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
+			if !e.AbruptStop {
+				e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+				// e.AddKillerMove(hashmove, searchHeight)
+				e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
+			}
 			return bestscore
 		}
 		// Potential PV move, lets copy it to the current pv-line
@@ -363,9 +365,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if score > bestscore {
 			if score >= beta {
-				e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
-				// e.AddKillerMove(move, searchHeight)
-				e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
+				if !e.AbruptStop {
+					e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
+					// e.AddKillerMove(move, searchHeight)
+					e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
+				}
 				return score
 			}
 			// Potential PV move, lets copy it to the current pv-line
@@ -376,10 +380,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		e.RemoveMoveHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 	}
-	if alpha > oldAlpha {
-		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
-	} else {
-		e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
+	if !e.AbruptStop {
+		if alpha > oldAlpha {
+			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
+		} else {
+			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
+		}
 	}
 	return bestscore
 }
