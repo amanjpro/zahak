@@ -152,10 +152,10 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		blackMG: -(MiddlegamePawnShieldPenalty * 1),
-		blackEG: -(EndgamePawnShieldPenalty * 1),
-		whiteMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
+		whiteMG: -(-MiddlegameOuterPawnShieldReward*1 + MiddlegameKingZoneMissingOwnPawnPenalty*1 /* + 1*MiddlegameKingZoneOpponentPawnMissingPenalty */),
+		whiteEG: -(-EndgameOuterPawnShieldReward*1 + EndgameKingZoneMissingOwnPawnPenalty*1 /* + 1*EndgameKingZoneOpponentPawnMissingPenalty */),
+		blackMG: -(-MiddlegameInnerPawnShieldReward*2 /* + MiddlegameKingZoneOpponentPawnMissingPenalty*1 */ + 1*MiddlegameKingZoneMissingOwnPawnPenalty),
+		blackEG: -(-EndgameInnerPawnShieldReward*2 /* + EndgameKingZoneOpponentPawnMissingPenalty*1 */ + 1*EndgameKingZoneMissingOwnPawnPenalty),
 	}
 
 	if actual != expected {
@@ -175,10 +175,10 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		whiteMG: -(MiddlegamePawnShieldPenalty * 1),
-		whiteEG: -(EndgamePawnShieldPenalty * 1),
-		blackMG: -(MiddlegamePawnShieldPenalty*2 + +1*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
+		blackMG: -(-MiddlegameOuterPawnShieldReward*1 + MiddlegameKingZoneMissingOwnPawnPenalty*1 /* + 1*MiddlegameKingZoneOpponentPawnMissingPenalty */),
+		blackEG: -(-EndgameOuterPawnShieldReward*1 + EndgameKingZoneMissingOwnPawnPenalty*1 /* +1*EndgameKingZoneOpponentPawnMissingPenalty */),
+		whiteMG: -(-MiddlegameInnerPawnShieldReward*2 /* + MiddlegameKingZoneOpponentPawnMissingPenalty*1 */ + 1*MiddlegameKingZoneMissingOwnPawnPenalty),
+		whiteEG: -(-EndgameInnerPawnShieldReward*2 /* + EndgameKingZoneOpponentPawnMissingPenalty*1 */ + 1*EndgameKingZoneMissingOwnPawnPenalty),
 	}
 
 	if actual != expected {
@@ -198,10 +198,10 @@ func TestKingSafetySemiOpenFile(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty * 2),
-		whiteEG: -(EndgameKingZoneMissingPawnPenalty * 2),
-		blackMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
-		blackEG: -(EndgameKingZoneMissingPawnPenalty * 1),
+		whiteMG: -(MiddlegameKingZoneMissingOwnPawnPenalty*1 - MiddlegameInnerPawnShieldReward*1),
+		whiteEG: -(EndgameKingZoneMissingOwnPawnPenalty*1 - EndgameInnerPawnShieldReward*1),
+		blackMG: MiddlegameInnerPawnShieldReward * 2,
+		blackEG: EndgameInnerPawnShieldReward * 2,
 	}
 
 	if actual != expected {
