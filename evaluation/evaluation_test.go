@@ -75,7 +75,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(-12)
+	expected := int16(-13)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -86,7 +86,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(-12)
+	expected = int16(-13)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -99,7 +99,7 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(50)
+	expected := int16(53)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -110,7 +110,7 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(50)
+	expected = int16(53)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -152,10 +152,10 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		blackMG: -(MiddlegamePawnShieldPenalty * 1),
-		blackEG: -(EndgamePawnShieldPenalty * 1),
-		whiteMG: -(MiddlegamePawnShieldPenalty*2 + 1*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
+		blackMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
+		blackEG: -(EndgameKingZoneMissingPawnPenalty * 1),
+		whiteMG: -(MiddlegamePawnShieldPenalty*1 + 1*MiddlegameKingZoneOpenFilePenalty),
+		whiteEG: -(EndgamePawnShieldPenalty*1 + 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
@@ -175,10 +175,10 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		whiteMG: -(MiddlegamePawnShieldPenalty * 1),
-		whiteEG: -(EndgamePawnShieldPenalty * 1),
-		blackMG: -(MiddlegamePawnShieldPenalty*2 + +1*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty*2 + 1*EndgameKingZoneOpenFilePenalty),
+		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
+		whiteEG: -(EndgameKingZoneMissingPawnPenalty * 1),
+		blackMG: -(MiddlegamePawnShieldPenalty*1 + 1*MiddlegameKingZoneOpenFilePenalty),
+		blackEG: -(EndgamePawnShieldPenalty*1 + 1*EndgameKingZoneOpenFilePenalty),
 	}
 
 	if actual != expected {
