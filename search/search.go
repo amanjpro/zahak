@@ -218,12 +218,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if isNullMoveAllowed && depthLeft > R {
 		ep := position.MakeNullMove()
-		oldPred := e.pred
-		e.pred = NewPredecessors()
+		e.pred.Push(position.Hash())
 		e.innerLines[searchHeight+1].Recycle()
 		e.positionMoves[searchHeight+1] = EmptyMove
 		score := -e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
-		e.pred = oldPred
+		e.pred.Pop()
 		position.UnMakeNullMove(ep)
 		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
 			e.info.nullMoveCounter += 1
