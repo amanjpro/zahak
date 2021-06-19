@@ -99,7 +99,7 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen, false)
 
 	actual := Evaluate(game.Position())
-	expected := int16(53)
+	expected := int16(55)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -110,7 +110,7 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen, false)
 
 	actual = Evaluate(game.Position())
-	expected = int16(53)
+	expected = int16(55)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
