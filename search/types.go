@@ -312,7 +312,7 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 		return true
 	}
 
-	for i := pred.maxIndex - 1; i >= 0; i -= 2 {
+	for i := pred.maxIndex - 1; i >= 0; i-- {
 		var candidate = pred.line[i]
 		if current == candidate {
 			return true
