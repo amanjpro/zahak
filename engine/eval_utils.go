@@ -233,8 +233,8 @@ func (p *Position) CountIsolatedPawns(color Color) int16 {
 	return 0
 }
 
-var lowHalf uint64 = 0x00000000FFFFFFFF
-var hiHalf uint64 = 0xFFFFFFFF00000000
+const lowHalf uint64 = 0x00000000FFFFFFFF
+const hiHalf uint64 = 0xFFFFFFFF00000000
 
 func (p *Position) CountPassedPawns(color Color) (int16, int16) {
 	switch color {
@@ -249,6 +249,13 @@ func (p *Position) CountPassedPawns(color Color) (int16, int16) {
 }
 
 // pawn utils
+
+var A_FileFill = FileFill(uint64(1 << A1))
+var B_FileFill = FileFill(uint64(1 << B1))
+var C_FileFill = FileFill(uint64(1 << C1))
+var F_FileFill = FileFill(uint64(1 << F1))
+var G_FileFill = FileFill(uint64(1 << G1))
+var H_FileFill = FileFill(uint64(1 << H1))
 
 func nortFill(gen uint64) uint64 {
 	gen |= (gen << 8)
