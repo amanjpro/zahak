@@ -314,35 +314,32 @@ func (p *Position) kingQuietMoves(tabooSquares uint64, color Color, ml *MoveList
 			moves ^= squareMask[sq]
 		}
 
+		kingSide := whiteKingSideCastle
+		queenSide := whiteQueenSideCastle
+		kingCastleMove := whiteKingCastleMove
+		queenCastleMove := whiteQueenCastleMove
 		E := E1
-		F := F1
-		G := G1
-		D := D1
-		C := C1
 		B := B1
-		if color == Black && srcSq.Rank() == Rank8 {
+		if color == Black {
+			kingCastleMove = blackKingCastleMove
+			queenCastleMove = blackQueenCastleMove
+			kingSide = blackKingSideCastle
+			queenSide = blackQueenSideCastle
 			E = E8
-			F = F8
-			G = G8
-			D = D8
-			C = C8
 			B = B8
 		}
 
-		kingSide := uint64(squareMask[F] | squareMask[G])
-		queenSide := uint64(squareMask[D] | squareMask[C])
-
-		if srcSq == E && kingSideCastle &&
+		if kingSideCastle &&
 			((ownPieces|otherPieces)&kingSide == 0) && // are empty
 			(tabooSquares&(kingSide|squareMask[E]) == 0) { // Not in check
-			m := NewMove(srcSq, G, movingPiece, NoPiece, NoType, KingSideCastle)
+			m := kingCastleMove
 			p.addAllMoves(ml, m)
 		}
 
 		if srcSq == E && queenSideCastle &&
 			((ownPieces|otherPieces)&(queenSide|(squareMask[B])) == 0) && // are empty
 			(tabooSquares&(queenSide|squareMask[E]) == 0) { // Not in check
-			m := NewMove(srcSq, C, movingPiece, NoPiece, NoType, QueenSideCastle)
+			m := queenCastleMove
 			p.addAllMoves(ml, m)
 
 		}
@@ -826,6 +823,15 @@ const rank2 = uint64(0x000000000000FF00)
 const rank4 = uint64(0x00000000FF000000)
 const rank5 = uint64(0x000000FF00000000)
 const rank7 = uint64(0x00FF000000000000)
+const blackQueenSideCastle = uint64(1<<D8 | 1<<C8)
+const whiteQueenSideCastle = uint64(1<<D1 | 1<<C1)
+const blackKingSideCastle = uint64(1<<F8 | 1<<G8)
+const whiteKingSideCastle = uint64(1<<F1 | 1<<G1)
+
+var whiteKingCastleMove = NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
+var whiteQueenCastleMove = NewMove(E1, C1, WhiteKing, NoPiece, NoType, QueenSideCastle)
+var blackKingCastleMove = NewMove(E8, G8, BlackKing, NoPiece, NoType, KingSideCastle)
+var blackQueenCastleMove = NewMove(E8, C8, BlackKing, NoPiece, NoType, QueenSideCastle)
 
 // I took those from CounterGo, which in turn takes them from Chess Programming Wiki
 func bishopAttacks(sq Square, occ uint64, ownPieces uint64) uint64 {
