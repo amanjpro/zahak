@@ -44,7 +44,7 @@ func isInCheck(b Bitboard, colorOfKing Color) bool {
 }
 
 func isKingAttacked(b Bitboard, colorOfKing Color) bool {
-	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ uint64
+	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ, opKing uint64
 	var squareOfKing Square
 	occupiedBB := b.whitePieces | b.blackPieces
 	if colorOfKing == White {
@@ -55,6 +55,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 		opKnights = b.blackKnight
 		opRQ = b.blackRook | b.blackQueen
 		opBQ = b.blackBishop | b.blackQueen
+		opKing = b.blackKing
 	} else {
 		kingIndex := bitScanForward(b.blackKing)
 		ownKing = squareMask[kingIndex]
@@ -63,6 +64,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 		opKnights = b.whiteKnight
 		opRQ = b.whiteRook | b.whiteQueen
 		opBQ = b.whiteBishop | b.whiteQueen
+		opKing = b.whiteKing
 	}
 	pawnChecks := opPawnAttacks
 	if pawnChecks != 0 {
@@ -73,7 +75,12 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 	if knightChecks != 0 {
 		return true
 	}
-	// Knights and pawns cannot discover each other
+
+	kingChecks := (kingAttacks(ownKing) & opKing)
+	if kingChecks != 0 {
+		return true
+	}
+
 	bishopChecks := (bishopAttacks(squareOfKing, occupiedBB, empty) & opBQ)
 
 	if bishopChecks != 0 {
