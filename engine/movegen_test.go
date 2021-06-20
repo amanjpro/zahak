@@ -437,7 +437,9 @@ func TestDoubleCheckResponses(t *testing.T) {
 	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{
 		NewMove(G1, H2, WhiteKing, NoPiece, NoType, 0), // The only legal move
-		NewMove(G1, H1, WhiteKing, NoPiece, NoType, 0), // The only legal move
+		NewMove(G1, H1, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G1, F1, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G1, F2, WhiteKing, NoPiece, NoType, 0),
 		NewMove(H6, H7, WhitePawn, NoPiece, NoType, 0),
 		NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(F3, F1, WhiteRook, NoPiece, NoType, 0),

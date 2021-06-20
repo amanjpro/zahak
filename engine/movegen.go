@@ -17,7 +17,14 @@ func (p *Position) GetQuietMoves(ml *MoveList) {
 	color := p.Turn()
 	board := p.Board
 
-	taboo := tabooSquares(board, color)
+	var taboo uint64
+
+	if color == White &&
+		(p.HasTag(WhiteCanCastleKingSide | WhiteCanCastleQueenSide)) {
+		taboo = tabooSquares(board, color)
+	} else if color == Black &&
+		(p.HasTag(BlackCanCastleKingSide | BlackCanCastleQueenSide)) {
+	}
 
 	p.pawnQuietMoves(color, ml)
 	p.knightQuietMoves(color, ml)
