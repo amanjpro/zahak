@@ -111,7 +111,7 @@ func TestKingMoves(t *testing.T) {
 	color := White
 	ml := NewMoveList(3)
 	taboo := tabooSquares(board, color)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -141,7 +141,7 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	color := White
 	taboo := tabooSquares(board, color)
 	ml := NewMoveList(3)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -171,7 +171,7 @@ func TestKingQueenSideCastling(t *testing.T) {
 	color := White
 	taboo := tabooSquares(board, color)
 	ml := NewMoveList(4)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -340,7 +340,7 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	ml := NewMoveList(1)
 	color := White
 	taboo := tabooSquares(board, color)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{

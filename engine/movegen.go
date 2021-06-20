@@ -18,6 +18,7 @@ func (p *Position) GetQuietMoves(ml *MoveList) {
 	board := p.Board
 
 	taboo := tabooSquares(board, color)
+
 	p.pawnQuietMoves(color, ml)
 	p.knightQuietMoves(color, ml)
 	p.slidingQuietMoves(color, Bishop, ml)
@@ -28,16 +29,13 @@ func (p *Position) GetQuietMoves(ml *MoveList) {
 
 func (p *Position) GetCaptureMoves(ml *MoveList) {
 	color := p.Turn()
-	board := p.Board
-
-	taboo := tabooSquares(board, color)
 
 	p.pawnCaptureMoves(color, ml)
 	p.knightCaptureMoves(color, ml)
 	p.slidingCaptureMoves(color, Bishop, ml)
 	p.slidingCaptureMoves(color, Rook, ml)
 	p.slidingCaptureMoves(color, Queen, ml)
-	p.kingCaptureMoves(taboo, color, ml)
+	p.kingCaptureMoves(color, ml)
 }
 
 // Checks and Pins
@@ -46,6 +44,9 @@ func isInCheck(b Bitboard, colorOfKing Color) bool {
 }
 
 func isKingAttacked(b Bitboard, colorOfKing Color) bool {
+	if b.whiteKing == 0 || b.blackKing == 0 {
+		return true
+	}
 	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ uint64
 	var squareOfKing Square
 	occupiedBB := b.whitePieces | b.blackPieces
@@ -503,7 +504,7 @@ func (p *Position) slidingCaptureMoves(color Color, pieceType PieceType, ml *Mov
 	}
 }
 
-func (p *Position) kingCaptureMoves(tabooSquares uint64, color Color, ml *MoveList) {
+func (p *Position) kingCaptureMoves(color Color, ml *MoveList) {
 	var bbPiece, otherPieces uint64
 	var movingPiece Piece
 	if color == White {
@@ -518,7 +519,7 @@ func (p *Position) kingCaptureMoves(tabooSquares uint64, color Color, ml *MoveLi
 	if bbPiece != 0 {
 		src := bitScanForward(bbPiece)
 		srcSq := Square(src)
-		captures := kingCaptures(srcSq, otherPieces, tabooSquares)
+		captures := kingCaptures(srcSq, otherPieces)
 		for captures != 0 {
 			sq := bitScanForward(captures)
 			dest := Square(sq)
@@ -612,9 +613,9 @@ func kingMovesNoCaptures(sq Square, others uint64, tabooSquares uint64) uint64 {
 	return attacks &^ (others | tabooSquares)
 }
 
-func kingCaptures(sq Square, others uint64, tabooSquares uint64) uint64 {
+func kingCaptures(sq Square, others uint64) uint64 {
 	attacks := computedKingAttacks[sq]
-	return (attacks & others) &^ tabooSquares
+	return (attacks & others)
 }
 
 func kingAttacks(b uint64) uint64 {
