@@ -355,7 +355,7 @@ func (p *Position) pawnCaptureMoves(color Color,
 					m2 := NewMove(srcSq, dest, WhitePawn, cp, Rook, Capture)
 					m3 := NewMove(srcSq, dest, WhitePawn, cp, Bishop, Capture)
 					m4 := NewMove(srcSq, dest, WhitePawn, cp, Knight, Capture)
-					ml.Add(m1, m2, m3, m4)
+					ml.AddFour(m1, m2, m3, m4)
 				} else {
 					m := NewMove(srcSq, dest, WhitePawn, cp, NoType, Capture)
 					ml.Add(m)
@@ -381,7 +381,7 @@ func (p *Position) pawnCaptureMoves(color Color,
 					m2 := NewMove(srcSq, dest, WhitePawn, NoPiece, Rook, 0)
 					m3 := NewMove(srcSq, dest, WhitePawn, NoPiece, Bishop, 0)
 					m4 := NewMove(srcSq, dest, WhitePawn, NoPiece, Knight, 0)
-					ml.Add(m1, m2, m3, m4)
+					ml.AddFour(m1, m2, m3, m4)
 				}
 			}
 			bbPawn ^= pawn
@@ -401,7 +401,7 @@ func (p *Position) pawnCaptureMoves(color Color,
 					m2 := NewMove(srcSq, dest, BlackPawn, cp, Rook, Capture)
 					m3 := NewMove(srcSq, dest, BlackPawn, cp, Bishop, Capture)
 					m4 := NewMove(srcSq, dest, BlackPawn, cp, Knight, Capture)
-					ml.Add(m1, m2, m3, m4)
+					ml.AddFour(m1, m2, m3, m4)
 				} else {
 					var tag MoveTag = Capture
 					m := NewMove(srcSq, dest, BlackPawn, cp, NoType, tag)
@@ -427,7 +427,7 @@ func (p *Position) pawnCaptureMoves(color Color,
 					m2 := NewMove(srcSq, dest, BlackPawn, NoPiece, Rook, 0)
 					m3 := NewMove(srcSq, dest, BlackPawn, NoPiece, Bishop, 0)
 					m4 := NewMove(srcSq, dest, BlackPawn, NoPiece, Knight, 0)
-					ml.Add(m1, m2, m3, m4)
+					ml.AddFour(m1, m2, m3, m4)
 				}
 			}
 			bbPawn ^= pawn
