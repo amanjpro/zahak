@@ -16,8 +16,8 @@ type MovePicker struct {
 }
 
 func EmptyMovePicker() *MovePicker {
-	qml := NewMoveList(500)
-	cml := NewMoveList(500)
+	qml := NewMoveList(250)
+	cml := NewMoveList(250)
 	mp := &MovePicker{
 		position:        nil,
 		engine:          nil,
