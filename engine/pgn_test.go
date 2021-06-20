@@ -10,7 +10,7 @@ func TestPGNParsing(t *testing.T) {
 	game := FromFen(fen, true)
 	actual := game.position.ParseMoves([]string{"g2h1q", "e2f1", "   ", "\n\t", "h8h2"})
 	expected := []Move{
-		NewMove(G2, H1, BlackPawn, WhiteRook, Queen, Capture|Check),
+		NewMove(G2, H1, BlackPawn, WhiteRook, Queen, Capture),
 		NewMove(E2, F1, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(H8, H2, BlackRook, WhitePawn, NoType, Capture),
 	}

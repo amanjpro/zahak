@@ -81,7 +81,7 @@ func TestUnMakeMove(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := NewMove(F3, G4, WhiteBishop, NoPiece, NoType, 0)
-	ep, tag, hc := game.position.MakeMove(move)
+	ep, tag, hc, _ := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
@@ -100,7 +100,7 @@ func TestUnMakeMoveDoublePushPawn(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0)
-	ep, tag, hc := game.position.MakeMove(move)
+	ep, tag, hc, _ := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
@@ -119,7 +119,7 @@ func TestUnMakeMoveCapture(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := NewMove(F3, E4, WhiteBishop, BlackPawn, NoType, Capture)
-	ep, tag, hc := game.position.MakeMove(move)
+	ep, tag, hc, _ := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
@@ -138,7 +138,7 @@ func TestUnMakeMoveCastling(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
-	ep, tag, hc := game.position.MakeMove(move)
+	ep, tag, hc, _ := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
@@ -157,7 +157,7 @@ func TestUnMakeMoveEnPassant(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture)
-	ep, tag, hc := game.position.MakeMove(move)
+	ep, tag, hc, _ := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {
@@ -176,7 +176,7 @@ func TestUnMakeMovePromotion(t *testing.T) {
 	game := FromFen(startFen, true)
 	startHash := game.position.Hash()
 	move := NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture)
-	ep, tag, hc := game.position.MakeMove(move)
+	ep, tag, hc, _ := game.position.MakeMove(move)
 	game.position.UnMakeMove(move, tag, ep, hc)
 	fen := game.Fen()
 	if fen != startFen {

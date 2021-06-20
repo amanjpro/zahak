@@ -16,8 +16,8 @@ type MovePicker struct {
 }
 
 func EmptyMovePicker() *MovePicker {
-	qml := NewMoveList(150)
-	cml := NewMoveList(150)
+	qml := NewMoveList(500)
+	cml := NewMoveList(500)
 	mp := &MovePicker{
 		position:        nil,
 		engine:          nil,
@@ -161,10 +161,10 @@ func (mp *MovePicker) scoreQuietMoves() {
 		}
 
 		// prefer checks
-		if move.IsCheck() {
-			mp.quietMoveList.Scores[i] = 10_000
-			continue
-		}
+		// if move.IsCheck() {
+		// 	mp.quietMoveList.Scores[i] = 10_000
+		// 	continue
+		// }
 
 		// King safety (castling)
 		isCastling := move.IsKingSideCastle() || move.IsQueenSideCastle()

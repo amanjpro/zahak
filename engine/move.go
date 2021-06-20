@@ -20,7 +20,6 @@ Given 32 bit int: 00000 000 0000 0000 0000 000000 000000
 	   - second bit is queen-side-castle
 	   - third bit is capture
 	   - fourth bit is enpassant
-	   - fifth bit is check
 
 	6+6+4+4+3+5 = 28 bits, that leaves us 4 more bits in case
 	more tags were needed
@@ -50,8 +49,6 @@ const (
 	Capture
 	// EnPassant indicates that the move captures via en passant.
 	EnPassant
-	// Check indicates that the move puts the opposing player in check.
-	Check
 )
 
 func (m Move) Source() Square {
@@ -92,14 +89,6 @@ func (m Move) IsCapture() bool {
 
 func (m Move) IsEnPassant() bool {
 	return uint32(m)&0x4000000 != 0
-}
-
-func (m Move) IsCheck() bool {
-	return uint32(m)&0x8000000 != 0
-}
-
-func (m *Move) AddCheckTag() {
-	*m = Move(uint32(*m) | 0x8000000)
 }
 
 func (m Move) ToString() string {

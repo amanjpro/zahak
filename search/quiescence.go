@@ -43,7 +43,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.info.quiesceCounter += 1
 	e.VisitNode()
 
-	var isInCheck = e.positionMoves[searchHeight].IsCheck()
+	var isInCheck = e.Position.IsInCheck()
 
 	standPat := e.staticEvals[searchHeight]
 
@@ -105,20 +105,21 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			}
 		}
 
-		ep, tg, hc := position.MakeMove(move)
-		e.positionMoves[searchHeight+1] = move
-		e.staticEvals[searchHeight+1] = Evaluate(position)
+		if ep, tg, hc, ok := position.MakeMove(move); ok {
+			e.positionMoves[searchHeight+1] = move
+			e.staticEvals[searchHeight+1] = Evaluate(position)
 
-		e.pred.Push(position.Hash())
-		score := -e.quiescence(-beta, -alpha, searchHeight+1)
-		e.pred.Pop()
-		position.UnMakeMove(move, tg, ep, hc)
-		if score > bestscore {
-			bestscore = score
-			if score > alpha {
-				alpha = score
-				if score >= beta {
-					break
+			e.pred.Push(position.Hash())
+			score := -e.quiescence(-beta, -alpha, searchHeight+1)
+			e.pred.Pop()
+			position.UnMakeMove(move, tg, ep, hc)
+			if score > bestscore {
+				bestscore = score
+				if score > alpha {
+					alpha = score
+					if score >= beta {
+						break
+					}
 				}
 			}
 		}

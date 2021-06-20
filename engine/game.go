@@ -13,7 +13,7 @@ type Game struct {
 
 func (g *Game) IsLegalMove(m Move) bool {
 	// Very inefficient, but doesn't really matter
-	for _, move := range g.position.LegalMoves() {
+	for _, move := range g.position.PseudoLegalMoves() {
 		if move == m {
 			return true
 		}

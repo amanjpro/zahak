@@ -14,7 +14,7 @@ func (p *Position) ParseMoves(moveStr []string) []Move {
 		return p.ParseMoves(moveStr[1:])
 	} else {
 		var parsed Move
-		validMoves := p.LegalMoves()
+		validMoves := p.PseudoLegalMoves()
 		for _, move := range validMoves {
 			if move.ToString() == currentMove {
 				parsed = move
@@ -24,7 +24,7 @@ func (p *Position) ParseMoves(moveStr []string) []Move {
 		if parsed == 0 {
 			panic(fmt.Sprintf("Expected a valid move, %s is not valid", currentMove))
 		}
-		ep, tg, hc := p.MakeMove(parsed)
+		ep, tg, hc, _ := p.MakeMove(parsed)
 		otherMoves := p.ParseMoves(moveStr[1:])
 		p.UnMakeMove(parsed, tg, ep, hc)
 		return append(append([]Move{}, parsed), otherMoves...)
@@ -39,7 +39,6 @@ func (p *Position) MoveToPGN(move Move) string {
 		return "O-O-O"
 	}
 	isCapture := move.IsCapture()
-	isCheck := move.IsCheck()
 	movingPiece := move.MovingPiece()
 	source := move.Source()
 	dest := move.Destination()
@@ -49,7 +48,7 @@ func (p *Position) MoveToPGN(move Move) string {
 	ambiguity := 0
 	var alternativeMove Move
 	if movingPiece.Type() != Pawn {
-		validMoves := p.LegalMoves()
+		validMoves := p.PseudoLegalMoves()
 		for _, m := range validMoves {
 			if m != move && m.MovingPiece() == movingPiece && m.Destination() == dest {
 				alternativeMove = m
@@ -82,16 +81,16 @@ func (p *Position) MoveToPGN(move Move) string {
 	if promoType != NoType {
 		moveStr = fmt.Sprint(moveStr, "=", promoType.Name())
 	}
-	if isCheck {
-		// is Checkmate?
-		p.partialMakeMove(move)
-		if len(p.LegalMoves()) == 0 {
+	// is Checkmate?
+	p.partialMakeMove(move)
+	if p.IsInCheck() {
+		if len(p.PseudoLegalMoves()) == 0 {
 			moveStr = fmt.Sprint(moveStr, "#")
 		} else {
 			moveStr = fmt.Sprint(moveStr, "+")
 		}
-		p.partialUnMakeMove(move)
 	}
+	p.partialUnMakeMove(move)
 
 	return moveStr
 }

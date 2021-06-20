@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewMove(t *testing.T) {
-	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, Check|Capture|KingSideCastle|QueenSideCastle|EnPassant)
+	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, Capture|KingSideCastle|QueenSideCastle|EnPassant)
 
 	if move.Source() != E1 {
 		t.Errorf("NewMove cannot assign source properly, %s", fmt.Sprintf("\nExpected: %b\nGot: %b", E1, move.Source()))
@@ -22,9 +22,6 @@ func TestNewMove(t *testing.T) {
 	}
 	if move.PromoType() != Queen {
 		t.Errorf("NewMove cannot assign promo type properly, %s", fmt.Sprintf("\nExpected: %b\nGot: %b", Queen, move.PromoType()))
-	}
-	if !move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected true, got false")
 	}
 	if !move.IsCapture() {
 		t.Error("NewMove doesn't set capture flag properly, Expected true, got false")
@@ -43,9 +40,6 @@ func TestNewMove(t *testing.T) {
 func TestEnPassantFlag(t *testing.T) {
 	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, EnPassant)
 
-	if move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected false, got true")
-	}
 	if move.IsCapture() {
 		t.Error("NewMove doesn't set capture flag properly, Expected false, got true")
 	}
@@ -60,32 +54,9 @@ func TestEnPassantFlag(t *testing.T) {
 	}
 }
 
-func TestCheckFlag(t *testing.T) {
-	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, Check)
-
-	if !move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected true, got false")
-	}
-	if move.IsCapture() {
-		t.Error("NewMove doesn't set capture flag properly, Expected false, got true")
-	}
-	if move.IsEnPassant() {
-		t.Error("NewMove doesn't set enpassant flag properly, Expected false, got true")
-	}
-	if move.IsQueenSideCastle() {
-		t.Error("NewMove doesn't set queen-side castle flag properly, Expected false, got true")
-	}
-	if move.IsKingSideCastle() {
-		t.Error("NewMove doesn't set king-side castle flag properly, Expected false, got true")
-	}
-}
-
 func TestCaptureFlag(t *testing.T) {
 	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, Capture)
 
-	if move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected false, got true")
-	}
 	if !move.IsCapture() {
 		t.Error("NewMove doesn't set capture flag properly, Expected true, got false")
 	}
@@ -103,9 +74,6 @@ func TestCaptureFlag(t *testing.T) {
 func TestQeenSideCastleFlag(t *testing.T) {
 	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, QueenSideCastle)
 
-	if move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected false, got true")
-	}
 	if move.IsCapture() {
 		t.Error("NewMove doesn't set capture flag properly, Expected false, got true")
 	}
@@ -123,9 +91,6 @@ func TestQeenSideCastleFlag(t *testing.T) {
 func TestKingSideCastleFlag(t *testing.T) {
 	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, KingSideCastle)
 
-	if move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected false, got true")
-	}
 	if move.IsCapture() {
 		t.Error("NewMove doesn't set capture flag properly, Expected false, got true")
 	}
@@ -137,28 +102,6 @@ func TestKingSideCastleFlag(t *testing.T) {
 	}
 	if !move.IsKingSideCastle() {
 		t.Error("NewMove doesn't set king-side castle flag properly, Expected true, got false")
-	}
-}
-
-func TestAddCheckTag(t *testing.T) {
-	move := NewMove(E1, E2, WhiteKing, BlackRook, Queen, 0)
-
-	move.AddCheckTag()
-
-	if !move.IsCheck() {
-		t.Error("NewMove doesn't set check flag properly, Expected true, got false")
-	}
-	if move.IsCapture() {
-		t.Error("NewMove doesn't set capture flag properly, Expected false, got true")
-	}
-	if move.IsEnPassant() {
-		t.Error("NewMove doesn't set enpassant flag properly, Expected false, got true")
-	}
-	if move.IsQueenSideCastle() {
-		t.Error("NewMove doesn't set queen-side castle flag properly, Expected false, got true")
-	}
-	if move.IsKingSideCastle() {
-		t.Error("NewMove doesn't set king-side castle flag properly, Expected false, got true")
 	}
 }
 

@@ -56,10 +56,6 @@ func ToMove(position *Position, bookmove uint16) Move {
 	}
 	move := NewMove(source, dest, movingPiece, capturedPiece, promotion, tag)
 
-	if position.IsCheckMove(move) {
-		move.AddCheckTag()
-	}
-
 	return move
 }
 
