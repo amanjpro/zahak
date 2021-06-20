@@ -44,9 +44,6 @@ func isInCheck(b Bitboard, colorOfKing Color) bool {
 }
 
 func isKingAttacked(b Bitboard, colorOfKing Color) bool {
-	if b.whiteKing == 0 || b.blackKing == 0 {
-		return true
-	}
 	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ uint64
 	var squareOfKing Square
 	occupiedBB := b.whitePieces | b.blackPieces
@@ -329,17 +326,19 @@ func (p *Position) kingQuietMoves(tabooSquares uint64, color Color, ml *MoveList
 
 func (p *Position) pawnCaptureMoves(color Color,
 	ml *MoveList) {
-	var bbPawn, ownPieces, otherPieces uint64
+	var bbPawn, ownPieces, otherPieces, otherKing uint64
 	if color == White {
 		bbPawn = p.Board.whitePawn
 		ownPieces = p.Board.whitePieces
-		otherPieces = p.Board.blackPieces
+		otherKing = p.Board.blackKing
+		otherPieces = p.Board.blackPieces ^ otherKing
 	} else {
 		bbPawn = p.Board.blackPawn
 		ownPieces = p.Board.blackPieces
-		otherPieces = p.Board.whitePieces
+		otherKing = p.Board.whiteKing
+		otherPieces = p.Board.whitePieces ^ otherKing
 	}
-	emptySquares := (otherPieces | ownPieces) ^ universal
+	emptySquares := (otherPieces | otherKing | ownPieces) ^ universal
 	enPassant := p.EnPassant
 	if color == White {
 		for bbPawn != 0 {
@@ -442,11 +441,11 @@ func (p *Position) knightCaptureMoves(color Color, ml *MoveList) {
 	if color == White {
 		movingPiece = WhiteKnight
 		bbPiece = p.Board.whiteKnight
-		otherPieces = p.Board.blackPieces
+		otherPieces = p.Board.blackPieces ^ p.Board.blackKing
 	} else {
 		movingPiece = BlackKnight
 		bbPiece = p.Board.blackKnight
-		otherPieces = p.Board.whitePieces
+		otherPieces = p.Board.whitePieces ^ p.Board.whiteKing
 	}
 	for bbPiece != 0 {
 		src := bitScanForward(bbPiece)
@@ -472,10 +471,10 @@ func (p *Position) slidingCaptureMoves(color Color, pieceType PieceType, ml *Mov
 	bbPiece := p.Board.GetBitboardOf(movingPiece)
 	if color == White {
 		ownPieces = p.Board.whitePieces
-		otherPieces = p.Board.blackPieces
+		otherPieces = p.Board.blackPieces ^ p.Board.blackKing
 	} else {
 		ownPieces = p.Board.blackPieces
-		otherPieces = p.Board.whitePieces
+		otherPieces = p.Board.whitePieces ^ p.Board.whiteKing
 	}
 	both := otherPieces | ownPieces
 	var rayAttacks uint64
@@ -509,11 +508,11 @@ func (p *Position) kingCaptureMoves(color Color, ml *MoveList) {
 	var movingPiece Piece
 	if color == White {
 		bbPiece = p.Board.whiteKing
-		otherPieces = p.Board.blackPieces
+		otherPieces = p.Board.blackPieces ^ p.Board.blackKing
 		movingPiece = WhiteKing
 	} else {
 		bbPiece = p.Board.blackKing
-		otherPieces = p.Board.whitePieces
+		otherPieces = p.Board.whitePieces ^ p.Board.whiteKing
 		movingPiece = BlackKing
 	}
 	if bbPiece != 0 {
