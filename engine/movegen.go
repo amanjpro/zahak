@@ -59,7 +59,6 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 		kingIndex := bitScanForward(b.whiteKing)
 		ownKing = squareMask[kingIndex]
 		squareOfKing = Square(kingIndex)
-		opPawnAttacks = wPawnsAble2CaptureAny(ownKing, b.blackPawn)
 		opKnights = b.blackKnight
 		opRQ = b.blackRook | b.blackQueen
 		opBQ = b.blackBishop | b.blackQueen
@@ -68,15 +67,10 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 		kingIndex := bitScanForward(b.blackKing)
 		ownKing = squareMask[kingIndex]
 		squareOfKing = Square(kingIndex)
-		opPawnAttacks = bPawnsAble2CaptureAny(ownKing, b.whitePawn)
 		opKnights = b.whiteKnight
 		opRQ = b.whiteRook | b.whiteQueen
 		opBQ = b.whiteBishop | b.whiteQueen
 		opKing = b.whiteKing
-	}
-	pawnChecks := opPawnAttacks
-	if pawnChecks != 0 {
-		return true
 	}
 
 	knightChecks := (knightAttacks(ownKing) & opKnights)
@@ -96,8 +90,17 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 	}
 
 	rookChecks := (rookAttacks(squareOfKing, occupiedBB, empty) & opRQ)
+	if rookChecks != 0 {
+		return true
+	}
 
-	return rookChecks != 0
+	if colorOfKing == White {
+		opPawnAttacks = wPawnsAble2CaptureAny(ownKing, b.blackPawn)
+		return opPawnAttacks != 0
+	}
+
+	opPawnAttacks = bPawnsAble2CaptureAny(ownKing, b.whitePawn)
+	return opPawnAttacks != 0
 }
 
 func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
