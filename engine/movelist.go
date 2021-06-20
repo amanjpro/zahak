@@ -1,16 +1,18 @@
 package engine
 
 type MoveList struct {
-	Moves  []Move
-	Scores []int32
-	Size   int
-	Next   int
+	Moves    []Move
+	Scores   []int32
+	IsScored bool
+	Size     int
+	Next     int
 }
 
 func NewMoveList(capacity int) *MoveList {
 	return &MoveList{
 		make([]Move, capacity),
 		make([]int32, capacity),
+		false,
 		0,
 		0,
 	}

@@ -83,6 +83,10 @@ func (m Move) IsQueenSideCastle() bool {
 	return uint32(m)&0x1000000 != 0
 }
 
+func (m Move) IsCastle() bool {
+	return uint32(m)&0x1800000 != 0
+}
+
 func (m Move) IsCapture() bool {
 	return uint32(m)&0x2000000 != 0
 }

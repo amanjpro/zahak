@@ -35,6 +35,9 @@ func TestNewMove(t *testing.T) {
 	if !move.IsKingSideCastle() {
 		t.Error("NewMove doesn't set king-side castle flag properly, Expected true, got false")
 	}
+	if !move.IsCastle() {
+		t.Error("NewMove doesn't set castle flag properly, Expected true, got false")
+	}
 }
 
 func TestEnPassantFlag(t *testing.T) {
@@ -51,6 +54,9 @@ func TestEnPassantFlag(t *testing.T) {
 	}
 	if move.IsKingSideCastle() {
 		t.Error("NewMove doesn't set king-side castle flag properly, Expected false, got true")
+	}
+	if move.IsCastle() {
+		t.Error("NewMove doesn't set castle flag properly, Expected false, got true")
 	}
 }
 
@@ -69,6 +75,9 @@ func TestCaptureFlag(t *testing.T) {
 	if move.IsKingSideCastle() {
 		t.Error("NewMove doesn't set king-side castle flag properly, Expected false, got true")
 	}
+	if move.IsCastle() {
+		t.Error("NewMove doesn't set castle flag properly, Expected false, got true")
+	}
 }
 
 func TestQeenSideCastleFlag(t *testing.T) {
@@ -86,6 +95,9 @@ func TestQeenSideCastleFlag(t *testing.T) {
 	if move.IsKingSideCastle() {
 		t.Error("NewMove doesn't set king-side castle flag properly, Expected false, got true")
 	}
+	if !move.IsCastle() {
+		t.Error("NewMove doesn't set castle flag properly, Expected true, got false")
+	}
 }
 
 func TestKingSideCastleFlag(t *testing.T) {
@@ -102,6 +114,9 @@ func TestKingSideCastleFlag(t *testing.T) {
 	}
 	if !move.IsKingSideCastle() {
 		t.Error("NewMove doesn't set king-side castle flag properly, Expected true, got false")
+	}
+	if !move.IsCastle() {
+		t.Error("NewMove doesn't set castle flag properly, Expected true, got false")
 	}
 }
 

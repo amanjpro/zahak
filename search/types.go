@@ -165,13 +165,13 @@ func (e *Engine) NodesVisited() int64 {
 }
 
 func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
-	if ply < 0 || e.killerMoves[ply] == nil {
+	if move == EmptyMove || ply < 0 || e.killerMoves[ply] == nil {
 		return 0
 	}
-	if e.killerMoves[ply][0] != EmptyMove && e.killerMoves[ply][0] == move {
+	if e.killerMoves[ply][0] == move {
 		return 100_000
 	}
-	if e.killerMoves[ply][1] != EmptyMove && e.killerMoves[ply][1] == move {
+	if e.killerMoves[ply][1] == move {
 		return 90_000
 	}
 	return 0
