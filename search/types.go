@@ -115,12 +115,12 @@ func NewEngine(tt *Cache) *Engine {
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
-	e.AbruptStop = e.StopSearchFlag || time.Now().Sub(e.StartTime).Milliseconds() >= e.ThinkTime
+	e.AbruptStop = e.StopSearchFlag || time.Since(e.StartTime).Milliseconds() >= e.ThinkTime
 	return e.AbruptStop
 }
 
 func (e *Engine) CanFinishSearch(lastIterationTime int64) bool {
-	return time.Now().Sub(e.StartTime).Milliseconds()+3*lastIterationTime < e.ThinkTime
+	return time.Since(e.StartTime).Milliseconds()+3*lastIterationTime < e.ThinkTime
 }
 
 func (e *Engine) ClearForSearch() {
@@ -247,7 +247,7 @@ func (e *Engine) SendPv(depth int8) {
 	if depth == -1 {
 		depth = e.pv.moveCount
 	}
-	thinkTime := time.Now().Sub(e.StartTime)
+	thinkTime := time.Since(e.StartTime)
 	nps := int64(float64(e.nodesVisited) / thinkTime.Seconds())
 	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
 		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),

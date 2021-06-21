@@ -76,7 +76,7 @@ func (e *Engine) rootSearch(depth int8) {
 				e.info.Print()
 			}
 
-			lastIterationTime := time.Now().Sub(iterStartTime).Milliseconds()
+			lastIterationTime := time.Since(iterStartTime).Milliseconds()
 
 			// We expect the next iteration will take around three times as much as this iteration
 			// And, if that means we will exceed the allocated time before we can finish the search,
