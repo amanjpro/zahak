@@ -11,7 +11,7 @@ const whiteMask = uint64(0x00FF000000000000)
 func dynamicMargin(pos *Position) int16 {
 
 	color := pos.Turn()
-	delta := b
+	delta := p
 	if color == White {
 		if pos.Board.GetBitboardOf(WhitePawn)&whiteMask != 0 {
 			delta = q
@@ -89,7 +89,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 		// promoType := move.PromoType()
 		if !IsPromoting(move) {
-			margin := b + move.CapturedPiece().Weight()
+			margin := p + move.CapturedPiece().Weight()
 			// promoType := move.PromoType()
 			// if isCaptureMove {
 			// 	margin += move.CapturedPiece().Weight()
