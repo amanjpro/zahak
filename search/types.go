@@ -47,29 +47,30 @@ func (i *Info) Print() {
 }
 
 type Engine struct {
-	Position           *Position
-	Ply                uint16
-	nodesVisited       int64
-	cacheHits          int64
-	pv                 PVLine
-	StopSearchFlag     bool
-	AbruptStop         bool
-	move               Move
-	score              int16
-	positionMoves      []Move
-	killerMoves        [][]Move
-	searchHistory      [][]int32
-	MovePickers        []*MovePicker
-	StartTime          time.Time
-	ThinkTime          int64
-	info               Info
-	pred               Predecessors
-	innerLines         []PVLine
-	staticEvals        []int16
-	TranspositionTable *Cache
-	DebugMode          bool
-	Pondering          bool
-	TotalTime          float64
+	Position            *Position
+	Ply                 uint16
+	nodesVisited        int64
+	cacheHits           int64
+	pv                  PVLine
+	StopSearchFlag      bool
+	AbruptStop          bool
+	move                Move
+	score               int16
+	positionMoves       []Move
+	killerMoves         [][]Move
+	searchHistory       [][]int32
+	MovePickers         []*MovePicker
+	StartTime           time.Time
+	ThinkTime           int64
+	info                Info
+	pred                Predecessors
+	innerLines          []PVLine
+	staticEvals         []int16
+	TranspositionTable  *Cache
+	DebugMode           bool
+	Pondering           bool
+	TotalTime           float64
+	nodesSinceTimeCheck int
 }
 
 var MAX_DEPTH int8 = int8(100)
@@ -109,13 +110,20 @@ func NewEngine(tt *Cache) *Engine {
 		false,
 		false,
 		0,
+		0,
 	}
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
-	e.AbruptStop = e.StopSearchFlag || time.Since(e.StartTime).Milliseconds() >= e.ThinkTime
+	if e.nodesSinceTimeCheck < 2000 {
+		e.nodesSinceTimeCheck += 1
+		e.AbruptStop = e.AbruptStop || e.StopSearchFlag
+		return e.AbruptStop
+	}
+	e.nodesSinceTimeCheck = 0
+	e.AbruptStop = e.AbruptStop || e.StopSearchFlag || time.Since(e.StartTime).Milliseconds() >= e.ThinkTime
 	return e.AbruptStop
 }
 
@@ -165,13 +173,13 @@ func (e *Engine) NodesVisited() int64 {
 }
 
 func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
-	if ply < 0 || e.killerMoves[ply] == nil {
+	if move == EmptyMove || ply < 0 || e.killerMoves[ply] == nil {
 		return 0
 	}
-	if e.killerMoves[ply][0] != EmptyMove && e.killerMoves[ply][0] == move {
+	if e.killerMoves[ply][0] == move {
 		return 100_000
 	}
-	if e.killerMoves[ply][1] != EmptyMove && e.killerMoves[ply][1] == move {
+	if e.killerMoves[ply][1] == move {
 		return 90_000
 	}
 	return 0

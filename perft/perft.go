@@ -29,13 +29,14 @@ func PerftTree(game Game, depth int, moves []Move) {
 		for i := 0; i < depth; i++ {
 			cache[i] = make(map[uint64]int64, 1000_000)
 		}
-		moves = game.Position().LegalMoves()
+		moves = game.Position().PseudoLegalMoves()
 		for _, move := range moves {
-			ep, tg, hc := game.Position().MakeMove(move)
-			nodes := bulkyPerft(game.Position(), depth)
-			fmt.Printf("%s %d\n", move.ToString(), nodes)
-			sum += nodes
-			game.Position().UnMakeMove(move, tg, ep, hc)
+			if ep, tg, hc, ok := game.Position().MakeMove(move); ok {
+				nodes := bulkyPerft(game.Position(), depth)
+				fmt.Printf("%s %d\n", move.ToString(), nodes)
+				sum += nodes
+				game.Position().UnMakeMove(move, tg, ep, hc)
+			}
 		}
 	}
 
@@ -226,7 +227,16 @@ func testNodesOnly(fen string, depth int, expected int64) int8 {
 func perft(p *Position, depth int, currentMove Move, acc *PerftNodes) {
 	if depth == 0 {
 		isCheck := p.IsInCheck()
-		isCheckmate := isCheck && len(p.LegalMoves()) == 0
+		moves := p.PseudoLegalMoves()
+		hasLegalMoves := false
+		for _, move := range moves {
+			if ep, tag, hc, ok := p.MakeMove(move); ok {
+				hasLegalMoves = true
+				p.UnMakeMove(move, tag, ep, hc)
+				break
+			}
+		}
+		isCheckmate := isCheck && !hasLegalMoves
 		acc.nodes += 1
 		if isCheckmate {
 			acc.checkmates += 1
@@ -250,12 +260,13 @@ func perft(p *Position, depth int, currentMove Move, acc *PerftNodes) {
 		return
 	}
 
-	moves := p.LegalMoves()
+	moves := p.PseudoLegalMoves()
 
 	for _, move := range moves {
-		ep, tag, hc := p.MakeMove(move)
-		perft(p, depth-1, move, acc)
-		p.UnMakeMove(move, tag, ep, hc)
+		if ep, tag, hc, ok := p.MakeMove(move); ok {
+			perft(p, depth-1, move, acc)
+			p.UnMakeMove(move, tag, ep, hc)
+		}
 	}
 }
 
@@ -266,23 +277,31 @@ func bulkyPerft(p *Position, depth int) int64 {
 		return 1
 	}
 
-	moves := p.LegalMoves()
+	moves := p.PseudoLegalMoves()
 	if depth == 1 {
-		return int64(len(moves))
+		count := int64(0)
+		for _, move := range moves {
+			if ep, tag, hc, ok := p.MakeMove(move); ok {
+				count += 1
+				p.UnMakeMove(move, tag, ep, hc)
+			}
+		}
+		return count
 	}
 
 	for _, move := range moves {
-		ep, tag, hc := p.MakeMove(move)
-		hash := p.Hash()
-		n, ok := cache[depth-1][hash]
-		if ok {
-			nodes += n
-		} else {
-			n := bulkyPerft(p, depth-1)
-			cache[depth-1][hash] = n
-			nodes += n
+		if ep, tag, hc, ok := p.MakeMove(move); ok {
+			hash := p.Hash()
+			n, ok := cache[depth-1][hash]
+			if ok {
+				nodes += n
+			} else {
+				n := bulkyPerft(p, depth-1)
+				cache[depth-1][hash] = n
+				nodes += n
+			}
+			p.UnMakeMove(move, tag, ep, hc)
 		}
-		p.UnMakeMove(move, tag, ep, hc)
 	}
 	return nodes
 }

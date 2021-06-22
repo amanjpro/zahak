@@ -19,7 +19,7 @@ func TestBishopMoves(t *testing.T) {
 		NewMove(E2, H5, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, D3, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, C4, WhiteBishop, NoPiece, NoType, 0),
-		NewMove(E2, B5, WhiteBishop, NoPiece, NoType, Check),
+		NewMove(E2, B5, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, A6, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E3, D2, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E3, F4, WhiteBishop, NoPiece, NoType, 0),
@@ -57,7 +57,7 @@ func TestRookMoves(t *testing.T) {
 		NewMove(C1, C4, WhiteRook, NoPiece, NoType, 0),
 		NewMove(C1, C5, WhiteRook, NoPiece, NoType, 0),
 		NewMove(C1, C6, WhiteRook, NoPiece, NoType, 0),
-		NewMove(C1, C7, WhiteRook, BlackPawn, NoType, Capture|Check),
+		NewMove(C1, C7, WhiteRook, BlackPawn, NoType, Capture),
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -87,7 +87,7 @@ func TestQueenMoves(t *testing.T) {
 		NewMove(D1, D4, WhiteQueen, BlackPawn, NoType, Capture),
 		NewMove(D1, C2, WhiteQueen, NoPiece, NoType, 0),
 		NewMove(D1, B3, WhiteQueen, NoPiece, NoType, 0),
-		NewMove(D1, A4, WhiteQueen, NoPiece, NoType, Check),
+		NewMove(D1, A4, WhiteQueen, NoPiece, NoType, 0),
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -111,7 +111,7 @@ func TestKingMoves(t *testing.T) {
 	color := White
 	ml := NewMoveList(3)
 	taboo := tabooSquares(board, color)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -141,7 +141,7 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	color := White
 	taboo := tabooSquares(board, color)
 	ml := NewMoveList(3)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -171,7 +171,7 @@ func TestKingQueenSideCastling(t *testing.T) {
 	color := White
 	taboo := tabooSquares(board, color)
 	ml := NewMoveList(4)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -213,7 +213,7 @@ func TestPawnMovesForWhite(t *testing.T) {
 		NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0),
 		NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture),
-		NewMove(E6, F7, WhitePawn, BlackPawn, NoType, Capture|Check),
+		NewMove(E6, F7, WhitePawn, BlackPawn, NoType, Capture),
 		NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture),
 		NewMove(B7, A8, WhitePawn, BlackRook, Rook, Capture),
 		NewMove(B7, A8, WhitePawn, BlackRook, Bishop, Capture),
@@ -290,10 +290,10 @@ func TestKnightMoves(t *testing.T) {
 		NewMove(G3, H5, WhiteKnight, NoPiece, NoType, 0),
 		NewMove(B5, A7, WhiteKnight, BlackPawn, NoType, Capture),
 		NewMove(B5, A3, WhiteKnight, NoPiece, NoType, 0),
-		NewMove(B5, C7, WhiteKnight, BlackPawn, NoType, Capture|Check),
+		NewMove(B5, C7, WhiteKnight, BlackPawn, NoType, Capture),
 		NewMove(B5, C3, WhiteKnight, NoPiece, NoType, 0),
 		NewMove(B5, D4, WhiteKnight, BlackPawn, NoType, Capture),
-		NewMove(B5, D6, WhiteKnight, NoPiece, NoType, Check),
+		NewMove(B5, D6, WhiteKnight, NoPiece, NoType, 0),
 	}
 	expectedLen := len(expectedMoves)
 	if len(moves) != expectedLen || !equalMoves(expectedMoves, moves) {
@@ -314,8 +314,8 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 	fen := "rnbq1bn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/k3K2R w Kkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	legalMoves := p.LegalMoves()
-	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, Check|KingSideCastle)
+	legalMoves := p.PseudoLegalMoves()
+	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
 	if !containsMove(legalMoves, move) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
@@ -323,7 +323,7 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 		}
 		t.Errorf("Expected to see %s", fmt.Sprintf("%s %d", move.ToString(), move.Tag()))
 	}
-	move = NewMove(E1, D2, WhiteKing, BlackRook, NoType, Check|Capture)
+	move = NewMove(E1, D2, WhiteKing, BlackRook, NoType, Capture)
 	if !containsMove(legalMoves, move) {
 		fmt.Println("Got:")
 		for _, i := range legalMoves {
@@ -340,7 +340,7 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	ml := NewMoveList(1)
 	color := White
 	taboo := tabooSquares(board, color)
-	g.position.kingCaptureMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, ml)
 	g.position.kingQuietMoves(taboo, color, ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
@@ -366,16 +366,18 @@ func TestLegalMoves(t *testing.T) {
 	fen := "rn1q1bn1/pPp1pppp/4P3/1N1pP2Q/3p3b/4B3/PP1rBPPP/k3K2R w Kkq d6 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	legalMoves := p.LegalMoves()
+	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{
 		NewMove(H1, G1, WhiteRook, NoPiece, NoType, 0),
 		NewMove(H1, F1, WhiteRook, NoPiece, NoType, 0),
 		NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0),
-		NewMove(E1, G1, WhiteKing, NoPiece, NoType, Check|KingSideCastle),
-		NewMove(E1, D2, WhiteKing, BlackRook, NoType, Check|Capture),
+		NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle),
+		NewMove(E1, D2, WhiteKing, BlackRook, NoType, Capture),
 		NewMove(H2, H3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0),
 		NewMove(G2, G4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(F2, F3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(F2, F4, WhitePawn, NoPiece, NoType, 0),
 		NewMove(E2, F1, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, D1, WhiteBishop, NoPiece, NoType, 0),
 		NewMove(E2, F3, WhiteBishop, NoPiece, NoType, 0),
@@ -432,9 +434,44 @@ func TestDoubleCheckResponses(t *testing.T) {
 	fen := "5Q2/8/1q5P/8/6k1/5R2/6P1/2r3K1 w - - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	legalMoves := p.LegalMoves()
+	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{
-		NewMove(G1, H2, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G1, H2, WhiteKing, NoPiece, NoType, 0), // The only legal move
+		NewMove(G1, H1, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G1, F1, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G1, F2, WhiteKing, NoPiece, NoType, 0),
+		NewMove(H6, H7, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0),
+		NewMove(F3, F1, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, F2, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, F4, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, F5, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, F6, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, F7, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, A3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, B3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, C3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, D3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, E3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, G3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F3, H3, WhiteRook, NoPiece, NoType, 0),
+		NewMove(F8, G7, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, F7, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, F6, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, F5, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, F4, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, E7, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, D6, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, C5, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, B4, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, A3, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, A8, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, B8, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, C8, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, D8, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, E8, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, G8, WhiteQueen, NoPiece, NoType, 0),
+		NewMove(F8, H8, WhiteQueen, NoPiece, NoType, 0),
 	}
 	if !p.IsInCheck() {
 		t.Errorf("Position is wrongfully considered not check for: %s", fen)
@@ -459,7 +496,7 @@ func TestLegalMovesInOpenning(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3ppp2/1P6/6P1/N6N/P1PPPP1P/R1BQKB1R w KQkq - 0 1"
 	g := FromFen(fen, true)
 	p := g.position
-	legalMoves := p.LegalMoves()
+	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{
 		NewMove(H1, G1, WhiteRook, NoPiece, NoType, 0),
 		NewMove(G4, G5, WhitePawn, NoPiece, NoType, 0),

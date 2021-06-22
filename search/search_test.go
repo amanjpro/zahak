@@ -30,7 +30,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e.Position = game.Position()
 	e.Ply = 1
 	e.Search(7)
-	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, Check)
+	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -44,7 +44,7 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	e.ThinkTime = 400_000
 	e.Position = game.Position()
 	e.Search(7)
-	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, Check)
+	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, 0)
 	mv := e.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
@@ -109,22 +109,22 @@ func TestNestedMakeUnMake(t *testing.T) {
 	originalHash := p.Hash()
 
 	m1 := NewMove(G8, E7, BlackKnight, NoPiece, NoType, 0)
-	ep1, tg1, hc1 := p.MakeMove(m1)
+	ep1, tg1, hc1, _ := p.MakeMove(m1)
 
 	m2 := NewMove(G2, G3, WhitePawn, NoPiece, NoType, 0)
-	ep2, tg2, hc2 := p.MakeMove(m2)
+	ep2, tg2, hc2, _ := p.MakeMove(m2)
 
 	m3 := NewMove(H4, G5, BlackQueen, NoPiece, NoType, 0)
-	ep3, tg3, hc3 := p.MakeMove(m3)
+	ep3, tg3, hc3, _ := p.MakeMove(m3)
 
 	m4 := NewMove(G3, G4, WhitePawn, NoPiece, NoType, 0)
-	ep4, tg4, hc4 := p.MakeMove(m4)
+	ep4, tg4, hc4, _ := p.MakeMove(m4)
 
 	m5 := NewMove(C8, B7, BlackBishop, WhiteQueen, NoType, Capture)
-	ep5, tg5, hc5 := p.MakeMove(m5)
+	ep5, tg5, hc5, _ := p.MakeMove(m5)
 
 	m6 := NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0)
-	ep6, tg6, hc6 := p.MakeMove(m6)
+	ep6, tg6, hc6, _ := p.MakeMove(m6)
 
 	actualFen := g.Fen()
 	expectedFen := "rn2kb1r/pbppnppp/4p3/6q1/1P4P1/2P5/P2PPP1P/RNB1KBNR b KQkq b3 0 1"
@@ -173,11 +173,11 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	e.Position = game.Position()
 	e.Search(13)
 	expected := []Move{
-		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check),
+		NewMove(B3, A3, BlackQueen, NoPiece, NoType, 0),
 		NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0),
-		NewMove(A3, B3, BlackQueen, NoPiece, NoType, Check),
+		NewMove(A3, B3, BlackQueen, NoPiece, NoType, 0),
 		NewMove(B1, A1, WhiteKing, NoPiece, NoType, 0),
-		NewMove(B3, A3, BlackQueen, NoPiece, NoType, Check)}
+		NewMove(B3, A3, BlackQueen, NoPiece, NoType, 0)}
 	actual := e.pv.line
 	if equalMoves(expected, actual) {
 		actualString := e.pv.ToString()

@@ -125,7 +125,7 @@ func (p *Position) partialUnMakeMove(move Move) {
 	}
 }
 
-func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
+func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
@@ -199,19 +199,28 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8) {
 		p.ClearTag(WhiteCanCastleKingSide)
 	}
 
+	if isInCheck(p.Board, p.Turn()) { // Is the move legal (bad way to determine legality
+		p.unMakeMoveHelper(move, tag, ep, hc, false)
+		return NoSquare, 0, 0, false
+	}
+
+	p.ToggleTurn()
+
 	// Set check tag
-	if move.IsCheck() {
+	if isInCheck(p.Board, p.Turn()) {
 		p.SetTag(InCheck)
 	} else {
 		p.ClearTag(InCheck)
 	}
-
-	p.ToggleTurn()
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	return ep, tag, hc
+	return ep, tag, hc, true
 }
 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
+	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
+}
+
+func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square, halfClock uint8, isLegal bool) {
 	oldTag := p.Tag
 	oldEnPassant := p.EnPassant
 	movingPiece := move.MovingPiece()
@@ -256,7 +265,9 @@ func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, half
 			p.Board.Move(F8, H8, BlackRook, NoPiece)
 		}
 	}
-	updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
+	if isLegal {
+		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
+	}
 }
 
 type Status uint8
@@ -269,13 +280,6 @@ const (
 
 func (p *Position) IsEndGame() bool {
 	return p.Board.IsEndGame(p.Turn())
-}
-
-func (p *Position) IsCheckMove(move Move) bool {
-	p.partialMakeMove(move)
-	isCheck := isInCheck(p.Board, p.Turn())
-	p.partialUnMakeMove(move)
-	return isCheck
 }
 
 func (p *Position) IsInCheck() bool {
