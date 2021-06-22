@@ -352,11 +352,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// Late Move Reduction
 			if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
 				e.info.lmrCounter += 1
-				// if legalMoves >= 8 && notPromoting {
-				LMR = 2
-				// } else {
-				// 	LMR = 1
-				// }
+				if legalMoves >= 8 && notPromoting {
+					LMR = 2
+				} else {
+					LMR = 1
+				}
 			}
 
 			e.pred.Push(position.Hash())
