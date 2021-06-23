@@ -47,11 +47,11 @@ func (p *Position) GetCaptureMoves(ml *MoveList) {
 }
 
 // Checks and Pins
-func isInCheck(b Bitboard, colorOfKing Color) bool {
+func isInCheck(b *Bitboard, colorOfKing Color) bool {
 	return isKingAttacked(b, colorOfKing)
 }
 
-func isKingAttacked(b Bitboard, colorOfKing Color) bool {
+func isKingAttacked(b *Bitboard, colorOfKing Color) bool {
 	var ownKing, opPawnAttacks, opKnights, opRQ, opBQ, opKing uint64
 	var squareOfKing Square
 	occupiedBB := b.whitePieces | b.blackPieces
@@ -103,7 +103,7 @@ func isKingAttacked(b Bitboard, colorOfKing Color) bool {
 	return opPawnAttacks != 0
 }
 
-func tabooSquares(b Bitboard, colorOfKing Color) uint64 {
+func tabooSquares(b *Bitboard, colorOfKing Color) uint64 {
 	var opPawns, opKnights, opR, opB, opQ, opKing, opPieces uint64
 	occupiedBB := b.whitePieces | b.blackPieces
 	if colorOfKing == White {
