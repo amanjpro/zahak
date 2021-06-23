@@ -309,23 +309,24 @@ func (p *Predecessors) Pop() {
 }
 
 func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
-	current := p.Hash()
-	previouslySeen := p.Positions[current]
-
-	if currentMove == EmptyMove || p.HalfMoveClock == 0 {
+	if p.HalfMoveClock == 0 {
 		return false
 	}
 
-	if previouslySeen >= 2 {
-		return true
-	}
-
+	current := p.Hash()
 	for i := pred.maxIndex - 1; i >= 0; i-- {
 		var candidate = pred.line[i]
 		if current == candidate {
 			return true
 		}
 	}
+
+	previouslySeen := p.Positions[current]
+
+	if previouslySeen >= 2 {
+		return true
+	}
+
 	return false
 }
 
