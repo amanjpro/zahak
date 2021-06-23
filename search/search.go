@@ -132,7 +132,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isPvNode := alpha != beta-1
 
 	position := e.Position
-	var isInCheck = position.IsInCheck()
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
@@ -140,6 +139,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return 0
 	}
 
+	var isInCheck = position.IsInCheck()
 	if isInCheck {
 		e.info.checkExtentionCounter += 1
 		depthLeft += 1 // Singular Extension

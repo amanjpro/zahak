@@ -43,8 +43,14 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.info.quiesceCounter += 1
 	e.VisitNode()
 
-	var isInCheck = e.Position.IsInCheck()
+	position := e.Position
+	currentMove := e.positionMoves[searchHeight+1]
+	// Position is drawn
+	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
+		return 0
+	}
 
+	var isInCheck = e.Position.IsInCheck()
 	standPat := e.staticEvals[searchHeight]
 
 	if standPat >= beta {
@@ -54,8 +60,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	if e.ShouldStop() {
 		return 0
 	}
-
-	position := e.Position
 
 	// Delta Pruning
 	if standPat+dynamicMargin(position) < alpha {
