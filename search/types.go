@@ -309,7 +309,7 @@ func (p *Predecessors) Pop() {
 }
 
 func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
-	if p.HalfMoveClock == 0 {
+	if currentMove == EmptyMove || p.HalfMoveClock == 0 {
 		return false
 	}
 
