@@ -8,8 +8,6 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-var CONTEMPT_SCORE int16 = 0
-
 type Info struct {
 	fpCounter             int
 	efpCounter            int

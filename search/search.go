@@ -18,7 +18,6 @@ var p = WhitePawn.Weight()
 var r = WhiteRook.Weight()
 var b = WhiteBishop.Weight()
 var q = WhiteQueen.Weight()
-var razoringMargin = r + p
 
 func (e *Engine) rootSearch(depth int8) {
 
@@ -137,7 +136,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
-		return CONTEMPT_SCORE
+		return 0
 	}
 
 	var isInCheck = position.IsInCheck()
@@ -181,35 +180,40 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if e.ShouldStop() {
 		return -MAX_INT
 	}
+
 	eval := Evaluate(position)
 	e.staticEvals[searchHeight] = eval
 	improving := currentMove == EmptyMove ||
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
-	isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
+	// Razoring
+	razoringMargin := r
+	// if improving {
+	// 	razoringMargin += int16(depthLeft) * p
+	// }
+	if !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
+		newEval := e.quiescence(alpha, beta, searchHeight)
+		if newEval < beta {
+			e.info.razoringCounter += 1
+			return newEval
+		}
+	}
+
+	isNullMoveAllowed := !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && !position.IsEndGame()
+	// Reverse Futility Pruning
 	reverseFutilityMargin := int16(depthLeft) * (b - p)
+	// if improving {
+	// 	reverseFutilityMargin += int16(depthLeft) * p
+	// }
+	if isNullMoveAllowed && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+		e.info.rfpCounter += 1
+		return eval - reverseFutilityMargin /* fail soft */
+	}
+
 	// NullMove pruning
 	R := int8(4)
 	if depthLeft == 4 {
 		R = 3
-	}
-
-	canPrune := !(isRootNode || isPvNode || isInCheck)
-	if !canPrune {
-		goto searchLoop
-	}
-
-	if depthLeft <= 3 && eval+razoringMargin < beta {
-		newEval := e.quiescence(alpha, beta, searchHeight)
-		// if newEval < beta {
-		e.info.razoringCounter += 1
-		return newEval
-		// }
-	}
-
-	if depthLeft < 7 && eval-reverseFutilityMargin >= beta {
-		e.info.rfpCounter += 1
-		return eval - reverseFutilityMargin /* fail soft */
 	}
 
 	if isNullMoveAllowed && depthLeft > R {
@@ -227,12 +231,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// }
 			// return beta, true // null move pruning
 		}
-	}
-
-searchLoop:
-
-	if depthLeft >= 4 && nHashMove == EmptyMove {
-		depthLeft--
 	}
 
 	// Internal Iterative Deepening
@@ -254,15 +252,18 @@ searchLoop:
 	movePicker.RecycleWith(position, e, depthLeft, nHashMove, false)
 
 	// Pruning
+	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
 	futilityMargin := eval + int16(depthLeft)*p
 	if improving {
 		futilityMargin += p
 	}
-
-	allowFutilityPruning := canPrune && depthLeft < 7 &&
+	allowFutilityPruning := false
+	if depthLeft < 7 && reductionsAllowed &&
 		abs16(alpha) < CHECKMATE_EVAL &&
-		abs16(beta) < CHECKMATE_EVAL && futilityMargin <= alpha
+		abs16(beta) < CHECKMATE_EVAL && futilityMargin <= alpha {
+		allowFutilityPruning = true
+	}
 
 	oldAlpha := alpha
 
@@ -305,7 +306,7 @@ searchLoop:
 		if isInCheck {
 			return -CHECKMATE_EVAL + int16(searchHeight)
 		} else {
-			return CONTEMPT_SCORE
+			return 0
 		}
 	}
 	pruningThreashold := int(5 + depthLeft*depthLeft)
@@ -338,10 +339,10 @@ searchLoop:
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				continue
 			}
-			//
+
 			// Late Move Pruning
-			if canPrune && notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-				legalMoves > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && abs16(bestscore) < CHECKMATE_EVAL {
+			if reductionsAllowed && notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
+				searchHeight > 5 && legalMoves > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && abs16(bestscore) < CHECKMATE_EVAL {
 				e.info.lmpCounter += 1
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				continue // LMP
@@ -349,7 +350,7 @@ searchLoop:
 
 			LMR := int8(0)
 			// Late Move Reduction
-			if canPrune && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
+			if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
 				e.info.lmrCounter += 1
 				if legalMoves >= 8 && notPromoting {
 					LMR = 2
