@@ -47,7 +47,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	currentMove := e.positionMoves[searchHeight+1]
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
-		return 0
+		return CONTEMPT_SCORE
 	}
 
 	var isInCheck = e.Position.IsInCheck()
