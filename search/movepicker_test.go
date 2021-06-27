@@ -662,6 +662,313 @@ func TestMovePickerQuiescenceSearch(t *testing.T) {
 	}
 }
 
+func TestMovePickerNormalSearchWithPromotionNoHashmove(t *testing.T) {
+	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
+
+	game := FromFen(fen, true)
+	engine := NewEngine(NewCache(2))
+	engine.ClearForSearch()
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
+
+	moves := []Move{
+		NewMove(H7, G8, WhitePawn, BlackKnight, Queen, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Queen, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Rook, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Bishop, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Rook, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Bishop, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0),
+		NewMove(F3, F4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G5, F4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H6, WhiteKing, NoPiece, NoType, 0),
+	}
+
+	i := 0
+	for ; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Move number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves!")
+	}
+	mp.Reset()
+
+	for i = 0; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves in reset!")
+	}
+}
+
+func TestMovePickerNormalSearchWithPromotionPromotionQuietHashmove(t *testing.T) {
+	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
+
+	game := FromFen(fen, true)
+	engine := NewEngine(NewCache(2))
+	engine.ClearForSearch()
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0), false)
+
+	moves := []Move{
+		NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Queen, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Queen, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Rook, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Bishop, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Rook, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Bishop, 0),
+		NewMove(F3, F4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G5, F4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H6, WhiteKing, NoPiece, NoType, 0),
+	}
+
+	i := 0
+	for ; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Move number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves!")
+	}
+	mp.Reset()
+
+	for i = 0; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves in reset!")
+	}
+}
+
+func TestMovePickerNormalSearchWithPromotionPromotionCaptureHashmove(t *testing.T) {
+	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
+
+	game := FromFen(fen, true)
+	engine := NewEngine(NewCache(2))
+	engine.ClearForSearch()
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture), false)
+
+	moves := []Move{
+		NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Queen, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Queen, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Rook, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Bishop, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Rook, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Bishop, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0),
+		NewMove(F3, F4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G5, F4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H6, WhiteKing, NoPiece, NoType, 0),
+	}
+
+	i := 0
+	for ; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Move number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves!")
+	}
+	mp.Reset()
+
+	for i = 0; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves in reset!")
+	}
+}
+
+func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionQuietHashmove(t *testing.T) {
+	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
+
+	game := FromFen(fen, true)
+	engine := NewEngine(NewCache(2))
+	engine.ClearForSearch()
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
+	mp.UpgradeToPvMove(NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0))
+
+	moves := []Move{
+		NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Queen, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Queen, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Rook, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Bishop, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Rook, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Bishop, 0),
+		NewMove(F3, F4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G5, F4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H6, WhiteKing, NoPiece, NoType, 0),
+	}
+
+	i := 0
+	for ; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Move number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves!")
+	}
+	mp.Reset()
+
+	for i = 0; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves in reset!")
+	}
+}
+
+func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionCaptureHashmove(t *testing.T) {
+	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
+
+	game := FromFen(fen, true)
+	engine := NewEngine(NewCache(2))
+	engine.ClearForSearch()
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
+	mp.UpgradeToPvMove(NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture))
+
+	moves := []Move{
+		NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Queen, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Queen, 0),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Rook, Capture),
+		NewMove(H7, G8, WhitePawn, BlackKnight, Bishop, Capture),
+		NewMove(H7, H8, WhitePawn, NoPiece, Rook, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Bishop, 0),
+		NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0),
+		NewMove(F3, F4, WhitePawn, NoPiece, NoType, 0),
+		NewMove(G5, F4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H4, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H5, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, F6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, G6, WhiteKing, NoPiece, NoType, 0),
+		NewMove(G5, H6, WhiteKing, NoPiece, NoType, 0),
+	}
+
+	i := 0
+	for ; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Move number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves!")
+	}
+	mp.Reset()
+
+	for i = 0; ; i++ {
+		actual := mp.Next()
+		if actual == EmptyMove {
+			break
+		}
+		expected := moves[i]
+		if actual != expected {
+			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
+		}
+	}
+
+	if i != len(moves) {
+		t.Error("Wrong number of moves in reset!")
+	}
+}
+
 func (mp *MovePicker) getScore(m Move) int32 {
 	if mp.hashmove == m {
 		return 900_000_000

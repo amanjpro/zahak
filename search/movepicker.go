@@ -44,7 +44,7 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, moveOrder int8, hashmo
 	nextCapture := 0
 	nextQuiet := 0
 	if hashmove != EmptyMove {
-		if hashmove.IsCapture() {
+		if hashmove.IsCapture() || hashmove.PromoType() != NoType {
 			nextCapture = 1
 		} else {
 			nextQuiet = 1
@@ -82,7 +82,7 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 	}
 	mp.hashmove = pvMove
 	mp.canUseHashMove = true
-	if pvMove.IsCapture() {
+	if pvMove.IsCapture() || pvMove.PromoType() != NoType {
 		mp.captureMoveList.Next = 1
 	} else {
 		mp.quietMoveList.Next = 1
@@ -238,7 +238,7 @@ func (mp *MovePicker) Reset() {
 	mp.quietMoveList.Next = 0
 	mp.captureMoveList.Next = 0
 	if mp.canUseHashMove {
-		if mp.hashmove.IsCapture() {
+		if mp.hashmove.IsCapture() || mp.hashmove.PromoType() != NoType {
 			mp.captureMoveList.Next = 1
 		} else {
 			mp.quietMoveList.Next = 1
