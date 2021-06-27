@@ -212,11 +212,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	// NullMove pruning
 	R := int8(4)
-	// if depthLeft == 4 {
-	// 	R = 3
-	// }
+	if depthLeft == 4 {
+		R = 3
+	}
 
-	if isNullMoveAllowed && depthLeft >= 2 {
+	if isNullMoveAllowed && depthLeft > R {
 		ep := position.MakeNullMove()
 		e.pred.Push(position.Hash())
 		e.innerLines[searchHeight+1].Recycle()
