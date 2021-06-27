@@ -211,32 +211,25 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// NullMove pruning
+	R := int8(4)
 	// if depthLeft == 4 {
 	// 	R = 3
 	// }
 
 	if isNullMoveAllowed && depthLeft >= 2 {
-		R := 4 + depthLeft/6
-		if eval >= beta+p {
-			R = min8(R, depthLeft)
-		} else {
-			R = min8(R, depthLeft-1)
-		}
-		if R >= 2 {
-			ep := position.MakeNullMove()
-			e.pred.Push(position.Hash())
-			e.innerLines[searchHeight+1].Recycle()
-			e.positionMoves[searchHeight+1] = EmptyMove
-			score := -e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
-			e.pred.Pop()
-			position.UnMakeNullMove(ep)
-			if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
-				e.info.nullMoveCounter += 1
-				// if abs16(score) <= CHECKMATE_EVAL {
-				return score
-				// }
-				// return beta, true // null move pruning
-			}
+		ep := position.MakeNullMove()
+		e.pred.Push(position.Hash())
+		e.innerLines[searchHeight+1].Recycle()
+		e.positionMoves[searchHeight+1] = EmptyMove
+		score := -e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
+		e.pred.Pop()
+		position.UnMakeNullMove(ep)
+		if score >= beta { //}&& abs16(score) <= CHECKMATE_EVAL {
+			e.info.nullMoveCounter += 1
+			// if abs16(score) <= CHECKMATE_EVAL {
+			return score
+			// }
+			// return beta, true // null move pruning
 		}
 	}
 
