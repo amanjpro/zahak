@@ -12,6 +12,7 @@ func dynamicMargin(pos *Position) int16 {
 
 	color := pos.Turn()
 	delta := p
+
 	if color == White {
 		if pos.Board.GetBitboardOf(WhitePawn)&whiteMask != 0 {
 			delta = q
@@ -44,6 +45,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.VisitNode()
 
 	position := e.Position
+
 	currentMove := e.positionMoves[searchHeight+1]
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
@@ -51,8 +53,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	var isInCheck = e.Position.IsInCheck()
-	standPat := e.staticEvals[searchHeight]
 
+	standPat := e.staticEvals[searchHeight]
 	if standPat >= beta {
 		return beta // fail hard
 	}

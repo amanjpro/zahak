@@ -221,7 +221,7 @@ func (e *Engine) AddKillerMove(move Move, ply int8) {
 }
 
 func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if ply < 0 || e.searchHistory[movingPiece-1] == nil || e.searchHistory[movingPiece-1][destination] == 0 {
+	if ply < 0 || e.searchHistory[movingPiece-1][destination] == 0 {
 		return 0
 	}
 	return 60_000 + e.searchHistory[movingPiece-1][destination]

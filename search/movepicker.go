@@ -95,11 +95,18 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 	var highestNonHashIndex int = -1
 	var highestNonHashScore int32 = math.MinInt32
 
-	for i := 0; i < mp.captureMoveList.Size; i++ {
-		move := mp.captureMoveList.Moves[i]
+	scores := mp.captureMoveList.Scores
+	moves := mp.captureMoveList.Moves
+	size := mp.captureMoveList.Size
+
+	_ = scores[size-1]
+	_ = moves[size-1]
+
+	for i := 0; i < size; i++ {
+		move := moves[i]
 
 		if move == mp.hashmove {
-			mp.captureMoveList.Scores[i] = 900_000_000
+			scores[i] = 900_000_000
 			mp.captureMoveList.Swap(0, i)
 			mp.captureMoveList.Next = 1
 			if highestNonHashIndex == 0 {
@@ -118,33 +125,33 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 			capPiece := move.CapturedPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				mp.captureMoveList.Scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
 				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 				if gain < 0 {
-					mp.captureMoveList.Scores[i] = -90_000_000 + gain
+					scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
-					mp.captureMoveList.Scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
+					scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
 				} else {
-					mp.captureMoveList.Scores[i] = 100_100_000 + gain
+					scores[i] = 100_100_000 + gain
 				}
 			} else {
-				mp.captureMoveList.Scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
 			}
 			goto end
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			mp.captureMoveList.Scores[i] = 150_000_000 + int32(p.Weight())
+			scores[i] = 150_000_000 + int32(p.Weight())
 			goto end
 		}
 
 	end:
-		if highestNonHashScore < mp.captureMoveList.Scores[i] {
+		if highestNonHashScore < scores[i] {
 			highestNonHashIndex = i
-			highestNonHashScore = mp.captureMoveList.Scores[i]
+			highestNonHashScore = scores[i]
 		}
 	}
 
@@ -159,12 +166,18 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	var highestNonHashScore int32 = math.MinInt32
 	engine := mp.engine
 	moveOrder := mp.moveOrder
+	scores := mp.quietMoveList.Scores
+	moves := mp.quietMoveList.Moves
+	size := mp.quietMoveList.Size
 
-	for i := 0; i < mp.quietMoveList.Size; i++ {
-		move := mp.quietMoveList.Moves[i]
+	_ = scores[size-1]
+	_ = moves[size-1]
+
+	for i := 0; i < size; i++ {
+		move := moves[i]
 
 		if move == mp.hashmove {
-			mp.quietMoveList.Scores[i] = 900_000_000
+			scores[i] = 900_000_000
 			mp.quietMoveList.Swap(0, i)
 			mp.quietMoveList.Next = 1
 			if highestNonHashIndex == 0 {
@@ -180,13 +193,13 @@ func (mp *MovePicker) scoreQuietMoves() int {
 		var isCastling bool
 
 		if killer != 0 {
-			mp.quietMoveList.Scores[i] = killer
+			scores[i] = killer
 			goto end
 		}
 
 		history = engine.MoveHistoryScore(piece, dest, moveOrder)
 		if history != 0 {
-			mp.quietMoveList.Scores[i] = history
+			scores[i] = history
 			goto end
 		}
 
@@ -199,21 +212,21 @@ func (mp *MovePicker) scoreQuietMoves() int {
 		// King safety (castling)
 		isCastling = move.IsCastle()
 		if isCastling {
-			mp.quietMoveList.Scores[i] = 3_000
+			scores[i] = 3_000
 			goto end
 		}
 
 		// Prefer smaller pieces
 		if piece.Type() == King {
-			mp.quietMoveList.Scores[i] = 0
+			scores[i] = 0
 			goto end
 		}
 
-		mp.quietMoveList.Scores[i] = 1100 - int32(piece.Weight())
+		scores[i] = 1100 - int32(piece.Weight())
 	end:
-		if highestNonHashScore < mp.quietMoveList.Scores[i] {
+		if highestNonHashScore < scores[i] {
 			highestNonHashIndex = i
-			highestNonHashScore = mp.quietMoveList.Scores[i]
+			highestNonHashScore = scores[i]
 		}
 	}
 	mp.quietMoveList.IsScored = true
@@ -251,16 +264,20 @@ func (mp *MovePicker) getNextCapture() Move {
 		mp.generateCaptureMoves()
 	}
 
-	if mp.captureMoveList.Next >= mp.captureMoveList.Size {
+	size := mp.captureMoveList.Size
+	if mp.captureMoveList.Next >= size {
 		return EmptyMove
 	}
 
 	next := mp.captureMoveList.Next
 	var bestIndex int
+	scores := mp.captureMoveList.Scores
+	_ = scores[size-1]
 	if mp.captureMoveList.IsScored {
 		bestIndex = next
-		for i := next + 1; i < mp.captureMoveList.Size; i++ {
-			if mp.captureMoveList.Scores[i] > mp.captureMoveList.Scores[bestIndex] {
+		_ = scores[bestIndex]
+		for i := next + 1; i < size; i++ {
+			if scores[i] > scores[bestIndex] {
 				bestIndex = i
 			}
 		}
@@ -284,16 +301,20 @@ func (mp *MovePicker) getNextQuiet() Move {
 		mp.generateQuietMoves()
 	}
 
-	if mp.quietMoveList.Next >= mp.quietMoveList.Size {
+	size := mp.quietMoveList.Size
+	if mp.quietMoveList.Next >= size {
 		return EmptyMove
 	}
 
 	next := mp.quietMoveList.Next
 	var bestIndex int
+	scores := mp.quietMoveList.Scores
+	_ = scores[size-1]
 	if mp.quietMoveList.IsScored {
 		bestIndex = next
-		for i := next + 1; i < mp.quietMoveList.Size; i++ {
-			if mp.quietMoveList.Scores[i] > mp.quietMoveList.Scores[bestIndex] {
+		_ = scores[bestIndex]
+		for i := next + 1; i < size; i++ {
+			if scores[i] > scores[bestIndex] {
 				bestIndex = i
 			}
 		}

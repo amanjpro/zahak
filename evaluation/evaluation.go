@@ -341,7 +341,7 @@ func Evaluate(position *Position) int16 {
 	pieceIter := bbBlackPawn
 	for pieceIter > 0 {
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		blackPawnsCount++
 		blackCentipawnsEG += LatePawnPst[index]
 		blackCentipawnsMG += EarlyPawnPst[index]
@@ -353,7 +353,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whitePawnsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		whiteCentipawnsEG += LatePawnPst[flip[index]]
 		whiteCentipawnsMG += EarlyPawnPst[flip[index]]
 		pieceIter ^= mask
@@ -364,7 +364,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		blackCentipawnsEG += LateKnightPst[index]
 		blackCentipawnsMG += EarlyKnightPst[index]
 		pieceIter ^= mask
@@ -374,7 +374,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		blackCentipawnsEG += LateBishopPst[index]
 		blackCentipawnsMG += EarlyBishopPst[index]
 		pieceIter ^= mask
@@ -384,7 +384,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackRooksCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		sq := Square(index)
 		if blackRooksCount == 1 {
 			if board.IsVerticalDoubleRook(sq, bbBlackRook, all) {
@@ -406,7 +406,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		blackQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		blackCentipawnsEG += LateQueenPst[index]
 		blackCentipawnsMG += EarlyQueenPst[index]
 		pieceIter ^= mask
@@ -415,7 +415,7 @@ func Evaluate(position *Position) int16 {
 	pieceIter = bbBlackKing
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		blackCentipawnsEG += LateKingPst[index]
 		blackCentipawnsMG += EarlyKingPst[index]
 		blackKingIndex = index
@@ -427,7 +427,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		whiteCentipawnsEG += LateKnightPst[flip[index]]
 		whiteCentipawnsMG += EarlyKnightPst[flip[index]]
 		pieceIter ^= mask
@@ -437,7 +437,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		whiteCentipawnsEG += LateBishopPst[flip[index]]
 		whiteCentipawnsMG += EarlyBishopPst[flip[index]]
 		pieceIter ^= mask
@@ -447,7 +447,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteRooksCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		sq := Square(index)
 		if whiteRooksCount == 1 {
 			if board.IsVerticalDoubleRook(sq, bbWhiteRook, all) {
@@ -469,7 +469,7 @@ func Evaluate(position *Position) int16 {
 	for pieceIter != 0 {
 		whiteQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		whiteCentipawnsEG += LateQueenPst[flip[index]]
 		whiteCentipawnsMG += EarlyQueenPst[flip[index]]
 		pieceIter ^= mask
@@ -478,7 +478,7 @@ func Evaluate(position *Position) int16 {
 	pieceIter = bbWhiteKing
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask(uint64(index))
+		mask := SquareMask[index]
 		whiteCentipawnsEG += LateKingPst[flip[index]]
 		whiteCentipawnsMG += EarlyKingPst[flip[index]]
 		whiteKingIndex = index

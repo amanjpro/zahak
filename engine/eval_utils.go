@@ -17,7 +17,7 @@ func (b *Bitboard) attacksTo(occupied uint64, sq Square) uint64 {
 	rooksQueens |= b.blackRook | b.whiteRook
 	bishopsQueens |= b.blackBishop | b.whiteBishop
 
-	sqMask := squareMask[sq]
+	sqMask := SquareMask[sq]
 	return wPawnsAble2CaptureAny(sqMask, b.blackPawn) |
 		bPawnsAble2CaptureAny(sqMask, b.whitePawn) |
 		(computedKnightAttacks[sq] & knights) |
@@ -52,7 +52,7 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	mayXray := b.blackBishop | b.whiteBishop |
 		b.blackRook | b.whiteRook | b.blackQueen | b.whiteQueen
 
-	fromSet := squareMask[frSq]
+	fromSet := SquareMask[frSq]
 	occupied := b.whitePieces | b.blackPieces
 	attacks := b.attacksTo(occupied, toSq)
 
