@@ -80,14 +80,21 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	// isEndgame := position.IsEndGame()
 
 	bestscore := standPat
+	captureMoves := 0
+	seeScores := movePicker.captureMoveList.Scores
+
 	for i := 0; ; i++ {
 		move := movePicker.Next()
 		if move == EmptyMove {
 			break
 		}
-		// isCheckMove := move.IsCheck()
-		// isCaptureMove := move.IsCapture()
-		if /*!isCheckMove && !isInCheck && /* isCaptureMove && */ movePicker.captureMoveList.Scores[i] < 0 {
+
+		isCaptureMove := move.IsCapture()
+		if isCaptureMove || move.PromoType() != NoType {
+			captureMoves += 1
+		}
+
+		if isCaptureMove && seeScores[captureMoves] < 0 {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
 			continue
@@ -96,17 +103,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		// promoType := move.PromoType()
 		if !IsPromoting(move) {
 			margin := p + move.CapturedPiece().Weight()
-			// promoType := move.PromoType()
-			// if isCaptureMove {
-			// 	margin += move.CapturedPiece().Weight()
-			// }
-			// if promoType != NoType {
-			// 	margin += GetPiece(promoType, White).Weight()
-			// }
-			// toPSQT := PSQT(move.MovingPiece(), move.Destination(), isEndgame)
 			if standPat+margin <= alpha {
 				e.info.fpCounter += 1
-				// position.UnMakeMove(move, tg, ep, hc)
 				continue
 			}
 		}
