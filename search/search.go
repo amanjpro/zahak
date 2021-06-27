@@ -191,7 +191,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// if improving {
 	// 	razoringMargin += int16(depthLeft) * p
 	// }
-	if !isRootNode && !isPvNode && currentMove != EmptyMove && !isInCheck && depthLeft <= 3 && eval+razoringMargin < beta {
+	if !isRootNode && !isPvNode && !isInCheck && depthLeft < 2 && eval+razoringMargin < beta {
 		newEval := e.quiescence(alpha, beta, searchHeight)
 		if newEval < beta {
 			e.info.razoringCounter += 1
@@ -205,7 +205,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// if improving {
 	// 	reverseFutilityMargin += int16(depthLeft) * p
 	// }
-	if isNullMoveAllowed && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+	if !isRootNode && !isPvNode && !isInCheck && depthLeft < 7 && eval-reverseFutilityMargin >= beta {
 		e.info.rfpCounter += 1
 		return eval - reverseFutilityMargin /* fail soft */
 	}
@@ -215,7 +215,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// 	R = 3
 	// }
 
-	if isNullMoveAllowed && depthLeft >= 2 {
+	if isNullMoveAllowed && depthLeft >= 3 {
 		R := 4 + depthLeft/6
 		if eval >= beta+p {
 			R = min8(R, depthLeft)
