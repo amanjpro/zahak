@@ -195,7 +195,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// if improving {
 		// 	razoringMargin += int16(depthLeft) * p
 		// }
-		if depthLeft < 2 && eval+razoringMargin < beta {
+		if depthLeft <= 3 && eval+razoringMargin < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			if newEval < beta {
 				e.info.razoringCounter += 1
@@ -359,7 +359,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
-					(!isCheckMove ||
+					(!isCaptureMove ||
 						depthLeft <= 1 && isCaptureMove && seeScores[noisyMoves] < 0) {
 					e.info.efpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
