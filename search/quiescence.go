@@ -80,7 +80,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	// isEndgame := position.IsEndGame()
 
 	bestscore := standPat
-	captureMoves := 0
+	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
 
 	for i := 0; ; i++ {
@@ -91,10 +91,10 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 		isCaptureMove := move.IsCapture()
 		if isCaptureMove || move.PromoType() != NoType {
-			captureMoves += 1
+			noisyMoves += 1
 		}
 
-		if isCaptureMove && seeScores[captureMoves] < 0 {
+		if isCaptureMove && seeScores[noisyMoves] < 0 {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
 			continue

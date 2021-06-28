@@ -156,7 +156,6 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 	}
 
 	mp.captureMoveList.IsScored = true
-
 	return highestNonHashIndex
 }
 

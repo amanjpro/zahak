@@ -271,10 +271,18 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	var bestscore int16
 	var hashmove Move
+	legalMoves := 1
+	quietMoves := -1
+	noisyMoves := -1
 	for true {
 		hashmove = movePicker.Next()
 		if hashmove == EmptyMove {
 			break
+		}
+		if hashmove.IsCapture() || hashmove.PromoType() != NoType {
+			noisyMoves += 1
+		} else {
+			quietMoves += 1
 		}
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(hashmove); ok {
 			e.pred.Push(position.Hash())
@@ -314,13 +322,22 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		pruningThreashold /= 2
 	}
 
-	legalMoves := 1
+	seeScores := movePicker.captureMoveList.Scores
+	// quietScores := movePicker.quietMoveList.Scores
 	var move Move
 	for true {
 		move = movePicker.Next()
 		if move == EmptyMove {
 			break
 		}
+		isCaptureMove := move.IsCapture()
+		promoType := move.PromoType()
+		if isCaptureMove || promoType != NoType {
+			noisyMoves += 1
+		} else {
+			quietMoves += 1
+		}
+
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
 			legalMoves += 1
 			if isRootNode {
@@ -334,7 +351,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if allowFutilityPruning &&
 				((!isCheckMove && !isCaptureMove && notPromoting) ||
-					(depthLeft <= 1 && movePicker.captureMoveList.Scores[legalMoves] < 0)) {
+					(depthLeft <= 1 && isCaptureMove && seeScores[noisyMoves] < 0)) {
 				e.info.efpCounter += 1
 				position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				continue
