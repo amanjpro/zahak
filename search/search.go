@@ -195,7 +195,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// if improving {
 		// 	razoringMargin += int16(depthLeft) * p
 		// }
-		if depthLeft <= 3 && eval+razoringMargin < beta {
+		if depthLeft < 2 && eval+razoringMargin < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			if newEval < beta {
 				e.info.razoringCounter += 1
@@ -208,7 +208,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if improving {
 			reverseFutilityMargin += p // int16(depthLeft) * p
 		}
-		if depthLeft <= 8 && eval-reverseFutilityMargin >= beta {
+		if depthLeft < 7 && eval-reverseFutilityMargin >= beta {
 			e.info.rfpCounter += 1
 			return eval - reverseFutilityMargin /* fail soft */
 		}
@@ -264,7 +264,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		futilityMargin += p
 	}
 	allowFutilityPruning := false
-	if depthLeft <= 8 && reductionsAllowed &&
+	if depthLeft < 7 && reductionsAllowed &&
 		abs16(alpha) < CHECKMATE_EVAL &&
 		abs16(beta) < CHECKMATE_EVAL && futilityMargin <= alpha {
 		allowFutilityPruning = true
@@ -359,7 +359,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
-					(!isCaptureMove ||
+					(!isCheckMove ||
 						depthLeft <= 1 && isCaptureMove && seeScores[noisyMoves] < 0) {
 					e.info.efpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
