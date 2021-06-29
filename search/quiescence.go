@@ -11,7 +11,8 @@ const whiteMask = uint64(0x00FF000000000000)
 func dynamicMargin(pos *Position) int16 {
 
 	color := pos.Turn()
-	delta := b
+	delta := p
+
 	if color == White {
 		if pos.Board.GetBitboardOf(WhitePawn)&whiteMask != 0 {
 			delta = q
@@ -43,10 +44,17 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.info.quiesceCounter += 1
 	e.VisitNode()
 
+	position := e.Position
+
+	currentMove := e.positionMoves[searchHeight+1]
+	// Position is drawn
+	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
+		return 0
+	}
+
 	var isInCheck = e.Position.IsInCheck()
 
 	standPat := e.staticEvals[searchHeight]
-
 	if standPat >= beta {
 		return beta // fail hard
 	}
@@ -54,8 +62,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	if e.ShouldStop() {
 		return 0
 	}
-
-	position := e.Position
 
 	// Delta Pruning
 	if standPat+dynamicMargin(position) < alpha {
@@ -74,14 +80,21 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	// isEndgame := position.IsEndGame()
 
 	bestscore := standPat
+	noisyMoves := -1
+	seeScores := movePicker.captureMoveList.Scores
+
 	for i := 0; ; i++ {
 		move := movePicker.Next()
 		if move == EmptyMove {
 			break
 		}
-		// isCheckMove := move.IsCheck()
-		// isCaptureMove := move.IsCapture()
-		if /*!isCheckMove && !isInCheck && /* isCaptureMove && */ movePicker.captureMoveList.Scores[i] < 0 {
+
+		isCaptureMove := move.IsCapture()
+		if isCaptureMove || move.PromoType() != NoType {
+			noisyMoves += 1
+		}
+
+		if isCaptureMove && seeScores[noisyMoves] < 0 {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
 			continue
@@ -89,18 +102,9 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 		// promoType := move.PromoType()
 		if !IsPromoting(move) {
-			margin := b + move.CapturedPiece().Weight()
-			// promoType := move.PromoType()
-			// if isCaptureMove {
-			// 	margin += move.CapturedPiece().Weight()
-			// }
-			// if promoType != NoType {
-			// 	margin += GetPiece(promoType, White).Weight()
-			// }
-			// toPSQT := PSQT(move.MovingPiece(), move.Destination(), isEndgame)
+			margin := p + move.CapturedPiece().Weight()
 			if standPat+margin <= alpha {
 				e.info.fpCounter += 1
-				// position.UnMakeMove(move, tg, ep, hc)
 				continue
 			}
 		}

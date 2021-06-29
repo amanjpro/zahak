@@ -5,7 +5,7 @@ import (
 )
 
 type Position struct {
-	Board         Bitboard
+	Board         *Bitboard
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
@@ -25,10 +25,10 @@ const (
 	WhiteToMove
 )
 
-func (p *Position) SetTag(tag PositionTag)     { p.Tag |= tag }
-func (p *Position) ClearTag(tag PositionTag)   { p.Tag &= ^tag }
-func (p *Position) ToggleTag(tag PositionTag)  { p.Tag ^= tag }
-func (p Position) HasTag(tag PositionTag) bool { return p.Tag&tag != 0 }
+func (p *Position) SetTag(tag PositionTag)      { p.Tag |= tag }
+func (p *Position) ClearTag(tag PositionTag)    { p.Tag &= ^tag }
+func (p *Position) ToggleTag(tag PositionTag)   { p.Tag ^= tag }
+func (p *Position) HasTag(tag PositionTag) bool { return p.Tag&tag != 0 }
 
 func (p *Position) Turn() Color {
 	if p.HasTag(WhiteToMove) {
@@ -380,7 +380,7 @@ func (p *Position) Copy() *Position {
 		copyMap[k] = v
 	}
 	return &Position{
-		*p.Board.copy(),
+		p.Board.copy(),
 		p.EnPassant,
 		p.Tag,
 		p.hash,

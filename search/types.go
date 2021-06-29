@@ -221,7 +221,7 @@ func (e *Engine) AddKillerMove(move Move, ply int8) {
 }
 
 func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if ply < 0 || e.searchHistory[movingPiece-1] == nil || e.searchHistory[movingPiece-1][destination] == 0 {
+	if ply < 0 || e.searchHistory[movingPiece-1][destination] == 0 {
 		return 0
 	}
 	return 60_000 + e.searchHistory[movingPiece-1][destination]
@@ -309,23 +309,24 @@ func (p *Predecessors) Pop() {
 }
 
 func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
-	current := p.Hash()
-	previouslySeen := p.Positions[current]
-
 	if currentMove == EmptyMove || p.HalfMoveClock == 0 {
 		return false
 	}
 
-	if previouslySeen >= 2 {
-		return true
-	}
-
+	current := p.Hash()
 	for i := pred.maxIndex - 1; i >= 0; i-- {
 		var candidate = pred.line[i]
 		if current == candidate {
 			return true
 		}
 	}
+
+	previouslySeen := p.Positions[current]
+
+	if previouslySeen >= 2 {
+		return true
+	}
+
 	return false
 }
 
@@ -355,6 +356,13 @@ func max16(x int16, y int16) int16 {
 }
 
 func min16(x int16, y int16) int16 {
+	if x >= y {
+		return y
+	}
+	return x
+}
+
+func min8(x int8, y int8) int8 {
 	if x >= y {
 		return y
 	}
