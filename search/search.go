@@ -241,6 +241,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
+	// Internal iterative reduction based on Rebel's idea
+	if !isInCheck && nHashMove == EmptyMove && depthLeft > 3 {
+		depthLeft--
+	}
+
 	// Internal Iterative Deepening
 	if depthLeft >= 8 && nHashMove == EmptyMove {
 		e.innerLines[searchHeight].Recycle()
