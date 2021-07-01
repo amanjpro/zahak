@@ -112,6 +112,12 @@ He is also listed in [Rebel's Gambit rating](http://rebel13.nl/grl-40-2.html), w
 ```
 bash-3.2$ bin/zahak -help
 Usage of bin/zahak:
+  Commands:
+   ./zahak         Runs Zahak in UCI mode
+   ./zahak bench   Runs Zahak in OpenBench mode
+   
+  Options:
+  
   -book string
         Path to openning book in PolyGlot (bin) format
   -exclude-params string
