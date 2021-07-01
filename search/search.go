@@ -169,6 +169,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
+	// Internal iterative reduction based on Rebel's idea
+	if !found && depthLeft >= 3 {
+		e.info.internalIterativeReduction += 1
+		depthLeft -= 1
+	}
+
 	// if nHashMove == EmptyMove && !position.HasLegalMoves() {
 	// 	if isInCheck {
 	// 		return -CHECKMATE_EVAL + int16(searchHeight), true
@@ -195,7 +201,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// if improving {
 		// 	razoringMargin += int16(depthLeft) * p
 		// }
-		if depthLeft <= 3 && eval+razoringMargin < beta {
+		if depthLeft < 2 && eval+razoringMargin < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			if newEval < beta {
 				e.info.razoringCounter += 1

@@ -94,6 +94,7 @@ He is also listed in [Rebel's Gambit rating](http://rebel13.nl/grl-40-2.html), w
 - Move History Heuristics
 - Check Extensions
 - Internal Iterative Deepening
+- Internal Iterative Reduction
 
 ## Evaluation
 
