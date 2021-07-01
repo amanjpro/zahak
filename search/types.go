@@ -9,22 +9,23 @@ import (
 )
 
 type Info struct {
-	fpCounter             int
-	efpCounter            int
-	rfpCounter            int
-	razoringCounter       int
-	checkExtentionCounter int
-	nullMoveCounter       int
-	lmrCounter            int
-	lmpCounter            int
-	deltaPruningCounter   int
-	seeQuiescenceCounter  int
-	mainSearchCounter     int
-	zwCounter             int
-	researchCounter       int
-	quiesceCounter        int
-	killerCounter         int
-	historyCounter        int
+	fpCounter                  int
+	efpCounter                 int
+	rfpCounter                 int
+	razoringCounter            int
+	checkExtentionCounter      int
+	nullMoveCounter            int
+	lmrCounter                 int
+	lmpCounter                 int
+	deltaPruningCounter        int
+	seeQuiescenceCounter       int
+	mainSearchCounter          int
+	zwCounter                  int
+	researchCounter            int
+	quiesceCounter             int
+	killerCounter              int
+	historyCounter             int
+	internalIterativeReduction int
 }
 
 func (i *Info) Print() {
@@ -44,6 +45,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string Quiescence Nodes: %d\n", i.quiesceCounter)
 	fmt.Printf("info string Killer Moves: %d\n", i.killerCounter)
 	fmt.Printf("info string History Moves: %d\n", i.historyCounter)
+	fmt.Printf("info string Internal Iterative Reduction: %d\n", i.internalIterativeReduction)
 }
 
 type Engine struct {
@@ -114,7 +116,7 @@ func NewEngine(tt *Cache) *Engine {
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.nodesSinceTimeCheck < 2000 {

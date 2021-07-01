@@ -171,7 +171,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	// Internal iterative reduction based on Rebel's idea
 	if !found && depthLeft >= 3 {
-		depthLeft--
+		e.info.internalIterativeReduction += 1
+		depthLeft -= 1
 	}
 
 	// if nHashMove == EmptyMove && !position.HasLegalMoves() {
