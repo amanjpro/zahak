@@ -46,19 +46,18 @@ Diaries](https://chessengines.blogspot.com/), and several others.
 
 # Rating
 
-Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/). He is also listed in [Rebel's Gambit rating (i.e. GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes.
+Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/). He is also listed in [Rebel's Gambit rating (i.e. GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes. As of version 4.0, Zahak is also listed on [CEGT 40/4 Rating List](http://www.cegt.net/blitz.htm).
 
-The history of Zahak's rating is summerized here, taken from
-[this](https://ccrl.chessdom.com/ccrl/404/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
+The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL Rating**   |
-|-------------|------------------------------|--------------------|
-| 4.0         |                              | 2522               |      
-| 3.0         | 2407                         | 2378               |
-| 2.0.0       | 2105 (unstable rating)       | N/A                |
-| 1.0.0       | 2011                         | N/A                |
-| 0.3.0       | 1922                         | N/A                |
-| 0.2.1       | 1824                         | N/A                |
+| **version** |    **CCRL Blitz Rating**     |   **GRL Rating**   |   **CEGT Rating**    |
+|-------------|------------------------------|--------------------|----------------------|
+| 4.0         |                              | 2522               | 2423                 |
+| 3.0         | 2407                         | 2378               | N/A                  |
+| 2.0.0       | 2105 (unstable rating)       | N/A                | N/A                  |
+| 1.0.0       | 2011                         | N/A                | N/A                  |
+| 0.3.0       | 1922                         | N/A                | N/A                  |
+| 0.2.1       | 1824                         | N/A                | N/A                  |
 
 
 
