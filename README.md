@@ -50,14 +50,14 @@ Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/). He is
 
 The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL Rating**   |   **CEGT Rating**    |
-|-------------|------------------------------|--------------------|----------------------|
-| 4.0         |                              | 2522               | 2423                 |
-| 3.0         | 2407                         | 2378               | N/A                  |
-| 2.0.0       | 2105 (unstable rating)       | N/A                | N/A                  |
-| 1.0.0       | 2011                         | N/A                | N/A                  |
-| 0.3.0       | 1922                         | N/A                | N/A                  |
-| 0.2.1       | 1824                         | N/A                | N/A                  |
+| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |
+|-------------|------------------------------|-------------------------|---------------------------|
+| 4.0         |                              | 2522                    | 2423                      |
+| 3.0         | 2407                         | 2378                    | N/A                       |
+| 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       |
+| 1.0.0       | 2011                         | N/A                     | N/A                       |
+| 0.3.0       | 1922                         | N/A                     | N/A                       |
+| 0.2.1       | 1824                         | N/A                     | N/A                       |
 
 
 
