@@ -2,6 +2,9 @@
 
 ![Build Status](https://github.com/amanjpro/zahak/workflows/Go/badge.svg) [![Join the chat at https://gitter.im/Zahak-Chess-Engine/zahak](https://badges.gitter.im/Zahak-Chess-Engine/zahak.svg)](https://gitter.im/Zahak-Chess-Engine/zahak?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+<img src="zahak_logo.svg" width="300"/>
+
+
 A UCI compatible chess AI written in Go. Still work in progress. Zahak is also
 compliant with [open-benchmark](https://github.com/AndyGrant/OpenBench).
 
@@ -157,3 +160,4 @@ Zahak wouldn't have been possible without:
 - [VICE videos](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
 - [Chess Programming Wiki](https://www.chessprogramming.org/)
 - Niels Abildskov the author of [Loki](https://github.com/BimmerBass/Loki), who helped me with Texel Tuning
+- [Nasrin Zaza](https://www.linkedin.com/in/nasrin-zaza/) for the amazing logo
