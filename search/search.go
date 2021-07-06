@@ -170,7 +170,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// Internal iterative reduction based on Rebel's idea
-	if !found && depthLeft >= 3 {
+	if !isPvNode && !found && depthLeft >= 3 {
 		e.info.internalIterativeReduction += 1
 		depthLeft -= 1
 	}
@@ -378,6 +378,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					e.info.lmpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue // LMP
+				}
+
+				// SEE pruning
+				if isCaptureMove && seeScores[noisyMoves] < 0 &&
+					!isCheckMove && depthLeft <= 2 && eval <= alpha && abs16(alpha) < CHECKMATE_EVAL {
+					e.info.seeCounter += 1
+					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+					continue
 				}
 
 				// Late Move Reduction

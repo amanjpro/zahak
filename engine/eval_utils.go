@@ -62,12 +62,12 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	rooksQueens |= b.blackRook | b.whiteRook
 	bishopsQueens |= b.blackBishop | b.whiteBishop
 
-	gain[d] = target.Weight()
+	gain[d] = target.seeWeight()
 
 	for fromSet != 0 {
 		d++ // next depth and side
 		color := aPiece.Color()
-		gain[d] = aPiece.Weight() - gain[d-1] // speculative store, if defended
+		gain[d] = aPiece.seeWeight() - gain[d-1] // speculative store, if defended
 		if max(-gain[d-1], gain[d]) < 0 {
 			break // pruning does not influence the result
 		}

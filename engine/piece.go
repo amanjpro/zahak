@@ -85,6 +85,24 @@ func (p Piece) Type() PieceType {
 
 const MAX_INT = int16(32767)
 
+func (p Piece) seeWeight() int16 {
+	switch p {
+	case WhitePawn, BlackPawn:
+		return 100
+	case WhiteKnight, BlackKnight:
+		return 300
+	case WhiteBishop, BlackBishop:
+		return 300
+	case WhiteRook, BlackRook:
+		return 500
+	case WhiteQueen, BlackQueen:
+		return 900
+	case WhiteKing, BlackKing:
+		return MAX_INT
+	}
+	return 0
+}
+
 func (p Piece) Weight() int16 {
 	switch p {
 	case WhitePawn, BlackPawn:
