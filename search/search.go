@@ -380,6 +380,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					continue // LMP
 				}
 
+				// SEE pruning
+				if isCaptureMove && seeScores[noisyMoves] < 0 &&
+					!isCheckMove && depthLeft <= 2 && eval <= alpha && abs16(alpha) < CHECKMATE_EVAL {
+					e.info.seeCounter += 1
+					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+					continue
+				}
+
 				// Late Move Reduction
 				if promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
 					e.info.lmrCounter += 1

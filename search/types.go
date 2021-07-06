@@ -19,6 +19,7 @@ type Info struct {
 	lmpCounter                 int
 	deltaPruningCounter        int
 	seeQuiescenceCounter       int
+	seeCounter                 int
 	mainSearchCounter          int
 	zwCounter                  int
 	researchCounter            int
@@ -39,6 +40,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
 	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
 	fmt.Printf("info string SEE Quiescence: %d\n", i.seeQuiescenceCounter)
+	fmt.Printf("info string SEE: %d\n", i.seeCounter)
 	fmt.Printf("info string PV Nodes: %d\n", i.mainSearchCounter)
 	fmt.Printf("info string ZW Nodes: %d\n", i.zwCounter)
 	fmt.Printf("info string Research: %d\n", i.researchCounter)
@@ -116,7 +118,7 @@ func NewEngine(tt *Cache) *Engine {
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.nodesSinceTimeCheck < 2000 {
