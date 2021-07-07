@@ -192,7 +192,7 @@ func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 }
 
 func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if ply >= 0 && !move.IsCapture() {
+	if ply >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 		e.info.killerCounter += 1
 		if e.killerMoves[ply][0] != move {
 			e.killerMoves[ply][1] = e.killerMoves[ply][0]
@@ -209,7 +209,7 @@ func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, pl
 }
 
 func (e *Engine) RemoveMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if ply >= 0 && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
+	if ply >= 0 && move.PromoType() == NoType && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
 		value := e.searchHistory[movingPiece-1][destination] - int32(ply*ply)
 
 		e.searchHistory[movingPiece-1][destination] = value
@@ -232,7 +232,7 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 }
 
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if !move.IsCapture() {
+	if move.PromoType() == NoType && !move.IsCapture() {
 		e.info.historyCounter += 1
 		e.searchHistory[movingPiece-1][destination] += int32(ply)
 	}
