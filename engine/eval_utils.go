@@ -254,7 +254,7 @@ func (p *Position) CountPassedPawns(color Color) (int16, int16) {
 
 var whiteOutpostRanks uint64 = 0x0000FFFF00000000
 var blackOutpostRanks uint64 = 0x00000000FFFF0000
-var outpostFiles uint64 = FileFill(uint64(1<<F1) | uint64(1<<E1) | uint64(1<<D1) | uint64(1<<C1))
+var outpostFiles uint64 = FileFill(uint64(1<<E1) | uint64(1<<D1))
 var whiteOutpostSquares uint64 = whiteOutpostRanks & outpostFiles
 var blackOutpostSquares uint64 = blackOutpostRanks & outpostFiles
 
