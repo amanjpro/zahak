@@ -114,7 +114,7 @@ func (b *Bitboard) AllAttacks(color Color) (uint64, uint64, uint64) {
 	occupiedBB := b.whitePieces | b.blackPieces
 	if color == Black {
 		ownPieces = b.blackPieces
-		ownPawns = bPawnsAble2CaptureAny(b.blackPawn, universal)
+		ownPawns = bPawnAnyAttacks(b.blackPawn)
 		ownKnights = b.blackKnight
 		ownR = b.blackRook
 		ownB = b.blackBishop
@@ -122,7 +122,7 @@ func (b *Bitboard) AllAttacks(color Color) (uint64, uint64, uint64) {
 		ownKing = b.blackKing
 	} else {
 		ownPieces = b.whitePieces
-		ownPawns = wPawnsAble2CaptureAny(b.whitePawn, universal)
+		ownPawns = wPawnAnyAttacks(b.whitePawn)
 		ownKnights = b.whiteKnight
 		ownR = b.whiteRook
 		ownB = b.whiteBishop

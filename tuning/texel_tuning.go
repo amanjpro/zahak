@@ -119,6 +119,8 @@ func computeInitialGuesses() []int16 {
 	guesses = append(guesses, EndgameKingZoneMissingPawnPenalty)     // 813
 	guesses = append(guesses, MiddlegameKnightOutpostAward)          // 814
 	guesses = append(guesses, EndgameKnightOutpostAward)             // 815
+	guesses = append(guesses, MiddlegameBishopPairAward)             // 816
+	guesses = append(guesses, EndgameBishopPairAward)                // 817
 
 	return guesses
 }
@@ -186,6 +188,8 @@ func updateEvalParams(guesses []int16) {
 	EndgameKingZoneMissingPawnPenalty = guesses[813]
 	MiddlegameKnightOutpostAward = guesses[814]
 	EndgameKnightOutpostAward = guesses[815]
+	MiddlegameBishopPairAward = guesses[816]
+	EndgameBishopPairAward = guesses[817]
 }
 
 func toEvalParams(guesses []float64) []int16 {
@@ -271,6 +275,8 @@ func printOptimalGuesses(guesses []int16) {
 	fmt.Printf("var EndgameKingZoneMissingPawnPenalty int16 = %d\n", guesses[813])
 	fmt.Printf("var MiddlegameKnightOutpostAward int16 = %d\n", guesses[814])
 	fmt.Printf("var EndgameKnightOutpostAward int16 = %d\n", guesses[815])
+	fmt.Printf("var MiddlegameBishopPairAward int16 = %d\n", guesses[816])
+	fmt.Printf("var EndgameBishopPairAward int16 = %d\n", guesses[817])
 
 	// fmt.Printf("var MiddlegameCastlingAward int16 = %d\n", guesses[792])
 	fmt.Println("===================================================")

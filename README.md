@@ -49,7 +49,11 @@ Diaries](https://chessengines.blogspot.com/), and several others.
 
 # Rating
 
-Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/). He is also listed in [Rebel's Gambit rating (i.e. GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes. As of version 4.0, Zahak is also listed on [CEGT 40/4 Rating List](http://www.cegt.net/blitz.htm).
+Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/). He
+is also listed in [Rebel's Gambit rating (i.e.
+GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes.
+As of version 4.0, Zahak is also listed on [CEGT 40/4 Rating
+List](http://www.cegt.net/blitz.htm).
 
 The history of Zahak's rating is summerized here:
 
@@ -110,6 +114,8 @@ The history of Zahak's rating is summerized here:
 - Pawn structure
 - Tuned Piece Square Table (PST)
 - Material balance
+- Bishop Pair
+- Outposts
 
 # Command line options
 
