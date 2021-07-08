@@ -223,6 +223,8 @@ var MiddlegameKingZoneOpenFilePenalty int16 = 35
 var EndgameKingZoneOpenFilePenalty int16 = 0
 var MiddlegameKingZoneMissingPawnPenalty int16 = 16
 var EndgameKingZoneMissingPawnPenalty int16 = 0
+var MiddlegameKnightOutpostAward int16 = 16
+var EndgameKnightOutpostAward int16 = 0
 
 var flip = [64]int16{
 	56, 57, 58, 59, 60, 61, 62, 63,
@@ -540,6 +542,12 @@ func Evaluate(position *Position) int16 {
 	blackCentipawnsMG += kingSafetyEval.blackMG
 	blackCentipawnsEG += kingSafetyEval.blackEG
 
+	knightOutpostEval := KnightOutpostEval(position)
+	whiteCentipawnsMG += knightOutpostEval.whiteMG
+	whiteCentipawnsEG += knightOutpostEval.whiteEG
+	blackCentipawnsMG += knightOutpostEval.blackMG
+	blackCentipawnsEG += knightOutpostEval.blackEG
+
 	phase := TotalPhase -
 		whitePawnsCount*PawnPhase -
 		blackPawnsCount*PawnPhase -
@@ -572,6 +580,19 @@ func Evaluate(position *Position) int16 {
 	phs := int32(phase)
 	taperedEval := int16(((mg * (256 - phs)) + eg*phs) / 256)
 	return toEval(taperedEval + Tempo)
+}
+
+func KnightOutpostEval(p *Position) Eval {
+	var blackMG, whiteMG, blackEG, whiteEG int16
+	blackOutposts := p.CountKnightOutposts(Black)
+	whiteOutposts := p.CountKnightOutposts(White)
+
+	blackMG = MiddlegameKnightOutpostAward * blackOutposts
+	blackEG = EndgameKnightOutpostAward * blackOutposts
+	whiteMG = MiddlegameKnightOutpostAward * whiteOutposts
+	whiteEG = EndgameKnightOutpostAward * whiteOutposts
+
+	return Eval{blackMG: blackMG, whiteMG: whiteMG, blackEG: blackEG, whiteEG: whiteEG}
 }
 
 func RookFilesEval(blackRook uint64, whiteRook uint64, blackPawns uint64, whitePawns uint64) Eval {
