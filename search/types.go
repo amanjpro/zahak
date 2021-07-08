@@ -26,6 +26,7 @@ type Info struct {
 	quiesceCounter             int
 	killerCounter              int
 	historyCounter             int
+	historyPruningCounter      int
 	internalIterativeReduction int
 }
 
@@ -47,6 +48,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string Quiescence Nodes: %d\n", i.quiesceCounter)
 	fmt.Printf("info string Killer Moves: %d\n", i.killerCounter)
 	fmt.Printf("info string History Moves: %d\n", i.historyCounter)
+	fmt.Printf("info string History Pruning: %d\n", i.historyPruningCounter)
 	fmt.Printf("info string Internal Iterative Reduction: %d\n", i.internalIterativeReduction)
 }
 
@@ -118,7 +120,7 @@ func NewEngine(tt *Cache) *Engine {
 	}
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ShouldStop() bool {
 	if e.nodesSinceTimeCheck < 2000 {
@@ -190,7 +192,7 @@ func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
 }
 
 func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if ply >= 0 && !move.IsCapture() {
+	if ply >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 		e.info.killerCounter += 1
 		if e.killerMoves[ply][0] != move {
 			e.killerMoves[ply][1] = e.killerMoves[ply][0]
@@ -207,11 +209,9 @@ func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, pl
 }
 
 func (e *Engine) RemoveMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if ply >= 0 && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
+	if ply >= 0 && move.PromoType() == NoType && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
 		value := e.searchHistory[movingPiece-1][destination] - int32(ply*ply)
-		if value < 0 {
-			value = 0
-		}
+
 		e.searchHistory[movingPiece-1][destination] = value
 	}
 }
@@ -232,7 +232,7 @@ func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int
 }
 
 func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if !move.IsCapture() {
+	if move.PromoType() == NoType && !move.IsCapture() {
 		e.info.historyCounter += 1
 		e.searchHistory[movingPiece-1][destination] += int32(ply)
 	}
