@@ -114,7 +114,7 @@ func (b *Bitboard) AllAttacks(color Color) (uint64, uint64, uint64) {
 	occupiedBB := b.whitePieces | b.blackPieces
 	if color == Black {
 		ownPieces = b.blackPieces
-		ownPawns = bPawnsAble2CaptureAny(b.blackPawn, universal)
+		ownPawns = bPawnAnyAttacks(b.blackPawn)
 		ownKnights = b.blackKnight
 		ownR = b.blackRook
 		ownB = b.blackBishop
@@ -122,7 +122,7 @@ func (b *Bitboard) AllAttacks(color Color) (uint64, uint64, uint64) {
 		ownKing = b.blackKing
 	} else {
 		ownPieces = b.whitePieces
-		ownPawns = wPawnsAble2CaptureAny(b.whitePawn, universal)
+		ownPawns = wPawnAnyAttacks(b.whitePawn)
 		ownKnights = b.whiteKnight
 		ownR = b.whiteRook
 		ownB = b.whiteBishop
@@ -246,6 +246,38 @@ func (p *Position) CountPassedPawns(color Color) (int16, int16) {
 		return int16(bits.OnesCount64(passers & hiHalf)), int16(bits.OnesCount64(passers & lowHalf))
 	}
 	return 0, 0
+}
+
+// We actually cheat here. We treat the knight like a pawn, and find out if
+// they are a passer, If yes, then we also check if they are defended by their
+// own pawns, if yes, then it is an outpost
+
+var whiteOutpostRanks uint64 = 0x0000FFFF00000000
+var blackOutpostRanks uint64 = 0x00000000FFFF0000
+var outpostFiles uint64 = FileFill(uint64(1<<E1) | uint64(1<<D1))
+var whiteOutpostSquares uint64 = whiteOutpostRanks & outpostFiles
+var blackOutpostSquares uint64 = blackOutpostRanks & outpostFiles
+
+func (p *Position) CountKnightOutposts(color Color) int16 {
+	switch color {
+	case White:
+		outpostCandidate := p.Board.whiteKnight & whiteOutpostSquares
+		if outpostCandidate == 0 {
+			return 0
+		}
+		passerKnights := wPassedKnights(outpostCandidate, p.Board.blackPawn)
+		defendedPassedKnights := wPawnsAble2CaptureAny(p.Board.whitePawn, passerKnights)
+		return int16(bits.OnesCount64(defendedPassedKnights))
+	case Black:
+		outpostCandidate := p.Board.blackKnight & blackOutpostSquares
+		if outpostCandidate == 0 {
+			return 0
+		}
+		passerKnights := bPassedKnights(outpostCandidate, p.Board.whitePawn)
+		defendedPassedKnights := bPawnsAble2CaptureAny(p.Board.blackPawn, passerKnights)
+		return int16(bits.OnesCount64(defendedPassedKnights))
+	}
+	return 0
 }
 
 // pawn utils
@@ -479,6 +511,16 @@ func bPassedPawns(bpawns uint64, wpawns uint64) uint64 {
 	allFrontSpans := wFrontSpans(wpawns)
 	allFrontSpans |= eastOne(allFrontSpans) | westOne(allFrontSpans)
 	return bpawns &^ allFrontSpans
+}
+
+func wPassedKnights(wpawns uint64, bpawns uint64) uint64 {
+	allSideSpans := bFrontSpans(eastOne(bpawns) | westOne(bpawns))
+	return wpawns &^ allSideSpans
+}
+
+func bPassedKnights(bpawns uint64, wpawns uint64) uint64 {
+	allSideSpans := bFrontSpans(eastOne(bpawns) | westOne(bpawns))
+	return bpawns &^ allSideSpans
 }
 
 func FileFill(fset uint64) uint64 {

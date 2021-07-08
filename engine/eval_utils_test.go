@@ -168,3 +168,71 @@ func TestPassedPawns(t *testing.T) {
 		t.Error(fmt.Sprintf("Expected: (%d, %d)\n, Got: (%d, %d)\n", expectedF, expectedS, actualF, actualS))
 	}
 }
+
+func TestCountKnightOutpostsWhiteSixthRank(t *testing.T) {
+	fen := "r4rk1/p4ppp/1p1N2n1/pPp1P3/8/8/1PP2PPP/2KRR3 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(1)
+	actual := game.Position().CountKnightOutposts(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("White\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(0)
+	actual = game.Position().CountKnightOutposts(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Black\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestCountKnightOutpostsWhiteFifthRank(t *testing.T) {
+	fen := "r4rk1/p4ppp/1p1p2n1/1PpN4/4P3/8/1PP2PPP/2KRR3 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(1)
+	actual := game.Position().CountKnightOutposts(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("White\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(0)
+	actual = game.Position().CountKnightOutposts(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Black\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestCountKnightOutpostsBlackThirdRank(t *testing.T) {
+	fen := "r4rk1/p5pp/1p1p4/1P2p3/1Pp1P1P1/3n1N2/P4P1P/2KRR3 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(0)
+	actual := game.Position().CountKnightOutposts(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("White\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(1)
+	actual = game.Position().CountKnightOutposts(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Black\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+}
+
+func TestCountKnightOutpostsBlackFourthRank(t *testing.T) {
+	fen := "r4rk1/p5pp/1p1p4/1Pp1p3/3nP1P1/2N5/PP3P1P/2KRR3 w - - 0 1"
+	game := FromFen(fen, true)
+
+	expected := int16(0)
+	actual := game.Position().CountKnightOutposts(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("White\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+
+	expected = int16(1)
+	actual = game.Position().CountKnightOutposts(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Black\nExpected: %d\n, Got: %d\n", expected, actual))
+	}
+}
