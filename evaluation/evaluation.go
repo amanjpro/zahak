@@ -476,6 +476,27 @@ func Evaluate(position *Position) int16 {
 		pieceIter ^= mask
 	}
 
+	// Draw scenarios
+	{
+		allPiecesCount :=
+			whitePawnsCount +
+				blackPawnsCount +
+				whiteKnightsCount +
+				blackKnightsCount +
+				whiteBishopsCount +
+				blackBishopsCount +
+				whiteRooksCount +
+				blackRooksCount +
+				whiteQueensCount +
+				blackQueensCount
+
+		if (allPiecesCount == 2 && whiteRooksCount == 1 && (blackKnightsCount == 1 || blackBishopsCount == 1)) ||
+			(allPiecesCount == 2 && blackRooksCount == 1 && (whiteKnightsCount == 1 || whiteBishopsCount == 1)) ||
+			(allPiecesCount == 3 && blackRooksCount == 1 && whiteRooksCount == 1 && (whiteKnightsCount == 1 || blackKnightsCount == 1)) {
+			return 0
+		}
+	}
+
 	pawnFactorMG := int16(16-blackPawnsCount-whitePawnsCount) * MiddlegamePawnFactorCoeff
 	pawnFactorEG := int16(16-blackPawnsCount-whitePawnsCount) * EndgamePawnFactorCoeff
 
