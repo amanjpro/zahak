@@ -101,7 +101,7 @@ The history of Zahak's rating is summerized here:
 - Check Extensions
 - Internal Iterative Deepening
 - Internal Iterative Reduction
-- History Leave Pruning
+- History Leaf Pruning
 - SEE pruning both in QS and normal search
 
 ## Evaluation
