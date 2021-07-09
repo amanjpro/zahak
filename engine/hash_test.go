@@ -189,7 +189,6 @@ var positions []*Position = []*Position{
 	FromFen("rnbqkbnr/pp2pppp/8/2pp4/3P4/4PN2/PPP2PPP/RNBQKB1R b KQkq - 0 3", false).position,
 }
 
-// "2r3k1/1q1nbppp/r3p3/3pP3/pPpP4/P1Q2N2/2RN1PPP/2R4K b - b3 0 23"
 func TestZobristCollisions(t *testing.T) {
 	collisions := make(map[uint64]map[string]uint64)
 	tests := uint64(0)
@@ -238,6 +237,30 @@ func TestUpdateZobristHash(t *testing.T) {
 				pos.UnMakeMove(mov, tg, ep, hc)
 				unmadeHash := pos.Hash()
 				pos.hash = originalHash
+				if incrementHash != freshHash {
+					t.Errorf("Updated hash != Fresh hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
+				}
+				if unmadeHash != originalHash {
+					t.Errorf("Undone hash (reverse from unmake) != original hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
+				}
+			}
+		}
+	}
+}
+
+func TestUpdateZobristPawnHash(t *testing.T) {
+	initZobrist()
+	for _, pos := range positions {
+		pos.pawnhash = 0 // Reset the positions
+		originalHash := pos.Pawnhash()
+		for _, mov := range pos.PseudoLegalMoves() {
+			if ep, tg, hc, ok := pos.MakeMove(mov); ok {
+				incrementHash := pos.Pawnhash()
+				pos.pawnhash = 0
+				freshHash := pos.Pawnhash()
+				pos.UnMakeMove(mov, tg, ep, hc)
+				unmadeHash := pos.Pawnhash()
+				pos.pawnhash = originalHash
 				if incrementHash != freshHash {
 					t.Errorf("Updated hash != Fresh hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
 				}
