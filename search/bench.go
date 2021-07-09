@@ -81,8 +81,8 @@ func RunBenchmark() {
 		engine.Search(depth)
 		nodes += engine.NodesVisited()
 		totalTime += engine.TotalTime
-		pawnhashMisses = PawnhashMisses
-		pawnhashHits = PawnhashHits
+		pawnhashMisses += PawnhashMisses
+		pawnhashHits += PawnhashHits
 	}
 
 	fmt.Println("====================================================")
