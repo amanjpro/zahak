@@ -46,187 +46,193 @@ const WhiteHShield = uint64(1<<H2 | 1<<H3)
 // Middle-game
 var EarlyPawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	92, 130, 67, 105, 95, 127, 16, -34,
-	-12, -14, 20, 20, 63, 74, 17, -16,
-	-24, -6, -3, 15, 15, 12, 1, -29,
-	-35, -23, -13, 5, 9, 3, -9, -34,
-	-35, -30, -20, -21, -10, -10, 6, -25,
-	-43, -25, -33, -33, -30, 9, 11, -33,
+	89, 126, 68, 110, 93, 132, 14, -38,
+	-11, -16, 19, 20, 63, 80, 17, -16,
+	-24, -9, -9, 15, 14, 13, 0, -26,
+	-39, -32, -16, 0, 5, -1, -14, -37,
+	-34, -34, -18, -18, -6, -10, 4, -23,
+	-44, -30, -34, -27, -26, 11, 10, -30,
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
 var EarlyKnightPst = [64]int16{
-	-192, -82, -47, -44, 60, -120, -20, -127,
-	-70, -30, 90, 38, 32, 85, 9, -7,
-	-29, 80, 57, 67, 100, 143, 79, 57,
-	19, 46, 38, 62, 33, 79, 29, 42,
-	24, 45, 50, 39, 58, 40, 44, 22,
-	15, 27, 45, 48, 60, 49, 63, 23,
-	11, -12, 30, 39, 39, 51, 29, 27,
-	-93, 23, -14, 1, 33, 15, 28, 18,
+	-187, -81, -44, -40, 63, -112, -19, -122,
+	-63, -24, 96, 40, 36, 87, 17, 0,
+	-26, 84, 59, 72, 103, 148, 84, 66,
+	25, 50, 42, 67, 40, 86, 38, 49,
+	27, 49, 51, 40, 57, 44, 47, 28,
+	19, 30, 43, 49, 62, 52, 67, 25,
+	15, -9, 32, 42, 44, 55, 31, 34,
+	-86, 26, -12, 3, 36, 19, 29, 23,
 }
 
 var EarlyBishopPst = [64]int16{
-	-18, 26, -88, -51, -29, -37, 8, 15,
-	1, 48, 12, -4, 51, 75, 40, -25,
-	20, 66, 77, 61, 60, 75, 48, 24,
-	32, 39, 39, 68, 55, 50, 32, 21,
-	34, 50, 46, 60, 66, 46, 47, 37,
-	32, 54, 54, 52, 55, 75, 57, 42,
-	44, 64, 57, 45, 56, 60, 82, 45,
-	2, 37, 35, 26, 37, 33, 0, 16,
+	-13, 30, -92, -52, -30, -35, 14, 16,
+	2, 44, 10, -6, 49, 75, 36, -25,
+	19, 64, 74, 57, 58, 73, 46, 22,
+	32, 34, 36, 68, 54, 51, 32, 21,
+	33, 47, 40, 57, 62, 38, 46, 39,
+	32, 57, 54, 48, 55, 74, 58, 41,
+	45, 63, 56, 44, 54, 64, 81, 46,
+	5, 39, 36, 26, 35, 35, 2, 18,
 }
 
 var EarlyRookPst = [64]int16{
-	-7, 11, -21, 17, 21, -21, -2, -14,
-	-2, -7, 30, 28, 56, 59, -6, 21,
-	-37, -14, -7, -10, -34, 19, 43, -22,
-	-45, -35, -16, -4, -20, 12, -21, -40,
-	-52, -49, -34, -26, -17, -29, -3, -40,
-	-53, -35, -32, -31, -20, -9, -14, -35,
-	-50, -25, -34, -24, -15, 3, -15, -72,
-	-19, -20, -12, -2, 0, -1, -38, -18,
+	-4, 13, -18, 21, 23, -22, 1, -11,
+	2, -8, 30, 29, 56, 58, -4, 20,
+	-39, -18, -10, -9, -31, 21, 40, -22,
+	-44, -31, -20, -2, -19, 14, -23, -36,
+	-53, -51, -35, -30, -19, -32, -6, -43,
+	-55, -35, -32, -33, -21, -10, -17, -38,
+	-48, -26, -34, -25, -14, 4, -15, -74,
+	-21, -20, -12, -3, -1, 1, -38, -20,
 }
 
 var EarlyQueenPst = [64]int16{
-	-60, -35, -15, -17, 43, 36, 36, 16,
-	-34, -61, -28, -26, -71, 26, -11, 22,
-	-17, -22, -12, -43, -12, 24, 2, 20,
-	-36, -36, -35, -48, -34, -23, -34, -23,
-	-7, -39, -22, -22, -23, -15, -15, -13,
-	-24, 10, -8, 0, -3, 1, 7, -2,
-	-22, 2, 20, 13, 20, 26, 8, 18,
-	16, -2, 12, 26, 1, -5, -6, -31,
+	-54, -29, -12, -12, 46, 43, 39, 19,
+	-29, -56, -23, -25, -71, 29, -9, 29,
+	-13, -17, -9, -45, -9, 27, 5, 20,
+	-35, -31, -35, -46, -32, -24, -34, -22,
+	-7, -40, -21, -23, -24, -18, -19, -16,
+	-22, 12, -10, 1, -4, -1, 4, -2,
+	-20, 3, 21, 18, 25, 29, 12, 22,
+	16, 3, 16, 30, 3, -4, -5, -32,
 }
 
 var EarlyKingPst = [64]int16{
-	-53, 111, 103, 56, -49, -16, 42, 51,
-	111, 43, 25, 73, 22, 13, -13, -70,
-	38, 48, 62, 12, 29, 67, 67, -14,
-	-17, -7, 17, -19, -19, -22, -19, -62,
-	-47, 11, -36, -74, -76, -51, -62, -81,
-	-9, -12, -28, -57, -58, -46, -21, -38,
-	15, 18, -9, -58, -33, -15, 10, 17,
-	-4, 36, 13, -62, -8, -35, 28, 26,
+	-52, 116, 111, 56, -51, -18, 43, 46,
+	108, 49, 26, 79, 23, 16, -14, -72,
+	35, 49, 64, 17, 33, 70, 74, -13,
+	-15, -4, 20, -18, -22, -21, -19, -65,
+	-46, 18, -35, -72, -75, -52, -62, -85,
+	-12, -12, -28, -57, -56, -47, -20, -40,
+	17, 22, -9, -59, -35, -16, 12, 17,
+	-7, 37, 14, -59, -10, -35, 28, 24,
 }
 
 // Endgame
 var LatePawnPst = [64]int16{
 	0, 0, 0, 0, 0, 0, 0, 0,
-	169, 147, 131, 101, 111, 101, 151, 191,
-	85, 81, 58, 32, 15, 22, 57, 70,
-	22, 4, -8, -29, -19, -13, 0, 9,
-	20, 9, -1, -9, -10, -7, -2, 4,
-	4, 0, -8, -4, -4, -7, -14, -12,
-	15, -1, 5, 3, 8, -8, -13, -10,
+	173, 146, 130, 100, 111, 100, 151, 191,
+	83, 80, 55, 28, 9, 18, 57, 67,
+	20, 1, -11, -31, -21, -16, -1, 8,
+	21, 10, -2, -10, -11, -6, -2, 6,
+	2, -3, -12, -10, -8, -10, -18, -14,
+	14, -4, 2, -1, 2, -13, -18, -13,
 	0, 0, 0, 0, 0, 0, 0, 0,
 }
 
 var LateKnightPst = [64]int16{
-	-40, -48, -17, -38, -46, -31, -75, -94,
-	-30, -17, -50, -16, -29, -53, -37, -58,
-	-36, -40, -14, -18, -34, -40, -38, -60,
-	-26, -9, 4, 2, 6, -7, -1, -27,
-	-30, -25, -4, 12, 1, 1, -7, -25,
-	-36, -14, -19, 0, -8, -18, -36, -29,
-	-44, -27, -21, -15, -13, -27, -30, -52,
-	-18, -57, -29, -16, -31, -23, -60, -76,
+	-35, -42, -13, -35, -40, -27, -70, -89,
+	-25, -11, -45, -11, -25, -49, -31, -54,
+	-31, -35, -8, -13, -29, -34, -32, -55,
+	-21, -4, 10, 4, 6, -3, -1, -26,
+	-25, -19, 1, 15, 3, 4, -4, -23,
+	-29, -9, -15, 2, -5, -20, -33, -26,
+	-39, -20, -17, -13, -13, -26, -27, -52,
+	-13, -57, -24, -12, -28, -22, -60, -73,
 }
 
 var LateBishopPst = [64]int16{
-	-18, -31, -11, -9, -9, -13, -18, -32,
-	-13, -23, -9, -20, -19, -27, -19, -18,
-	-10, -25, -23, -22, -22, -19, -13, -6,
-	-12, -6, -4, -8, -6, -9, -12, -4,
-	-18, -14, -3, -1, -16, -6, -21, -18,
-	-16, -14, -3, -4, -1, -18, -15, -19,
-	-21, -29, -18, -9, -7, -19, -25, -37,
-	-23, -13, -24, -8, -14, -18, -8, -20,
+	-22, -35, -14, -16, -14, -18, -24, -34,
+	-17, -24, -12, -21, -22, -30, -24, -20,
+	-11, -24, -25, -26, -25, -22, -15, -9,
+	-17, -5, -6, -10, -8, -12, -17, -8,
+	-21, -16, -6, -4, -19, -10, -24, -21,
+	-20, -15, -6, -8, -6, -21, -16, -22,
+	-26, -31, -20, -14, -13, -21, -30, -44,
+	-26, -17, -26, -13, -17, -22, -11, -25,
 }
 
 var LateRookPst = [64]int16{
-	7, 1, 13, 2, 3, 13, 6, 7,
-	7, 11, 1, 1, -18, -9, 10, 1,
-	11, 8, 1, 5, 4, -7, -10, 1,
-	13, 7, 13, -1, 5, 4, 2, 13,
-	16, 19, 19, 11, 5, 9, -2, 5,
-	12, 13, 8, 11, 4, 0, 5, -1,
-	10, 4, 12, 13, 2, -3, -2, 16,
-	4, 11, 9, 0, -3, -3, 11, -14,
+	11, 4, 15, 5, 7, 14, 8, 8,
+	9, 14, 3, 3, -16, -7, 11, 4,
+	13, 10, 3, 5, 3, -8, -9, 1,
+	14, 7, 15, -1, 4, 2, 1, 13,
+	15, 18, 16, 10, 3, 5, -3, 3,
+	13, 10, 5, 9, 1, -6, 3, -1,
+	10, 4, 11, 13, 0, -5, -4, 15,
+	6, 10, 9, 1, -2, -1, 10, -13,
 }
 
 var LateQueenPst = [64]int16{
-	31, 61, 54, 49, 38, 35, 22, 57,
-	10, 47, 54, 66, 97, 42, 63, 39,
-	2, 23, 15, 84, 70, 50, 56, 40,
-	44, 46, 45, 72, 80, 65, 98, 74,
-	2, 58, 45, 67, 58, 57, 70, 57,
-	32, -22, 33, 23, 33, 44, 52, 47,
-	0, -5, -17, 3, 8, 0, -9, -10,
-	-17, -14, -4, -27, 24, -9, 2, -23,
+	36, 65, 59, 56, 42, 35, 27, 61,
+	13, 50, 58, 73, 101, 45, 68, 42,
+	6, 24, 18, 89, 71, 51, 58, 44,
+	48, 52, 46, 74, 81, 65, 102, 74,
+	4, 62, 49, 70, 58, 57, 71, 58,
+	32, -20, 37, 26, 36, 45, 56, 48,
+	3, -1, -14, 5, 8, 5, -9, -9,
+	-12, -13, -5, -23, 23, -2, 3, -15,
 }
 
 var LateKingPst = [64]int16{
-	-70, -55, -36, -31, -3, 18, -2, -16,
-	-35, -3, 0, -6, 4, 26, 13, 21,
-	1, 0, 2, 3, 3, 26, 24, 13,
-	-9, 11, 13, 20, 18, 26, 19, 11,
-	-15, -15, 18, 27, 28, 22, 9, 0,
-	-19, -9, 8, 21, 23, 17, 2, -2,
-	-29, -19, 5, 12, 11, 4, -11, -21,
-	-55, -47, -22, 0, -26, -4, -37, -56,
+	-76, -61, -41, -34, -6, 16, -6, -18,
+	-38, -4, -1, -7, 2, 25, 13, 19,
+	-1, 1, 1, 3, 1, 25, 23, 9,
+	-13, 10, 12, 20, 18, 25, 17, 8,
+	-17, -17, 18, 27, 28, 20, 6, -3,
+	-21, -9, 9, 22, 23, 16, 0, -4,
+	-33, -20, 5, 13, 12, 5, -12, -24,
+	-57, -47, -23, 1, -24, -4, -37, -57,
 }
 
 var MiddlegameBackwardPawnPenalty int16 = 10
 var EndgameBackwardPawnPenalty int16 = 4
-var MiddlegameIsolatedPawnPenalty int16 = 12
-var EndgameIsolatedPawnPenalty int16 = 7
+var MiddlegameIsolatedPawnPenalty int16 = 15
+var EndgameIsolatedPawnPenalty int16 = 6
 var MiddlegameDoublePawnPenalty int16 = 2
-var EndgameDoublePawnPenalty int16 = 26
+var EndgameDoublePawnPenalty int16 = 25
 var MiddlegamePassedPawnAward int16 = 0
 var EndgamePassedPawnAward int16 = 10
-var MiddlegameAdvancedPassedPawnAward int16 = 10
-var EndgameAdvancedPassedPawnAward int16 = 62
-var MiddlegameCandidatePassedPawnAward int16 = 31
-var EndgameCandidatePassedPawnAward int16 = 49
-var MiddlegameRookOpenFileAward int16 = 45
+var MiddlegameAdvancedPassedPawnAward int16 = 11
+var EndgameAdvancedPassedPawnAward int16 = 65
+var MiddlegameCandidatePassedPawnAward int16 = 40
+var EndgameCandidatePassedPawnAward int16 = 51
+var MiddlegameRookOpenFileAward int16 = 47
 var EndgameRookOpenFileAward int16 = 0
-var MiddlegameRookSemiOpenFileAward int16 = 14
-var EndgameRookSemiOpenFileAward int16 = 20
-var MiddlegameVeritcalDoubleRookAward int16 = 10
-var EndgameVeritcalDoubleRookAward int16 = 10
-var MiddlegameHorizontalDoubleRookAward int16 = 27
+var MiddlegameRookSemiOpenFileAward int16 = 13
+var EndgameRookSemiOpenFileAward int16 = 19
+var MiddlegameVeritcalDoubleRookAward int16 = 11
+var EndgameVeritcalDoubleRookAward int16 = 11
+var MiddlegameHorizontalDoubleRookAward int16 = 28
 var EndgameHorizontalDoubleRookAward int16 = 12
 var MiddlegamePawnFactorCoeff int16 = 0
-var EndgamePawnFactorCoeff int16 = 0
-var MiddlegameMobilityFactorCoeff int16 = 6
-var EndgameMobilityFactorCoeff int16 = 3
-var MiddlegameAggressivityFactorCoeff int16 = 1
-var EndgameAggressivityFactorCoeff int16 = 6
-var MiddlegameInnerPawnToKingAttackCoeff int16 = 0
+var EndgamePawnFactorCoeff int16 = 1
+var MiddlegamePawnSquareControlCoeff int16 = 6
+var EndgamePawnSquareControlCoeff int16 = 4
+var MiddlegameMinorMobilityFactorCoeff int16 = 5
+var EndgameMinorMobilityFactorCoeff int16 = 1
+var MiddlegameMinorAggressivityFactorCoeff int16 = 4
+var EndgameMinorAggressivityFactorCoeff int16 = 3
+var MiddlegameMajorMobilityFactorCoeff int16 = 3
+var EndgameMajorMobilityFactorCoeff int16 = 3
+var MiddlegameMajorAggressivityFactorCoeff int16 = 0
+var EndgameMajorAggressivityFactorCoeff int16 = 5
+var MiddlegameInnerPawnToKingAttackCoeff int16 = 2
 var EndgameInnerPawnToKingAttackCoeff int16 = 0
 var MiddlegameOuterPawnToKingAttackCoeff int16 = 4
-var EndgameOuterPawnToKingAttackCoeff int16 = 0
-var MiddlegameInnerMinorToKingAttackCoeff int16 = 18
+var EndgameOuterPawnToKingAttackCoeff int16 = 1
+var MiddlegameInnerMinorToKingAttackCoeff int16 = 17
 var EndgameInnerMinorToKingAttackCoeff int16 = 0
-var MiddlegameOuterMinorToKingAttackCoeff int16 = 11
-var EndgameOuterMinorToKingAttackCoeff int16 = 1
-var MiddlegameInnerMajorToKingAttackCoeff int16 = 17
+var MiddlegameOuterMinorToKingAttackCoeff int16 = 10
+var EndgameOuterMinorToKingAttackCoeff int16 = 2
+var MiddlegameInnerMajorToKingAttackCoeff int16 = 15
 var EndgameInnerMajorToKingAttackCoeff int16 = 0
-var MiddlegameOuterMajorToKingAttackCoeff int16 = 8
-var EndgameOuterMajorToKingAttackCoeff int16 = 5
-var MiddlegamePawnShieldPenalty int16 = 10
-var EndgamePawnShieldPenalty int16 = 8
-var MiddlegameNotCastlingPenalty int16 = 26
-var EndgameNotCastlingPenalty int16 = 5
-var MiddlegameKingZoneOpenFilePenalty int16 = 35
+var MiddlegameOuterMajorToKingAttackCoeff int16 = 11
+var EndgameOuterMajorToKingAttackCoeff int16 = 3
+var MiddlegamePawnShieldPenalty int16 = 8
+var EndgamePawnShieldPenalty int16 = 10
+var MiddlegameNotCastlingPenalty int16 = 33
+var EndgameNotCastlingPenalty int16 = 6
+var MiddlegameKingZoneOpenFilePenalty int16 = 38
 var EndgameKingZoneOpenFilePenalty int16 = 0
-var MiddlegameKingZoneMissingPawnPenalty int16 = 16
+var MiddlegameKingZoneMissingPawnPenalty int16 = 15
 var EndgameKingZoneMissingPawnPenalty int16 = 0
-var MiddlegameKnightOutpostAward int16 = 18
-var EndgameKnightOutpostAward int16 = 18
-var MiddlegameBishopPairAward int16 = 26
-var EndgameBishopPairAward int16 = 35
+var MiddlegameKnightOutpostAward int16 = 17
+var EndgameKnightOutpostAward int16 = 23
+var MiddlegameBishopPairAward int16 = 28
+var EndgameBishopPairAward int16 = 44
 
 var flip = [64]int16{
 	56, 57, 58, 59, 60, 61, 62, 63,
@@ -857,65 +863,98 @@ func Mobility(p *Position, blackKingIndex int, whiteKingIndex int) Eval {
 	var whiteCentipawnsMG, whiteCentipawnsEG, blackCentipawnsMG, blackCentipawnsEG int16
 
 	// mobility and attacks
-	whitePawnAttacks, whiteMinorAttacks, whiteOtherAttacks := board.AllAttacks(White) // get the squares that are attacked by white
-	blackPawnAttacks, blackMinorAttacks, blackOtherAttacks := board.AllAttacks(Black) // get the squares that are attacked by black
+	whitePawnAttacks, whiteMinorAttacks, whiteMajorAttacks := board.AllAttacks(White) // get the squares that are attacked by white
+	blackPawnAttacks, blackMinorAttacks, blackMajorAttacks := board.AllAttacks(Black) // get the squares that are attacked by black
 
 	blackKingZone := SquareInnerRingMask[blackKingIndex] | SquareOuterRingMask[blackKingIndex]
 	whiteKingZone := SquareInnerRingMask[whiteKingIndex] | SquareOuterRingMask[whiteKingIndex]
 
-	// king attacks are considered later
-	whiteAttacks := (whitePawnAttacks | whiteMinorAttacks | whiteOtherAttacks) &^ blackKingZone
-	blackAttacks := (blackPawnAttacks | blackMinorAttacks | blackOtherAttacks) &^ whiteKingZone
+	// Pawn controlled squares
+	wPawnAttacks := int16(bits.OnesCount64(whitePawnAttacks &^ blackKingZone))
+	bPawnAttacks := int16(bits.OnesCount64(blackPawnAttacks &^ whiteKingZone))
 
-	wQuietAttacks := bits.OnesCount64(whiteAttacks << 32) // keep hi-bits only
-	bQuietAttacks := bits.OnesCount64(blackAttacks >> 32) // keep lo-bits only
+	whiteCentipawnsMG += MiddlegamePawnSquareControlCoeff * wPawnAttacks
+	whiteCentipawnsEG += EndgamePawnSquareControlCoeff * wPawnAttacks
 
-	whiteAggressivity := bits.OnesCount64(whiteAttacks >> 32) // keep hi-bits only
-	blackAggressivity := bits.OnesCount64(blackAttacks << 32) // keep lo-bits only
+	blackCentipawnsMG += MiddlegamePawnSquareControlCoeff * bPawnAttacks
+	blackCentipawnsEG += EndgamePawnSquareControlCoeff * bPawnAttacks
 
-	whiteCentipawnsMG += MiddlegameMobilityFactorCoeff * int16(wQuietAttacks)
-	whiteCentipawnsEG += EndgameMobilityFactorCoeff * int16(wQuietAttacks)
+	// // Minor mobility
+	wMinorAttacksNoKingZone := whiteMinorAttacks &^ blackKingZone
+	bMinorAttacksNoKingZone := blackMinorAttacks &^ whiteKingZone
 
-	blackCentipawnsMG += MiddlegameMobilityFactorCoeff * int16(bQuietAttacks)
-	blackCentipawnsEG += EndgameMobilityFactorCoeff * int16(bQuietAttacks)
+	wMinorQuietAttacks := int16(bits.OnesCount64(wMinorAttacksNoKingZone << 32)) // keep hi-bits only
+	bMinorQuietAttacks := int16(bits.OnesCount64(bMinorAttacksNoKingZone >> 32)) // keep lo-bits only
 
-	whiteCentipawnsMG += MiddlegameAggressivityFactorCoeff * int16(whiteAggressivity)
-	whiteCentipawnsEG += EndgameAggressivityFactorCoeff * int16(whiteAggressivity)
+	wMinorAggressivity := int16(bits.OnesCount64(wMinorAttacksNoKingZone >> 32)) // keep hi-bits only
+	bMinorAggressivity := int16(bits.OnesCount64(bMinorAttacksNoKingZone << 32)) // keep lo-bits only
 
-	blackCentipawnsMG += MiddlegameAggressivityFactorCoeff * int16(blackAggressivity)
-	blackCentipawnsEG += EndgameAggressivityFactorCoeff * int16(blackAggressivity)
+	whiteCentipawnsMG += MiddlegameMinorMobilityFactorCoeff * wMinorQuietAttacks
+	whiteCentipawnsEG += EndgameMinorMobilityFactorCoeff * wMinorQuietAttacks
 
+	blackCentipawnsMG += MiddlegameMinorMobilityFactorCoeff * bMinorQuietAttacks
+	blackCentipawnsEG += EndgameMinorMobilityFactorCoeff * bMinorQuietAttacks
+
+	whiteCentipawnsMG += MiddlegameMinorAggressivityFactorCoeff * wMinorAggressivity
+	whiteCentipawnsEG += EndgameMinorAggressivityFactorCoeff * wMinorAggressivity
+
+	blackCentipawnsMG += MiddlegameMinorAggressivityFactorCoeff * bMinorAggressivity
+	blackCentipawnsEG += EndgameMinorAggressivityFactorCoeff * bMinorAggressivity
+
+	// Major mobility
+	wMajorAttacksNoKingZone := whiteMajorAttacks &^ blackKingZone
+	bMajorAttacksNoKingZone := blackMajorAttacks &^ whiteKingZone
+
+	wMajorQuietAttacks := int16(bits.OnesCount64(wMajorAttacksNoKingZone << 32)) // keep hi-bits only
+	bMajorQuietAttacks := int16(bits.OnesCount64(bMajorAttacksNoKingZone >> 32)) // keep lo-bits only
+
+	wMajorAggressivity := int16(bits.OnesCount64(wMajorAttacksNoKingZone >> 32)) // keep hi-bits only
+	bMajorAggressivity := int16(bits.OnesCount64(bMajorAttacksNoKingZone << 32)) // keep lo-bits only
+
+	whiteCentipawnsMG += MiddlegameMajorMobilityFactorCoeff * wMajorQuietAttacks
+	whiteCentipawnsEG += EndgameMajorMobilityFactorCoeff * wMajorQuietAttacks
+
+	blackCentipawnsMG += MiddlegameMajorMobilityFactorCoeff * bMajorQuietAttacks
+	blackCentipawnsEG += EndgameMajorMobilityFactorCoeff * bMajorQuietAttacks
+
+	whiteCentipawnsMG += MiddlegameMajorAggressivityFactorCoeff * wMajorAggressivity
+	whiteCentipawnsEG += EndgameMajorAggressivityFactorCoeff * wMajorAggressivity
+
+	blackCentipawnsMG += MiddlegameMajorAggressivityFactorCoeff * bMajorAggressivity
+	blackCentipawnsEG += EndgameMajorAggressivityFactorCoeff * bMajorAggressivity
+
+	// King attacks
 	whiteCentipawnsMG +=
 		MiddlegameInnerPawnToKingAttackCoeff*int16(bits.OnesCount64(whitePawnAttacks&SquareInnerRingMask[blackKingIndex])) +
 			MiddlegameOuterPawnToKingAttackCoeff*int16(bits.OnesCount64(whitePawnAttacks&SquareOuterRingMask[blackKingIndex])) +
 			MiddlegameInnerMinorToKingAttackCoeff*int16(bits.OnesCount64(whiteMinorAttacks&SquareInnerRingMask[blackKingIndex])) +
 			MiddlegameOuterMinorToKingAttackCoeff*int16(bits.OnesCount64(whiteMinorAttacks&SquareOuterRingMask[blackKingIndex])) +
-			MiddlegameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteOtherAttacks&SquareInnerRingMask[blackKingIndex])) +
-			MiddlegameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteOtherAttacks&SquareOuterRingMask[blackKingIndex]))
+			MiddlegameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteMajorAttacks&SquareInnerRingMask[blackKingIndex])) +
+			MiddlegameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteMajorAttacks&SquareOuterRingMask[blackKingIndex]))
 
 	whiteCentipawnsEG +=
 		EndgameInnerPawnToKingAttackCoeff*int16(bits.OnesCount64(whitePawnAttacks&SquareInnerRingMask[blackKingIndex])) +
 			EndgameOuterPawnToKingAttackCoeff*int16(bits.OnesCount64(whitePawnAttacks&SquareOuterRingMask[blackKingIndex])) +
 			EndgameInnerMinorToKingAttackCoeff*int16(bits.OnesCount64(whiteMinorAttacks&SquareInnerRingMask[blackKingIndex])) +
 			EndgameOuterMinorToKingAttackCoeff*int16(bits.OnesCount64(whiteMinorAttacks&SquareOuterRingMask[blackKingIndex])) +
-			EndgameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteOtherAttacks&SquareInnerRingMask[blackKingIndex])) +
-			EndgameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteOtherAttacks&SquareOuterRingMask[blackKingIndex]))
+			EndgameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteMajorAttacks&SquareInnerRingMask[blackKingIndex])) +
+			EndgameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(whiteMajorAttacks&SquareOuterRingMask[blackKingIndex]))
 
 	blackCentipawnsMG +=
 		MiddlegameInnerPawnToKingAttackCoeff*int16(bits.OnesCount64(blackPawnAttacks&SquareInnerRingMask[whiteKingIndex])) +
 			MiddlegameOuterPawnToKingAttackCoeff*int16(bits.OnesCount64(blackPawnAttacks&SquareOuterRingMask[whiteKingIndex])) +
 			MiddlegameInnerMinorToKingAttackCoeff*int16(bits.OnesCount64(blackMinorAttacks&SquareInnerRingMask[whiteKingIndex])) +
 			MiddlegameOuterMinorToKingAttackCoeff*int16(bits.OnesCount64(blackMinorAttacks&SquareOuterRingMask[whiteKingIndex])) +
-			MiddlegameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(blackOtherAttacks&SquareInnerRingMask[whiteKingIndex])) +
-			MiddlegameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(blackOtherAttacks&SquareOuterRingMask[whiteKingIndex]))
+			MiddlegameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(blackMajorAttacks&SquareInnerRingMask[whiteKingIndex])) +
+			MiddlegameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(blackMajorAttacks&SquareOuterRingMask[whiteKingIndex]))
 
 	blackCentipawnsEG +=
 		EndgameInnerPawnToKingAttackCoeff*int16(bits.OnesCount64(blackPawnAttacks&SquareInnerRingMask[whiteKingIndex])) +
 			EndgameOuterPawnToKingAttackCoeff*int16(bits.OnesCount64(blackPawnAttacks&SquareOuterRingMask[whiteKingIndex])) +
 			EndgameInnerMinorToKingAttackCoeff*int16(bits.OnesCount64(blackMinorAttacks&SquareInnerRingMask[whiteKingIndex])) +
 			EndgameOuterMinorToKingAttackCoeff*int16(bits.OnesCount64(blackMinorAttacks&SquareOuterRingMask[whiteKingIndex])) +
-			EndgameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(blackOtherAttacks&SquareInnerRingMask[whiteKingIndex])) +
-			EndgameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(blackOtherAttacks&SquareOuterRingMask[whiteKingIndex]))
+			EndgameInnerMajorToKingAttackCoeff*int16(bits.OnesCount64(blackMajorAttacks&SquareInnerRingMask[whiteKingIndex])) +
+			EndgameOuterMajorToKingAttackCoeff*int16(bits.OnesCount64(blackMajorAttacks&SquareOuterRingMask[whiteKingIndex]))
 
 	return Eval{blackMG: blackCentipawnsMG, whiteMG: whiteCentipawnsMG, blackEG: blackCentipawnsEG, whiteEG: whiteCentipawnsEG}
 }
