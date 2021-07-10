@@ -59,7 +59,7 @@ The history of Zahak's rating is summerized here:
 
 | **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |
 |-------------|------------------------------|-------------------------|---------------------------|
-| 4.0         |                              | 2522                    | 2423                      |
+| 4.0         | 2552                         | 2522                    | 2423                      |
 | 3.0         | 2407                         | 2378                    | N/A                       |
 | 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       |
 | 1.0.0       | 2011                         | N/A                     | N/A                       |
@@ -76,6 +76,7 @@ The history of Zahak's rating is summerized here:
 - (Magic) Bitboards
 - Multi-stage move generation
 - Transposition Table
+- Pawnhash
 - PolyGlot opening book
 - Compliant with OpenBench
 
