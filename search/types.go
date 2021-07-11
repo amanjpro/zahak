@@ -318,7 +318,7 @@ func IsRepetition(p *Position, pred Predecessors, currentMove Move) bool {
 	}
 
 	current := p.Hash()
-	for i := pred.maxIndex - 1; i >= 0; i-- {
+	for i := pred.maxIndex - 2; i >= 0; i -= 2 {
 		var candidate = pred.line[i]
 		if current == candidate {
 			return true
