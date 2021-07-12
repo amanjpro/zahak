@@ -157,8 +157,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	hash := position.Hash()
-	nHashMove, nEval, nDepth, nType, found := e.TranspositionTable.Get(hash)
-	if !isPvNode && found && nDepth >= depthLeft {
+	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
+	if !isPvNode && ttHit && nDepth >= depthLeft {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
 			return nEval
@@ -167,10 +167,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.CacheHit()
 			return nEval
 		}
+		if nType == Exact {
+			e.CacheHit()
+			return nEval
+		}
 	}
 
 	// Internal iterative reduction based on Rebel's idea
-	if !isPvNode && !found && depthLeft >= 3 {
+	if !isPvNode && !ttHit && depthLeft >= 3 {
 		e.info.internalIterativeReduction += 1
 		depthLeft -= 1
 	}
@@ -187,7 +191,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return -MAX_INT
 	}
 
-	eval := Evaluate(position)
+	var eval int16 = -MAX_INT
+	if !isRootNode && currentMove == EmptyMove {
+		eval = -1 * (e.staticEvals[searchHeight-1] + Tempo + Tempo)
+	} else {
+		eval = Evaluate(position)
+	}
+
 	e.staticEvals[searchHeight] = eval
 	improving := currentMove == EmptyMove ||
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
@@ -210,7 +220,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Reverse Futility Pruning
-		reverseFutilityMargin := int16(depthLeft) * (b - p)
+		reverseFutilityMargin := int16(depthLeft) * p //(b - p)
 		if improving {
 			reverseFutilityMargin += p // int16(depthLeft) * p
 		}
@@ -223,7 +233,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
 			var R = 4 + depthLeft/6
-			if eval >= beta+50 {
+			if eval >= beta+p {
 				R = min8(R, depthLeft)
 			} else {
 				R = min8(R, depthLeft-1)
@@ -248,7 +258,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// Internal Iterative Deepening
-	if depthLeft >= 8 && nHashMove == EmptyMove {
+	if isPvNode && depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
 		if e.AbruptStop {
@@ -375,9 +385,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					continue
 				}
 
+				killerScore := e.KillerMoveScore(move, searchHeight)
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-					legalMoves > pruningThreashold && e.KillerMoveScore(move, searchHeight) <= 0 && abs16(alpha) < CHECKMATE_EVAL {
+					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < CHECKMATE_EVAL {
 					e.info.lmpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue // LMP
@@ -396,7 +407,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					e.info.lmrCounter += 1
 					LMR = 1
 
-					if legalMoves >= 8 && notPromoting {
+					if (legalMoves >= 8 || notPromoting) && killerScore <= 0 {
 						LMR += 1
 					}
 
@@ -412,6 +423,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							continue
 						}
 					}
+
+					LMR = min8(depthLeft-2, LMR)
 				}
 			}
 
