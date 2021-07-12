@@ -18,6 +18,7 @@ var p = WhitePawn.Weight()
 var r = WhiteRook.Weight()
 var b = WhiteBishop.Weight()
 var q = WhiteQueen.Weight()
+var WIN_IN_MAX = CHECKMATE_EVAL - int16(MAX_DEPTH)
 
 func (e *Engine) rootSearch(depth int8) {
 
@@ -281,8 +282,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	allowFutilityPruning := false
 	if depthLeft < 7 && reductionsAllowed &&
-		abs16(alpha) < CHECKMATE_EVAL &&
-		abs16(beta) < CHECKMATE_EVAL && futilityMargin <= alpha {
+		abs16(alpha) < WIN_IN_MAX &&
+		abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
 		allowFutilityPruning = true
 	}
 
@@ -388,7 +389,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				killerScore := e.KillerMoveScore(move, searchHeight)
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < CHECKMATE_EVAL {
+					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
 					e.info.lmpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue // LMP
@@ -396,7 +397,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// SEE pruning
 				if isCaptureMove && seeScores[noisyMoves] < 0 &&
-					!isCheckMove && depthLeft <= 2 && eval <= alpha && abs16(alpha) < CHECKMATE_EVAL {
+					!isCheckMove && depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 					e.info.seeCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
