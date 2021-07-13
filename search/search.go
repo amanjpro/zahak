@@ -2,7 +2,6 @@ package search
 
 import (
 	"fmt"
-	"time"
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
@@ -42,19 +41,19 @@ func (e *Engine) rootSearch(depth int8) {
 	if e.move == EmptyMove {
 		e.pv.Recycle()
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
-			if e.ShouldStop() {
+
+			if iterationDepth > 1 && !e.TimeManager.CanStartNewIteration() {
 				break
 			}
-
-			iterStartTime := time.Now()
 
 			e.innerLines[0].Recycle()
 			score := e.aspirationWindow(e.score, iterationDepth)
 			// score := e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
 
-			if e.AbruptStop {
+			if e.TimeManager.AbruptStop {
 				break
 			}
+
 			e.pv.Clone(e.innerLines[0])
 			e.score = score
 			e.move = e.pv.MoveAt(0)
@@ -77,14 +76,6 @@ func (e *Engine) rootSearch(depth int8) {
 				e.info.Print()
 			}
 
-			lastIterationTime := time.Since(iterStartTime).Milliseconds()
-
-			// We expect the next iteration will take around three times as much as this iteration
-			// And, if that means we will exceed the allocated time before we can finish the search,
-			// we will be wasting time, this condition tries to avoid this.
-			if !e.CanFinishSearch(lastIterationTime) {
-				break
-			}
 		}
 
 	}
@@ -188,8 +179,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// 	}
 	// }
 	//
-	if e.ShouldStop() {
-		return -MAX_INT
+	if !isRootNode {
+		if e.TimeManager.ShouldStop(false, false) {
+			return -MAX_INT
+		}
 	}
 
 	var eval int16 = -MAX_INT
@@ -262,7 +255,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode && depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.AbruptStop {
+		if e.TimeManager.AbruptStop {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -315,7 +308,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if !e.AbruptStop {
+					if !e.TimeManager.AbruptStop {
 						e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 						// e.AddKillerMove(hashmove, searchHeight)
 						e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft)
@@ -349,6 +342,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	historyPruningThreashold := -1000 * int32(depthLeft)
 	var move Move
 	for true {
+
+		if isRootNode {
+			if e.TimeManager.ShouldStop(true, bestscore-e.score >= -20) {
+				break
+			}
+		}
+
 		move = movePicker.Next()
 		if move == EmptyMove {
 			break
@@ -449,7 +449,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if !e.AbruptStop {
+					if !e.TimeManager.AbruptStop {
 						e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 						// e.AddKillerMove(move, searchHeight)
 						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
@@ -465,7 +465,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.RemoveMoveHistory(move, move.MovingPiece(), move.Destination(), depthLeft)
 		}
 	}
-	if !e.AbruptStop {
+	if !e.TimeManager.AbruptStop {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 		} else {

@@ -59,7 +59,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return beta // fail hard
 	}
 
-	if e.ShouldStop() {
+	if e.TimeManager.ShouldStop(false, false) {
 		return 0
 	}
 

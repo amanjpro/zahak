@@ -8,6 +8,8 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+const MAX_TIME int64 = 9_223_372_036_854_775_807
+
 type Info struct {
 	fpCounter                  int
 	efpCounter                 int
@@ -53,30 +55,27 @@ func (i *Info) Print() {
 }
 
 type Engine struct {
-	Position            *Position
-	Ply                 uint16
-	nodesVisited        int64
-	cacheHits           int64
-	pv                  PVLine
-	StopSearchFlag      bool
-	AbruptStop          bool
-	move                Move
-	score               int16
-	positionMoves       []Move
-	killerMoves         [][]Move
-	searchHistory       [][]int32
-	MovePickers         []*MovePicker
-	StartTime           time.Time
-	ThinkTime           int64
-	info                Info
-	pred                Predecessors
-	innerLines          []PVLine
-	staticEvals         []int16
-	TranspositionTable  *Cache
-	DebugMode           bool
-	Pondering           bool
-	TotalTime           float64
-	nodesSinceTimeCheck int
+	Position           *Position
+	Ply                uint16
+	nodesVisited       int64
+	cacheHits          int64
+	pv                 PVLine
+	move               Move
+	score              int16
+	positionMoves      []Move
+	killerMoves        [][]Move
+	searchHistory      [][]int32
+	MovePickers        []*MovePicker
+	StartTime          time.Time
+	info               Info
+	pred               Predecessors
+	innerLines         []PVLine
+	staticEvals        []int16
+	TranspositionTable *Cache
+	DebugMode          bool
+	Pondering          bool
+	TotalTime          float64
+	TimeManager        *TimeManager
 }
 
 var MAX_DEPTH int8 = int8(100)
@@ -92,50 +91,43 @@ func NewEngine(tt *Cache) *Engine {
 	for i := int8(0); i < MAX_DEPTH; i++ {
 		movePickers[i] = EmptyMovePicker()
 	}
+
 	return &Engine{
-		nil,
-		0,
-		0,
-		0,
-		line,
-		false,
-		false,
-		EmptyMove,
-		0,
-		make([]Move, MAX_DEPTH),
-		make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
-		make([][]int32, 12), // We have 12 pieces only
-		movePickers,
-		time.Now(),
-		0,
-		NoInfo,
-		NewPredecessors(),
-		innerLines,
-		make([]int16, MAX_DEPTH),
-		tt,
-		false,
-		false,
-		0,
-		0,
+		Position:           nil,
+		Ply:                0,
+		nodesVisited:       0,
+		cacheHits:          0,
+		pv:                 line,
+		move:               EmptyMove,
+		score:              0,
+		positionMoves:      make([]Move, MAX_DEPTH),
+		killerMoves:        make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
+		searchHistory:      make([][]int32, 12), // We have 12 pieces only
+		MovePickers:        movePickers,
+		StartTime:          time.Now(),
+		info:               NoInfo,
+		pred:               NewPredecessors(),
+		innerLines:         innerLines,
+		staticEvals:        make([]int16, MAX_DEPTH),
+		TranspositionTable: tt,
+		DebugMode:          false,
+		Pondering:          false,
+		TotalTime:          0,
+		TimeManager:        nil,
 	}
+}
+
+func (e *Engine) InitTimeManager(availableTimeInMillis int64, isPerMove bool,
+	increment int64, movesToTimeControl int64) {
+	e.TimeManager = NewTimeManager(e.StartTime, availableTimeInMillis, isPerMove, increment, movesToTimeControl)
+}
+
+func (e *Engine) AttachTimeManager(tm *TimeManager) {
+	tm.StartTime = e.StartTime
+	e.TimeManager = tm
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-
-func (e *Engine) ShouldStop() bool {
-	if e.nodesSinceTimeCheck < 2000 {
-		e.nodesSinceTimeCheck += 1
-		e.AbruptStop = e.AbruptStop || e.StopSearchFlag
-		return e.AbruptStop
-	}
-	e.nodesSinceTimeCheck = 0
-	e.AbruptStop = e.AbruptStop || e.StopSearchFlag || time.Since(e.StartTime).Milliseconds() >= e.ThinkTime
-	return e.AbruptStop
-}
-
-func (e *Engine) CanFinishSearch(lastIterationTime int64) bool {
-	return time.Since(e.StartTime).Milliseconds()+3*lastIterationTime < e.ThinkTime
-}
 
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
@@ -160,8 +152,6 @@ func (e *Engine) ClearForSearch() {
 		}
 	}
 
-	e.StopSearchFlag = false
-	e.AbruptStop = false
 	e.nodesVisited = 0
 	e.cacheHits = 0
 	e.pv.Pop() // pop our move
@@ -172,6 +162,7 @@ func (e *Engine) ClearForSearch() {
 	e.pred.Clear()
 
 	e.StartTime = time.Now()
+	e.TimeManager.StartTime = e.StartTime
 }
 
 func (e *Engine) NodesVisited() int64 {

@@ -1,27 +1,78 @@
 package search
 
 import (
-	. "github.com/amanjpro/zahak/engine"
+	"time"
 )
 
 const COMMUNICATION_TIME_BUFFER = 50
 
-func (e *Engine) InitiateTimer(game *Game, availableTimeInMillis int, isPerMove bool,
-	increment int, movesToTimeControl int) int64 {
-	maximumTimeToThink := 0
+// Implements this: http://talkchess.com/forum3/viewtopic.php?f=7&t=77396&p=894325&hilit=cold+turkey#p894294
+type TimeManager struct {
+	StartTime           time.Time
+	HardLimit           int64
+	SoftLimit           int64
+	NodesSinceLastCheck int64
+	AbruptStop          bool
+	StopSearchNow       bool
+	IsPerMove           bool
+}
+
+func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
+	increment int64, movesToTimeControl int64) *TimeManager {
+	softLimit := int64(0)
+	hardLimit := int64(0)
 	if isPerMove {
-		maximumTimeToThink = availableTimeInMillis
+		softLimit = availableTimeInMillis - COMMUNICATION_TIME_BUFFER
+		hardLimit = softLimit
 	} else {
-		movestogo := 30
+		movestogo := int64(30)
 		if movesToTimeControl != 0 {
 			movestogo = movesToTimeControl
 		}
-		maximumTimeToThink = availableTimeInMillis / movestogo
+		softLimit = availableTimeInMillis / movestogo
+		softLimit = int64(softLimit - COMMUNICATION_TIME_BUFFER)
+		hardLimit = softLimit * 10
+		if availableTimeInMillis < increment {
+			hardLimit = hardLimit - increment
+		}
 	}
-	if availableTimeInMillis < increment {
-		return int64(maximumTimeToThink - COMMUNICATION_TIME_BUFFER)
+
+	return &TimeManager{
+		HardLimit:           hardLimit,
+		SoftLimit:           softLimit,
+		StartTime:           startTime,
+		NodesSinceLastCheck: 0,
+		AbruptStop:          false,
+		StopSearchNow:       false,
+		IsPerMove:           isPerMove,
+	}
+}
+
+func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
+	if tm.NodesSinceLastCheck < 2000 {
+		tm.NodesSinceLastCheck += 1
+		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow
+		return tm.AbruptStop
+	}
+	tm.NodesSinceLastCheck = 0
+	if isRoot && canCutNow {
+		return tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 	} else {
-		return int64(maximumTimeToThink - COMMUNICATION_TIME_BUFFER + increment)
+		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
+		return tm.AbruptStop
+	}
+}
+
+func (tm *TimeManager) CanStartNewIteration() bool {
+	if tm.AbruptStop || tm.StopSearchNow {
+		return false
+	}
+
+	if tm.IsPerMove {
+		return time.Since(tm.StartTime).Milliseconds() <= tm.SoftLimit
+	} else {
+		limit := 70 * tm.SoftLimit / 100
+		return time.Since(tm.StartTime).Milliseconds() <= limit
 	}
 }
 
