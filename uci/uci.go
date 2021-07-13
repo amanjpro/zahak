@@ -42,6 +42,7 @@ func (uci *UCI) Start() {
 		InitBook(uci.bookPath)
 	}
 	reader := bufio.NewReader(os.Stdin)
+
 	for true {
 		cmd, err := reader.ReadString('\n')
 		cmd = strings.Trim(cmd, "\n\r")
@@ -92,7 +93,9 @@ func (uci *UCI) Start() {
 				if uci.engine.Pondering {
 					uci.stopPondering()
 				} else {
-					uci.engine.TimeManager.StopSearchNow = true
+					if uci.engine.TimeManager != nil {
+						uci.engine.TimeManager.StopSearchNow = true
+					}
 				}
 			default:
 				if strings.HasPrefix(cmd, "setoption name Ponder value") {
