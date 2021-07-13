@@ -18,18 +18,18 @@ import (
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 type UCI struct {
-	version   string
-	engine    *Engine
-	thinkTime int64
-	withBook  bool
-	bookPath  string
+	version     string
+	engine      *Engine
+	timeManager *TimeManager
+	withBook    bool
+	bookPath    string
 }
 
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
 		NewEngine(NewCache(DEFAULT_CACHE_SIZE)),
-		0,
+		nil,
 		withBook,
 		bookPath,
 	}
@@ -42,6 +42,7 @@ func (uci *UCI) Start() {
 		InitBook(uci.bookPath)
 	}
 	reader := bufio.NewReader(os.Stdin)
+
 	for true {
 		cmd, err := reader.ReadString('\n')
 		cmd = strings.Trim(cmd, "\n\r")
@@ -54,8 +55,8 @@ func (uci *UCI) Start() {
 			case "ponderhit":
 				uci.engine.StartTime = time.Now()
 				uci.engine.Pondering = false
-				uci.engine.ThinkTime = uci.thinkTime
-				uci.thinkTime = 0
+				uci.engine.AttachTimeManager(uci.timeManager)
+				uci.timeManager = nil
 				uci.engine.SendPv(-1)
 			case "quit":
 				return
@@ -92,7 +93,9 @@ func (uci *UCI) Start() {
 				if uci.engine.Pondering {
 					uci.stopPondering()
 				} else {
-					uci.engine.StopSearchFlag = true
+					if uci.engine.TimeManager != nil {
+						uci.engine.TimeManager.StopSearchNow = true
+					}
 				}
 			default:
 				if strings.HasPrefix(cmd, "setoption name Ponder value") {
@@ -159,7 +162,7 @@ func (uci *UCI) Start() {
 }
 
 func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
-	uci.thinkTime = 0
+	uci.timeManager = nil
 	fields := strings.Fields(cmd)
 
 	pos := game.Position()
@@ -216,17 +219,17 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	uci.engine.Ply = ply
 	if !noTC {
 		if uci.engine.Pondering {
-			uci.thinkTime = uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
-			uci.engine.ThinkTime = MAX_TIME
+			uci.timeManager = NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo))
+			uci.engine.InitTimeManager(MAX_TIME, false, 0, 0)
 		} else {
-			uci.engine.ThinkTime = uci.engine.InitiateTimer(&game, timeToThink, perMove, inc, movesToGo)
+			uci.engine.InitTimeManager(int64(timeToThink), perMove, int64(inc), int64(movesToGo))
 		}
 		uci.engine.Search(depth)
 		uci.engine.SendBestMove()
 		uci.engine.Pondering = false
 	} else {
-		uci.engine.ThinkTime = MAX_TIME
-		uci.thinkTime = uci.engine.ThinkTime
+		uci.engine.InitTimeManager(MAX_TIME, false, 0, 0)
+		uci.timeManager = uci.engine.TimeManager
 		uci.engine.Search(depth)
 		uci.engine.SendBestMove()
 		uci.engine.Pondering = false
@@ -235,7 +238,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 
 func (uci *UCI) stopPondering() {
 	if uci.engine.Pondering {
-		uci.engine.StopSearchFlag = true
+		uci.engine.TimeManager.StopSearchNow = true
 		for !uci.engine.Pondering {
 		} // wait until stopped
 	}

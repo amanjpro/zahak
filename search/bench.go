@@ -62,7 +62,6 @@ var fens = []string{
 
 func RunBenchmark() {
 
-	var MAX_TIME int64 = 9_223_372_036_854_775_807
 	cacheSize := uint32(32)
 	pawnHashSize := 1
 	depth := int8(7)
@@ -72,7 +71,7 @@ func RunBenchmark() {
 	totalTime := float64(0)
 	pawnhashHits := int64(0)
 	pawnhashMisses := int64(0)
-	engine.ThinkTime = MAX_TIME
+	engine.InitTimeManager(MAX_TIME, false, 0, 0)
 	for _, fen := range fens {
 		engine.TranspositionTable = NewCache(cacheSize)
 		NewPawnCache(pawnHashSize)
