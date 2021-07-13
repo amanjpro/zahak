@@ -79,8 +79,8 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 }
 
 func (tm *TimeManager) ExtraTime() {
-	if tm.ExtensionCounter < 10 {
-		tm.SoftLimit = min64(tm.HardLimit, tm.SoftLimit+5*tm.SoftLimit/100)
+	if tm.ExtensionCounter < 5 {
+		tm.SoftLimit = min64(tm.HardLimit, tm.SoftLimit+tm.SoftLimit/10)
 		tm.ExtensionCounter += 1
 	}
 }
