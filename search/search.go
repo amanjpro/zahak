@@ -54,6 +54,10 @@ func (e *Engine) rootSearch(depth int8) {
 				break
 			}
 
+			if iterationDepth >= 8 && e.score-score >= 30 { // Position degrading
+				e.TimeManager.ExtraTime()
+			}
+
 			e.pv.Clone(e.innerLines[0])
 			e.score = score
 			e.move = e.pv.MoveAt(0)
@@ -471,6 +475,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		} else {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
 		}
+	}
+	if isRootNode && legalMoves == 1 {
+		e.TimeManager.StopSearchNow = true
 	}
 	return bestscore
 }

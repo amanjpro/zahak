@@ -15,6 +15,7 @@ type TimeManager struct {
 	AbruptStop          bool
 	StopSearchNow       bool
 	IsPerMove           bool
+	ExtensionCounter    int
 }
 
 func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
@@ -45,6 +46,7 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		AbruptStop:          false,
 		StopSearchNow:       false,
 		IsPerMove:           isPerMove,
+		ExtensionCounter:    0,
 	}
 }
 
@@ -76,21 +78,14 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 	}
 }
 
-func abs(num int) int {
-	if num < 0 {
-		return -num
+func (tm *TimeManager) ExtraTime() {
+	if tm.ExtensionCounter < 10 {
+		tm.SoftLimit = min64(tm.HardLimit, tm.SoftLimit+5*tm.SoftLimit/100)
+		tm.ExtensionCounter += 1
 	}
-	return num
 }
 
-func max(a int, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a int, b int) int {
+func min64(a int64, b int64) int64 {
 	if a < b {
 		return a
 	}
