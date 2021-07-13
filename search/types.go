@@ -162,7 +162,9 @@ func (e *Engine) ClearForSearch() {
 	e.pred.Clear()
 
 	e.StartTime = time.Now()
-	e.TimeManager.StartTime = e.StartTime
+	if e.TimeManager != nil {
+		e.TimeManager.StartTime = e.StartTime
+	}
 }
 
 func (e *Engine) NodesVisited() int64 {
