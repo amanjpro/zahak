@@ -27,7 +27,7 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		hardLimit = softLimit
 	} else {
 		movestogo := int64(30)
-		if movesToTimeControl != 0 {
+		if movesToTimeControl > 0 {
 			movestogo = movesToTimeControl
 		}
 		softLimit = availableTimeInMillis / movestogo
