@@ -31,11 +31,8 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 			movestogo = movesToTimeControl
 		}
 		softLimit = availableTimeInMillis / movestogo
-		softLimit = int64(softLimit - COMMUNICATION_TIME_BUFFER)
-		hardLimit = softLimit * 10
-		if availableTimeInMillis < increment {
-			hardLimit = hardLimit - increment
-		}
+		softLimit = min64(int64(softLimit+increment-COMMUNICATION_TIME_BUFFER), availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
+		hardLimit = min64(softLimit*10, availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
 	}
 
 	return &TimeManager{
