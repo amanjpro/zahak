@@ -365,3 +365,10 @@ func min8(x int8, y int8) int8 {
 	}
 	return x
 }
+
+func max8(x int8, y int8) int8 {
+	if x <= y {
+		return y
+	}
+	return x
+}
