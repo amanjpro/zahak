@@ -201,9 +201,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
+	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft > 3) && !isInCheck
 
-	if reductionsAllowed {
+	if reductionsAllowed && !isRootNode {
 		// Razoring
 		// razoringMargin := r
 		// if improving {
@@ -230,8 +230,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// NullMove pruning
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
-			var R = 4 + depthLeft/6
-			if eval >= beta+p {
+			var R = 4 + depthLeft/5
+			if eval >= beta+50 {
 				R = min8(R, depthLeft)
 			} else {
 				R = min8(R, depthLeft-1)
@@ -427,6 +427,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 							continue
 						}
+					}
+
+					if isPvNode {
+						LMR = max8(1, LMR-1)
 					}
 
 					LMR = min8(depthLeft-2, LMR)
