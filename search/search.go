@@ -201,9 +201,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	purningAllowed := (depthLeft > 4 || searchHeight > 2) && !isPvNode && !isInCheck
+	reductionsAllowed := !isRootNode && !isPvNode && !isInCheck
 
-	if purningAllowed {
+	if reductionsAllowed {
 		// Razoring
 		// razoringMargin := r
 		// if improving {
@@ -278,7 +278,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		futilityMargin += p
 	}
 	allowFutilityPruning := false
-	if depthLeft < 7 && purningAllowed &&
+	if depthLeft < 7 && reductionsAllowed &&
 		abs16(alpha) < WIN_IN_MAX &&
 		abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
 		allowFutilityPruning = true
@@ -379,8 +379,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			notPromoting := !IsPromoting(move)
 			LMR := int8(0)
 
-			killerScore := e.KillerMoveScore(move, searchHeight)
-			if purningAllowed {
+			if reductionsAllowed {
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
@@ -391,6 +390,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					continue
 				}
 
+				killerScore := e.KillerMoveScore(move, searchHeight)
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
 					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
@@ -407,34 +407,30 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					continue
 				}
 
-			}
-			// Late Move Reduction
-			if !isInCheck && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
-				e.info.lmrCounter += 1
-				LMR = 1
+				// Late Move Reduction
+				if promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
+					e.info.lmrCounter += 1
+					LMR = 1
 
-				if (legalMoves >= 8 || notPromoting) && killerScore <= 0 {
-					LMR += 1
-				}
-
-				if quietScores[quietMoves] < historyPruningThreashold {
-					LMR += 1
-					if legalMoves >= 10 {
+					if (legalMoves >= 8 || notPromoting) && killerScore <= 0 {
 						LMR += 1
 					}
-					e.info.historyPruningCounter += 1
-					if depthLeft-LMR <= 1 {
+
+					if quietScores[quietMoves] < historyPruningThreashold {
+						LMR += 1
+						if legalMoves >= 10 {
+							LMR += 1
+						}
 						e.info.historyPruningCounter += 1
-						position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-						continue
+						if depthLeft-LMR <= 1 {
+							e.info.historyPruningCounter += 1
+							position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+							continue
+						}
 					}
-				}
 
-				if isPvNode {
-					LMR = max8(LMR-1, 1)
+					LMR = min8(depthLeft-2, LMR)
 				}
-
-				LMR = min8(depthLeft-2, LMR)
 			}
 
 			e.pred.Push(position.Hash())
@@ -442,21 +438,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.positionMoves[searchHeight+1] = move
 			score := -e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
 			e.pred.Pop()
-
-			// Failed reduced search? research with full depth, zero window
-			if !isPvNode && LMR >= 1 && score > alpha && score < beta {
-				e.info.researchCounter += 1
-				// research with window [alpha;beta]
-				e.pred.Push(position.Hash())
-				e.innerLines[searchHeight+1].Recycle()
-				score := -e.alphaBeta(depthLeft-1, searchHeight+1, -alpha-1, -alpha)
-				e.pred.Pop()
-				if score > alpha {
-					alpha = score
-				}
-			}
-
-			// Failed again? search with full window and depth
 			if score > alpha && score < beta {
 				e.info.researchCounter += 1
 				// research with window [alpha;beta]
