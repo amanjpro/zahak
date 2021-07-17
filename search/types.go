@@ -196,7 +196,6 @@ func (e *Engine) KillerMoveScore(move Move, depthLeft int8) int32 {
 }
 
 func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, depthLeft int8, searchHeight int8, quietMovesCounter int) {
-	e.RemoveMoveHistory(quietMovesCounter, depthLeft, searchHeight)
 	if depthLeft >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 		e.info.killerCounter += 1
 		if e.killerMoves[depthLeft][0] != move {
@@ -208,6 +207,7 @@ func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, de
 			return
 		}
 
+		e.RemoveMoveHistory(move, quietMovesCounter, depthLeft, searchHeight)
 		e.info.historyCounter += 1
 		e.searchHistory[movingPiece-1][destination] += int32(depthLeft * depthLeft)
 	}
@@ -220,7 +220,7 @@ func (e *Engine) NoteMove(move Move, quietMovesCounter int, height int8) {
 	e.triedQuietMoves[height][quietMovesCounter] = move
 }
 
-func (e *Engine) RemoveMoveHistory(quietMovesCounter int, depthLeft int8, searchHeight int8) {
+func (e *Engine) RemoveMoveHistory(killerMove Move, quietMovesCounter int, depthLeft int8, searchHeight int8) {
 	if searchHeight < 0 || depthLeft < 0 {
 		return
 	}
@@ -229,7 +229,7 @@ func (e *Engine) RemoveMoveHistory(quietMovesCounter int, depthLeft int8, search
 		move := triedMoves[i]
 		destination := move.Destination()
 		movingPiece := move.MovingPiece()
-		if move.PromoType() == NoType && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
+		if move != killerMove && move.PromoType() == NoType && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
 			value := e.searchHistory[movingPiece-1][destination] - int32(depthLeft*depthLeft)
 
 			e.searchHistory[movingPiece-1][destination] = value
