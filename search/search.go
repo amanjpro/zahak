@@ -201,7 +201,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft > 3) && !isInCheck
+	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft >= 3) && !isInCheck
 
 	if reductionsAllowed && !isRootNode {
 		// Razoring
@@ -379,7 +379,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			notPromoting := !IsPromoting(move)
 			LMR := int8(0)
 
-			if reductionsAllowed {
+			killerScore := e.KillerMoveScore(move, searchHeight)
+			if reductionsAllowed && !isRootNode {
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
@@ -390,7 +391,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					continue
 				}
 
-				killerScore := e.KillerMoveScore(move, searchHeight)
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
 					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
@@ -406,27 +406,27 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
 				}
+			}
 
-				// Late Move Reduction
-				if promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
-					e.info.lmrCounter += 1
-					LMR = 1
+			// Late Move Reduction
+			if promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
+				e.info.lmrCounter += 1
+				LMR = 1
 
-					if (legalMoves >= 8 || notPromoting) && killerScore <= 0 {
+				if (legalMoves >= 8 || notPromoting) && killerScore <= 0 {
+					LMR += 1
+				}
+
+				if quietScores[quietMoves] < historyPruningThreashold {
+					LMR += 1
+					if legalMoves >= 10 {
 						LMR += 1
 					}
-
-					if quietScores[quietMoves] < historyPruningThreashold {
-						LMR += 1
-						if legalMoves >= 10 {
-							LMR += 1
-						}
+					e.info.historyPruningCounter += 1
+					if depthLeft-LMR <= 1 {
 						e.info.historyPruningCounter += 1
-						if depthLeft-LMR <= 1 {
-							e.info.historyPruningCounter += 1
-							position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-							continue
-						}
+						position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+						continue
 					}
 
 					if isPvNode {
@@ -435,6 +435,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 					LMR = min8(depthLeft-2, LMR)
 				}
+
+				LMR = min8(depthLeft-2, LMR)
 			}
 
 			e.pred.Push(position.Hash())
