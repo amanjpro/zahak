@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"math"
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
@@ -18,6 +19,18 @@ var r = WhiteRook.Weight()
 var b = WhiteBishop.Weight()
 var q = WhiteQueen.Weight()
 var WIN_IN_MAX = CHECKMATE_EVAL - int16(MAX_DEPTH)
+
+var lmrReductions [32][32]int = initLMR()
+
+func initLMR() [32][32]int {
+	var reductions [32][32]int
+	for depth := 1; depth < 32; depth++ {
+		for moves := 1; moves < 32; moves++ {
+			reductions[depth][moves] = int(1.75 + math.Log(float64(depth))*math.Log(float64(moves))/1.75)
+		}
+	}
+	return reductions
+}
 
 func (e *Engine) rootSearch(depth int8) {
 
@@ -201,8 +214,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft > 3) && !isInCheck
-	pruningAllowd := reductionsAllowed && !isRootNode
+	// reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft > 3) && !isInCheck
+	pruningAllowd := !isPvNode && !isInCheck && !isRootNode
 
 	if pruningAllowd {
 		// Razoring
@@ -343,8 +356,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	seeScores := movePicker.captureMoveList.Scores
-	quietScores := movePicker.quietMoveList.Scores
-	historyPruningThreashold := -1000 * int32(depthLeft)
+	// quietScores := movePicker.quietMoveList.Scores
+	// historyPruningThreashold := -1000 * int32(depthLeft)
 	var move Move
 	for true {
 
@@ -410,29 +423,31 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// Late Move Reduction
-			if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
+			if !isInCheck && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
 				e.info.lmrCounter += 1
-				LMR = 1
+				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
-				if (legalMoves >= 8 || notPromoting) && killerScore <= 0 {
-					LMR += 1
+				if killerScore <= 0 {
+					LMR = max8(LMR-1, 1)
 				}
 
-				if quietScores[quietMoves] < historyPruningThreashold {
-					LMR += 1
-					if legalMoves >= 10 {
-						LMR += 1
-					}
-					e.info.historyPruningCounter += 1
-					if depthLeft-LMR <= 1 {
-						e.info.historyPruningCounter += 1
-						position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-						continue
-					}
+				if isPvNode {
+					LMR = max8(LMR-1, 1)
 				}
 
-				// if isPvNode {
-				// 	LMR = max8(LMR-1, 1)
+				if improving {
+					LMR = max8(LMR-1, 1)
+				}
+
+				// if quietScores[quietMoves] < historyPruningThreashold {
+				// 	LMR += 1
+				//
+				// 	e.info.historyPruningCounter += 1
+				// 	if depthLeft-LMR <= 1 {
+				// 		e.info.historyPruningCounter += 1
+				// 		position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+				// 		continue
+				// 	}
 				// }
 
 				LMR = min8(depthLeft-2, LMR)
