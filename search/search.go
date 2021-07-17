@@ -436,7 +436,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-				if isQuiet && depthLeft-LMR < 3 && quietScores[quietMoves] < historyPruningThreashold {
+				if isQuiet && depthLeft-LMR < 1 && quietScores[quietMoves] < historyPruningThreashold {
 					e.info.historyPruningCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
@@ -460,9 +460,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				// if quietScores[quietMoves] > historyPruningThreashold {
-				// 	LMR -= 1
-				// }
+				if quietScores[quietMoves] > historyPruningThreashold {
+					LMR -= 1
+				}
 
 				// if quietScores[quietMoves] < historyPruningThreashold {
 				// 	LMR += 1
