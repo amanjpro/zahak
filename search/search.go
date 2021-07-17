@@ -26,7 +26,7 @@ func initLMR() [32][32]int {
 	var reductions [32][32]int
 	for depth := 1; depth < 32; depth++ {
 		for moves := 1; moves < 32; moves++ {
-			reductions[depth][moves] = int(1.75 + math.Log(float64(depth))*math.Log(float64(moves))/1.75)
+			reductions[depth][moves] = int(0.8 + math.Log(float64(depth))*math.Log(1.2*float64(moves))/2.5)
 		}
 	}
 	return reductions
@@ -355,9 +355,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		pruningThreashold /= 2
 	}
 
+	lmrThreashold := 2
+	if isPvNode {
+		lmrThreashold += 1
+	}
 	seeScores := movePicker.captureMoveList.Scores
-	// quietScores := movePicker.quietMoveList.Scores
-	// historyPruningThreashold := -1000 * int32(depthLeft)
+	quietScores := movePicker.quietMoveList.Scores
+	historyPruningThreashold := -1000 * int32(depthLeft)
 	var move Move
 	for true {
 
@@ -420,23 +424,34 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
 				}
+
+				// LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
+				// if depthLeft-LMR <= 1 {
+				// 	e.info.historyPruningCounter += 1
+				// 	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+				// 	continue
+				// }
 			}
 
 			// Late Move Reduction
-			if !isInCheck && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
+			if !isInCheck && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 2 && legalMoves > lmrThreashold {
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
 				if killerScore <= 0 {
-					LMR = max8(LMR-1, 1)
+					LMR -= 1
 				}
 
 				if isPvNode {
-					LMR = max8(LMR-1, 1)
+					LMR -= 1
 				}
 
 				if improving {
-					LMR = max8(LMR-1, 1)
+					LMR -= 1
+				}
+
+				if quietScores[quietMoves] > historyPruningThreashold {
+					LMR -= 1
 				}
 
 				// if quietScores[quietMoves] < historyPruningThreashold {
@@ -450,7 +465,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				// 	}
 				// }
 
-				LMR = min8(depthLeft-2, LMR)
+				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}
 
 			e.pred.Push(position.Hash())
