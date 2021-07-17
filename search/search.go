@@ -201,7 +201,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft >= 3) && !isInCheck
+	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft > 3) && !isInCheck
 	pruningAllowd := reductionsAllowed && !isRootNode
 
 	if pruningAllowd {
