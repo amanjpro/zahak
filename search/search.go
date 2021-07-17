@@ -202,8 +202,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	// Pruning
 	reductionsAllowed := (!isPvNode || isPvNode && isRootNode && depthLeft >= 3) && !isInCheck
+	pruningAllowd := reductionsAllowed && !isRootNode
 
-	if reductionsAllowed && !isRootNode {
+	if pruningAllowd {
 		// Razoring
 		// razoringMargin := r
 		// if improving {
@@ -278,7 +279,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		futilityMargin += p
 	}
 	allowFutilityPruning := false
-	if depthLeft < 7 && reductionsAllowed &&
+	if depthLeft < 7 && pruningAllowd &&
 		abs16(alpha) < WIN_IN_MAX &&
 		abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
 		allowFutilityPruning = true
@@ -380,7 +381,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			killerScore := e.KillerMoveScore(move, searchHeight)
-			if reductionsAllowed && !isRootNode {
+			if pruningAllowd {
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
@@ -409,7 +410,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// Late Move Reduction
-			if promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
+			if reductionsAllowed && promoType == NoType && !isCaptureMove && !isCheckMove && depthLeft > 3 && legalMoves > 4 {
 				e.info.lmrCounter += 1
 				LMR = 1
 
@@ -428,13 +429,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 						continue
 					}
-
-					if isPvNode {
-						LMR = max8(1, LMR-1)
-					}
-
-					LMR = min8(depthLeft-2, LMR)
 				}
+
+				// if isPvNode {
+				// 	LMR = max8(LMR-1, 1)
+				// }
 
 				LMR = min8(depthLeft-2, LMR)
 			}
