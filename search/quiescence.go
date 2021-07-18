@@ -73,11 +73,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		alpha = standPat
 	}
 
-	// withChecks := false && ply < 4
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, -1, EmptyMove, !isInCheck)
-
-	// isEndgame := position.IsEndGame()
 
 	bestscore := standPat
 	noisyMoves := -1
@@ -127,14 +124,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 				}
 			}
 		}
-		// if score >= beta {
-		// 	// e.AddKillerMove(move, searchHeight)
-		// 	// e.AddMoveHistory(move, move.MovingPiece(), move.Destination(), searchHeight)
-		// 	return beta, true
-		// }
-		// if score > alpha {
-		// 	alpha = score
-		// }
 	}
 	return bestscore
 }

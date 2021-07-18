@@ -70,7 +70,7 @@ The history of Zahak's rating is summerized here:
 
 # Implemented Features:
 
-## Basics
+## Core Features
 
 - UCI Support
 - (Magic) Bitboards
@@ -82,13 +82,23 @@ The history of Zahak's rating is summerized here:
 
 ## Search
 
+### Basics
 - Alpha-Beta search
 - Quiescence Search
 - Iterative Deepening
 - PV Search and PV
 - Search with Zero Windows
 - Aspiration Window with PVS
-- Static Exchange Evaluation
+
+### Move Ordering
+
+- Hash move
+- Promotions
+- Static Exchange Evaluation followed by LVA-MVV for equal captures according to SEE
+- Killer Moves Heuristics
+- Move History Heuristics
+
+### Selectivity
 - Late Move Pruning
 - Null-Move Pruning
 - Delta Pruning
@@ -97,12 +107,9 @@ The history of Zahak's rating is summerized here:
 - Enhanced Futility Pruning
 - Late Move Reduction
 - Razoring
-- Killer Moves Heuristics
-- Move History Heuristics
 - Check Extensions
-- Internal Iterative Deepening
-- Internal Iterative Reduction
-- History Leaf Pruning
+- Internal Iterative Deepening (for PV nodes only)
+- Internal Iterative Reduction (for non-PV nodes only)
 - SEE pruning both in QS and normal search
 
 ## Evaluation
