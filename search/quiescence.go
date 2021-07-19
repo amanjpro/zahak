@@ -46,7 +46,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	position := e.Position
 
-	currentMove := e.positionMoves[searchHeight+1]
+	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
 		return 0
