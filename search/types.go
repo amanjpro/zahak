@@ -290,7 +290,7 @@ func (e *Engine) SendPv(depth int8) {
 }
 
 func ScoreToCp(score int16) string {
-	if IsCheckmateEval(score) {
+	if isCheckmateEval(score) {
 		if score < 0 {
 			return fmt.Sprintf("mate -%d", (CHECKMATE_EVAL+score)/2)
 		} else {
@@ -406,4 +406,12 @@ func max8(x int8, y int8) int8 {
 		return y
 	}
 	return x
+}
+
+func isCheckmateEval(eval int16) bool {
+	absEval := abs16(eval)
+	if absEval == MAX_INT {
+		return false
+	}
+	return absEval >= CHECKMATE_EVAL-int16(MAX_DEPTH)
 }

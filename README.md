@@ -111,6 +111,7 @@ The history of Zahak's rating is summerized here:
 - Internal Iterative Deepening (for PV nodes only)
 - Internal Iterative Reduction (for non-PV nodes only)
 - SEE pruning both in QS and normal search
+- Mate distance pruning
 
 ## Evaluation
 

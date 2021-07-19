@@ -83,9 +83,6 @@ func (e *Engine) rootSearch(depth int8) {
 			} else {
 				fruitelessIterations = 0
 			}
-			if IsCheckmateEval(e.score) {
-				break
-			}
 			previousBestMove = e.move
 			e.pred.Clear()
 			if !e.Pondering && e.DebugMode {
@@ -149,6 +146,26 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			eval := Evaluate(position)
 			e.staticEvals[searchHeight] = eval
 			return eval
+		}
+
+		matingValue := CHECKMATE_EVAL - int16(searchHeight)
+
+		// Mate distance Pruning - Winning
+		if matingValue < beta {
+			beta = matingValue
+			if alpha >= matingValue {
+				return matingValue
+			}
+		}
+
+		matingValue = -CHECKMATE_EVAL + int16(searchHeight)
+
+		// Mate distance Pruning - Losing
+		if matingValue > alpha {
+			alpha = matingValue
+			if beta <= matingValue {
+				return matingValue
+			}
 		}
 	}
 
@@ -489,12 +506,4 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		e.TimeManager.StopSearchNow = true
 	}
 	return bestscore
-}
-
-func IsCheckmateEval(eval int16) bool {
-	absEval := abs16(eval)
-	if absEval == MAX_INT {
-		return false
-	}
-	return absEval >= CHECKMATE_EVAL-int16(MAX_DEPTH)
 }
