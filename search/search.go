@@ -201,9 +201,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	pruningAllowd := !isPvNode && !isInCheck && !isRootNode
+	pruningAllowed := !isPvNode && !isInCheck && !isRootNode
 
-	if pruningAllowd {
+	if pruningAllowed {
 		// Razoring
 		if depthLeft <= 2 && eval+r < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
@@ -269,7 +269,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		futilityMargin += p
 	}
 	allowFutilityPruning := false
-	if depthLeft < 7 && pruningAllowd &&
+	if depthLeft < 7 && pruningAllowed &&
 		abs16(alpha) < WIN_IN_MAX &&
 		abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
 		allowFutilityPruning = true
@@ -383,7 +383,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			killerScore := e.KillerMoveScore(move, searchHeight)
-			if pruningAllowd {
+			if pruningAllowed {
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
@@ -416,7 +416,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
-				if killerScore <= 0 {
+				if killerScore > 0 {
 					LMR -= 1
 				}
 
