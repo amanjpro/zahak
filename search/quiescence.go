@@ -52,11 +52,13 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return 0
 	}
 
-	var isInCheck = e.Position.IsInCheck()
-
 	standPat := e.staticEvals[searchHeight]
 	if standPat >= beta {
 		return beta // fail hard
+	}
+
+	if searchHeight >= MAX_DEPTH-1 {
+		return standPat
 	}
 
 	if e.TimeManager.ShouldStop(false, false) {
@@ -73,6 +75,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		alpha = standPat
 	}
 
+	var isInCheck = e.Position.IsInCheck()
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, -1, EmptyMove, !isInCheck)
 

@@ -143,6 +143,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return 0
 	}
 
+	if !isRootNode {
+
+		if searchHeight >= MAX_DEPTH-1 {
+			eval := Evaluate(position)
+			e.staticEvals[searchHeight] = eval
+			return eval
+		}
+	}
+
 	var isInCheck = position.IsInCheck()
 	if isInCheck {
 		e.info.checkExtentionCounter += 1
