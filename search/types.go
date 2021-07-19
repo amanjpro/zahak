@@ -67,6 +67,7 @@ type Engine struct {
 	searchHistory      [][]int32
 	MovePickers        []*MovePicker
 	StartTime          time.Time
+	triedQuietMoves    [][]Move
 	info               Info
 	pred               Predecessors
 	innerLines         []PVLine
@@ -105,6 +106,7 @@ func NewEngine(tt *Cache) *Engine {
 		searchHistory:      make([][]int32, 12), // We have 12 pieces only
 		MovePickers:        movePickers,
 		StartTime:          time.Now(),
+		triedQuietMoves:    make([][]Move, 250),
 		info:               NoInfo,
 		pred:               NewPredecessors(),
 		innerLines:         innerLines,
@@ -152,6 +154,15 @@ func (e *Engine) ClearForSearch() {
 		}
 	}
 
+	for i := 0; i < len(e.triedQuietMoves); i++ {
+		if e.triedQuietMoves[i] == nil {
+			e.triedQuietMoves[i] = make([]Move, 250) // Number of potential legal moves per position
+		}
+		for j := 0; j < len(e.triedQuietMoves[i]); j++ {
+			e.triedQuietMoves[i][j] = EmptyMove
+		}
+	}
+
 	e.nodesVisited = 0
 	e.cacheHits = 0
 	e.pv.Pop() // pop our move
@@ -171,63 +182,80 @@ func (e *Engine) NodesVisited() int64 {
 	return e.nodesVisited
 }
 
-func (e *Engine) KillerMoveScore(move Move, ply int8) int32 {
-	if move == EmptyMove || ply < 0 || e.killerMoves[ply] == nil {
+func (e *Engine) KillerMoveScore(move Move, depthLeft int8) int32 {
+	if move == EmptyMove || depthLeft < 0 || e.killerMoves[depthLeft] == nil {
 		return 0
 	}
-	if e.killerMoves[ply][0] == move {
+	if e.killerMoves[depthLeft][0] == move {
 		return 100_000
 	}
-	if e.killerMoves[ply][1] == move {
+	if e.killerMoves[depthLeft][1] == move {
 		return 90_000
 	}
 	return 0
 }
 
-func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if ply >= 0 && move.PromoType() == NoType && !move.IsCapture() {
+func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, depthLeft int8, searchHeight int8, quietMovesCounter int) {
+	if depthLeft >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 		e.info.killerCounter += 1
-		if e.killerMoves[ply][0] != move {
-			e.killerMoves[ply][1] = e.killerMoves[ply][0]
-			e.killerMoves[ply][0] = move
+		if e.killerMoves[depthLeft][0] != move {
+			e.killerMoves[depthLeft][1] = e.killerMoves[depthLeft][0]
+			e.killerMoves[depthLeft][0] = move
 		}
 
-		if ply <= 1 {
+		if depthLeft <= 1 {
 			return
 		}
 
+		e.RemoveMoveHistory(move, quietMovesCounter, depthLeft, searchHeight)
 		e.info.historyCounter += 1
-		e.searchHistory[movingPiece-1][destination] += int32(ply * ply)
+		e.searchHistory[movingPiece-1][destination] += int32(depthLeft * depthLeft)
 	}
 }
 
-func (e *Engine) RemoveMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
-	if ply >= 0 && move.PromoType() == NoType && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
-		value := e.searchHistory[movingPiece-1][destination] - int32(ply*ply)
+func (e *Engine) NoteMove(move Move, quietMovesCounter int, height int8) {
+	if quietMovesCounter < 0 || height < 0 || move.PromoType() != NoType || move.IsCapture() {
+		return
+	}
+	e.triedQuietMoves[height][quietMovesCounter] = move
+}
 
-		e.searchHistory[movingPiece-1][destination] = value
+func (e *Engine) RemoveMoveHistory(killerMove Move, quietMovesCounter int, depthLeft int8, searchHeight int8) {
+	if searchHeight < 0 || depthLeft < 0 {
+		return
+	}
+	triedMoves := e.triedQuietMoves[searchHeight]
+	for i := 0; i <= quietMovesCounter; i++ {
+		move := triedMoves[i]
+		destination := move.Destination()
+		movingPiece := move.MovingPiece()
+		if move != killerMove && move.PromoType() == NoType && !move.IsCapture() && e.searchHistory[movingPiece-1][destination] != 0 {
+			value := e.searchHistory[movingPiece-1][destination] - int32(depthLeft*depthLeft)
+
+			e.searchHistory[movingPiece-1][destination] = value
+		}
 	}
 }
 
-func (e *Engine) AddKillerMove(move Move, ply int8) {
+func (e *Engine) AddKillerMove(move Move, depthLeft int8) {
 	if !move.IsCapture() {
 		e.info.killerCounter += 1
-		e.killerMoves[ply][1] = e.killerMoves[ply][0]
-		e.killerMoves[ply][0] = move
+		e.killerMoves[depthLeft][1] = e.killerMoves[depthLeft][0]
+		e.killerMoves[depthLeft][0] = move
 	}
 }
 
-func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, ply int8) int32 {
-	if ply < 0 || e.searchHistory[movingPiece-1][destination] == 0 {
+func (e *Engine) MoveHistoryScore(movingPiece Piece, destination Square, depthLeft int8) int32 {
+	if depthLeft < 0 || e.searchHistory[movingPiece-1][destination] == 0 {
 		return 0
 	}
 	return 60_000 + e.searchHistory[movingPiece-1][destination]
 }
 
-func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, ply int8) {
+func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, depthLeft int8) {
 	if move.PromoType() == NoType && !move.IsCapture() {
 		e.info.historyCounter += 1
-		e.searchHistory[movingPiece-1][destination] += int32(ply)
+		e.searchHistory[movingPiece-1][destination] += int32(depthLeft)
 	}
 }
 
@@ -360,6 +388,13 @@ func min16(x int16, y int16) int16 {
 }
 
 func min8(x int8, y int8) int8 {
+	if x >= y {
+		return y
+	}
+	return x
+}
+
+func min(x int, y int) int {
 	if x >= y {
 		return y
 	}
