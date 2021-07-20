@@ -83,6 +83,9 @@ func (e *Engine) rootSearch(depth int8) {
 			} else {
 				fruitelessIterations = 0
 			}
+			if isCheckmateEval(e.score) {
+				break
+			}
 			previousBestMove = e.move
 			e.pred.Clear()
 			if !e.Pondering && e.DebugMode {
@@ -140,19 +143,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return 0
 	}
 
-	if !isRootNode {
-
-		if searchHeight >= MAX_DEPTH-1 {
-			eval := Evaluate(position)
-			e.staticEvals[searchHeight] = eval
-			return eval
-		}
-
-		alpha = max16(alpha, -CHECKMATE_EVAL+int16(searchHeight))
-		beta = min16(beta, CHECKMATE_EVAL-int16(searchHeight)-1)
-		if alpha >= beta {
-			return alpha
-		}
+	if searchHeight >= MAX_DEPTH-1 {
+		eval := Evaluate(position)
+		e.staticEvals[searchHeight] = eval
+		return eval
 	}
 
 	var isInCheck = position.IsInCheck()
