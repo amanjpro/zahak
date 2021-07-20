@@ -83,7 +83,7 @@ func (e *Engine) rootSearch(depth int8) {
 			} else {
 				fruitelessIterations = 0
 			}
-			if IsCheckmateEval(e.score) {
+			if isCheckmateEval(e.score) {
 				break
 			}
 			previousBestMove = e.move
@@ -141,6 +141,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Position is drawn
 	if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
 		return 0
+	}
+
+	if searchHeight >= MAX_DEPTH-1 {
+		eval := Evaluate(position)
+		e.staticEvals[searchHeight] = eval
+		return eval
 	}
 
 	var isInCheck = position.IsInCheck()
@@ -480,12 +486,4 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		e.TimeManager.StopSearchNow = true
 	}
 	return bestscore
-}
-
-func IsCheckmateEval(eval int16) bool {
-	absEval := abs16(eval)
-	if absEval == MAX_INT {
-		return false
-	}
-	return absEval >= CHECKMATE_EVAL-int16(MAX_DEPTH)
 }
