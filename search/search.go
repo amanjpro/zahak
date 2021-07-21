@@ -348,7 +348,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	seeScores := movePicker.captureMoveList.Scores
 	quietScores := movePicker.quietMoveList.Scores
-	historyPruningThreashold := -1000 * int32(depthLeft)
 	var move Move
 	for true {
 
@@ -434,7 +433,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				if quietScores[quietMoves] > historyPruningThreashold {
+				if quietScores[quietMoves] > 0 {
 					LMR -= 1
 				}
 
