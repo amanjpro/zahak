@@ -433,7 +433,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				if quietScores[quietMoves] > 0 {
+				if killerScore <= 0 && quietScores[quietMoves] > 0 {
 					LMR -= 1
 				}
 
