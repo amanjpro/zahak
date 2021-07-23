@@ -52,6 +52,8 @@ Diaries](https://chessengines.blogspot.com/), and several others.
 Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/). He
 is also listed in [Rebel's Gambit rating (i.e.
 GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes.
+__Please Note__ that GRL tests the engiens with their default hash size, which means it doesn't
+really represent the actual strength/weakness of the engines in the list.
 As of version 4.0, Zahak is also listed on [CEGT 40/4 Rating
 List](http://www.cegt.net/blitz.htm).
 
@@ -66,8 +68,6 @@ The history of Zahak's rating is summerized here:
 | 1.0.0       | 2011                         | N/A                     | N/A                       |
 | 0.3.0       | 1922                         | N/A                     | N/A                       |
 | 0.2.1       | 1824                         | N/A                     | N/A                       |
-
-
 
 # Implemented Features:
 
