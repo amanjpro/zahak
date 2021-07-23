@@ -59,6 +59,7 @@ The history of Zahak's rating is summerized here:
 
 | **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |
 |-------------|------------------------------|-------------------------|---------------------------|
+| 5.0         | N/A                          | 2686                    | N/A                       |
 | 4.0         | 2552                         | 2522                    | 2423                      |
 | 3.0         | 2407                         | 2378                    | N/A                       |
 | 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       |
