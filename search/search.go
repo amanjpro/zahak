@@ -211,7 +211,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if pruningAllowed {
 		// Razoring
-		if depthLeft <= 2 && eval+r < beta {
+		if depthLeft < 3 && eval+b < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			e.info.razoringCounter += 1
 			return newEval
@@ -230,7 +230,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// NullMove pruning
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
-			var R = 4 + depthLeft/5
+			var R = 4 + depthLeft/4
 			if eval >= beta+50 {
 				R = min8(R, depthLeft)
 			} else {
