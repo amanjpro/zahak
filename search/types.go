@@ -79,6 +79,7 @@ type Engine struct {
 	Pondering          bool
 	TotalTime          float64
 	TimeManager        *TimeManager
+	doPruning          bool
 }
 
 var MAX_DEPTH int8 = int8(100)
@@ -118,6 +119,7 @@ func NewEngine(tt *Cache) *Engine {
 		Pondering:          false,
 		TotalTime:          0,
 		TimeManager:        nil,
+		doPruning:          false,
 	}
 }
 
