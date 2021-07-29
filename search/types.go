@@ -28,6 +28,7 @@ type Info struct {
 	quiesceCounter             int
 	killerCounter              int
 	historyCounter             int
+	probCutCounter             int
 	historyPruningCounter      int
 	internalIterativeReduction int
 }
@@ -41,6 +42,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
 	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
 	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
+	fmt.Printf("info string ProbCut: %d\n", i.probCutCounter)
 	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
 	fmt.Printf("info string SEE Quiescence: %d\n", i.seeQuiescenceCounter)
 	fmt.Printf("info string SEE: %d\n", i.seeCounter)
@@ -129,7 +131,7 @@ func (e *Engine) AttachTimeManager(tm *TimeManager) {
 	e.TimeManager = tm
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
