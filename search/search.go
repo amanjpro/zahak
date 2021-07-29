@@ -250,6 +250,54 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 			}
 		}
+
+		// Prob cut
+		// The idea is basically cherry picked from multiple engines, Weiss, Ethereal and Berserk for example
+		probBeta := min16(beta+110, WIN_IN_MAX)
+		if depthLeft > 4 && abs16(beta) < WIN_IN_MAX && !(ttHit && nDepth >= depthLeft-3 && nEval < probBeta) {
+
+			hashMove := EmptyMove
+			if hashMove.IsCapture() || hashMove.PromoType() != NoType {
+				hashMove = nHashMove
+			}
+			movePicker := e.MovePickers[searchHeight]
+			movePicker.RecycleWith(position, e, depthLeft, hashMove, true)
+			seeScores := movePicker.captureMoveList.Scores
+			i := 0
+			for true {
+				move := movePicker.Next()
+				if move == EmptyMove || seeScores[i] < 0 {
+					break
+				}
+				if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
+					var score int16
+					if depthLeft >= 8 {
+						e.innerLines[searchHeight+1].Recycle()
+						e.pred.Push(position.Hash())
+						e.positionMoves[searchHeight+1] = move
+						childEval := Evaluate(position)
+						e.staticEvals[searchHeight] = childEval
+						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
+						e.pred.Pop()
+					}
+
+					if depthLeft < 8 || score >= probBeta {
+						e.innerLines[searchHeight+1].Recycle()
+						e.pred.Push(position.Hash())
+						e.positionMoves[searchHeight+1] = move
+						score = -e.alphaBeta(depthLeft-4, searchHeight+1, -probBeta, -probBeta+1)
+						e.pred.Pop()
+					}
+					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+
+					if score >= probBeta {
+						e.info.probCutCounter += 1
+						return score
+					}
+				}
+				i += 1
+			}
+		}
 	}
 
 	// Internal Iterative Deepening
