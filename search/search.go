@@ -100,6 +100,7 @@ func (e *Engine) rootSearch(depth int8) {
 }
 
 func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
+	e.doPruning = iterationDepth > 3
 	if iterationDepth <= 6 {
 		alpha := -MAX_INT
 		beta := MAX_INT
@@ -207,7 +208,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	pruningAllowed := !isPvNode && !isInCheck && !isRootNode
+	pruningAllowed := !isPvNode && !isInCheck && e.doPruning
 
 	if pruningAllowed {
 		// Razoring
@@ -436,7 +437,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			killerScore := e.KillerMoveScore(move, searchHeight)
-			if pruningAllowed {
+			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
 				if allowFutilityPruning &&
 					!isCheckMove && notPromoting &&
@@ -465,7 +466,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// Late Move Reduction
-			if !isInCheck && isQuiet && !isCheckMove && depthLeft > 2 && legalMoves > lmrThreashold {
+			if !isInCheck && e.doPruning && isQuiet && !isCheckMove && depthLeft > 2 && legalMoves > lmrThreashold {
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
