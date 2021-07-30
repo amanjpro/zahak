@@ -99,25 +99,17 @@ func (e *Engine) rootSearch(depth int8) {
 	e.SendPv(lastDepth)
 }
 
-func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
+func (e *Engine) aspirationWindow(prevScore int16, iterationDepth int8) int16 {
 	e.doPruning = iterationDepth > 3
 	if iterationDepth <= 6 {
-		alpha := -MAX_INT
-		beta := MAX_INT
-		score = e.alphaBeta(iterationDepth, 0, alpha, beta)
+		return e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
 	} else {
-		var alpha, beta int16
 		alphaMargin := int16(25)
 		betaMargin := int16(25)
-		for i := 0; i < 3; i++ {
-			if i < 2 {
-				alpha = max16(score-alphaMargin, -MAX_INT)
-				beta = min16(score+betaMargin, MAX_INT)
-			} else {
-				alpha = -MAX_INT
-				beta = MAX_INT
-			}
-			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
+		for i := 0; i < 2; i++ {
+			alpha := max16(prevScore-alphaMargin, -MAX_INT)
+			beta := min16(prevScore+betaMargin, MAX_INT)
+			score := e.alphaBeta(iterationDepth, 0, alpha, beta)
 			if score <= alpha {
 				alphaMargin *= 2
 			} else if score >= beta {
@@ -127,7 +119,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 			}
 		}
 	}
-	return score
+	return e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
 }
 
 func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16) int16 {
@@ -277,7 +269,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						e.pred.Push(position.Hash())
 						e.positionMoves[searchHeight+1] = move
 						childEval := Evaluate(position)
-						e.staticEvals[searchHeight] = childEval
+						e.staticEvals[searchHeight+1] = childEval
 						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
 						e.pred.Pop()
 					}
