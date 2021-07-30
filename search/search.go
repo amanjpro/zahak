@@ -106,22 +106,22 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 		beta := MAX_INT
 		score = e.alphaBeta(iterationDepth, 0, alpha, beta)
 	} else {
-		var alpha, beta int16
 		alphaMargin := int16(25)
 		betaMargin := int16(25)
+		alpha := max16(score-alphaMargin, -MAX_INT)
+		beta := min16(score+betaMargin, MAX_INT)
 		for i := 0; i < 3; i++ {
-			if i < 2 {
-				alpha = max16(score-alphaMargin, -MAX_INT)
-				beta = min16(score+betaMargin, MAX_INT)
-			} else {
+			if i >= 2 {
 				alpha = -MAX_INT
 				beta = MAX_INT
 			}
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
 			if score <= alpha {
 				alphaMargin *= 2
+				alpha = max16(alpha-alphaMargin, -MAX_INT)
 			} else if score >= beta {
 				betaMargin *= 2
+				beta = min16(beta+betaMargin, MAX_INT)
 			} else {
 				return score
 			}
