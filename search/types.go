@@ -48,6 +48,7 @@ type Info struct {
 	historyCounter             int64
 	probCutCounter             int64
 	historyPruningCounter      int64
+	singularExtensionCounter   int
 	internalIterativeReduction int64
 }
 
@@ -99,7 +100,7 @@ func (i *Info) Print() {
 	fmt.Printf("info string Quiescence Nodes: %d\n", i.quiesceCounter)
 	fmt.Printf("info string Killer Moves: %d\n", i.killerCounter)
 	fmt.Printf("info string History Moves: %d\n", i.historyCounter)
-	fmt.Printf("info string History Pruning: %d\n", i.historyPruningCounter)
+	fmt.Printf("info string Singular Extension: %d\n", i.singularExtensionCounter)
 	fmt.Printf("info string Internal Iterative Reduction: %d\n", i.internalIterativeReduction)
 }
 
@@ -118,6 +119,7 @@ type Engine struct {
 	score              int16
 	innerLines         []PVLine
 	staticEvals        []int16
+	skipMove           Move
 	TranspositionTable *Cache
 	Pawnhash           *PawnCache
 	TotalTime          float64
@@ -128,7 +130,7 @@ type Engine struct {
 	startDepth         int8
 }
 
-var MAX_DEPTH int8 = int8(100)
+var MAX_DEPTH int8 = int8(127)
 
 func (e *Engine) TimeManager() *TimeManager {
 	return e.parent.TimeManager
@@ -171,14 +173,15 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 		cacheHits:          0,
 		score:              0,
 		positionMoves:      make([]Move, MAX_DEPTH),
-		killerMoves:        make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
-		searchHistory:      make([][]int32, 12), // We have 12 pieces only
+		killerMoves:        make([][]Move, MAX_DEPTH), // We assume there will be at most 126 iterations for each move/search
+		searchHistory:      make([][]int32, 12),       // We have 12 pieces only
 		MovePickers:        movePickers,
 		triedQuietMoves:    make([][]Move, 250),
 		info:               NoInfo,
 		pred:               NewPredecessors(),
 		innerLines:         innerLines,
 		staticEvals:        make([]int16, MAX_DEPTH),
+		skipMove:           EmptyMove,
 		TranspositionTable: tt,
 		Pawnhash:           ph,
 		StartTime:          time.Now(),
@@ -199,7 +202,7 @@ func (r *Runner) Ponderhit() {
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0

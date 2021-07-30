@@ -269,7 +269,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
 	// Pruning
-	pruningAllowed := !isPvNode && !isInCheck && e.doPruning
+	pruningAllowed := !isPvNode && !isInCheck && e.doPruning && e.skipMove == EmptyMove
 
 	if pruningAllowed {
 		// Razoring
@@ -385,9 +385,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	oldAlpha := alpha
 
 	// using fail soft with negamax:
-	var bestscore int16
+	var bestscore int16 = alpha
 	var hashmove Move
-	legalMoves := 1
+	legalMoves := 0
+	searchedMoves := 0
 	quietMoves := -1
 	legalQuiteMove := -1
 	noisyMoves := -1
@@ -403,21 +404,60 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			isQuiet = true
 			quietMoves += 1
 		}
+		if e.skipMove == hashmove {
+			legalMoves += 1
+			break
+		}
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(hashmove); ok {
+			legalMoves += 1
+			searchedMoves += 1
 			if isQuiet {
 				legalQuiteMove += 1
+			}
+
+			// Singular Extension
+			var extension int8
+			if depthLeft > 8 &&
+				hashmove == nHashMove &&
+				ttHit &&
+				e.skipMove == EmptyMove &&
+				nDepth > depthLeft-3 &&
+				nType != UpperBound &&
+				abs16(nEval) < WIN_IN_MAX &&
+				!isRootNode {
+
+				// ttMove has been made to check legality
+				position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
+
+				// Search to reduced depth with a zero window a bit lower than ttScore
+				threshold := max16(nEval-3*int16(depthLeft)/2, -CHECKMATE_EVAL)
+
+				e.skipMove = hashmove
+				score := e.alphaBeta(depthLeft/2-1, searchHeight, threshold-1, threshold)
+				e.skipMove = EmptyMove
+
+				// Extend as this move seems forced
+				if score < threshold {
+					e.info.singularExtensionCounter += 1
+					extension = 1
+				}
+
+				// Replay ttMove
+				position.MakeMove(hashmove)
 			}
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
 			e.positionMoves[searchHeight+1] = hashmove
 			e.NoteMove(hashmove, legalQuiteMove, searchHeight)
-			bestscore = -e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
+			bestscore = -e.alphaBeta(depthLeft-1+extension, searchHeight+1, -beta, -alpha)
 			e.pred.Pop()
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
-						e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+						if e.skipMove == EmptyMove {
+							e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+						}
 						e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
 					return bestscore
@@ -431,7 +471,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
-	if hashmove == EmptyMove {
+	if legalMoves == 0 {
 		if isInCheck {
 			return -CHECKMATE_EVAL + int16(searchHeight)
 		} else {
@@ -463,7 +503,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if move == EmptyMove {
 			break
 		}
-
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()
 		isQuiet := false
@@ -474,6 +513,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			quietMoves += 1
 		}
 
+		if e.skipMove == move {
+			legalMoves += 1
+			if isQuiet {
+				legalQuiteMove += 1
+			}
+			continue
+		}
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
 			legalMoves += 1
 			if isQuiet {
@@ -490,11 +536,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			killerScore := e.KillerMoveScore(move, searchHeight)
-			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
+			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX && searchedMoves >= 1 {
 
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
+					searchedMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
 					e.info.lmpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue // LMP
@@ -518,7 +564,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// Late Move Reduction
-			if !isInCheck && e.doPruning && isQuiet && depthLeft > 2 && legalMoves > lmrThreashold {
+			if !isInCheck && e.doPruning && isQuiet && depthLeft > 2 && searchedMoves > lmrThreashold {
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
@@ -541,20 +587,26 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}
 
+			searchedMoves += 1
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
 			e.positionMoves[searchHeight+1] = move
-			score := -e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
-			e.pred.Pop()
-			if score > alpha && score < beta {
-				e.info.researchCounter += 1
-				// research with window [alpha;beta]
-				e.pred.Push(position.Hash())
-				e.innerLines[searchHeight+1].Recycle()
+			var score int16
+			if searchedMoves == 0 {
 				score = -e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
-				e.pred.Pop()
-				if score > alpha {
-					alpha = score
+				bestscore = score
+			} else {
+				score = -e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
+				if score > alpha && score < beta {
+					e.info.researchCounter += 1
+					// research with window [alpha;beta]
+					e.pred.Push(position.Hash())
+					e.innerLines[searchHeight+1].Recycle()
+					score = -e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
+					e.pred.Pop()
+					if score > alpha {
+						alpha = score
+					}
 				}
 			}
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
@@ -562,7 +614,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			if score > bestscore {
 				if score >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
-						e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
+						if e.skipMove == EmptyMove {
+							e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
+						}
 						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
 					return score
@@ -585,7 +639,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.parent.mu.RUnlock()
 		}
 	}
-	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
+	if e.skipMove == EmptyMove && ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 		} else {
