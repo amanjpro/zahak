@@ -277,7 +277,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						e.pred.Push(position.Hash())
 						e.positionMoves[searchHeight+1] = move
 						childEval := Evaluate(position)
-						e.staticEvals[searchHeight] = childEval
+						e.staticEvals[searchHeight+1] = childEval
 						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
 						e.pred.Pop()
 					}
