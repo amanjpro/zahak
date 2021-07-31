@@ -226,7 +226,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
-	if !isPvNode && ttHit && nDepth >= depthLeft {
+	if !isPvNode && ttHit && nDepth >= depthLeft && e.skipMove == EmptyMove {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
 			return nEval
@@ -433,7 +433,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				threshold := max16(nEval-3*int16(depthLeft)/2, -CHECKMATE_EVAL)
 
 				e.skipMove = hashmove
+				e.innerLines[searchHeight].Recycle()
+				e.MovePickers[searchHeight] = TempMovePicker
 				score := e.alphaBeta(depthLeft/2-1, searchHeight, threshold-1, threshold)
+				e.MovePickers[searchHeight] = movePicker
+				e.innerLines[searchHeight].Recycle()
 				e.skipMove = EmptyMove
 
 				// Extend as this move seems forced
@@ -587,16 +591,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}
 
-			searchedMoves += 1
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
 			e.positionMoves[searchHeight+1] = move
 			var score int16
 			if searchedMoves == 0 {
-				score = -e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
-				bestscore = score
+				bestscore = -e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
+				e.pred.Pop()
 			} else {
 				score = -e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
+				e.pred.Pop()
 				if score > alpha && score < beta {
 					e.info.researchCounter += 1
 					// research with window [alpha;beta]
@@ -609,6 +613,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					}
 				}
 			}
+			searchedMoves += 1
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 
 			if score > bestscore {
