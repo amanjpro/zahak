@@ -29,11 +29,12 @@ var initialK = 1.0
 var skipParams map[int]bool
 var answers = make(chan float64)
 var ml = NewMoveList(500)
+var pawnhash = NewPawnCache(2)
 
 func initEngines() []*Engine {
 	res := make([]*Engine, NUM_PROCESSORS)
 	for i := 0; i < NUM_PROCESSORS; i++ {
-		res[i] = NewEngine(nil)
+		res[i] = NewEngine(nil, nil)
 	}
 	return res
 }
@@ -376,7 +377,7 @@ func findK() float64 {
 }
 
 func linearEvaluation(pos *Position) int16 {
-	eval := Evaluate(pos)
+	eval := Evaluate(pos, pawnhash)
 	if pos.Turn() == Black {
 		return -eval
 	}

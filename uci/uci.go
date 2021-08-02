@@ -28,7 +28,7 @@ type UCI struct {
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
-		NewEngine(NewCache(DEFAULT_CACHE_SIZE)),
+		NewEngine(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE)),
 		nil,
 		withBook,
 		bookPath,
@@ -65,7 +65,7 @@ func (uci *UCI) Start() {
 				if game.Position().Turn() == Black {
 					dir = -1
 				}
-				fmt.Printf("%d\n", dir*Evaluate(game.Position()))
+				fmt.Printf("%d\n", dir*Evaluate(game.Position(), uci.engine.Pawnhash))
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
@@ -82,12 +82,12 @@ func (uci *UCI) Start() {
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
 				size := uci.engine.TranspositionTable.Size()
-				pawnSize := Pawnhash.Size()
-				Pawnhash = nil
+				pawnSize := uci.engine.Pawnhash.Size()
+				uci.engine.Pawnhash = nil
 				uci.engine.TranspositionTable = nil
 				runtime.GC()
 				uci.engine.TranspositionTable = NewCache(size)
-				Pawnhash = NewPawnCache(pawnSize)
+				uci.engine.Pawnhash = NewPawnCache(pawnSize)
 				game = FromFen(startFen, true)
 			case "stop":
 				if uci.engine.Pondering {
@@ -112,9 +112,9 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
-					Pawnhash = nil
+					uci.engine.Pawnhash = nil
 					runtime.GC()
-					Pawnhash = NewPawnCache(hashSize)
+					uci.engine.Pawnhash = NewPawnCache(hashSize)
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]

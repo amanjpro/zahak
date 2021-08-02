@@ -37,8 +37,8 @@ type Cache struct {
 	consumed int
 }
 
-const DEFAULT_CACHE_SIZE = uint32(10)
-const MAX_CACHE_SIZE = uint32(8000)
+const DEFAULT_CACHE_SIZE = uint32(64)
+const MAX_CACHE_SIZE = uint32(24000)
 
 func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)

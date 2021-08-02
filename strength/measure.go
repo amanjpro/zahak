@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/evaluation"
 	. "github.com/amanjpro/zahak/search"
 	"os"
 	"strings"
@@ -77,7 +78,7 @@ func RunTestPositions(path string) {
 		os.Stdout = w
 
 		game := FromFen(epd.fen, true)
-		e := NewEngine(NewCache(DEFAULT_CACHE_SIZE))
+		e := NewEngine(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
 		e.InitTimeManager(15000, true, 0, 0)
 		pos := game.Position()
 		e.Position = pos

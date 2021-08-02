@@ -8,6 +8,11 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+type Threads struct {
+	engines    []*Engine
+	globalInfo Info
+}
+
 const MAX_TIME int64 = 9_223_372_036_854_775_807
 
 type Info struct {
@@ -31,6 +36,38 @@ type Info struct {
 	probCutCounter             int
 	historyPruningCounter      int
 	internalIterativeReduction int
+}
+
+func (this *Info) add(other Info) {
+	this.fpCounter = other.fpCounter
+	this.efpCounter = other.efpCounter
+	this.rfpCounter = other.rfpCounter
+	this.razoringCounter = other.razoringCounter
+	this.checkExtentionCounter = other.checkExtentionCounter
+	this.nullMoveCounter = other.nullMoveCounter
+	this.lmrCounter = other.lmrCounter
+	this.lmpCounter = other.lmpCounter
+	this.deltaPruningCounter = other.deltaPruningCounter
+	this.seeQuiescenceCounter = other.seeQuiescenceCounter
+	this.seeCounter = other.seeCounter
+	this.mainSearchCounter = other.mainSearchCounter
+	this.zwCounter = other.zwCounter
+	this.researchCounter = other.researchCounter
+	this.quiesceCounter = other.quiesceCounter
+	this.killerCounter = other.killerCounter
+	this.historyCounter = other.historyCounter
+	this.probCutCounter = other.probCutCounter
+	this.historyPruningCounter = other.historyCounter
+	this.internalIterativeReduction = other.internalIterativeReduction
+}
+
+func (t *Threads) PrintGlobalInfo() {
+	t.globalInfo = NoInfo
+
+	for i := 0; i < len(t.engines); i++ {
+		t.globalInfo.add(t.engines[i].info)
+	}
+	t.globalInfo.Print()
 }
 
 func (i *Info) Print() {
@@ -75,16 +112,18 @@ type Engine struct {
 	innerLines         []PVLine
 	staticEvals        []int16
 	TranspositionTable *Cache
+	Pawnhash           *PawnCache
 	DebugMode          bool
 	Pondering          bool
 	TotalTime          float64
 	TimeManager        *TimeManager
 	doPruning          bool
+	isMainThread       bool
 }
 
 var MAX_DEPTH int8 = int8(100)
 
-func NewEngine(tt *Cache) *Engine {
+func NewEngine(tt *Cache, ph *PawnCache) *Engine {
 	line := NewPVLine(MAX_DEPTH)
 	innerLines := make([]PVLine, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
@@ -115,11 +154,13 @@ func NewEngine(tt *Cache) *Engine {
 		innerLines:         innerLines,
 		staticEvals:        make([]int16, MAX_DEPTH),
 		TranspositionTable: tt,
+		Pawnhash:           ph,
 		DebugMode:          false,
 		Pondering:          false,
 		TotalTime:          0,
 		TimeManager:        nil,
 		doPruning:          false,
+		isMainThread:       false,
 	}
 }
 
@@ -290,8 +331,8 @@ func (e *Engine) SendPv(depth int8) {
 	}
 	thinkTime := time.Since(e.StartTime)
 	nps := int64(float64(e.nodesVisited) / thinkTime.Seconds())
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
-		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
+	fmt.Printf("info depth %d seldepth %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
+		depth, e.pv.moveCount, e.TranspositionTable.Consumed(),
 		e.nodesVisited, nps, ScoreToCp(e.score),
 		thinkTime.Milliseconds(), e.pv.ToString())
 	e.TotalTime = thinkTime.Seconds()

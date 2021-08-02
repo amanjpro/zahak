@@ -65,12 +65,10 @@ func RunBenchmark() {
 	cacheSize := uint32(32)
 	pawnHashSize := 1
 	depth := int8(7)
-	engine := NewEngine(NewCache(cacheSize))
+	engine := NewEngine(NewCache(cacheSize), NewPawnCache(2))
 	NewPawnCache(pawnHashSize)
 	nodes := int64(0)
 	totalTime := float64(0)
-	pawnhashHits := int64(0)
-	pawnhashMisses := int64(0)
 	engine.InitTimeManager(MAX_TIME, false, 0, 0)
 	for _, fen := range fens {
 		engine.TranspositionTable = NewCache(cacheSize)
@@ -80,14 +78,12 @@ func RunBenchmark() {
 		engine.Search(depth)
 		nodes += engine.NodesVisited()
 		totalTime += engine.TotalTime
-		pawnhashMisses += PawnhashMisses
-		pawnhashHits += PawnhashHits
 	}
 
 	fmt.Println("====================================================")
 	fmt.Printf("Time spent %d\n", int64(totalTime*1000))
 	fmt.Printf("Nodes %d\n", nodes)
 	fmt.Printf("nps %d\n", int64(float64(nodes)/totalTime))
-	fmt.Printf("Pawn Miss %d\n", pawnhashHits)
-	fmt.Printf("Pawn Hit %d\n", pawnhashMisses)
+	fmt.Printf("Pawn Miss %d\n", engine.Pawnhash.PawnhashHits)
+	fmt.Printf("Pawn Hit %d\n", engine.Pawnhash.PawnhashMisses)
 }
