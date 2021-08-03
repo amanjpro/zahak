@@ -305,6 +305,7 @@ func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 }
 
 func Evaluate(position *Position) int16 {
+	var drawDivider int16 = 0
 	board := position.Board
 	turn := position.Turn()
 
@@ -492,8 +493,11 @@ func Evaluate(position *Position) int16 {
 
 		if (allPiecesCount == 2 && whiteRooksCount == 1 && (blackKnightsCount == 1 || blackBishopsCount == 1)) ||
 			(allPiecesCount == 2 && blackRooksCount == 1 && (whiteKnightsCount == 1 || whiteBishopsCount == 1)) ||
-			(allPiecesCount == 3 && blackRooksCount == 1 && whiteRooksCount == 1 && (whiteKnightsCount == 1 || blackKnightsCount == 1)) {
-			return 0
+			// (allPiecesCount == 3 && (blackKnightsCount == 1 || blackBishopsCount == 1) && (whiteKnightsCount == 1 || whiteBishopsCount == 1) && (whitePawnsCount == 1 || blackPawnsCount == 1)) ||
+			(allPiecesCount == 2 && (blackKnightsCount == 1 || blackBishopsCount == 1) && whitePawnsCount == 1) ||
+			(allPiecesCount == 2 && (whiteKnightsCount == 1 || whiteBishopsCount == 1) && blackPawnsCount == 1) ||
+			(allPiecesCount == 3 && blackRooksCount == 1 && whiteRooksCount == 1 && (whiteKnightsCount == 1 || blackKnightsCount == 1 || blackBishopsCount == 1 || whiteBishopsCount == 1)) {
+			drawDivider = 3
 		}
 	}
 
@@ -595,7 +599,7 @@ func Evaluate(position *Position) int16 {
 	eg := int32(evalEG)
 	phs := int32(phase)
 	taperedEval := int16(((mg * (256 - phs)) + eg*phs) / 256)
-	return toEval(taperedEval + Tempo)
+	return toEval(taperedEval+Tempo) >> drawDivider
 }
 
 func KnightOutpostEval(p *Position) Eval {
