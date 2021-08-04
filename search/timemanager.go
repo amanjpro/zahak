@@ -5,6 +5,7 @@ import (
 )
 
 const COMMUNICATION_TIME_BUFFER = 50
+const MAX_TIME int64 = 9_223_372_036_854_775_807
 
 // Implements this: http://talkchess.com/forum3/viewtopic.php?f=7&t=77396&p=894325&hilit=cold+turkey#p894294
 type TimeManager struct {
@@ -32,7 +33,7 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		}
 		softLimit = availableTimeInMillis / movestogo
 		softLimit = min64(int64(softLimit+increment-COMMUNICATION_TIME_BUFFER), availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
-		hardLimit = min64(softLimit*10, availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
+		hardLimit = min64(max64(softLimit*10, MAX_TIME), availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
 	}
 
 	return &TimeManager{
@@ -54,8 +55,9 @@ func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
 		return tm.AbruptStop
 	}
 	tm.NodesSinceLastCheck = 0
+	softLimit := max64(2*tm.SoftLimit, tm.SoftLimit)
 	if isRoot && canCutNow {
-		return tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
+		return tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= softLimit
 	} else {
 		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
 		return tm.AbruptStop
@@ -70,7 +72,7 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 	if tm.IsPerMove {
 		return time.Since(tm.StartTime).Milliseconds() <= tm.SoftLimit
 	} else {
-		limit := 70 * tm.SoftLimit / 100
+		limit := int64(0.7 * float64(tm.SoftLimit))
 		return time.Since(tm.StartTime).Milliseconds() <= limit
 	}
 }
@@ -84,6 +86,13 @@ func (tm *TimeManager) ExtraTime() {
 
 func min64(a int64, b int64) int64 {
 	if a < b {
+		return a
+	}
+	return b
+}
+
+func max64(a int64, b int64) int64 {
+	if a > b {
 		return a
 	}
 	return b

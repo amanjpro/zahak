@@ -36,11 +36,8 @@ func initLMR() [32][32]int {
 
 func (e *Engine) rootSearch(depth int8) {
 
-	var previousBestMove Move
-
 	e.move = EmptyMove
 	e.score = -MAX_INT
-	fruitelessIterations := 0
 
 	bookmove := GetBookMove(e.Position)
 	lastDepth := int8(1)
@@ -75,18 +72,6 @@ func (e *Engine) rootSearch(depth int8) {
 			e.move = e.pv.MoveAt(0)
 			e.SendPv(iterationDepth)
 			lastDepth = iterationDepth
-			if !e.Pondering && iterationDepth >= 35 && e.move == previousBestMove {
-				fruitelessIterations++
-				if fruitelessIterations > 4 {
-					break
-				}
-			} else {
-				fruitelessIterations = 0
-			}
-			if isCheckmateEval(e.score) {
-				break
-			}
-			previousBestMove = e.move
 			e.pred.Clear()
 			if !e.Pondering && e.DebugMode {
 				e.info.Print()

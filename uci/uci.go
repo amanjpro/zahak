@@ -212,8 +212,6 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		}
 	}
 
-	var MAX_TIME int64 = 9_223_372_036_854_775_807
-
 	uci.engine.Position = game.Position()
 	uci.engine.Ply = ply
 	if !noTC {
