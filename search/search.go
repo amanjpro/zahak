@@ -213,10 +213,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// Reverse Futility Pruning
 		reverseFutilityMargin := int16(depthLeft) * p //(b - p)
-		if improving {
-			reverseFutilityMargin += p // int16(depthLeft) * p
-		}
-		if depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+		// if improving {
+		// 	reverseFutilityMargin += p // int16(depthLeft) * p
+		// }
+		if depthLeft < 8 && eval-reverseFutilityMargin >= beta {
 			e.info.rfpCounter += 1
 			return eval - reverseFutilityMargin /* fail soft */
 		}
@@ -225,7 +225,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
 			var R = 4 + depthLeft/4
-			if eval >= beta+50 {
+			if eval > beta {
 				R = min8(R, depthLeft)
 			} else {
 				R = min8(R, depthLeft-1)
@@ -311,17 +311,17 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, depthLeft, nHashMove, false)
-
-	futilityMargin := eval + int16(depthLeft)*p
-	if improving {
-		futilityMargin += p
-	}
-	allowFutilityPruning := false
-	if depthLeft < 7 && pruningAllowed &&
-		abs16(alpha) < WIN_IN_MAX &&
-		abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
-		allowFutilityPruning = true
-	}
+	//
+	// futilityMargin := eval + int16(depthLeft)*p
+	// // if improving {
+	// // 	futilityMargin += p
+	// // }
+	// allowFutilityPruning := false
+	// if depthLeft < 7 && pruningAllowed &&
+	// 	abs16(alpha) < WIN_IN_MAX &&
+	// 	abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
+	// 	allowFutilityPruning = true
+	// }
 
 	oldAlpha := alpha
 
@@ -433,14 +433,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			killerScore := e.KillerMoveScore(move, searchHeight)
 			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
-				if allowFutilityPruning &&
-					!isCheckMove && notPromoting &&
-					(!isCaptureMove ||
-						depthLeft <= 1 && isCaptureMove && seeScores[noisyMoves] < 0) {
-					e.info.efpCounter += 1
-					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-					continue
-				}
+				// if allowFutilityPruning &&
+				// 	!isCheckMove && notPromoting &&
+				// 	(!isCaptureMove ||
+				// 		depthLeft <= 1 && isCaptureMove && seeScores[noisyMoves] < 0) {
+				// 	e.info.efpCounter += 1
+				// 	position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+				// 	continue
+				// }
 
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
@@ -460,7 +460,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// History pruning
 				lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-				if !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
+				if killerScore <= 0 && !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
 					e.info.historyPruningCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
