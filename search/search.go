@@ -46,6 +46,7 @@ var r = WhiteRook.Weight()
 var b = WhiteBishop.Weight()
 var q = WhiteQueen.Weight()
 var WIN_IN_MAX = CHECKMATE_EVAL - int16(MAX_DEPTH)
+var LOSS_IN_MAX = -CHECKMATE_EVAL + int16(MAX_DEPTH)
 
 var lmrReductions [32][32]int = initLMR()
 
@@ -147,9 +148,6 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.parent.globalInfo.Print()
 			}
-			if isCheckmateEval(e.score) {
-				break
-			}
 		}
 	}
 
@@ -201,10 +199,19 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return 0
 	}
 
-	if searchHeight >= MAX_DEPTH-1 {
-		eval := Evaluate(position, pawnhash)
-		e.staticEvals[searchHeight] = eval
-		return eval
+	if !isRootNode {
+		if searchHeight >= MAX_DEPTH-1 {
+			eval := Evaluate(position, pawnhash)
+			e.staticEvals[searchHeight] = eval
+			return eval
+		}
+
+		// Mate distance pruning
+		alpha = max16(alpha, LOSS_IN_MAX)
+		beta = min16(beta, WIN_IN_MAX-1)
+		if alpha >= beta {
+			return alpha
+		}
 	}
 
 	var isInCheck = position.IsInCheck()
@@ -226,6 +233,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
+	// nEval = scoreFromTT(nEval, searchHeight)
 	if !isPvNode && ttHit && nDepth >= depthLeft {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
@@ -596,4 +604,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		e.TimeManager().StopSearchNow = true
 	}
 	return bestscore
+}
+
+func scoreFromTT(score int16, searchHeight int8) int16 {
+	if score >= WIN_IN_MAX && score <= CHECKMATE_EVAL {
+		return CHECKMATE_EVAL - int16(searchHeight)
+	} else if score <= LOSS_IN_MAX && score >= -CHECKMATE_EVAL {
+		return -CHECKMATE_EVAL + int16(searchHeight)
+	}
+
+	return score
 }
