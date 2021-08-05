@@ -105,7 +105,6 @@ The history of Zahak's rating is summerized here:
 - Delta Pruning
 - Reverse Futility Pruning
 - Futility Pruning in quiescence search
-- Enhanced Futility Pruning
 - Late Move Reduction
 - Razoring
 - Check Extensions
