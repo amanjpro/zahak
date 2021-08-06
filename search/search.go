@@ -311,18 +311,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, depthLeft, nHashMove, false)
-
-	futilityMargin := eval + int16(depthLeft)*p
-	if improving {
-		futilityMargin += p
-	}
-	allowFutilityPruning := false
-	if depthLeft < 7 && pruningAllowed &&
-		abs16(alpha) < WIN_IN_MAX &&
-		abs16(beta) < WIN_IN_MAX && futilityMargin <= alpha {
-		allowFutilityPruning = true
-	}
-
 	oldAlpha := alpha
 
 	// using fail soft with negamax:
@@ -433,15 +421,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			killerScore := e.KillerMoveScore(move, searchHeight)
 			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
-				if allowFutilityPruning &&
-					!isCheckMove && notPromoting &&
-					(!isCaptureMove ||
-						depthLeft <= 1 && isCaptureMove && seeScores[noisyMoves] < 0) {
-					e.info.efpCounter += 1
-					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-					continue
-				}
-
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
 					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
@@ -460,7 +439,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// History pruning
 				lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-				if !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
+				if killerScore <= 0 && !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
 					e.info.historyPruningCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
