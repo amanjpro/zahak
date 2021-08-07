@@ -216,7 +216,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if improving {
 			reverseFutilityMargin += p // int16(depthLeft) * p
 		}
-		if depthLeft < 7 && eval-reverseFutilityMargin >= beta {
+		if depthLeft < 8 && eval-reverseFutilityMargin >= beta {
 			e.info.rfpCounter += 1
 			return eval - reverseFutilityMargin /* fail soft */
 		}
