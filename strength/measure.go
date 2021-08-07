@@ -3,11 +3,13 @@ package strength
 import (
 	"bufio"
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 	. "github.com/amanjpro/zahak/search"
-	"os"
-	"strings"
 )
 
 type EPDEntry struct {
@@ -78,12 +80,12 @@ func RunTestPositions(path string) {
 		os.Stdout = w
 
 		game := FromFen(epd.fen, true)
-		e := NewEngine(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-		e.InitTimeManager(15000, true, 0, 0)
+		r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+		r.AddTimeManager(NewTimeManager(time.Now(), 15000, true, 0, 0, false))
 		pos := game.Position()
-		e.Position = pos
-		e.Search(MAX_DEPTH)
-		mv := pos.MoveToPGN(e.Move())
+		r.Engines[0].Position = pos
+		r.Engines[0].Search(MAX_DEPTH)
+		mv := pos.MoveToPGN(r.Engines[0].Move())
 
 		// back to normal state
 		w.Close()

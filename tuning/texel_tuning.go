@@ -34,7 +34,7 @@ var pawnhash = NewPawnCache(2)
 func initEngines() []*Engine {
 	res := make([]*Engine, NUM_PROCESSORS)
 	for i := 0; i < NUM_PROCESSORS; i++ {
-		res[i] = NewEngine(nil, nil)
+		res[i] = NewEngine(nil, nil, nil)
 	}
 	return res
 }

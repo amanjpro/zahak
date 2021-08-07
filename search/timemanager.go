@@ -1,6 +1,7 @@
 package search
 
 import (
+	"sync/atomic"
 	"time"
 )
 
@@ -13,13 +14,14 @@ type TimeManager struct {
 	SoftLimit           int64
 	NodesSinceLastCheck int64
 	AbruptStop          bool
-	StopSearchNow       bool
+	StopSearchNow       atomic.Value
 	IsPerMove           bool
 	ExtensionCounter    int
+	pondering           atomic.Value
 }
 
 func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
-	increment int64, movesToTimeControl int64) *TimeManager {
+	increment int64, movesToTimeControl int64, pondering bool) *TimeManager {
 	softLimit := int64(0)
 	hardLimit := int64(0)
 	if isPerMove {
@@ -35,35 +37,61 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		hardLimit = min64(softLimit*10, availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
 	}
 
+	var s atomic.Value
+	var p atomic.Value
+	s.Store(false)
+	p.Store(pondering)
+
 	return &TimeManager{
 		HardLimit:           hardLimit,
 		SoftLimit:           softLimit,
 		StartTime:           startTime,
 		NodesSinceLastCheck: 0,
 		AbruptStop:          false,
-		StopSearchNow:       false,
+		StopSearchNow:       s,
 		IsPerMove:           isPerMove,
 		ExtensionCounter:    0,
+		pondering:           p,
 	}
 }
 
+func (tm *TimeManager) Pondering() bool {
+	return tm.pondering.Load().(bool)
+}
+
 func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
+	if tm.Pondering() {
+		return false
+	}
+	stopSearchNow := tm.StopSearchNow.Load().(bool)
 	if tm.NodesSinceLastCheck < 2000 {
 		tm.NodesSinceLastCheck += 1
-		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow
+		tm.AbruptStop = tm.AbruptStop || stopSearchNow
 		return tm.AbruptStop
 	}
 	tm.NodesSinceLastCheck = 0
 	if isRoot && canCutNow {
-		return tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
+		return stopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 	} else {
-		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
+		tm.AbruptStop = tm.AbruptStop || stopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
 		return tm.AbruptStop
 	}
 }
 
+func (tm *TimeManager) UpdatePondering(flag bool) {
+	tm.pondering.Store(flag)
+}
+
+func (tm *TimeManager) UpdateStopSearchNow(flag bool) {
+	tm.StopSearchNow.Store(flag)
+}
+
 func (tm *TimeManager) CanStartNewIteration() bool {
-	if tm.AbruptStop || tm.StopSearchNow {
+	if tm.Pondering() {
+		return true
+	}
+	stopSearchNow := tm.StopSearchNow.Load().(bool)
+	if tm.AbruptStop || stopSearchNow {
 		return false
 	}
 
@@ -76,6 +104,9 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 }
 
 func (tm *TimeManager) ExtraTime() {
+	if tm.Pondering() {
+		return
+	}
 	if tm.ExtensionCounter < 5 {
 		tm.SoftLimit = min64(tm.HardLimit, tm.SoftLimit+tm.SoftLimit/10)
 		tm.ExtensionCounter += 1

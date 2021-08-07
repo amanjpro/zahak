@@ -2,15 +2,18 @@ package search
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-type Threads struct {
-	engines    []*Engine
-	globalInfo Info
+type Runner struct {
+	Engines     []*Engine
+	globalInfo  Info
+	timeManager atomic.Value
+	DebugMode   bool
 }
 
 const MAX_TIME int64 = 9_223_372_036_854_775_807
@@ -61,11 +64,11 @@ func (this *Info) add(other Info) {
 	this.internalIterativeReduction = other.internalIterativeReduction
 }
 
-func (t *Threads) PrintGlobalInfo() {
+func (t *Runner) PrintGlobalInfo() {
 	t.globalInfo = NoInfo
 
-	for i := 0; i < len(t.engines); i++ {
-		t.globalInfo.add(t.engines[i].info)
+	for i := 0; i < len(t.Engines); i++ {
+		t.globalInfo.add(t.Engines[i].info)
 	}
 	t.globalInfo.Print()
 }
@@ -105,7 +108,6 @@ type Engine struct {
 	killerMoves        [][]Move
 	searchHistory      [][]int32
 	MovePickers        []*MovePicker
-	StartTime          time.Time
 	triedQuietMoves    [][]Move
 	info               Info
 	pred               Predecessors
@@ -113,17 +115,42 @@ type Engine struct {
 	staticEvals        []int16
 	TranspositionTable *Cache
 	Pawnhash           *PawnCache
-	DebugMode          bool
-	Pondering          bool
 	TotalTime          float64
-	TimeManager        *TimeManager
 	doPruning          bool
 	isMainThread       bool
+	StartTime          time.Time
+	parent             *Runner
 }
 
 var MAX_DEPTH int8 = int8(100)
 
-func NewEngine(tt *Cache, ph *PawnCache) *Engine {
+func (r *Runner) TimeManager() *TimeManager {
+	return (r.timeManager.Load()).(*TimeManager)
+}
+
+func (e *Engine) TimeManager() *TimeManager {
+	return e.parent.TimeManager()
+}
+
+func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
+	t := &Runner{}
+	engines := make([]*Engine, numberOfThreads)
+	for i := 0; i < numberOfThreads; i++ {
+		var engine *Engine
+		if i == 0 {
+			engine = NewEngine(tt, ph, t)
+			engine.isMainThread = true
+		} else {
+			engine = NewEngine(tt, ph, t)
+		}
+		engines[i] = engine
+	}
+	t.globalInfo = NoInfo
+	t.Engines = engines
+	return t
+}
+
+func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 	line := NewPVLine(MAX_DEPTH)
 	innerLines := make([]PVLine, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
@@ -147,7 +174,6 @@ func NewEngine(tt *Cache, ph *PawnCache) *Engine {
 		killerMoves:        make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
 		searchHistory:      make([][]int32, 12), // We have 12 pieces only
 		MovePickers:        movePickers,
-		StartTime:          time.Now(),
 		triedQuietMoves:    make([][]Move, 250),
 		info:               NoInfo,
 		pred:               NewPredecessors(),
@@ -155,23 +181,24 @@ func NewEngine(tt *Cache, ph *PawnCache) *Engine {
 		staticEvals:        make([]int16, MAX_DEPTH),
 		TranspositionTable: tt,
 		Pawnhash:           ph,
-		DebugMode:          false,
-		Pondering:          false,
+		StartTime:          time.Now(),
 		TotalTime:          0,
-		TimeManager:        nil,
 		doPruning:          false,
 		isMainThread:       false,
+		parent:             parent,
 	}
 }
 
-func (e *Engine) InitTimeManager(availableTimeInMillis int64, isPerMove bool,
-	increment int64, movesToTimeControl int64) {
-	e.TimeManager = NewTimeManager(e.StartTime, availableTimeInMillis, isPerMove, increment, movesToTimeControl)
+func (t *Runner) AddTimeManager(tm *TimeManager) {
+	t.timeManager.Store(tm)
 }
 
-func (e *Engine) AttachTimeManager(tm *TimeManager) {
-	tm.StartTime = e.StartTime
-	e.TimeManager = tm
+func (t *Runner) Ponderhit() {
+	tm := t.TimeManager()
+	tm.StartTime = time.Now()
+	tm.UpdatePondering(false)
+	t.timeManager.Store(tm)
+	t.Engines[0].SendPv(-1)
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -214,13 +241,9 @@ func (e *Engine) ClearForSearch() {
 	e.pv.Pop() // pop our opponent's move
 
 	e.info = NoInfo
+	e.StartTime = time.Now()
 
 	e.pred.Clear()
-
-	e.StartTime = time.Now()
-	if e.TimeManager != nil {
-		e.TimeManager.StartTime = e.StartTime
-	}
 }
 
 func (e *Engine) NodesVisited() int64 {
@@ -308,7 +331,8 @@ func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square
 	}
 }
 
-func (e *Engine) SendBestMove() {
+func (r *Runner) SendBestMove() {
+	e := r.Engines[0]
 	mv := e.Move()
 	if e.pv.moveCount >= 2 {
 		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), e.pv.MoveAt(1).ToString())

@@ -9,6 +9,12 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+func (r *Runner) Search(depth int8) {
+	for _, e := range r.Engines {
+		e.Search(depth) // channel it
+	}
+}
+
 func (e *Engine) Search(depth int8) {
 	e.ClearForSearch()
 	e.rootSearch(depth)
@@ -55,19 +61,19 @@ func (e *Engine) rootSearch(depth int8) {
 		e.pv.Recycle()
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
 
-			if iterationDepth > 1 && !e.TimeManager.CanStartNewIteration() {
+			if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
 				break
 			}
 
 			e.innerLines[0].Recycle()
 			score := e.aspirationWindow(e.score, iterationDepth)
 
-			if e.TimeManager.AbruptStop {
+			if e.TimeManager().AbruptStop {
 				break
 			}
 
 			if iterationDepth >= 8 && e.score-score >= 30 { // Position degrading
-				e.TimeManager.ExtraTime()
+				e.TimeManager().ExtraTime()
 			}
 
 			e.pv.Clone(e.innerLines[0])
@@ -75,7 +81,7 @@ func (e *Engine) rootSearch(depth int8) {
 			e.move = e.pv.MoveAt(0)
 			e.SendPv(iterationDepth)
 			lastDepth = iterationDepth
-			if !e.Pondering && iterationDepth >= 35 && e.move == previousBestMove {
+			if !e.TimeManager().Pondering() && iterationDepth >= 35 && e.move == previousBestMove {
 				fruitelessIterations++
 				if fruitelessIterations > 4 {
 					break
@@ -88,7 +94,7 @@ func (e *Engine) rootSearch(depth int8) {
 			}
 			previousBestMove = e.move
 			e.pred.Clear()
-			if !e.Pondering && e.DebugMode {
+			if !e.TimeManager().Pondering() && e.parent.DebugMode {
 				e.info.Print()
 			}
 
@@ -184,7 +190,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if !isRootNode {
-		if e.TimeManager.ShouldStop(false, false) {
+		if e.TimeManager().ShouldStop(false, false) {
 			return -MAX_INT
 		}
 	}
@@ -299,7 +305,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode && depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.TimeManager.AbruptStop {
+		if e.TimeManager().AbruptStop {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -346,7 +352,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if !e.TimeManager.AbruptStop {
+					if !e.TimeManager().AbruptStop {
 						e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 						e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -384,7 +390,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	for true {
 
 		if isRootNode {
-			if e.TimeManager.ShouldStop(true, bestscore-e.score >= -20) {
+			if e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
 				break
 			}
 		}
@@ -410,7 +416,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				legalQuiteMove += 1
 			}
 
-			if e.DebugMode && isRootNode {
+			if e.parent.DebugMode && isRootNode {
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
@@ -491,7 +497,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if !e.TimeManager.AbruptStop {
+					if !e.TimeManager().AbruptStop {
 						e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -505,7 +511,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 		}
 	}
-	if !e.TimeManager.AbruptStop {
+	if !e.TimeManager().AbruptStop {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 		} else {
@@ -513,7 +519,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 	if isRootNode && legalMoves == 1 {
-		e.TimeManager.StopSearchNow = true
+		e.TimeManager().UpdateStopSearchNow(true)
 	}
 	return bestscore
 }
