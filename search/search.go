@@ -10,6 +10,7 @@ import (
 )
 
 func (r *Runner) Search(depth int8) {
+	r.Stop = false
 	if len(r.Engines) == 1 {
 		go r.Engines[0].ParallelSearch(depth, 1, 1)
 	} else {
@@ -76,18 +77,22 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 		e.pv.Recycle()
 		for iterationDepth := startDepth; iterationDepth <= depth; iterationDepth += depthIncrement {
 
-			if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
+			if e.isMainThread {
+				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
+					break
+				}
+			} else if iterationDepth > 1 && e.parent.Stop {
 				break
 			}
 
 			e.innerLines[0].Recycle()
 			score := e.aspirationWindow(e.score, iterationDepth)
 
-			if e.TimeManager().AbruptStop {
+			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
 				break
 			}
 
-			if iterationDepth >= 8 && e.score-score >= 30 { // Position degrading
+			if e.isMainThread && iterationDepth >= 8 && e.score-score >= 30 { // Position degrading
 				e.TimeManager().ExtraTime()
 			}
 
@@ -96,7 +101,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			e.move = e.pv.MoveAt(0)
 			e.SendPv(iterationDepth)
 			lastDepth = iterationDepth
-			if !e.TimeManager().Pondering() && iterationDepth >= 35 && e.move == previousBestMove {
+			if e.isMainThread && !e.TimeManager().Pondering && iterationDepth >= 35 && e.move == previousBestMove {
 				fruitelessIterations++
 				if fruitelessIterations > 4 {
 					break
@@ -109,10 +114,14 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			}
 			previousBestMove = e.move
 			e.pred.Clear()
-			if !e.TimeManager().Pondering() && e.parent.DebugMode {
+			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.info.Print()
 			}
+		}
 
+		if e.isMainThread {
+			e.TimeManager().Pondering = false
+			e.parent.Stop = true
 		}
 
 	}
@@ -205,9 +214,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if !isRootNode {
-		if e.TimeManager().ShouldStop(false, false) {
+		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
 			return -MAX_INT
 		}
+	}
+
+	if !e.isMainThread && e.parent.Stop {
+		return -MAX_INT
 	}
 
 	var eval int16 = -MAX_INT
@@ -320,7 +333,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode && depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.TimeManager().AbruptStop {
+		if e.isMainThread && e.TimeManager().AbruptStop {
+			return score
+		} else if !e.isMainThread && e.parent.Stop {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -367,7 +382,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if !e.TimeManager().AbruptStop {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 						e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -405,7 +420,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	for true {
 
 		if isRootNode {
-			if e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
+			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
 				break
 			}
 		}
@@ -512,7 +527,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if !e.TimeManager().AbruptStop {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -526,15 +541,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 		}
 	}
-	if !e.TimeManager().AbruptStop {
+	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 		} else {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
 		}
 	}
-	if isRootNode && legalMoves == 1 {
-		e.TimeManager().UpdateStopSearchNow(true)
+	if e.isMainThread && isRootNode && legalMoves == 1 {
+		e.TimeManager().StopSearchNow = true
 	}
 	return bestscore
 }

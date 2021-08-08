@@ -2,7 +2,6 @@ package search
 
 import (
 	"fmt"
-	"sync/atomic"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -13,7 +12,8 @@ type Runner struct {
 	Engines      []*Engine
 	globalInfo   Info
 	nodesVisited int64
-	timeManager  atomic.Value
+	Stop         bool
+	TimeManager  *TimeManager
 	DebugMode    bool
 }
 
@@ -125,16 +125,8 @@ type Engine struct {
 
 var MAX_DEPTH int8 = int8(100)
 
-func (r *Runner) TimeManager() *TimeManager {
-	tm := r.timeManager.Load()
-	if tm == nil {
-		return nil
-	}
-	return tm.(*TimeManager)
-}
-
 func (e *Engine) TimeManager() *TimeManager {
-	return e.parent.TimeManager()
+	return e.parent.TimeManager
 }
 
 func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
@@ -195,14 +187,12 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 }
 
 func (t *Runner) AddTimeManager(tm *TimeManager) {
-	t.timeManager.Store(tm)
+	t.TimeManager = tm
 }
 
 func (t *Runner) Ponderhit() {
-	tm := t.TimeManager()
-	tm.StartTime = time.Now()
-	tm.UpdatePondering(false)
-	t.timeManager.Store(tm)
+	t.TimeManager.StartTime = time.Now()
+	t.TimeManager.Pondering = false
 	fmt.Printf("info nodes %d\n", t.nodesVisited)
 }
 

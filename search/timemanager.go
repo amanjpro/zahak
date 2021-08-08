@@ -1,7 +1,6 @@
 package search
 
 import (
-	"sync/atomic"
 	"time"
 )
 
@@ -14,10 +13,10 @@ type TimeManager struct {
 	SoftLimit           int64
 	NodesSinceLastCheck int64
 	AbruptStop          bool
-	StopSearchNow       atomic.Value
+	StopSearchNow       bool
 	IsPerMove           bool
 	ExtensionCounter    int
-	pondering           atomic.Value
+	Pondering           bool
 }
 
 func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
@@ -37,61 +36,42 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		hardLimit = min64(softLimit*10, availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
 	}
 
-	var s atomic.Value
-	var p atomic.Value
-	s.Store(false)
-	p.Store(pondering)
-
 	return &TimeManager{
 		HardLimit:           hardLimit,
 		SoftLimit:           softLimit,
 		StartTime:           startTime,
 		NodesSinceLastCheck: 0,
 		AbruptStop:          false,
-		StopSearchNow:       s,
+		StopSearchNow:       false,
 		IsPerMove:           isPerMove,
 		ExtensionCounter:    0,
-		pondering:           p,
+		Pondering:           pondering,
 	}
-}
-
-func (tm *TimeManager) Pondering() bool {
-	return tm.pondering.Load().(bool)
 }
 
 func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
-	if tm.Pondering() {
+	if tm.Pondering {
 		return false
 	}
-	stopSearchNow := tm.StopSearchNow.Load().(bool)
 	if tm.NodesSinceLastCheck < 2000 {
 		tm.NodesSinceLastCheck += 1
-		tm.AbruptStop = tm.AbruptStop || stopSearchNow
+		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow
 		return tm.AbruptStop
 	}
 	tm.NodesSinceLastCheck = 0
 	if isRoot && canCutNow {
-		return stopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
+		return tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 	} else {
-		tm.AbruptStop = tm.AbruptStop || stopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
+		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
 		return tm.AbruptStop
 	}
 }
 
-func (tm *TimeManager) UpdatePondering(flag bool) {
-	tm.pondering.Store(flag)
-}
-
-func (tm *TimeManager) UpdateStopSearchNow(flag bool) {
-	tm.StopSearchNow.Store(flag)
-}
-
 func (tm *TimeManager) CanStartNewIteration() bool {
-	if tm.Pondering() {
+	if tm.Pondering {
 		return true
 	}
-	stopSearchNow := tm.StopSearchNow.Load().(bool)
-	if tm.AbruptStop || stopSearchNow {
+	if tm.AbruptStop || tm.StopSearchNow {
 		return false
 	}
 
@@ -104,7 +84,7 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 }
 
 func (tm *TimeManager) ExtraTime() {
-	if tm.Pondering() {
+	if tm.Pondering {
 		return
 	}
 	if tm.ExtensionCounter < 5 {

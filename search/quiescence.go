@@ -62,7 +62,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return standPat
 	}
 
-	if e.TimeManager().ShouldStop(false, false) {
+	if (e.isMainThread && e.TimeManager().ShouldStop(false, false)) || (!e.isMainThread && e.parent.Stop) {
 		return 0
 	}
 
