@@ -138,7 +138,7 @@ func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
 			engine = NewEngine(tt, ph, t)
 			engine.isMainThread = true
 		} else {
-			engine = NewEngine(tt, ph, t)
+			engine = NewEngine(tt, NewPawnCache(ph.Size()), t)
 		}
 		engines[i] = engine
 	}

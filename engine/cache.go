@@ -33,7 +33,7 @@ const (
 
 var oldAge = uint16(5)
 
-var EmptyEval = CachedEval{0, 0, EmptyMove, 0, 0, 0, 0}
+var EmptyEval = CachedEval{0, 1, EmptyMove, 0, 0, 0, 0}
 var CACHE_ENTRY_SIZE = uint32(4 + 4 + 4 + 2 + 2 + 1 + 1)
 
 type Cache struct {
@@ -42,38 +42,41 @@ type Cache struct {
 	consumed int
 }
 
-const DEFAULT_CACHE_SIZE = uint32(64)
+const DEFAULT_CACHE_SIZE = uint32(128)
 const MAX_CACHE_SIZE = uint32(24000)
 
 func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-const mask = 0x00000000FFFFFFFF
-
 func (c *Cache) index(hash uint64) uint32 {
-	return uint32(hash&mask) % uint32(len(c.items))
+	return uint32(hash) % uint32(len(c.items))
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
 	index := c.index(hash)
 	key := uint32(hash >> 32)
-	oldValue := c.items[index]
+	oldValue := &c.items[index]
 
-	if atomic.CompareAndSwapInt32(&c.items[index].Gate, 0, 1) {
-		if oldValue != EmptyEval {
+	if atomic.CompareAndSwapInt32(&oldValue.Gate, 0, 1) {
+		if *oldValue != EmptyEval {
 			if key == oldValue.LowKey {
-				c.items[index].Update(key, hashmove, eval, depth, nodeType, age)
+				oldValue.Update(key, hashmove, eval, depth, nodeType, age)
 			} else if age-oldValue.Age >= oldAge {
-				c.items[index].Update(key, hashmove, eval, depth, nodeType, age)
+				oldValue.Update(key, hashmove, eval, depth, nodeType, age)
 			} else if oldValue.Depth <= depth {
-				c.items[index].Update(key, hashmove, eval, depth, nodeType, age)
+				if oldValue.Type == Exact || nodeType != Exact {
+				} else if nodeType == Exact {
+					oldValue.Update(key, hashmove, eval, depth, nodeType, age)
+				} else {
+					oldValue.Update(key, hashmove, eval, depth, nodeType, age)
+				}
 			}
 		} else {
 			c.consumed += 1
-			c.items[index].Update(key, hashmove, eval, depth, nodeType, age)
+			oldValue.Update(key, hashmove, eval, depth, nodeType, age)
 		}
-		atomic.StoreInt32(&c.items[index].Gate, 0)
+		atomic.StoreInt32(&oldValue.Gate, 0)
 	}
 }
 
@@ -84,15 +87,16 @@ func (c *Cache) Size() uint32 {
 func (c *Cache) Get(hash uint64) (move Move, eval int16, depth int8, nType NodeType, ok bool) {
 	index := c.index(hash)
 	key := uint32(hash >> 32)
-	if atomic.CompareAndSwapInt32(&c.items[index].Gate, 0, 1) {
-		if c.items[index].LowKey == key {
-			move = c.items[index].HashMove
-			eval = c.items[index].Eval
-			depth = c.items[index].Depth
-			nType = c.items[index].Type
+	value := &c.items[index]
+	if atomic.CompareAndSwapInt32(&value.Gate, 0, 1) {
+		if value.LowKey == key {
+			move = value.HashMove
+			eval = value.Eval
+			depth = value.Depth
+			nType = value.Type
 			ok = true
 		}
-		atomic.StoreInt32(&c.items[index].Gate, 0)
+		atomic.StoreInt32(&value.Gate, 0)
 	}
 	return
 }
