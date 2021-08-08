@@ -79,7 +79,7 @@ func RunTestPositions(path string) {
 		_, w, _ := os.Pipe()
 		os.Stdout = w
 
-		game := FromFen(epd.fen, true)
+		game := FromFen(epd.fen)
 		r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
 		r.AddTimeManager(NewTimeManager(time.Now(), 15000, true, 0, 0, false))
 		pos := game.Position()

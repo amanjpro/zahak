@@ -479,7 +479,7 @@ func parseLine(line string) (string, float64) {
 func PrepareTuningData(path string) {
 	loadPositions(path, func(line string) {
 		fen, _ := parseLine(line)
-		game := FromFen(fen, true)
+		game := FromFen(fen)
 		pos := game.Position()
 		ml.Size = 0
 		ml.Next = 0
@@ -498,7 +498,7 @@ func Tune(path string, toExclude map[int]bool) {
 	skipParams = toExclude
 	loadPositions(path, func(line string) {
 		fen, outcome := parseLine(line)
-		game := FromFen(fen, true)
+		game := FromFen(fen)
 		pos := game.Position()
 		tp := TestPosition{pos, outcome}
 		testPositions = append(testPositions, tp)

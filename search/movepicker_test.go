@@ -177,7 +177,7 @@ func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 func TestMovePickerNormalSearch(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0), false)
@@ -263,7 +263,7 @@ func TestMovePickerNormalSearch(t *testing.T) {
 func TestUpgradeMoveToHashmoveQuiet(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
@@ -351,7 +351,7 @@ func TestUpgradeMoveToHashmoveQuiet(t *testing.T) {
 func TestMovePickerNormalSearchNoHashmove(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
@@ -437,7 +437,7 @@ func TestMovePickerNormalSearchNoHashmove(t *testing.T) {
 func TestMovePickerNormalSearchCaptureHashmove(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture), false)
@@ -524,7 +524,7 @@ func TestMovePickerNormalSearchCaptureHashmove(t *testing.T) {
 func TestMovePickerNormalSearchUpgradeToHashmoveCapture(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
@@ -613,7 +613,7 @@ func TestMovePickerNormalSearchUpgradeToHashmoveCapture(t *testing.T) {
 func TestMovePickerQuiescenceSearch(t *testing.T) {
 	fen := "rnbqkb1r/ppp2ppp/5n2/3p4/4P3/2N1P3/PPP2PPP/R1BQKBNR w KQkq - 1 2"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, true)
@@ -666,7 +666,7 @@ func TestMovePickerQuiescenceSearch(t *testing.T) {
 func TestMovePickerNormalSearchWithPromotionNoHashmove(t *testing.T) {
 	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
@@ -727,7 +727,7 @@ func TestMovePickerNormalSearchWithPromotionNoHashmove(t *testing.T) {
 func TestMovePickerNormalSearchWithPromotionPromotionQuietHashmove(t *testing.T) {
 	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0), false)
@@ -788,7 +788,7 @@ func TestMovePickerNormalSearchWithPromotionPromotionQuietHashmove(t *testing.T)
 func TestMovePickerNormalSearchWithPromotionPromotionCaptureHashmove(t *testing.T) {
 	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture), false)
@@ -849,7 +849,7 @@ func TestMovePickerNormalSearchWithPromotionPromotionCaptureHashmove(t *testing.
 func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionQuietHashmove(t *testing.T) {
 	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
@@ -911,7 +911,7 @@ func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionQuietHashmove(t *t
 func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionCaptureHashmove(t *testing.T) {
 	fen := "1k4n1/7P/8/6K1/8/5P2/8/8 w - - 0 1"
 
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	engine := NewEngine(NewCache(2), NewPawnCache(2), nil)
 	engine.ClearForSearch()
 	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)

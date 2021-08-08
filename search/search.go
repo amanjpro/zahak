@@ -11,13 +11,16 @@ import (
 
 func (r *Runner) Search(depth int8) {
 	for _, e := range r.Engines {
-		e.Search(depth) // channel it
+		go e.Search(depth)
 	}
 }
 
 func (e *Engine) Search(depth int8) {
 	e.ClearForSearch()
 	e.rootSearch(depth)
+	if e.isMainThread {
+		e.SendBestMove()
+	}
 }
 
 var p = WhitePawn.Weight()

@@ -73,7 +73,7 @@ func RunBenchmark() {
 	for _, fen := range fens {
 		runner.Engines[0].TranspositionTable = NewCache(cacheSize)
 		NewPawnCache(pawnHashSize)
-		game := FromFen(fen, true)
+		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
 		runner.Engines[0].Search(depth)
 		nodes += runner.Engines[0].NodesVisited()

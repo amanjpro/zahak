@@ -9,7 +9,7 @@ var castleRightsZC [4]uint64
 var enPassantZC [16]uint64
 var whiteTurnZC uint64
 
-func initZobrist() {
+func init() {
 	whiteTurnZC = rand.Uint64()
 	for i := 0; i < 12; i++ {
 		for j := 0; j < 64; j++ {

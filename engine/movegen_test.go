@@ -7,7 +7,7 @@ import (
 
 func TestBishopMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	ml := NewMoveList(13)
 	g.position.slidingQuietMoves(White, Bishop, ml)
 	g.position.slidingCaptureMoves(White, Bishop, ml)
@@ -44,7 +44,7 @@ func TestBishopMoves(t *testing.T) {
 
 func TestRookMoves(t *testing.T) {
 	fen := "rnkqbbnr/ppp1pppp/4P3/3pP3/3P4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	ml := NewMoveList(8)
 	g.position.slidingQuietMoves(White, Rook, ml)
 	g.position.slidingCaptureMoves(White, Rook, ml)
@@ -76,7 +76,7 @@ func TestRookMoves(t *testing.T) {
 
 func TestQueenMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	ml := NewMoveList(6)
 	g.position.slidingCaptureMoves(White, Queen, ml)
 	g.position.slidingQuietMoves(White, Queen, ml)
@@ -106,7 +106,7 @@ func TestQueenMoves(t *testing.T) {
 
 func TestKingMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	board := g.position.Board
 	color := White
 	ml := NewMoveList(3)
@@ -136,7 +136,7 @@ func TestKingMoves(t *testing.T) {
 
 func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	fen := "rnbqkbnr/1p6/p1p3Pp/1B1pp2Q/1P6/B7/P1PP1PPP/RN2K1NR w KQkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	board := g.position.Board
 	color := White
 	taboo := tabooSquares(board, color)
@@ -166,7 +166,7 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 
 func TestKingQueenSideCastling(t *testing.T) {
 	fen := "rnbqkbnr/1p6/p1p3Pp/1B1pp2Q/1P6/B7/P1PP1PPP/R3K1NR w KQkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	board := g.position.Board
 	color := White
 	taboo := tabooSquares(board, color)
@@ -197,7 +197,7 @@ func TestKingQueenSideCastling(t *testing.T) {
 
 func TestPawnMovesForWhite(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	ml := NewMoveList(18)
 	color := White
 	g.position.pawnQuietMoves(color, ml)
@@ -240,7 +240,7 @@ func TestPawnMovesForWhite(t *testing.T) {
 
 func TestPawnMovesForBlack(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3p1p2/1P4P1/4pP2/N6N/P1PPP2P/R1BQKB1R b KQkq f3 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	ml := NewMoveList(13)
 	color := Black
 	g.position.pawnQuietMoves(color, ml)
@@ -278,7 +278,7 @@ func TestPawnMovesForBlack(t *testing.T) {
 
 func TestKnightMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/1N1pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	ml := NewMoveList(10)
 	g.position.knightQuietMoves(White, ml)
 	g.position.knightCaptureMoves(White, ml)
@@ -312,7 +312,7 @@ func TestKnightMoves(t *testing.T) {
 
 func TestCastleAndDiscoveredChecks(t *testing.T) {
 	fen := "rnbq1bn1/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP1rBPPP/k3K2R w Kkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	p := g.position
 	legalMoves := p.PseudoLegalMoves()
 	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
@@ -335,7 +335,7 @@ func TestCastleAndDiscoveredChecks(t *testing.T) {
 
 func TestCastleAndPawnAttack(t *testing.T) {
 	fen := "r3k2r/p1ppqpb1/1n2pnp1/1b1PN3/1p2P3/P1N2Q2/1PPBBPpP/1R2K2R w Kkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	board := g.position.Board
 	ml := NewMoveList(1)
 	color := White
@@ -364,7 +364,7 @@ func TestCastleAndPawnAttack(t *testing.T) {
 
 func TestLegalMoves(t *testing.T) {
 	fen := "rn1q1bn1/pPp1pppp/4P3/1N1pP2Q/3p3b/4B3/PP1rBPPP/k3K2R w Kkq d6 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	p := g.position
 	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{
@@ -432,7 +432,7 @@ func TestLegalMoves(t *testing.T) {
 
 func TestDoubleCheckResponses(t *testing.T) {
 	fen := "5Q2/8/1q5P/8/6k1/5R2/6P1/2r3K1 w - - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	p := g.position
 	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{
@@ -494,7 +494,7 @@ func TestDoubleCheckResponses(t *testing.T) {
 
 func TestLegalMovesInOpenning(t *testing.T) {
 	fen := "rnbqkbnr/ppp3pp/3ppp2/1P6/6P1/N6N/P1PPPP1P/R1BQKB1R w KQkq - 0 1"
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	p := g.position
 	legalMoves := p.PseudoLegalMoves()
 	expectedMoves := []Move{

@@ -17,6 +17,10 @@ import (
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
+var defaultCPU = 1
+var minCPU = 1
+var maxCPU = runtime.NumCPU()
+
 type UCI struct {
 	version     string
 	runner      *Runner
@@ -36,7 +40,7 @@ func NewUCI(version string, withBook bool, bookPath string) *UCI {
 }
 
 func (uci *UCI) Start() {
-	var game Game
+	var game Game = FromFen(startFen)
 	var depth = int8(MAX_DEPTH)
 	if uci.withBook {
 		InitBook(uci.bookPath)
@@ -70,6 +74,7 @@ func (uci *UCI) Start() {
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
 				fmt.Printf("option name Pawnhash type spin default %d min 1 max %d\n", DEFAULT_PAWNHASH_SIZE, MAX_PAWNHASH_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
+				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -88,7 +93,7 @@ func (uci *UCI) Start() {
 					uci.runner.Engines[i].TranspositionTable = newTT
 					uci.runner.Engines[i].Pawnhash = NewPawnCache(pawnSize)
 				}
-				game = FromFen(startFen, true)
+				game = FromFen(startFen)
 			case "stop":
 				if uci.runner.TimeManager().Pondering() {
 					uci.stopPondering()
@@ -109,6 +114,11 @@ func (uci *UCI) Start() {
 					} else if !IsBoookLoaded() && opt == "true" { // if it is loaded, no need to reload
 						InitBook(uci.bookPath)
 					}
+				} else if strings.HasPrefix(cmd, "setoption name Threads value") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					cpu, _ := strconv.Atoi(v)
+					uci.runner = NewRunner(uci.runner.Engines[0].TranspositionTable, uci.runner.Engines[0].Pawnhash, cpu)
 				} else if strings.HasPrefix(cmd, "setoption name Pawnhash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
@@ -129,17 +139,17 @@ func (uci *UCI) Start() {
 						uci.runner.Engines[i].TranspositionTable = newTT
 					}
 				} else if strings.HasPrefix(cmd, "go") {
-					go uci.findMove(game, depth, game.MoveClock(), cmd)
+					uci.findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					uci.stopPondering()
 					moves := strings.Fields(cmd)[3:]
-					game = FromFen(startFen, false)
+					game = FromFen(startFen)
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
 					}
 				} else if strings.HasPrefix(cmd, "position startpos") {
 					uci.stopPondering()
-					game = FromFen(startFen, false)
+					game = FromFen(startFen)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
 					cmd := strings.Fields(cmd)
@@ -152,9 +162,9 @@ func (uci *UCI) Start() {
 					moves := []string{}
 					if len(cmd) > 9 {
 						moves = cmd[9:]
-						game = FromFen(fen, false)
+						game = FromFen(fen)
 					} else {
-						game = FromFen(fen, false)
+						game = FromFen(fen)
 					}
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
@@ -221,7 +231,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	var MAX_TIME int64 = 9_223_372_036_854_775_807
 
 	for i := 0; i < len(uci.runner.Engines); i++ {
-		uci.runner.Engines[i].Position = game.Position()
+		uci.runner.Engines[i].Position = game.Position().Copy()
 		uci.runner.Engines[i].Ply = ply
 	}
 
@@ -235,13 +245,11 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 			uci.runner.AddTimeManager(tm)
 		}
 		uci.runner.Search(depth)
-		uci.runner.SendBestMove()
 	} else {
 		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
 		uci.runner.AddTimeManager(tm)
 		uci.timeManager = tm
 		uci.runner.Search(depth)
-		uci.runner.SendBestMove()
 	}
 }
 
