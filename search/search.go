@@ -15,7 +15,7 @@ func (r *Runner) Search(depth int8) {
 		go r.Engines[0].ParallelSearch(depth, 1, 1)
 	} else {
 		for i, e := range r.Engines {
-			go e.ParallelSearch(depth, int8(1+i%2), 2)
+			go e.ParallelSearch(depth, int8(1+i%5), 2)
 		}
 	}
 }
