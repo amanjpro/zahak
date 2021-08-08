@@ -126,7 +126,11 @@ type Engine struct {
 var MAX_DEPTH int8 = int8(100)
 
 func (r *Runner) TimeManager() *TimeManager {
-	return (r.timeManager.Load()).(*TimeManager)
+	tm := r.timeManager.Load()
+	if tm == nil {
+		return nil
+	}
+	return tm.(*TimeManager)
 }
 
 func (e *Engine) TimeManager() *TimeManager {

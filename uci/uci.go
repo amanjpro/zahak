@@ -147,9 +147,6 @@ func (uci *UCI) Start() {
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
 					}
-				} else if strings.HasPrefix(cmd, "position startpos") {
-					uci.stopPondering()
-					game = FromFen(startFen)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
 					cmd := strings.Fields(cmd)
@@ -254,7 +251,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 }
 
 func (uci *UCI) stopPondering() {
-	if uci.runner.TimeManager().Pondering() {
+	if uci.runner.TimeManager() != nil && uci.runner.TimeManager().Pondering() {
 		uci.runner.TimeManager().UpdatePondering(false)
 		uci.runner.TimeManager().UpdateStopSearchNow(true)
 		for uci.runner.TimeManager().Pondering() {
