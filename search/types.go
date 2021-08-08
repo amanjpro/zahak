@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -20,58 +21,53 @@ type Runner struct {
 const MAX_TIME int64 = 9_223_372_036_854_775_807
 
 type Info struct {
-	fpCounter                  int
-	efpCounter                 int
-	rfpCounter                 int
-	razoringCounter            int
-	checkExtentionCounter      int
-	nullMoveCounter            int
-	lmrCounter                 int
-	lmpCounter                 int
-	deltaPruningCounter        int
-	seeQuiescenceCounter       int
-	seeCounter                 int
-	mainSearchCounter          int
-	zwCounter                  int
-	researchCounter            int
-	quiesceCounter             int
-	killerCounter              int
-	historyCounter             int
-	probCutCounter             int
-	historyPruningCounter      int
-	internalIterativeReduction int
+	fpCounter                  int64
+	efpCounter                 int64
+	rfpCounter                 int64
+	razoringCounter            int64
+	checkExtentionCounter      int64
+	nullMoveCounter            int64
+	lmrCounter                 int64
+	lmpCounter                 int64
+	deltaPruningCounter        int64
+	seeQuiescenceCounter       int64
+	seeCounter                 int64
+	mainSearchCounter          int64
+	zwCounter                  int64
+	researchCounter            int64
+	quiesceCounter             int64
+	killerCounter              int64
+	historyCounter             int64
+	probCutCounter             int64
+	historyPruningCounter      int64
+	internalIterativeReduction int64
 }
 
-func (this *Info) add(other Info) {
-	this.fpCounter = other.fpCounter
-	this.efpCounter = other.efpCounter
-	this.rfpCounter = other.rfpCounter
-	this.razoringCounter = other.razoringCounter
-	this.checkExtentionCounter = other.checkExtentionCounter
-	this.nullMoveCounter = other.nullMoveCounter
-	this.lmrCounter = other.lmrCounter
-	this.lmpCounter = other.lmpCounter
-	this.deltaPruningCounter = other.deltaPruningCounter
-	this.seeQuiescenceCounter = other.seeQuiescenceCounter
-	this.seeCounter = other.seeCounter
-	this.mainSearchCounter = other.mainSearchCounter
-	this.zwCounter = other.zwCounter
-	this.researchCounter = other.researchCounter
-	this.quiesceCounter = other.quiesceCounter
-	this.killerCounter = other.killerCounter
-	this.historyCounter = other.historyCounter
-	this.probCutCounter = other.probCutCounter
-	this.historyPruningCounter = other.historyCounter
-	this.internalIterativeReduction = other.internalIterativeReduction
-}
+func (e *Engine) ShareInfo() {
+	atomic.AddInt64(&e.parent.globalInfo.fpCounter, e.info.fpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.efpCounter, e.info.efpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.rfpCounter, e.info.rfpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.razoringCounter, e.info.razoringCounter)
+	atomic.AddInt64(&e.parent.globalInfo.checkExtentionCounter, e.info.checkExtentionCounter)
+	atomic.AddInt64(&e.parent.globalInfo.nullMoveCounter, e.info.nullMoveCounter)
+	atomic.AddInt64(&e.parent.globalInfo.lmrCounter, e.info.lmrCounter)
+	atomic.AddInt64(&e.parent.globalInfo.lmpCounter, e.info.lmpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.deltaPruningCounter, e.info.deltaPruningCounter)
+	atomic.AddInt64(&e.parent.globalInfo.seeQuiescenceCounter, e.info.seeQuiescenceCounter)
+	atomic.AddInt64(&e.parent.globalInfo.seeCounter, e.info.seeCounter)
+	atomic.AddInt64(&e.parent.globalInfo.mainSearchCounter, e.info.mainSearchCounter)
+	atomic.AddInt64(&e.parent.globalInfo.zwCounter, e.info.zwCounter)
+	atomic.AddInt64(&e.parent.globalInfo.researchCounter, e.info.researchCounter)
+	atomic.AddInt64(&e.parent.globalInfo.quiesceCounter, e.info.quiesceCounter)
+	atomic.AddInt64(&e.parent.globalInfo.killerCounter, e.info.killerCounter)
+	atomic.AddInt64(&e.parent.globalInfo.historyCounter, e.info.historyCounter)
+	atomic.AddInt64(&e.parent.globalInfo.probCutCounter, e.info.probCutCounter)
+	atomic.AddInt64(&e.parent.globalInfo.historyPruningCounter, e.info.historyCounter)
+	atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
 
-func (t *Runner) PrintGlobalInfo() {
-	t.globalInfo = NoInfo
-
-	for i := 0; i < len(t.Engines); i++ {
-		t.globalInfo.add(t.Engines[i].info)
-	}
-	t.globalInfo.Print()
+	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
+	e.info = NoInfo
+	e.nodesVisited = 0
 }
 
 func (i *Info) Print() {
@@ -190,10 +186,10 @@ func (t *Runner) AddTimeManager(tm *TimeManager) {
 	t.TimeManager = tm
 }
 
-func (t *Runner) Ponderhit() {
-	t.TimeManager.StartTime = time.Now()
-	t.TimeManager.Pondering = false
-	fmt.Printf("info nodes %d\n", t.nodesVisited)
+func (r *Runner) Ponderhit() {
+	r.TimeManager.StartTime = time.Now()
+	r.TimeManager.Pondering = false
+	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
@@ -348,10 +344,11 @@ func (e *Engine) SendPv(depth int8) {
 		depth = e.pv.moveCount
 	}
 	thinkTime := time.Since(e.StartTime)
-	nps := int64(float64(e.nodesVisited) / thinkTime.Seconds())
+	nodesVisited := e.parent.nodesVisited
+	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
 	fmt.Printf("info depth %d seldepth %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
 		depth, e.pv.moveCount, e.TranspositionTable.Consumed(),
-		e.nodesVisited, nps, ScoreToCp(e.score),
+		nodesVisited, nps, ScoreToCp(e.score),
 		thinkTime.Milliseconds(), e.pv.ToString())
 	e.TotalTime = thinkTime.Seconds()
 }

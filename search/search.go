@@ -99,7 +99,9 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			e.pv.Clone(e.innerLines[0])
 			e.score = score
 			e.move = e.pv.MoveAt(0)
-			e.SendPv(iterationDepth)
+			if e.isMainThread {
+				e.SendPv(iterationDepth)
+			}
 			lastDepth = iterationDepth
 			if e.isMainThread && !e.TimeManager().Pondering && iterationDepth >= 35 && e.move == previousBestMove {
 				fruitelessIterations++
@@ -115,8 +117,9 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			previousBestMove = e.move
 			e.pred.Clear()
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
-				e.info.Print()
+				e.parent.globalInfo.Print()
 			}
+			e.ShareInfo()
 		}
 
 		if e.isMainThread {
@@ -126,7 +129,9 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 	}
 
-	e.SendPv(lastDepth)
+	if e.isMainThread {
+		e.SendPv(lastDepth)
+	}
 }
 
 func (e *Engine) aspirationWindow(prevScore int16, iterationDepth int8) int16 {
@@ -446,7 +451,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				legalQuiteMove += 1
 			}
 
-			if e.parent.DebugMode && isRootNode {
+			if e.isMainThread && e.parent.DebugMode && isRootNode {
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
