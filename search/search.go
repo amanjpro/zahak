@@ -10,14 +10,26 @@ import (
 )
 
 func (r *Runner) Search(depth int8) {
-	for _, e := range r.Engines {
-		go e.Search(depth)
+	if len(r.Engines) == 1 {
+		go r.Engines[0].ParallelSearch(depth, 1, 1)
+	} else {
+		for i, e := range r.Engines {
+			go e.ParallelSearch(depth, int8(1+i%2), 2)
+		}
+	}
+}
+
+func (e *Engine) ParallelSearch(depth int8, start int8, inc int8) {
+	e.ClearForSearch()
+	e.rootSearch(depth, start, inc)
+	if e.isMainThread {
+		e.SendBestMove()
 	}
 }
 
 func (e *Engine) Search(depth int8) {
 	e.ClearForSearch()
-	e.rootSearch(depth)
+	e.rootSearch(depth, 1, 1)
 	if e.isMainThread {
 		e.SendBestMove()
 	}
@@ -43,7 +55,7 @@ func initLMR() [32][32]int {
 	return reductions
 }
 
-func (e *Engine) rootSearch(depth int8) {
+func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 	var previousBestMove Move
 
@@ -62,7 +74,7 @@ func (e *Engine) rootSearch(depth int8) {
 
 	if e.move == EmptyMove {
 		e.pv.Recycle()
-		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
+		for iterationDepth := startDepth; iterationDepth <= depth; iterationDepth += depthIncrement {
 
 			if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
 				break
