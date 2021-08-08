@@ -59,15 +59,15 @@ List](http://www.cegt.net/blitz.htm).
 
 The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |
-|-------------|------------------------------|-------------------------|---------------------------|
-| 5.0         | N/A                          | 2686                    | N/A                       |
-| 4.0         | 2570                         | 2522                    | 2423                      |
-| 3.0         | 2407                         | 2378                    | N/A                       |
-| 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       |
-| 1.0.0       | 2011                         | N/A                     | N/A                       |
-| 0.3.0       | 1922                         | N/A                     | N/A                       |
-| 0.2.1       | 1824                         | N/A                     | N/A                       |
+| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   |
+|-------------|------------------------------|-------------------------|---------------------------|---------------------------|
+| 5.0         | 2714                         | 2686                    | N/A                       | 2665 (unstable rating)    |
+| 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    |
+| 3.0         | 2407                         | 2378                    | N/A                       | N/A                       |
+| 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       | N/A                       |
+| 1.0.0       | 2011                         | N/A                     | N/A                       | N/A                       |
+| 0.3.0       | 1922                         | N/A                     | N/A                       | N/A                       |
+| 0.2.1       | 1824                         | N/A                     | N/A                       | N/A                       |
 
 # Implemented Features:
 
