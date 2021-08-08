@@ -10,30 +10,29 @@ import (
 )
 
 func (r *Runner) Search(depth int8) {
-	r.Stop = false
+	r.ClearForSearch()
 	if len(r.Engines) == 1 {
 		go r.Engines[0].ParallelSearch(depth, 1, 1)
 	} else {
-		for i, e := range r.Engines {
-			go e.ParallelSearch(depth, int8(1+i%5), 2)
+		for i := 0; i < len(r.Engines); i++ {
+			go func(e *Engine, depth int8, i int) {
+				e.ParallelSearch(depth, int8(1+i%2), 2)
+			}(r.Engines[i], depth, i)
 		}
+		r.SendBestMove()
 	}
 }
 
 func (e *Engine) ParallelSearch(depth int8, start int8, inc int8) {
 	e.ClearForSearch()
 	e.rootSearch(depth, start, inc)
-	if e.isMainThread {
-		e.SendBestMove()
-	}
 }
 
 func (e *Engine) Search(depth int8) {
+	e.parent.ClearForSearch()
 	e.ClearForSearch()
 	e.rootSearch(depth, 1, 1)
-	if e.isMainThread {
-		e.SendBestMove()
-	}
+	e.parent.SendBestMove()
 }
 
 var p = WhitePawn.Weight()
@@ -56,25 +55,44 @@ func initLMR() [32][32]int {
 	return reductions
 }
 
+func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) (PVLine, int16, int8) {
+	parent := e.parent
+	var parentPv = NewPVLine(MAX_DEPTH)
+	parent.mu.Lock()
+	if isBookmove || (parent.depth < depth && !parent.isBookmove) {
+		parent.pv.Recycle()
+		parent.pv.Clone(pvLine)
+		parent.move = pvLine.MoveAt(0)
+		parent.score = score
+		parent.depth = depth
+		parent.isBookmove = isBookmove
+	} else {
+		score = parent.score
+		depth = parent.depth
+	}
+	parentPv.Clone(parent.pv)
+	parent.mu.Unlock()
+	return parentPv, score, depth
+}
+
 func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
+	move := EmptyMove
+	score := -MAX_INT
+	pv := NewPVLine(MAX_DEPTH)
+	var globalPv PVLine
 
-	var previousBestMove Move
-
-	e.move = EmptyMove
-	e.score = -MAX_INT
-	fruitelessIterations := 0
-
-	bookmove := GetBookMove(e.Position)
 	lastDepth := int8(1)
 
-	if bookmove != EmptyMove {
-		e.move = bookmove
-		e.pv.Recycle()
-		e.pv.AddFirst(bookmove)
+	bookmove := GetBookMove(e.Position)
+	if e.isMainThread && bookmove != EmptyMove {
+		move = bookmove
+		pv.Recycle()
+		pv.AddFirst(bookmove)
+		globalPv, score, _ = e.updatePv(pv, score, 1, true)
 	}
 
-	if e.move == EmptyMove {
-		e.pv.Recycle()
+	if move == EmptyMove {
+		pv.Recycle()
 		for iterationDepth := startDepth; iterationDepth <= depth; iterationDepth += depthIncrement {
 
 			if e.isMainThread {
@@ -85,52 +103,57 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 				break
 			}
 
+			var bookmove bool
+			var globalDepth int8
+			var globalScore int16
+			e.parent.mu.Lock()
+			globalDepth = e.parent.depth
+			bookmove = e.parent.isBookmove
+			globalScore = e.parent.score
+			e.parent.mu.Unlock()
+
+			if bookmove {
+				break
+			}
+
+			if depth <= globalDepth {
+				continue
+			}
+
 			e.innerLines[0].Recycle()
-			score := e.aspirationWindow(e.score, iterationDepth)
+			e.score = globalScore
+			newScore := e.aspirationWindow(score, iterationDepth)
 
 			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
 				break
 			}
+			pv.Clone(e.innerLines[0])
 
-			if e.isMainThread && iterationDepth >= 8 && e.score-score >= 30 { // Position degrading
+			if e.isMainThread && iterationDepth >= 8 && score-newScore >= 30 { // Position degrading
 				e.TimeManager().ExtraTime()
 			}
 
-			e.pv.Clone(e.innerLines[0])
-			e.score = score
-			e.move = e.pv.MoveAt(0)
+			var newDepth int8
+			globalPv, score, newDepth = e.updatePv(pv, newScore, iterationDepth, false)
 			if e.isMainThread {
-				e.SendPv(iterationDepth)
+				e.SendPv(globalPv, score, newDepth)
 			}
-			lastDepth = iterationDepth
-			if e.isMainThread && !e.TimeManager().Pondering && iterationDepth >= 35 && e.move == previousBestMove {
-				fruitelessIterations++
-				if fruitelessIterations > 4 {
-					break
-				}
-			} else {
-				fruitelessIterations = 0
-			}
-			if isCheckmateEval(e.score) {
+			lastDepth = newDepth
+			if isCheckmateEval(score) {
 				break
 			}
-			previousBestMove = e.move
 			e.pred.Clear()
+			e.ShareInfo()
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.parent.globalInfo.Print()
 			}
-			e.ShareInfo()
 		}
-
-		if e.isMainThread {
-			e.TimeManager().Pondering = false
-			e.parent.Stop = true
-		}
-
 	}
 
 	if e.isMainThread {
-		e.SendPv(lastDepth)
+		e.TimeManager().Pondering = false
+		e.parent.Stop = true
+		e.SendPv(globalPv, score, lastDepth)
 	}
 }
 

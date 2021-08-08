@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -10,12 +11,19 @@ import (
 )
 
 type Runner struct {
+	mu           sync.Mutex
 	Engines      []*Engine
 	globalInfo   Info
 	nodesVisited int64
 	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
+	cacheHits    int64
+	pv           PVLine
+	isBookmove   bool
+	depth        int8
+	move         Move
+	score        int16
 }
 
 const MAX_TIME int64 = 9_223_372_036_854_775_807
@@ -66,8 +74,10 @@ func (e *Engine) ShareInfo() {
 	atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
 
 	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
+	atomic.AddInt64(&e.parent.cacheHits, e.cacheHits)
 	e.info = NoInfo
 	e.nodesVisited = 0
+	e.cacheHits = 0
 }
 
 func (i *Info) Print() {
@@ -98,9 +108,6 @@ type Engine struct {
 	Ply                uint16
 	nodesVisited       int64
 	cacheHits          int64
-	pv                 PVLine
-	move               Move
-	score              int16
 	positionMoves      []Move
 	killerMoves        [][]Move
 	searchHistory      [][]int32
@@ -108,6 +115,7 @@ type Engine struct {
 	triedQuietMoves    [][]Move
 	info               Info
 	pred               Predecessors
+	score              int16
 	innerLines         []PVLine
 	staticEvals        []int16
 	TranspositionTable *Cache
@@ -138,13 +146,13 @@ func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
 		}
 		engines[i] = engine
 	}
+	t.pv = NewPVLine(MAX_DEPTH)
 	t.globalInfo = NoInfo
 	t.Engines = engines
 	return t
 }
 
 func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
-	line := NewPVLine(MAX_DEPTH)
 	innerLines := make([]PVLine, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
 		line := NewPVLine(MAX_DEPTH)
@@ -160,8 +168,6 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 		Ply:                0,
 		nodesVisited:       0,
 		cacheHits:          0,
-		pv:                 line,
-		move:               EmptyMove,
 		score:              0,
 		positionMoves:      make([]Move, MAX_DEPTH),
 		killerMoves:        make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
@@ -193,6 +199,16 @@ func (r *Runner) Ponderhit() {
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+func (r *Runner) ClearForSearch() {
+	r.nodesVisited = 0
+	r.depth = 0
+	r.isBookmove = false
+	r.cacheHits = 0
+	r.pv.Pop() // pop our move
+	r.pv.Pop() // pop our opponent's move
+	r.Stop = false
+}
 
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
@@ -228,17 +244,11 @@ func (e *Engine) ClearForSearch() {
 
 	e.nodesVisited = 0
 	e.cacheHits = 0
-	e.pv.Pop() // pop our move
-	e.pv.Pop() // pop our opponent's move
 
 	e.info = NoInfo
 	e.StartTime = time.Now()
 
 	e.pred.Clear()
-}
-
-func (e *Engine) NodesVisited() int64 {
-	return e.nodesVisited
 }
 
 func (e *Engine) KillerMoveScore(move Move, depthLeft int8) int32 {
@@ -322,34 +332,35 @@ func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square
 	}
 }
 
-func (e *Engine) SendBestMove() {
-	mv := e.Move()
-	if e.pv.moveCount >= 2 {
-		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), e.pv.MoveAt(1).ToString())
+func (r *Runner) SendBestMove() {
+	mv := r.Move()
+	pv := r.pv
+	if pv.moveCount >= 2 {
+		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), pv.MoveAt(1).ToString())
 	} else {
 		fmt.Printf("bestmove %s\n", mv.ToString())
 	}
 }
 
-func (e *Engine) Move() Move {
-	return e.move
+func (r *Runner) Move() Move {
+	return r.move
 }
 
-func (e *Engine) Score() int16 {
-	return e.score
+func (r *Runner) Score() int16 {
+	return r.score
 }
 
-func (e *Engine) SendPv(depth int8) {
+func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
 	if depth == -1 {
-		depth = e.pv.moveCount
+		depth = pv.moveCount
 	}
 	thinkTime := time.Since(e.StartTime)
 	nodesVisited := e.parent.nodesVisited
 	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
 	fmt.Printf("info depth %d seldepth %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
-		depth, e.pv.moveCount, e.TranspositionTable.Consumed(),
-		nodesVisited, nps, ScoreToCp(e.score),
-		thinkTime.Milliseconds(), e.pv.ToString())
+		depth, pv.moveCount, e.TranspositionTable.Consumed(),
+		nodesVisited, nps, ScoreToCp(score),
+		thinkTime.Milliseconds(), pv.ToString())
 	e.TotalTime = thinkTime.Seconds()
 }
 

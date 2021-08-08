@@ -76,7 +76,7 @@ func RunBenchmark() {
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
 		runner.Engines[0].Search(depth)
-		nodes += runner.Engines[0].NodesVisited()
+		nodes += runner.nodesVisited
 		totalTime += runner.Engines[0].TotalTime
 	}
 

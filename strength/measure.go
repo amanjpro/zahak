@@ -85,7 +85,7 @@ func RunTestPositions(path string) {
 		pos := game.Position()
 		r.Engines[0].Position = pos
 		r.Engines[0].Search(MAX_DEPTH)
-		mv := pos.MoveToPGN(r.Engines[0].Move())
+		mv := pos.MoveToPGN(r.Move())
 
 		// back to normal state
 		w.Close()

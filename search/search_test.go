@@ -18,7 +18,7 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	e.Ply = 27
 	e.Search(7)
 	expected := NewMove(D7, D6, BlackKing, NoPiece, NoType, 0)
-	mv := e.Move()
+	mv := r.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -34,7 +34,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e.Ply = 1
 	e.Search(7)
 	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, 0)
-	mv := e.Move()
+	mv := r.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -49,7 +49,7 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	e.Position = game.Position()
 	e.Search(7)
 	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, 0)
-	mv := e.Move()
+	mv := r.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -64,7 +64,7 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	e.Position = game.Position()
 	e.Search(7)
 	expected := NewMove(D1, C1, WhiteKing, NoPiece, NoType, 0)
-	mv := e.Move()
+	mv := r.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -79,8 +79,8 @@ func TestSearchOnlyMove(t *testing.T) {
 	e.Position = game.Position()
 	e.Search(7)
 	expected := NewMove(G7, G6, BlackPawn, NoPiece, NoType, 0)
-	mv := e.Move()
-	score := e.Score()
+	mv := r.Move()
+	score := r.Score()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -98,12 +98,12 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	e.Position = game.Position()
 	e.Search(7)
 	expected := NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0)
-	mv := e.Move()
+	mv := r.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
 	}
-	score := e.Score()
+	score := r.Score()
 	if score != -CHECKMATE_EVAL+2 {
 		t.Errorf("Unexpected eval was returned:%s\n", fmt.Sprintf("Expected: %d\nGot: %d\n", -CHECKMATE_EVAL+2, score))
 	}
@@ -166,7 +166,7 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	e.Position = game.Position()
 	e.Search(25)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
-	mv := e.Move()
+	mv := r.Move()
 	mvStr := mv.ToString()
 	if mv != expected {
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expected.ToString(), mvStr))
@@ -187,11 +187,11 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 		NewMove(A3, B3, BlackQueen, NoPiece, NoType, 0),
 		NewMove(B1, A1, WhiteKing, NoPiece, NoType, 0),
 		NewMove(B3, A3, BlackQueen, NoPiece, NoType, 0)}
-	actual := e.pv.line
+	actual := r.pv.line
 	if equalMoves(expected, actual) {
-		actualString := e.pv.ToString()
-		e.pv.line = expected
-		expectedString := e.pv.ToString()
+		actualString := r.pv.ToString()
+		r.pv.line = expected
+		expectedString := r.pv.ToString()
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expectedString, actualString))
 	}
 }
