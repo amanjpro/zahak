@@ -118,7 +118,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 				break
 			}
 
-			if depth <= globalDepth {
+			if iterationDepth <= globalDepth {
 				continue
 			}
 
