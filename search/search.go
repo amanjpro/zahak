@@ -447,7 +447,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// Late Move Reduction
-			if !isInCheck && e.doPruning && isQuiet && !isCheckMove && depthLeft > 2 && legalMoves > lmrThreashold {
+			if !isInCheck && e.doPruning && isQuiet && depthLeft > 2 && legalMoves > lmrThreashold {
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
