@@ -10,10 +10,11 @@ import (
 )
 
 type Runner struct {
-	Engines     []*Engine
-	globalInfo  Info
-	timeManager atomic.Value
-	DebugMode   bool
+	Engines      []*Engine
+	globalInfo   Info
+	nodesVisited int64
+	timeManager  atomic.Value
+	DebugMode    bool
 }
 
 const MAX_TIME int64 = 9_223_372_036_854_775_807
@@ -198,7 +199,7 @@ func (t *Runner) Ponderhit() {
 	tm.StartTime = time.Now()
 	tm.UpdatePondering(false)
 	t.timeManager.Store(tm)
-	t.Engines[0].SendPv(-1)
+	fmt.Printf("info nodes %d\n", t.nodesVisited)
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
