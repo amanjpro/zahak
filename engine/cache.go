@@ -40,6 +40,7 @@ type Cache struct {
 	items    []CachedEval
 	size     uint32
 	consumed int
+	count    uint64
 }
 
 const DEFAULT_CACHE_SIZE = uint32(128)
@@ -50,7 +51,7 @@ func (c *Cache) Consumed() int {
 }
 
 func (c *Cache) index(hash uint64) uint32 {
-	return uint32(hash) % uint32(len(c.items))
+	return uint32(uint64(uint32(hash)) * uint64(c.count) >> 32)
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
@@ -108,7 +109,7 @@ func NewCache(megabytes uint32) *Cache {
 	size := int(megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
 
-	return &Cache{make([]CachedEval, length), megabytes, 0}
+	return &Cache{make([]CachedEval, length), megabytes, 0, uint64(length)}
 }
 
 func RoundPowerOfTwo(size int) int {

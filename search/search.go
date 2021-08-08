@@ -137,17 +137,16 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 			var newDepth int8
 			globalPv, e.score, newDepth = e.updatePv(pv, newScore, iterationDepth, false)
-			if e.isMainThread {
-				e.SendPv(globalPv, e.score, newDepth)
-			}
+
 			lastDepth = newDepth
-			if isCheckmateEval(e.score) {
-				break
-			}
 			e.pred.Clear()
 			e.ShareInfo()
+			e.SendPv(globalPv, e.score, newDepth)
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.parent.globalInfo.Print()
+			}
+			if isCheckmateEval(e.score) {
+				break
 			}
 		}
 	}
