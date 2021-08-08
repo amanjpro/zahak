@@ -84,7 +84,7 @@ func RunTestPositions(path string) {
 		r.AddTimeManager(NewTimeManager(time.Now(), 15000, true, 0, 0, false))
 		pos := game.Position()
 		r.Engines[0].Position = pos
-		r.Engines[0].Search(MAX_DEPTH)
+		r.Search(MAX_DEPTH)
 		mv := pos.MoveToPGN(r.Move())
 
 		// back to normal state

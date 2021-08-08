@@ -12,20 +12,23 @@ import (
 func (r *Runner) Search(depth int8) {
 	r.ClearForSearch()
 	if len(r.Engines) == 1 {
-		go r.Engines[0].ParallelSearch(depth, 1, 1)
+		e := r.Engines[0]
+		go e.ParallelSearch(depth, 1, 1)
 	} else {
 		for i := 0; i < len(r.Engines); i++ {
 			go func(e *Engine, depth int8, i int) {
 				e.ParallelSearch(depth, int8(1+i%2), 2)
 			}(r.Engines[i], depth, i)
 		}
-		r.SendBestMove()
 	}
 }
 
 func (e *Engine) ParallelSearch(depth int8, start int8, inc int8) {
 	e.ClearForSearch()
 	e.rootSearch(depth, start, inc)
+	if e.isMainThread {
+		e.parent.SendBestMove()
+	}
 }
 
 func (e *Engine) Search(depth int8) {
@@ -77,9 +80,9 @@ func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove boo
 
 func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 	move := EmptyMove
-	score := -MAX_INT
 	pv := NewPVLine(MAX_DEPTH)
 	var globalPv PVLine
+	var globalScore int16
 
 	lastDepth := int8(1)
 
@@ -88,7 +91,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 		move = bookmove
 		pv.Recycle()
 		pv.AddFirst(bookmove)
-		globalPv, score, _ = e.updatePv(pv, score, 1, true)
+		globalPv, e.score, _ = e.updatePv(pv, 0, 1, true)
 	}
 
 	if move == EmptyMove {
@@ -105,7 +108,6 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 			var bookmove bool
 			var globalDepth int8
-			var globalScore int16
 			e.parent.mu.Lock()
 			globalDepth = e.parent.depth
 			bookmove = e.parent.isBookmove
@@ -122,24 +124,24 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 			e.innerLines[0].Recycle()
 			e.score = globalScore
-			newScore := e.aspirationWindow(score, iterationDepth)
+			newScore := e.aspirationWindow(e.score, iterationDepth)
 
 			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
 				break
 			}
 			pv.Clone(e.innerLines[0])
 
-			if e.isMainThread && iterationDepth >= 8 && score-newScore >= 30 { // Position degrading
+			if e.isMainThread && iterationDepth >= 8 && e.score-newScore >= 30 { // Position degrading
 				e.TimeManager().ExtraTime()
 			}
 
 			var newDepth int8
-			globalPv, score, newDepth = e.updatePv(pv, newScore, iterationDepth, false)
+			globalPv, e.score, newDepth = e.updatePv(pv, newScore, iterationDepth, false)
 			if e.isMainThread {
-				e.SendPv(globalPv, score, newDepth)
+				e.SendPv(globalPv, e.score, newDepth)
 			}
 			lastDepth = newDepth
-			if isCheckmateEval(score) {
+			if isCheckmateEval(e.score) {
 				break
 			}
 			e.pred.Clear()
@@ -153,7 +155,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 	if e.isMainThread {
 		e.TimeManager().Pondering = false
 		e.parent.Stop = true
-		e.SendPv(globalPv, score, lastDepth)
+		e.SendPv(globalPv, globalScore, lastDepth)
 	}
 }
 

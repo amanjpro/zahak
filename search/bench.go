@@ -64,15 +64,14 @@ var fens = []string{
 func RunBenchmark() {
 
 	cacheSize := uint32(32)
-	pawnHashSize := 1
 	depth := int8(7)
-	runner := NewRunner(NewCache(cacheSize), NewPawnCache(2), 1)
+	runner := NewRunner(NewCache(cacheSize), NewPawnCache(1), 1)
 	nodes := int64(0)
 	totalTime := float64(0)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
 	for _, fen := range fens {
 		runner.Engines[0].TranspositionTable = NewCache(cacheSize)
-		NewPawnCache(pawnHashSize)
+		runner.Engines[0].Pawnhash = NewPawnCache(1)
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
 		runner.Engines[0].Search(depth)

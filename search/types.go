@@ -202,6 +202,7 @@ var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
+	r.score = -MAX_INT
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
