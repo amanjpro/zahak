@@ -30,7 +30,7 @@ func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeTy
 	return
 }
 
-func (c *Cache) Update(index int, key uint64, data uint64) {
+func (c *Cache) Update(index uint32, key uint64, data uint64) {
 	c.items[index].Key = key
 	c.items[index].Data = data
 }
@@ -52,7 +52,7 @@ type Cache struct {
 	items    []CachedEval
 	size     uint32
 	consumed int
-	count    int
+	mask     uint32
 }
 
 const DEFAULT_CACHE_SIZE = uint32(128)
@@ -62,9 +62,9 @@ func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-func (c *Cache) index(hash uint64) int {
+func (c *Cache) index(hash uint64) uint32 {
 	// return uint64(uint64(uint32(hash))*c.count) >> 32
-	return int(hash>>32) % c.count
+	return uint32(hash) & c.mask //int(hash>>32) % c.count
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
@@ -115,8 +115,9 @@ func NewCache(megabytes uint32) *Cache {
 	}
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
+	mask := uint32(length - 1)
 
-	return &Cache{make([]CachedEval, length), megabytes, 0, length}
+	return &Cache{make([]CachedEval, length), megabytes, 0, mask}
 }
 
 func RoundPowerOfTwo(size int) int {
