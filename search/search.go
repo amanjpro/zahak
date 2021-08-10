@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"math"
+	"sync"
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
@@ -10,25 +11,27 @@ import (
 )
 
 func (r *Runner) Search(depth int8) {
-	r.ClearForSearch()
 	if len(r.Engines) == 1 {
 		e := r.Engines[0]
-		go e.ParallelSearch(depth, 1, 1)
+		e.Search(depth)
 	} else {
+		r.ClearForSearch()
+		var wg sync.WaitGroup
 		for i := 0; i < len(r.Engines); i++ {
+			wg.Add(1)
 			go func(e *Engine, depth int8, i int) {
 				e.ParallelSearch(depth, int8(1+i%2), 2)
+				wg.Done()
 			}(r.Engines[i], depth, i)
 		}
+		wg.Wait()
+		r.SendBestMove()
 	}
 }
 
 func (e *Engine) ParallelSearch(depth int8, start int8, inc int8) {
 	e.ClearForSearch()
 	e.rootSearch(depth, start, inc)
-	if e.isMainThread {
-		e.parent.SendBestMove()
-	}
 }
 
 func (e *Engine) Search(depth int8) {
@@ -58,44 +61,37 @@ func initLMR() [32][32]int {
 	return reductions
 }
 
-func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) (PVLine, int16, int8) {
+func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) (PVLine, int16, int8, bool) {
 	parent := e.parent
-	var parentPv = NewPVLine(MAX_DEPTH)
 	parent.mu.Lock()
+	updated := false
 	if isBookmove || (parent.depth < depth && !parent.isBookmove) {
-		parent.pv.Recycle()
 		parent.pv.Clone(pvLine)
-		parent.move = pvLine.MoveAt(0)
+		parent.move = parent.pv.MoveAt(0)
 		parent.score = score
 		parent.depth = depth
 		parent.isBookmove = isBookmove
+		updated = true
 	} else {
 		score = parent.score
 		depth = parent.depth
+		pvLine.Clone(parent.pv)
 	}
-	parentPv.Clone(parent.pv)
 	parent.mu.Unlock()
-	return parentPv, score, depth
+	return pvLine, score, depth, updated
 }
 
 func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
-	move := EmptyMove
 	pv := NewPVLine(MAX_DEPTH)
-	var globalPv PVLine
-	var globalScore int16
 
 	lastDepth := int8(1)
 
 	bookmove := GetBookMove(e.Position)
 	if e.isMainThread && bookmove != EmptyMove {
-		move = bookmove
 		pv.Recycle()
 		pv.AddFirst(bookmove)
-		globalPv, e.score, _ = e.updatePv(pv, 0, 1, true)
-	}
-
-	if move == EmptyMove {
-		pv.Recycle()
+		pv, e.score, _, _ = e.updatePv(pv, 0, 1, true)
+	} else {
 		for iterationDepth := startDepth; iterationDepth <= depth; iterationDepth += depthIncrement {
 
 			if e.isMainThread {
@@ -108,11 +104,11 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 			var bookmove bool
 			var globalDepth int8
-			e.parent.mu.Lock()
+			e.parent.mu.RLock()
 			globalDepth = e.parent.depth
 			bookmove = e.parent.isBookmove
-			globalScore = e.parent.score
-			e.parent.mu.Unlock()
+			e.score = e.parent.score
+			e.parent.mu.RUnlock()
 
 			if bookmove {
 				break
@@ -123,11 +119,14 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			}
 
 			e.innerLines[0].Recycle()
-			e.score = globalScore
+			e.startDepth = iterationDepth
 			newScore := e.aspirationWindow(e.score, iterationDepth)
 
 			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
 				break
+			}
+			if e.startDepth == 0 {
+				continue
 			}
 			pv.Clone(e.innerLines[0])
 
@@ -136,12 +135,15 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			}
 
 			var newDepth int8
-			globalPv, e.score, newDepth = e.updatePv(pv, newScore, iterationDepth, false)
+			var updated bool
+			pv, e.score, newDepth, updated = e.updatePv(pv, newScore, iterationDepth, false)
 
 			lastDepth = newDepth
 			e.pred.Clear()
 			e.ShareInfo()
-			e.SendPv(globalPv, e.score, newDepth)
+			if updated {
+				e.SendPv(pv, e.score, newDepth)
+			}
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.parent.globalInfo.Print()
 			}
@@ -154,7 +156,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 	if e.isMainThread {
 		e.TimeManager().Pondering = false
 		e.parent.Stop = true
-		e.SendPv(globalPv, globalScore, lastDepth)
+		e.SendPv(pv, e.score, lastDepth)
 	}
 }
 
@@ -169,6 +171,9 @@ func (e *Engine) aspirationWindow(prevScore int16, iterationDepth int8) int16 {
 			alpha := max16(prevScore-alphaMargin, -MAX_INT)
 			beta := min16(prevScore+betaMargin, MAX_INT)
 			score := e.alphaBeta(iterationDepth, 0, alpha, beta)
+			if e.startDepth == 0 {
+				return -MAX_INT
+			}
 			if score <= alpha {
 				alphaMargin *= 2
 			} else if score >= beta {
@@ -568,6 +573,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				bestscore = score
 				hashmove = move
 			}
+		}
+
+		if !isRootNode && e.startDepth > 6 {
+			e.parent.mu.RLock()
+			if e.startDepth <= e.parent.depth {
+				e.startDepth = 0
+				e.parent.mu.RUnlock()
+				return -MAX_INT
+			}
+			e.parent.mu.RUnlock()
 		}
 	}
 	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {

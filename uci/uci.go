@@ -95,10 +95,12 @@ func (uci *UCI) Start() {
 				}
 				game = FromFen(startFen)
 			case "stop":
-				if uci.runner.TimeManager.Pondering {
-					uci.stopPondering()
-				} else {
-					uci.runner.TimeManager.StopSearchNow = true
+				if uci.runner.TimeManager != nil {
+					if uci.runner.TimeManager.Pondering {
+						uci.stopPondering()
+					} else {
+						uci.runner.TimeManager.StopSearchNow = true
+					}
 				}
 			default:
 				if strings.HasPrefix(cmd, "setoption name Ponder value") {
@@ -238,12 +240,12 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.runner.AddTimeManager(tm)
 		}
-		uci.runner.Search(depth)
+		go uci.runner.Search(depth)
 	} else {
 		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
 		uci.runner.AddTimeManager(tm)
 		uci.timeManager = tm
-		uci.runner.Search(depth)
+		go uci.runner.Search(depth)
 	}
 }
 

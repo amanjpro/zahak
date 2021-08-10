@@ -11,7 +11,7 @@ import (
 )
 
 type Runner struct {
-	mu           sync.Mutex
+	mu           sync.RWMutex
 	Engines      []*Engine
 	globalInfo   Info
 	nodesVisited int64
@@ -125,6 +125,7 @@ type Engine struct {
 	isMainThread       bool
 	StartTime          time.Time
 	parent             *Runner
+	startDepth         int8
 }
 
 var MAX_DEPTH int8 = int8(100)

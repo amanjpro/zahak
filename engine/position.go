@@ -387,7 +387,7 @@ func findEnPassantCaptureSquare(move Move) Square {
 }
 
 func (p *Position) Copy() *Position {
-	copyMap := make(map[uint64]int, 100)
+	copyMap := make(map[uint64]int, len(p.Positions))
 	for k, v := range p.Positions {
 		copyMap[k] = v
 	}

@@ -50,8 +50,9 @@ func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-func (c *Cache) index(hash uint64) uint32 {
-	return uint32(uint64(uint32(hash)) * uint64(c.count) >> 32)
+func (c *Cache) index(hash uint64) uint64 {
+	return uint64(uint64(uint32(hash))*c.count) >> 32
+	// return int(hash>>32) % c.count
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
@@ -106,7 +107,7 @@ func NewCache(megabytes uint32) *Cache {
 	if megabytes > MAX_CACHE_SIZE {
 		return nil
 	}
-	size := int(megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE)
+	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
 
 	return &Cache{make([]CachedEval, length), megabytes, 0, uint64(length)}
