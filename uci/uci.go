@@ -251,6 +251,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 
 func (uci *UCI) stopPondering() {
 	if uci.runner.TimeManager != nil && uci.runner.TimeManager.Pondering {
+		uci.runner.TimeManager.Pondering = false
 		uci.runner.TimeManager.StopSearchNow = true
 		for uci.runner.TimeManager.Pondering {
 		} // wait until stopped
