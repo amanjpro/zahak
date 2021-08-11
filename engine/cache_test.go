@@ -61,4 +61,33 @@ func TestUnpackPackFunctions(t *testing.T) {
 	if actualAge != expectedAge {
 		t.Errorf("Unexpected age: %s", fmt.Sprintf("Expected: %d, Got %d\n", expectedAge, actualAge))
 	}
+
+	expectedMove = Move(0b1111111111111111111111111111)
+	expectedEval = int16(0b0111111111111111)
+	expectedDepth = int8(0b1111111)
+	expectedType = NodeType(0b111)
+	expectedAge = uint16(0b1111111111)
+
+	data = Pack(expectedMove, expectedEval, expectedDepth, expectedType, expectedAge)
+	actualMove, actualEval, actualDepth, actualType, actualAge = Unpack(data)
+
+	if actualMove != expectedMove {
+		t.Errorf("Unexpected move: %s", fmt.Sprintf("Expected: %d, Got %d\n", expectedMove, actualMove))
+	}
+
+	if actualEval != expectedEval {
+		t.Errorf("Unexpected eval: %s", fmt.Sprintf("Expected: %d, Got %d\n", expectedEval, actualEval))
+	}
+
+	if actualDepth != expectedDepth {
+		t.Errorf("Unexpected depth: %s", fmt.Sprintf("Expected: %d, Got %d\n", expectedDepth, actualDepth))
+	}
+
+	if actualType != expectedType {
+		t.Errorf("Unexpected type: %s", fmt.Sprintf("Expected: %d, Got %d\n", expectedType, actualType))
+	}
+
+	if actualAge != expectedAge {
+		t.Errorf("Unexpected age: %s", fmt.Sprintf("Expected: %d, Got %d\n", expectedAge, actualAge))
+	}
 }
