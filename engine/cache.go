@@ -12,13 +12,11 @@ const TYPE_MASK uint64 = 0x0038000000000000  // type << 51
 const AGE_MASK uint64 = 0xffc0000000000000   // age << 54
 
 func Pack(hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) uint64 {
-	var data uint64
-	data = uint64(hashmove) |
+	return uint64(hashmove) |
 		uint64(eval)<<28 |
 		uint64(depth)<<44 |
 		uint64(nodeType)<<51 |
 		uint64(age)<<54
-	return data
 }
 
 func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
@@ -30,9 +28,9 @@ func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeTy
 	return
 }
 
-func (c *CachedEval) Update(key uint64, data uint64) {
-	c.Key = key
-	c.Data = data
+func (c *Cache) Update(index uint32, key uint64, data uint64) {
+	c.items[index].Key = key
+	c.items[index].Data = data
 }
 
 type NodeType uint8
@@ -45,13 +43,13 @@ const (
 
 var OldAge = uint16(5)
 
-var EmptyEval = CachedEval{0, 0}
 var CACHE_ENTRY_SIZE = uint32(8 + 8)
 
 type Cache struct {
 	items    []CachedEval
 	size     uint32
 	consumed int
+	length   int
 }
 
 const DEFAULT_CACHE_SIZE = uint32(128)
@@ -62,13 +60,14 @@ func (c *Cache) Consumed() int {
 }
 
 func (c *Cache) index(hash uint64) uint32 {
+	// return int(hash) & (c.length - 1)
 	return uint32(hash>>32) % uint32(len(c.items))
 	// return uint32((uint64(uint32(hash)) * c.count) >> 32)
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
 	index := c.index(hash)
-	entry := &c.items[index]
+	entry := c.items[index]
 
 	oldKey := entry.Key
 	oldData := entry.Data
@@ -76,14 +75,15 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 
 	newData := Pack(hashmove, eval, depth, nodeType, age)
 	newKey := hash ^ newData
-	if *entry != EmptyEval {
+
+	if oldData != 0 {
 		_, _, entryDepth, entryType, entryAge := Unpack(oldData)
 		if hash == entryHash {
-			entry.Update(newKey, newData)
+			c.Update(index, newKey, newData)
 			return
 		}
 		if age-entryAge >= OldAge {
-			entry.Update(newKey, newData)
+			c.Update(index, newKey, newData)
 			return
 		}
 		if entryDepth > depth {
@@ -92,13 +92,13 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 		if entryType == Exact || nodeType != Exact {
 			return
 		} else if nodeType == Exact {
-			entry.Update(newKey, newData)
+			c.Update(index, newKey, newData)
 			return
 		}
-		entry.Update(newKey, newData)
+		c.Update(index, newKey, newData)
 	} else {
 		c.consumed += 1
-		entry.Update(newKey, newData)
+		c.Update(index, newKey, newData)
 	}
 }
 
@@ -125,7 +125,7 @@ func NewCache(megabytes uint32) *Cache {
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
 
-	return &Cache{make([]CachedEval, length), megabytes, 0}
+	return &Cache{make([]CachedEval, length), megabytes, 0, int(length)}
 }
 
 func RoundPowerOfTwo(size int) int {
