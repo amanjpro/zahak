@@ -30,9 +30,9 @@ func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeTy
 	return
 }
 
-func (c *Cache) Update(index uint32, key uint64, data uint64) {
-	c.items[index].Key = key
-	c.items[index].Data = data
+func (c *CachedEval) Update(key uint64, data uint64) {
+	c.Key = key
+	c.Data = data
 }
 
 type NodeType uint8
@@ -63,25 +63,27 @@ func (c *Cache) Consumed() int {
 
 func (c *Cache) index(hash uint64) uint32 {
 	return uint32(hash>>32) % uint32(len(c.items))
+	// return uint32((uint64(uint32(hash)) * c.count) >> 32)
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
 	index := c.index(hash)
-	entry := c.items[index]
+	entry := &c.items[index]
+
 	oldKey := entry.Key
 	oldData := entry.Data
-	data := Pack(hashmove, eval, depth, nodeType, age)
 	entryHash := (oldKey ^ oldData)
-	key := hash ^ data
 
-	if entry != EmptyEval {
+	newData := Pack(hashmove, eval, depth, nodeType, age)
+	newKey := hash ^ newData
+	if *entry != EmptyEval {
 		_, _, entryDepth, entryType, entryAge := Unpack(oldData)
 		if hash == entryHash {
-			c.Update(index, key, data)
+			entry.Update(newKey, newData)
 			return
 		}
 		if age-entryAge >= OldAge {
-			c.Update(index, key, data)
+			entry.Update(newKey, newData)
 			return
 		}
 		if entryDepth > depth {
@@ -90,13 +92,13 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 		if entryType == Exact || nodeType != Exact {
 			return
 		} else if nodeType == Exact {
-			c.Update(index, key, data)
+			entry.Update(newKey, newData)
 			return
 		}
-		c.Update(index, key, data)
+		entry.Update(newKey, newData)
 	} else {
 		c.consumed += 1
-		c.Update(index, key, data)
+		entry.Update(newKey, newData)
 	}
 }
 
@@ -109,7 +111,7 @@ func (c *Cache) Get(hash uint64) (move Move, eval int16, depth int8, nType NodeT
 	value := c.items[index]
 	data := value.Data
 	key := value.Key
-	ok = hash == key^data
+	ok = (hash ^ data) == key
 	if ok {
 		move, eval, depth, nType, _ = Unpack(data)
 	}
@@ -117,7 +119,7 @@ func (c *Cache) Get(hash uint64) (move Move, eval int16, depth int8, nType NodeT
 }
 
 func NewCache(megabytes uint32) *Cache {
-	if megabytes > MAX_CACHE_SIZE {
+	if megabytes > MAX_CACHE_SIZE || megabytes < 1 {
 		return nil
 	}
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
