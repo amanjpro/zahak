@@ -70,7 +70,7 @@ func (e *Engine) ShareInfo() {
 	atomic.AddInt64(&e.parent.globalInfo.killerCounter, e.info.killerCounter)
 	atomic.AddInt64(&e.parent.globalInfo.historyCounter, e.info.historyCounter)
 	atomic.AddInt64(&e.parent.globalInfo.probCutCounter, e.info.probCutCounter)
-	atomic.AddInt64(&e.parent.globalInfo.historyPruningCounter, e.info.historyCounter)
+	atomic.AddInt64(&e.parent.globalInfo.historyPruningCounter, e.info.historyPruningCounter)
 	atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
 
 	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
