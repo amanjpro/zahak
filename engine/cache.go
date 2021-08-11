@@ -1,36 +1,12 @@
 package engine
 
+// import (
+// 	"fmt"
+// )
+
 type CachedEval struct {
 	Key  uint64 // 8
 	Data uint64 // 8
-}
-
-const MOVE_MASK uint64 = 0x000000000FFFFFFF  // move << 0
-const EVAL_MASK uint64 = 0x00000FFFF0000000  // eval << 28
-const DEPTH_MASK uint64 = 0x0007F00000000000 // depth << 44
-const TYPE_MASK uint64 = 0x0038000000000000  // type << 51
-const AGE_MASK uint64 = 0xFFC0000000000000   // age << 54
-
-func Pack(hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) uint64 {
-	return uint64(hashmove) |
-		uint64(eval)<<28 |
-		uint64(depth)<<44 |
-		uint64(nodeType)<<51 |
-		uint64(age)<<54
-}
-
-func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
-	hashmove = Move(data & MOVE_MASK)
-	eval = int16((data & EVAL_MASK) >> 28)
-	depth = int8((data & DEPTH_MASK) >> 44)
-	nodeType = NodeType((data & TYPE_MASK) >> 51)
-	age = uint16((data & AGE_MASK) >> 54)
-	return
-}
-
-func (c *CachedEval) Update(key uint64, data uint64) {
-	c.Key = key
-	c.Data = data
 }
 
 type NodeType uint8
@@ -41,10 +17,6 @@ const (
 	LowerBound                      // Cut-Node
 )
 
-var OldAge = uint16(5)
-
-var CACHE_ENTRY_SIZE = uint32(8 + 8)
-
 type Cache struct {
 	items    []CachedEval
 	size     uint32
@@ -52,47 +24,81 @@ type Cache struct {
 	length   uint64
 }
 
+const OldAge = uint16(5)
+const CACHE_ENTRY_SIZE = uint32(8 + 8)
 const DEFAULT_CACHE_SIZE = uint32(128)
 const MAX_CACHE_SIZE = uint32(24000)
+
+const MOVE_MASK uint64 = 0b1111111111111111111111111111 // move << 0, 28 bits
+const EVAL_MASK uint64 = 0b1111111111111111             // eval << 28, 16 bits
+const DEPTH_MASK uint64 = 0b1111111                     // depth << 44, 7 bits
+const TYPE_MASK uint64 = 0b111                          // type << 51, 3 bits
+const AGE_MASK uint64 = 0b1111111111                    // age << 54, 10 bits
+
+func Pack(hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) uint64 {
+	return (uint64(hashmove) & MOVE_MASK) |
+		((uint64(eval) & EVAL_MASK) << 28) |
+		((uint64(depth) & DEPTH_MASK) << 44) |
+		((uint64(nodeType) & TYPE_MASK) << 51) |
+		((uint64(age) & AGE_MASK) << 54)
+}
+
+func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
+	hashmove = Move(data & MOVE_MASK)
+	eval = int16((data >> 28) & EVAL_MASK)
+	depth = int8((data >> 44) & DEPTH_MASK)
+	nodeType = NodeType((data >> 51) & TYPE_MASK)
+	age = uint16((data >> 54) & AGE_MASK)
+	return
+}
+
+func (c *CachedEval) Update(key uint64, data uint64) {
+	c.Key = key
+	c.Data = data
+}
 
 func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
 func (c *Cache) index(hash uint64) uint32 {
-	return uint32((uint64(uint32(hash)) * c.length) >> 32)
-
-	// return uint32(hash>>32) % uint32(len(c.items))
+	return uint32(hash>>32) % uint32(len(c.items))
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
-	if hashmove == EmptyMove {
-		return
-	}
+	// if hashmove == EmptyMove {
+	// 	return
+	// }
 	index := c.index(hash)
-	entry := c.items[index]
 
-	oldKey := entry.Key
-	oldData := entry.Data
-	entryHash := (oldKey ^ oldData)
+	oldValue := c.items[index]
+	oldKey := oldValue.Key
+	oldData := oldValue.Data
 
 	newData := Pack(hashmove, eval, depth, nodeType, age)
-	newKey := hash ^ newData
+	// very good for debugging hash issues
+	// newHashmove, newEval, newDepth, newNodeType, newAge := Unpack(newData)
+	// if hashmove != newHashmove || eval != newEval || depth != newDepth || nodeType != newNodeType || age != newAge {
+	// 	panic(fmt.Sprintf(
+	// 		"Culprits are: %d %d %d %d %d\nSomehow became: %d %d %d %d %d\n", hashmove, eval, depth, nodeType, age, newHashmove, newEval, newDepth, newNodeType, newAge))
+	// }
+
+	newKey := newData ^ hash
 
 	if oldData != 0 {
-		_, _, entryDepth, entryType, entryAge := Unpack(oldData)
-		if hash == entryHash {
+		_, _, oldDepth, oldType, oldAge := Unpack(oldData)
+		if (hash ^ oldData) == oldKey {
 			c.items[index].Update(newKey, newData)
 			return
 		}
-		if age-entryAge >= OldAge {
+		if age-oldAge >= OldAge {
 			c.items[index].Update(newKey, newData)
 			return
 		}
-		if entryDepth > depth {
+		if oldDepth > depth {
 			return
 		}
-		if entryType == Exact || nodeType != Exact {
+		if oldType == Exact || nodeType != Exact {
 			return
 		} else if nodeType == Exact {
 			c.items[index].Update(newKey, newData)
