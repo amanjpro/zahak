@@ -52,7 +52,6 @@ type Cache struct {
 	items    []CachedEval
 	size     uint32
 	consumed int
-	mask     uint32
 }
 
 const DEFAULT_CACHE_SIZE = uint32(128)
@@ -63,32 +62,38 @@ func (c *Cache) Consumed() int {
 }
 
 func (c *Cache) index(hash uint64) uint32 {
-	// return uint64(uint64(uint32(hash))*c.count) >> 32
-	return uint32(hash) & c.mask //int(hash>>32) % c.count
+	return uint32(hash>>32) % uint32(len(c.items))
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
 	index := c.index(hash)
-	oldValue := c.items[index]
+	entry := c.items[index]
+	oldKey := entry.Key
+	oldData := entry.Data
 	data := Pack(hashmove, eval, depth, nodeType, age)
-	entryHash := (oldValue.Key ^ oldValue.Data)
+	entryHash := (oldKey ^ oldData)
 	key := hash ^ data
 
-	if oldValue != EmptyEval {
-		_, _, entryDepth, entryType, entryAge := Unpack(oldValue.Data)
+	if entry != EmptyEval {
+		_, _, entryDepth, entryType, entryAge := Unpack(oldData)
 		if hash == entryHash {
 			c.Update(index, key, data)
-		} else if age-entryAge >= OldAge {
-			c.Update(index, key, data)
-		} else if entryDepth <= depth {
-			if entryType == Exact || nodeType != Exact {
-				return
-			} else if nodeType == Exact {
-				c.Update(index, key, data)
-			} else {
-				c.Update(index, key, data)
-			}
+			return
 		}
+		if age-entryAge >= OldAge {
+			c.Update(index, key, data)
+			return
+		}
+		if entryDepth > depth {
+			return
+		}
+		if entryType == Exact || nodeType != Exact {
+			return
+		} else if nodeType == Exact {
+			c.Update(index, key, data)
+			return
+		}
+		c.Update(index, key, data)
 	} else {
 		c.consumed += 1
 		c.Update(index, key, data)
@@ -102,9 +107,11 @@ func (c *Cache) Size() uint32 {
 func (c *Cache) Get(hash uint64) (move Move, eval int16, depth int8, nType NodeType, ok bool) {
 	index := c.index(hash)
 	value := c.items[index]
-	ok = hash^value.Data == value.Key
+	data := value.Data
+	key := value.Key
+	ok = hash == key^data
 	if ok {
-		move, eval, depth, nType, _ = Unpack(value.Data)
+		move, eval, depth, nType, _ = Unpack(data)
 	}
 	return
 }
@@ -115,9 +122,8 @@ func NewCache(megabytes uint32) *Cache {
 	}
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
-	mask := uint32(length - 1)
 
-	return &Cache{make([]CachedEval, length), megabytes, 0, mask}
+	return &Cache{make([]CachedEval, length), megabytes, 0}
 }
 
 func RoundPowerOfTwo(size int) int {
