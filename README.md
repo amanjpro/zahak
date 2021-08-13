@@ -92,6 +92,8 @@ The history of Zahak's rating is summerized here:
 - PV Search and PV
 - Search with Zero Windows
 - Aspiration Window with PVS
+- Pondering
+- Multi-Threading (LazySMP)
 
 ### Move Ordering
 
