@@ -128,6 +128,7 @@ type Engine struct {
 	StartTime          time.Time
 	parent             *Runner
 	startDepth         int8
+	TempMovePicker     *MovePicker
 }
 
 var MAX_DEPTH int8 = int8(127)
@@ -189,6 +190,7 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 		doPruning:          false,
 		isMainThread:       false,
 		parent:             parent,
+		TempMovePicker:     EmptyMovePicker(),
 	}
 }
 

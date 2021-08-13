@@ -434,7 +434,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				e.skipMove = hashmove
 				e.innerLines[searchHeight].Recycle()
-				e.MovePickers[searchHeight] = TempMovePicker
+				e.MovePickers[searchHeight] = e.TempMovePicker
 				score := e.alphaBeta(depthLeft/2-1, searchHeight, threshold-1, threshold)
 				e.MovePickers[searchHeight] = movePicker
 				e.innerLines[searchHeight].Recycle()
@@ -475,13 +475,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
-	if legalMoves == 0 {
-		if isInCheck {
-			return -CHECKMATE_EVAL + int16(searchHeight)
-		} else {
-			return 0
-		}
-	}
 	pruningThreashold := int(5 + depthLeft*depthLeft)
 	if !improving {
 		pruningThreashold /= 2
@@ -496,7 +489,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
 	for true {
-
 		if isRootNode {
 			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
 				break
@@ -597,7 +589,24 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			var score int16
 			if searchedMoves == 0 {
 				bestscore = -e.alphaBeta(depthLeft-1, searchHeight+1, -beta, -alpha)
+				score = bestscore
 				e.pred.Pop()
+				if bestscore > alpha {
+					if bestscore >= beta {
+						if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
+							if e.skipMove == EmptyMove {
+								e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
+							}
+							e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
+						}
+						position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+						return bestscore
+					}
+					// Potential PV move, lets copy it to the current pv-line
+					e.innerLines[searchHeight].AddFirst(hashmove)
+					e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
+					alpha = bestscore
+				}
 			} else {
 				score = -e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
 				e.pred.Pop()
@@ -644,6 +653,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.parent.mu.RUnlock()
 		}
 	}
+
+	if legalMoves == 0 {
+		if isInCheck {
+			return -CHECKMATE_EVAL + int16(searchHeight)
+		} else {
+			return 0
+		}
+	}
+
 	if e.skipMove == EmptyMove && ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)

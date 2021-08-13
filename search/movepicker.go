@@ -17,8 +17,6 @@ type MovePicker struct {
 	isQuiescence    bool
 }
 
-var TempMovePicker = EmptyMovePicker()
-
 func EmptyMovePicker() *MovePicker {
 	qml := NewMoveList(250)
 	cml := NewMoveList(250)
