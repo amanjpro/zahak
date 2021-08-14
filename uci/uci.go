@@ -17,9 +17,13 @@ import (
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
+var defaultCPU = 1
+var minCPU = 1
+var maxCPU = runtime.NumCPU()
+
 type UCI struct {
 	version     string
-	engine      *Engine
+	runner      *Runner
 	timeManager *TimeManager
 	withBook    bool
 	bookPath    string
@@ -28,7 +32,7 @@ type UCI struct {
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
-		NewEngine(NewCache(DEFAULT_CACHE_SIZE)),
+		NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1),
 		nil,
 		withBook,
 		bookPath,
@@ -36,7 +40,7 @@ func NewUCI(version string, withBook bool, bookPath string) *UCI {
 }
 
 func (uci *UCI) Start() {
-	var game Game
+	var game Game = FromFen(startFen)
 	var depth = int8(MAX_DEPTH)
 	if uci.withBook {
 		InitBook(uci.bookPath)
@@ -49,15 +53,12 @@ func (uci *UCI) Start() {
 		if err == nil {
 			switch cmd {
 			case "debug on":
-				uci.engine.DebugMode = true
+				uci.runner.DebugMode = true
 			case "debug off":
-				uci.engine.DebugMode = false
+				uci.runner.DebugMode = false
 			case "ponderhit":
-				uci.engine.StartTime = time.Now()
-				uci.engine.Pondering = false
-				uci.engine.AttachTimeManager(uci.timeManager)
+				uci.runner.Ponderhit()
 				uci.timeManager = nil
-				uci.engine.SendPv(-1)
 			case "quit":
 				return
 			case "eval":
@@ -65,7 +66,7 @@ func (uci *UCI) Start() {
 				if game.Position().Turn() == Black {
 					dir = -1
 				}
-				fmt.Printf("%d\n", dir*Evaluate(game.Position()))
+				fmt.Printf("%d\n", dir*Evaluate(game.Position(), uci.runner.Engines[0].Pawnhash))
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
@@ -73,6 +74,7 @@ func (uci *UCI) Start() {
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
 				fmt.Printf("option name Pawnhash type spin default %d min 1 max %d\n", DEFAULT_PAWNHASH_SIZE, MAX_PAWNHASH_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
+				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -81,20 +83,23 @@ func (uci *UCI) Start() {
 			case "draw":
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
-				size := uci.engine.TranspositionTable.Size()
-				pawnSize := Pawnhash.Size()
-				Pawnhash = nil
-				uci.engine.TranspositionTable = nil
-				runtime.GC()
-				uci.engine.TranspositionTable = NewCache(size)
-				Pawnhash = NewPawnCache(pawnSize)
-				game = FromFen(startFen, true)
+				size := uci.runner.Engines[0].TranspositionTable.Size()
+				pawnSize := uci.runner.Engines[0].Pawnhash.Size()
+				newTT := NewCache(size)
+				for i := 0; i < len(uci.runner.Engines); i++ {
+					uci.runner.Engines[i].Pawnhash = nil
+					uci.runner.Engines[i].TranspositionTable = nil
+					runtime.GC()
+					uci.runner.Engines[i].TranspositionTable = newTT
+					uci.runner.Engines[i].Pawnhash = NewPawnCache(pawnSize)
+				}
+				game = FromFen(startFen)
 			case "stop":
-				if uci.engine.Pondering {
-					uci.stopPondering()
-				} else {
-					if uci.engine.TimeManager != nil {
-						uci.engine.TimeManager.StopSearchNow = true
+				if uci.runner.TimeManager != nil {
+					if uci.runner.TimeManager.Pondering {
+						uci.stopPondering()
+					} else {
+						uci.runner.TimeManager.StopSearchNow = true
 					}
 				}
 			default:
@@ -108,32 +113,39 @@ func (uci *UCI) Start() {
 					} else if !IsBoookLoaded() && opt == "true" { // if it is loaded, no need to reload
 						InitBook(uci.bookPath)
 					}
+				} else if strings.HasPrefix(cmd, "setoption name Threads value") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					cpu, _ := strconv.Atoi(v)
+					uci.runner = NewRunner(uci.runner.Engines[0].TranspositionTable, uci.runner.Engines[0].Pawnhash, cpu)
 				} else if strings.HasPrefix(cmd, "setoption name Pawnhash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
-					hashSize, _ := strconv.Atoi(mg)
-					Pawnhash = nil
-					runtime.GC()
-					Pawnhash = NewPawnCache(hashSize)
+					pawnSize, _ := strconv.Atoi(mg)
+					for i := 0; i < len(uci.runner.Engines); i++ {
+						uci.runner.Engines[i].Pawnhash = nil
+						runtime.GC()
+						uci.runner.Engines[i].Pawnhash = NewPawnCache(pawnSize)
+					}
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
-					uci.engine.TranspositionTable = nil
-					runtime.GC()
-					uci.engine.TranspositionTable = NewCache(uint32(hashSize))
+					newTT := NewCache(uint32(hashSize))
+					for i := 0; i < len(uci.runner.Engines); i++ {
+						uci.runner.Engines[i].TranspositionTable = nil
+						runtime.GC()
+						uci.runner.Engines[i].TranspositionTable = newTT
+					}
 				} else if strings.HasPrefix(cmd, "go") {
-					go uci.findMove(game, depth, game.MoveClock(), cmd)
+					uci.findMove(game, depth, game.MoveClock(), cmd)
 				} else if strings.HasPrefix(cmd, "position startpos moves") {
 					uci.stopPondering()
 					moves := strings.Fields(cmd)[3:]
-					game = FromFen(startFen, false)
+					game = FromFen(startFen)
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
 					}
-				} else if strings.HasPrefix(cmd, "position startpos") {
-					uci.stopPondering()
-					game = FromFen(startFen, false)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
 					cmd := strings.Fields(cmd)
@@ -146,9 +158,9 @@ func (uci *UCI) Start() {
 					moves := []string{}
 					if len(cmd) > 9 {
 						moves = cmd[9:]
-						game = FromFen(fen, false)
+						game = FromFen(fen)
 					} else {
-						game = FromFen(fen, false)
+						game = FromFen(fen)
 					}
 					for _, move := range game.Position().ParseMoves(moves) {
 						game.Move(move)
@@ -171,11 +183,11 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	inc := 0
 	movesToGo := 0
 	perMove := false
-	uci.engine.Pondering = false
+	pondering := false
 	for i := 0; i < len(fields); i++ {
 		switch fields[i] {
 		case "ponder":
-			uci.engine.Pondering = true
+			pondering = true
 		case "wtime":
 			if pos.Turn() == White {
 				timeToThink, _ = strconv.Atoi(fields[i+1])
@@ -214,31 +226,34 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 
 	var MAX_TIME int64 = 9_223_372_036_854_775_807
 
-	uci.engine.Position = game.Position()
-	uci.engine.Ply = ply
+	for i := 0; i < len(uci.runner.Engines); i++ {
+		uci.runner.Engines[i].Position = game.Position().Copy()
+		uci.runner.Engines[i].Ply = ply
+	}
+
 	if !noTC {
-		if uci.engine.Pondering {
-			uci.timeManager = NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo))
-			uci.engine.InitTimeManager(MAX_TIME, false, 0, 0)
+		if pondering {
+			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
+			uci.timeManager = tm
+			uci.runner.AddTimeManager(tm)
 		} else {
-			uci.engine.InitTimeManager(int64(timeToThink), perMove, int64(inc), int64(movesToGo))
+			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
+			uci.runner.AddTimeManager(tm)
 		}
-		uci.engine.Search(depth)
-		uci.engine.SendBestMove()
-		uci.engine.Pondering = false
+		go uci.runner.Search(depth)
 	} else {
-		uci.engine.InitTimeManager(MAX_TIME, false, 0, 0)
-		uci.timeManager = uci.engine.TimeManager
-		uci.engine.Search(depth)
-		uci.engine.SendBestMove()
-		uci.engine.Pondering = false
+		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
+		uci.runner.AddTimeManager(tm)
+		uci.timeManager = tm
+		go uci.runner.Search(depth)
 	}
 }
 
 func (uci *UCI) stopPondering() {
-	if uci.engine.Pondering {
-		uci.engine.TimeManager.StopSearchNow = true
-		for !uci.engine.Pondering {
+	if uci.runner.TimeManager != nil && uci.runner.TimeManager.Pondering {
+		uci.runner.TimeManager.Pondering = false
+		uci.runner.TimeManager.StopSearchNow = true
+		for uci.runner.TimeManager.Pondering {
 		} // wait until stopped
 	}
 }

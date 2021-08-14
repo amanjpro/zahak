@@ -3,15 +3,42 @@ package search
 import (
 	"fmt"
 	"math"
+	"sync"
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-func (e *Engine) Search(depth int8) {
+func (r *Runner) Search(depth int8) {
+	if len(r.Engines) == 1 {
+		e := r.Engines[0]
+		e.Search(depth)
+	} else {
+		r.ClearForSearch()
+		var wg sync.WaitGroup
+		for i := 0; i < len(r.Engines); i++ {
+			wg.Add(1)
+			go func(e *Engine, depth int8, i int) {
+				e.ParallelSearch(depth, int8(1+i%2), 2)
+				wg.Done()
+			}(r.Engines[i], depth, i)
+		}
+		wg.Wait()
+		r.SendBestMove()
+	}
+}
+
+func (e *Engine) ParallelSearch(depth int8, start int8, inc int8) {
 	e.ClearForSearch()
-	e.rootSearch(depth)
+	e.rootSearch(depth, start, inc)
+}
+
+func (e *Engine) Search(depth int8) {
+	e.parent.ClearForSearch()
+	e.ClearForSearch()
+	e.rootSearch(depth, 1, 1)
+	e.parent.SendBestMove()
 }
 
 var p = WhitePawn.Weight()
@@ -34,69 +61,103 @@ func initLMR() [32][32]int {
 	return reductions
 }
 
-func (e *Engine) rootSearch(depth int8) {
+func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) (PVLine, int16, int8, bool) {
+	parent := e.parent
+	parent.mu.Lock()
+	updated := false
+	if isBookmove || (parent.depth < depth && !parent.isBookmove) {
+		parent.pv.Clone(pvLine)
+		parent.move = parent.pv.MoveAt(0)
+		parent.score = score
+		parent.depth = depth
+		parent.isBookmove = isBookmove
+		updated = true
+	} else {
+		score = parent.score
+		depth = parent.depth
+		pvLine.Clone(parent.pv)
+	}
+	parent.mu.Unlock()
+	return pvLine, score, depth, updated
+}
 
-	var previousBestMove Move
+func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
+	pv := NewPVLine(MAX_DEPTH)
 
-	e.move = EmptyMove
-	e.score = -MAX_INT
-	fruitelessIterations := 0
-
-	bookmove := GetBookMove(e.Position)
 	lastDepth := int8(1)
 
-	if bookmove != EmptyMove {
-		e.move = bookmove
-		e.pv.Recycle()
-		e.pv.AddFirst(bookmove)
-	}
+	bookmove := GetBookMove(e.Position)
+	if e.isMainThread && bookmove != EmptyMove {
+		pv.Recycle()
+		pv.AddFirst(bookmove)
+		pv, e.score, _, _ = e.updatePv(pv, 0, 1, true)
+	} else {
+		for iterationDepth := startDepth; iterationDepth <= depth; iterationDepth += depthIncrement {
 
-	if e.move == EmptyMove {
-		e.pv.Recycle()
-		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth++ {
-
-			if iterationDepth > 1 && !e.TimeManager.CanStartNewIteration() {
+			if e.isMainThread {
+				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
+					break
+				}
+			} else if iterationDepth > 1 && e.parent.Stop {
 				break
+			}
+
+			var bookmove bool
+			var globalDepth int8
+			e.parent.mu.RLock()
+			globalDepth = e.parent.depth
+			bookmove = e.parent.isBookmove
+			e.score = e.parent.score
+			e.parent.mu.RUnlock()
+
+			if bookmove {
+				break
+			}
+
+			if iterationDepth <= globalDepth {
+				continue
 			}
 
 			e.innerLines[0].Recycle()
-			score := e.aspirationWindow(e.score, iterationDepth)
+			e.startDepth = iterationDepth
+			newScore := e.aspirationWindow(e.score, iterationDepth)
 
-			if e.TimeManager.AbruptStop {
+			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
 				break
 			}
+			if e.startDepth == 0 {
+				continue
+			}
+			pv.Clone(e.innerLines[0])
 
-			if iterationDepth >= 8 && e.score-score >= 30 { // Position degrading
-				e.TimeManager.ExtraTime()
+			if e.isMainThread && iterationDepth >= 8 && e.score-newScore >= 30 { // Position degrading
+				e.TimeManager().ExtraTime()
 			}
 
-			e.pv.Clone(e.innerLines[0])
-			e.score = score
-			e.move = e.pv.MoveAt(0)
-			e.SendPv(iterationDepth)
-			lastDepth = iterationDepth
-			if !e.Pondering && iterationDepth >= 35 && e.move == previousBestMove {
-				fruitelessIterations++
-				if fruitelessIterations > 4 {
-					break
-				}
-			} else {
-				fruitelessIterations = 0
+			var newDepth int8
+			var updated bool
+			pv, e.score, newDepth, updated = e.updatePv(pv, newScore, iterationDepth, false)
+
+			lastDepth = newDepth
+			e.pred.Clear()
+			e.ShareInfo()
+			if updated {
+				e.SendPv(pv, e.score, newDepth)
+			}
+			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
+				e.parent.globalInfo.Print()
 			}
 			if isCheckmateEval(e.score) {
 				break
 			}
-			previousBestMove = e.move
-			e.pred.Clear()
-			if !e.Pondering && e.DebugMode {
-				e.info.Print()
-			}
-
 		}
-
 	}
 
-	e.SendPv(lastDepth)
+	if e.isMainThread {
+		e.TimeManager().Pondering = false
+		e.parent.Stop = true
+		e.SendPv(pv, e.score, lastDepth)
+	}
 }
 
 func (e *Engine) aspirationWindow(prevScore int16, iterationDepth int8) int16 {
@@ -110,6 +171,9 @@ func (e *Engine) aspirationWindow(prevScore int16, iterationDepth int8) int16 {
 			alpha := max16(prevScore-alphaMargin, -MAX_INT)
 			beta := min16(prevScore+betaMargin, MAX_INT)
 			score := e.alphaBeta(iterationDepth, 0, alpha, beta)
+			if e.startDepth == 0 {
+				return -MAX_INT
+			}
 			if score <= alpha {
 				alphaMargin *= 2
 			} else if score >= beta {
@@ -129,6 +193,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isPvNode := alpha != beta-1
 
 	position := e.Position
+	pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
@@ -137,7 +202,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if searchHeight >= MAX_DEPTH-1 {
-		eval := Evaluate(position)
+		eval := Evaluate(position, pawnhash)
 		e.staticEvals[searchHeight] = eval
 		return eval
 	}
@@ -149,7 +214,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if depthLeft <= 0 {
-		e.staticEvals[searchHeight] = Evaluate(position)
+		e.staticEvals[searchHeight] = Evaluate(position, pawnhash)
 		return e.quiescence(alpha, beta, searchHeight)
 	}
 
@@ -183,16 +248,20 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if !isRootNode {
-		if e.TimeManager.ShouldStop(false, false) {
+		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
 			return -MAX_INT
 		}
+	}
+
+	if !e.isMainThread && e.parent.Stop {
+		return -MAX_INT
 	}
 
 	var eval int16 = -MAX_INT
 	if !isRootNode && currentMove == EmptyMove {
 		eval = -1 * (e.staticEvals[searchHeight-1] + Tempo + Tempo)
 	} else {
-		eval = Evaluate(position)
+		eval = Evaluate(position, pawnhash)
 	}
 
 	e.staticEvals[searchHeight] = eval
@@ -269,7 +338,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						e.innerLines[searchHeight+1].Recycle()
 						e.pred.Push(position.Hash())
 						e.positionMoves[searchHeight+1] = move
-						childEval := Evaluate(position)
+						childEval := Evaluate(position, pawnhash)
 						e.staticEvals[searchHeight+1] = childEval
 						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
 						e.pred.Pop()
@@ -298,7 +367,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode && depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.TimeManager.AbruptStop {
+		if e.isMainThread && e.TimeManager().AbruptStop {
+			return score
+		} else if !e.isMainThread && e.parent.Stop {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -345,7 +416,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if !e.TimeManager.AbruptStop {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 						e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -383,7 +454,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	for true {
 
 		if isRootNode {
-			if e.TimeManager.ShouldStop(true, bestscore-e.score >= -20) {
+			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
 				break
 			}
 		}
@@ -409,7 +480,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				legalQuiteMove += 1
 			}
 
-			if e.DebugMode && isRootNode {
+			if e.isMainThread && e.parent.DebugMode && isRootNode {
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
@@ -490,7 +561,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if !e.TimeManager.AbruptStop {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -503,16 +574,26 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				hashmove = move
 			}
 		}
+
+		if !isRootNode && e.startDepth > 6 {
+			e.parent.mu.RLock()
+			if e.startDepth <= e.parent.depth {
+				e.startDepth = 0
+				e.parent.mu.RUnlock()
+				return -MAX_INT
+			}
+			e.parent.mu.RUnlock()
+		}
 	}
-	if !e.TimeManager.AbruptStop {
+	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 		} else {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
 		}
 	}
-	if isRootNode && legalMoves == 1 {
-		e.TimeManager.StopSearchNow = true
+	if e.isMainThread && isRootNode && legalMoves == 1 {
+		e.TimeManager().StopSearchNow = true
 	}
 	return bestscore
 }

@@ -304,7 +304,7 @@ func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 	return 0
 }
 
-func Evaluate(position *Position) int16 {
+func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 	var drawDivider int16 = 0
 	board := position.Board
 	turn := position.Turn()
@@ -550,7 +550,7 @@ func Evaluate(position *Position) int16 {
 	blackCentipawnsMG += rookEval.blackMG
 	blackCentipawnsEG += rookEval.blackEG
 
-	pawnMG, pawnEG := CachedPawnStructureEval(position)
+	pawnMG, pawnEG := CachedPawnStructureEval(position, pawnhash)
 
 	kingSafetyEval := KingSafety(bbBlackKing, bbWhiteKing, bbBlackPawn, bbWhitePawn,
 		position.HasTag(BlackCanCastleQueenSide) || position.HasTag(BlackCanCastleKingSide),
@@ -655,9 +655,9 @@ func RookFilesEval(blackRook uint64, whiteRook uint64, blackPawns uint64, whiteP
 	return Eval{blackMG: blackMG, whiteMG: whiteMG, blackEG: blackEG, whiteEG: whiteEG}
 }
 
-func CachedPawnStructureEval(p *Position) (int16, int16) {
+func CachedPawnStructureEval(p *Position, pawnhash *PawnCache) (int16, int16) {
 	hash := p.Pawnhash()
-	mg, eg, ok := Pawnhash.Get(hash)
+	mg, eg, ok := pawnhash.Get(hash)
 
 	if ok {
 		return mg, eg
@@ -666,7 +666,7 @@ func CachedPawnStructureEval(p *Position) (int16, int16) {
 	eval := PawnStructureEval(p)
 	mg = eval.whiteMG - eval.blackMG
 	eg = eval.whiteEG - eval.blackEG
-	Pawnhash.Set(hash, mg, eg)
+	pawnhash.Set(hash, mg, eg)
 
 	return mg, eg
 }

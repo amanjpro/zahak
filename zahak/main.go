@@ -83,7 +83,7 @@ func main() {
 		} else if *perftTreeFlag {
 			depth, _ := strconv.Atoi(flag.Arg(0))
 			fen := flag.Arg(1)
-			game := FromFen(fen, true)
+			game := FromFen(fen)
 			moves := []Move{}
 			if len(flag.Args()) > 2 {
 				game.Position().ParseMoves(strings.Fields(flag.Args()[2]))

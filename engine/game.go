@@ -53,12 +53,7 @@ func NewGame(
 	position *Position,
 	startPosition Position,
 	moves []Move,
-	numberOfMoves uint16,
-	clearCache bool) Game {
-
-	if clearCache {
-		initZobrist()
-	}
+	numberOfMoves uint16) Game {
 
 	return Game{
 		position,

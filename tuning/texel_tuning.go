@@ -29,11 +29,12 @@ var initialK = 1.0
 var skipParams map[int]bool
 var answers = make(chan float64)
 var ml = NewMoveList(500)
+var pawnhash = NewPawnCache(2)
 
 func initEngines() []*Engine {
 	res := make([]*Engine, NUM_PROCESSORS)
 	for i := 0; i < NUM_PROCESSORS; i++ {
-		res[i] = NewEngine(nil)
+		res[i] = NewEngine(nil, nil, nil)
 	}
 	return res
 }
@@ -376,7 +377,7 @@ func findK() float64 {
 }
 
 func linearEvaluation(pos *Position) int16 {
-	eval := Evaluate(pos)
+	eval := Evaluate(pos, pawnhash)
 	if pos.Turn() == Black {
 		return -eval
 	}
@@ -478,7 +479,7 @@ func parseLine(line string) (string, float64) {
 func PrepareTuningData(path string) {
 	loadPositions(path, func(line string) {
 		fen, _ := parseLine(line)
-		game := FromFen(fen, true)
+		game := FromFen(fen)
 		pos := game.Position()
 		ml.Size = 0
 		ml.Next = 0
@@ -497,7 +498,7 @@ func Tune(path string, toExclude map[int]bool) {
 	skipParams = toExclude
 	loadPositions(path, func(line string) {
 		fen, outcome := parseLine(line)
-		game := FromFen(fen, true)
+		game := FromFen(fen)
 		pos := game.Position()
 		tp := TestPosition{pos, outcome}
 		testPositions = append(testPositions, tp)

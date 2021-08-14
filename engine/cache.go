@@ -1,21 +1,12 @@
 package engine
 
-type CachedEval struct {
-	Hash     uint64   // 8
-	HashMove Move     // 4
-	Eval     int16    // 2
-	Age      uint16   // 2
-	Depth    int8     // 1
-	Type     NodeType // 1
-}
+// import (
+// 	"fmt"
+// )
 
-func (c *CachedEval) Update(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
-	c.Hash = hash
-	c.HashMove = hashmove
-	c.Eval = eval
-	c.Depth = depth
-	c.Type = nodeType
-	c.Age = age
+type CachedEval struct {
+	Key  uint64 // 8
+	Data uint64 // 8
 }
 
 type NodeType uint8
@@ -26,53 +17,97 @@ const (
 	LowerBound                      // Cut-Node
 )
 
-var oldAge = uint16(5)
-
-var EmptyEval = CachedEval{0, EmptyMove, 0, 0, 0, 0}
-var CACHE_ENTRY_SIZE = uint32(8 + 4 + 2 + 2 + 1 + 1)
-
 type Cache struct {
 	items    []CachedEval
 	size     uint32
 	consumed int
+	length   uint64
 }
 
-const DEFAULT_CACHE_SIZE = uint32(10)
-const MAX_CACHE_SIZE = uint32(8000)
+const OldAge = uint16(5)
+const CACHE_ENTRY_SIZE = uint32(8 + 8)
+const DEFAULT_CACHE_SIZE = uint32(128)
+const MAX_CACHE_SIZE = uint32(24000)
+
+const MOVE_MASK uint64 = 0b1111111111111111111111111111 // move << 0, 28 bits
+const EVAL_MASK uint64 = 0b1111111111111111             // eval << 28, 16 bits
+const DEPTH_MASK uint64 = 0b1111111                     // depth << 44, 7 bits
+const TYPE_MASK uint64 = 0b111                          // type << 51, 3 bits
+const AGE_MASK uint64 = 0b1111111111                    // age << 54, 10 bits
+
+func Pack(hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) uint64 {
+	return (uint64(hashmove) & MOVE_MASK) |
+		((uint64(eval) & EVAL_MASK) << 28) |
+		((uint64(depth) & DEPTH_MASK) << 44) |
+		((uint64(nodeType) & TYPE_MASK) << 51) |
+		((uint64(age) & AGE_MASK) << 54)
+}
+
+func Unpack(data uint64) (hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
+	hashmove = Move(data & MOVE_MASK)
+	eval = int16((data >> 28) & EVAL_MASK)
+	depth = int8((data >> 44) & DEPTH_MASK)
+	nodeType = NodeType((data >> 51) & TYPE_MASK)
+	age = uint16((data >> 54) & AGE_MASK)
+	return
+}
+
+func (c *CachedEval) Update(key uint64, data uint64) {
+	c.Key = key
+	c.Data = data
+}
 
 func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-func (c *Cache) hash(key uint64) uint32 {
-	return uint32(key>>32) % uint32(len(c.items))
+func (c *Cache) index(hash uint64) uint32 {
+	return uint32(hash>>32) % uint32(len(c.items))
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
-	key := c.hash(hash)
-	oldValue := c.items[key]
-	if oldValue != EmptyEval {
-		if hash == oldValue.Hash {
-			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
+	// if hashmove == EmptyMove {
+	// 	return
+	// }
+	index := c.index(hash)
+
+	oldValue := c.items[index]
+	oldKey := oldValue.Key
+	oldData := oldValue.Data
+
+	newData := Pack(hashmove, eval, depth, nodeType, age)
+	// very good for debugging hash issues
+	// newHashmove, newEval, newDepth, newNodeType, newAge := Unpack(newData)
+	// if hashmove != newHashmove || eval != newEval || depth != newDepth || nodeType != newNodeType || age != newAge {
+	// 	panic(fmt.Sprintf(
+	// 		"Culprits are: %d %d %d %d %d\nSomehow became: %d %d %d %d %d\n", hashmove, eval, depth, nodeType, age, newHashmove, newEval, newDepth, newNodeType, newAge))
+	// }
+
+	newKey := newData ^ hash
+
+	if oldData != 0 {
+		_, _, oldDepth, oldType, oldAge := Unpack(oldData)
+		if (hash ^ oldData) == oldKey {
+			c.items[index].Update(newKey, newData)
 			return
 		}
-		if age-oldValue.Age >= oldAge {
-			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
+		if age-oldAge >= OldAge {
+			c.items[index].Update(newKey, newData)
 			return
 		}
-		if oldValue.Depth > depth {
+		if oldDepth > depth {
 			return
 		}
-		if oldValue.Type == Exact || nodeType != Exact {
+		if oldType == Exact || nodeType != Exact {
 			return
 		} else if nodeType == Exact {
-			c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
+			c.items[index].Update(newKey, newData)
 			return
 		}
-		c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
+		c.items[index].Update(newKey, newData)
 	} else {
 		c.consumed += 1
-		c.items[key].Update(hash, hashmove, eval, depth, nodeType, age)
+		c.items[index].Update(newKey, newData)
 	}
 }
 
@@ -81,21 +116,26 @@ func (c *Cache) Size() uint32 {
 }
 
 func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
-	key := c.hash(hash)
-	item := c.items[key]
-	if item.Hash == hash {
-		return item.HashMove, item.Eval, item.Depth, item.Type, true
+	index := c.index(hash)
+	value := c.items[index]
+	data := value.Data
+	key := value.Key
+	ok := hash == (key ^ data)
+	if ok {
+		move, eval, depth, nType, _ := Unpack(data)
+		return move, eval, depth, nType, true
 	}
-	return EmptyMove, 0, 0, 0, false
+	return 0, 0, 0, 0, false
 }
 
 func NewCache(megabytes uint32) *Cache {
-	if megabytes > MAX_CACHE_SIZE {
+	if megabytes > MAX_CACHE_SIZE || megabytes < 1 {
 		return nil
 	}
-	size := int(megabytes * 1024 * 1024 / CACHE_ENTRY_SIZE)
+	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
+	length := RoundPowerOfTwo(size)
 
-	return &Cache{make([]CachedEval, RoundPowerOfTwo(size)), megabytes, 0}
+	return &Cache{make([]CachedEval, length), megabytes, 0, uint64(length)}
 }
 
 func RoundPowerOfTwo(size int) int {

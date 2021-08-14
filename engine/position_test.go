@@ -5,7 +5,7 @@ import (
 )
 
 func TestMakeMove(t *testing.T) {
-	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := NewMove(F3, G4, WhiteBishop, NoPiece, NoType, 0)
 	game.position.MakeMove(move)
 	fen := game.Fen()
@@ -17,7 +17,7 @@ func TestMakeMove(t *testing.T) {
 }
 
 func TestMakeMoveDoublePushPawn(t *testing.T) {
-	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0)
 	game.position.MakeMove(move)
 	fen := game.Fen()
@@ -29,7 +29,7 @@ func TestMakeMoveDoublePushPawn(t *testing.T) {
 }
 
 func TestMakeMoveCapture(t *testing.T) {
-	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := NewMove(F3, E4, WhiteBishop, BlackPawn, NoType, Capture)
 	game.position.MakeMove(move)
 	fen := game.Fen()
@@ -41,7 +41,7 @@ func TestMakeMoveCapture(t *testing.T) {
 }
 
 func TestMakeMoveCastling(t *testing.T) {
-	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
 	game.position.MakeMove(move)
 	fen := game.Fen()
@@ -53,7 +53,7 @@ func TestMakeMoveCastling(t *testing.T) {
 }
 
 func TestMakeMoveEnPassant(t *testing.T) {
-	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture)
 	game.position.MakeMove(move)
 	fen := game.Fen()
@@ -65,7 +65,7 @@ func TestMakeMoveEnPassant(t *testing.T) {
 }
 
 func TestMakeMovePromotion(t *testing.T) {
-	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1", true)
+	game := FromFen("rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1")
 	move := NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture)
 	game.position.MakeMove(move)
 	fen := game.Fen()
@@ -78,7 +78,7 @@ func TestMakeMovePromotion(t *testing.T) {
 
 func TestUnMakeMove(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
-	game := FromFen(startFen, true)
+	game := FromFen(startFen)
 	startHash := game.position.Hash()
 	move := NewMove(F3, G4, WhiteBishop, NoPiece, NoType, 0)
 	ep, tag, hc, _ := game.position.MakeMove(move)
@@ -97,7 +97,7 @@ func TestUnMakeMove(t *testing.T) {
 
 func TestUnMakeMoveDoublePushPawn(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
-	game := FromFen(startFen, true)
+	game := FromFen(startFen)
 	startHash := game.position.Hash()
 	move := NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0)
 	ep, tag, hc, _ := game.position.MakeMove(move)
@@ -116,7 +116,7 @@ func TestUnMakeMoveDoublePushPawn(t *testing.T) {
 
 func TestUnMakeMoveCapture(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
-	game := FromFen(startFen, true)
+	game := FromFen(startFen)
 	startHash := game.position.Hash()
 	move := NewMove(F3, E4, WhiteBishop, BlackPawn, NoType, Capture)
 	ep, tag, hc, _ := game.position.MakeMove(move)
@@ -135,7 +135,7 @@ func TestUnMakeMoveCapture(t *testing.T) {
 
 func TestUnMakeMoveCastling(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
-	game := FromFen(startFen, true)
+	game := FromFen(startFen)
 	startHash := game.position.Hash()
 	move := NewMove(E1, G1, WhiteKing, NoPiece, NoType, KingSideCastle)
 	ep, tag, hc, _ := game.position.MakeMove(move)
@@ -154,7 +154,7 @@ func TestUnMakeMoveCastling(t *testing.T) {
 
 func TestUnMakeMoveEnPassant(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
-	game := FromFen(startFen, true)
+	game := FromFen(startFen)
 	startHash := game.position.Hash()
 	move := NewMove(E5, D6, WhitePawn, BlackPawn, NoType, EnPassant|Capture)
 	ep, tag, hc, _ := game.position.MakeMove(move)
@@ -173,7 +173,7 @@ func TestUnMakeMoveEnPassant(t *testing.T) {
 
 func TestUnMakeMovePromotion(t *testing.T) {
 	startFen := "rnbqkbnr/pPp1pppp/4P3/3pP3/4p3/5BN1/PP3PPP/RNBQK2R w KQkq d6 0 1"
-	game := FromFen(startFen, true)
+	game := FromFen(startFen)
 	startHash := game.position.Hash()
 	move := NewMove(B7, A8, WhitePawn, BlackRook, Queen, Capture)
 	ep, tag, hc, _ := game.position.MakeMove(move)

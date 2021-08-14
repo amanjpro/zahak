@@ -192,7 +192,7 @@ func StartPerftTest(slow bool) {
 
 func test(fen string, depth int, expected PerftNodes) int8 {
 	fmt.Printf("Running perft for %s depth %d\n", fen, depth)
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	actual := PerftNodes{0, 0, 0, 0, 0, 0, 0}
 	perft(g.Position(), depth, EmptyMove, &actual)
 	if actual != expected {
@@ -207,7 +207,7 @@ var cache []map[uint64]int64
 
 func testNodesOnly(fen string, depth int, expected int64) int8 {
 	fmt.Printf("Running perft for %s depth %d\n", fen, depth)
-	g := FromFen(fen, true)
+	g := FromFen(fen)
 	cache = make([]map[uint64]int64, depth)
 	for i := 0; i < depth; i++ {
 		cache[i] = make(map[uint64]int64, 1000_000)

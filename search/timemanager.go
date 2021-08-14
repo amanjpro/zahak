@@ -16,10 +16,11 @@ type TimeManager struct {
 	StopSearchNow       bool
 	IsPerMove           bool
 	ExtensionCounter    int
+	Pondering           bool
 }
 
 func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
-	increment int64, movesToTimeControl int64) *TimeManager {
+	increment int64, movesToTimeControl int64, pondering bool) *TimeManager {
 	softLimit := int64(0)
 	hardLimit := int64(0)
 	if isPerMove {
@@ -44,10 +45,14 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		StopSearchNow:       false,
 		IsPerMove:           isPerMove,
 		ExtensionCounter:    0,
+		Pondering:           pondering,
 	}
 }
 
 func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
+	if tm.Pondering {
+		return false
+	}
 	if tm.NodesSinceLastCheck < 2000 {
 		tm.NodesSinceLastCheck += 1
 		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow
@@ -63,6 +68,9 @@ func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
 }
 
 func (tm *TimeManager) CanStartNewIteration() bool {
+	if tm.Pondering {
+		return true
+	}
 	if tm.AbruptStop || tm.StopSearchNow {
 		return false
 	}
@@ -76,6 +84,9 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 }
 
 func (tm *TimeManager) ExtraTime() {
+	if tm.Pondering {
+		return
+	}
 	if tm.ExtensionCounter < 5 {
 		tm.SoftLimit = min64(tm.HardLimit, tm.SoftLimit+tm.SoftLimit/10)
 		tm.ExtensionCounter += 1

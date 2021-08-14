@@ -45,6 +45,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.VisitNode()
 
 	position := e.Position
+	pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
@@ -61,7 +62,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return standPat
 	}
 
-	if e.TimeManager.ShouldStop(false, false) {
+	if (e.isMainThread && e.TimeManager().ShouldStop(false, false)) || (!e.isMainThread && e.parent.Stop) {
 		return 0
 	}
 
@@ -111,7 +112,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 		if ep, tg, hc, ok := position.MakeMove(move); ok {
 			e.positionMoves[searchHeight+1] = move
-			e.staticEvals[searchHeight+1] = Evaluate(position)
+			e.staticEvals[searchHeight+1] = Evaluate(position, pawnhash)
 
 			e.pred.Push(position.Hash())
 			score := -e.quiescence(-beta, -alpha, searchHeight+1)

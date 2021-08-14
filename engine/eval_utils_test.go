@@ -8,7 +8,7 @@ import (
 
 func TestSimpleStaticExchangeEval(t *testing.T) {
 	fen := "1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E5, BlackPawn, E1, WhiteRook)
@@ -21,7 +21,7 @@ func TestSimpleStaticExchangeEval(t *testing.T) {
 
 func TestComplicatedStaticExchangeEval(t *testing.T) {
 	fen := "1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E5, BlackPawn, D3, WhiteKnight)
@@ -34,7 +34,7 @@ func TestComplicatedStaticExchangeEval(t *testing.T) {
 
 func TestSlidingPiecesStaticExchangeEval(t *testing.T) {
 	fen := "k3r3/pp2r3/2b5/3p4/4P3/5P2/PP2R3/K3R2B b - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E4, WhitePawn, D5, BlackPawn)
@@ -46,7 +46,7 @@ func TestSlidingPiecesStaticExchangeEval(t *testing.T) {
 
 func TestSlidingPiecesStaticExchangeEvalPositive(t *testing.T) {
 	fen := "k3r3/pp2r3/2b5/3p4/4P3/8/PP2R3/K3R2B b - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	board := game.position.Board
 
 	actual := board.StaticExchangeEval(E4, WhitePawn, D5, BlackPawn)
@@ -59,7 +59,7 @@ func TestSlidingPiecesStaticExchangeEvalPositive(t *testing.T) {
 
 func TestAllAttacksWhite(t *testing.T) {
 	fen := "3k4/8/8/8/8/2Q5/8/2K5 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	board := game.position.Board
 
 	actualP, actualM, actualO := board.AllAttacks(White)
@@ -73,7 +73,7 @@ func TestAllAttacksWhite(t *testing.T) {
 
 func TestAllAttacksBlack(t *testing.T) {
 	fen := "3k4/8/8/8/8/2Q5/8/2K5 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 	board := game.position.Board
 
 	actualP, actualM, actualO := board.AllAttacks(Black)
@@ -87,7 +87,7 @@ func TestAllAttacksBlack(t *testing.T) {
 
 func TestBackwardPawns(t *testing.T) {
 	fen := "rnbqkbnr/5ppp/p2p4/P2P1P2/1P2P3/8/6PP/RNBQKBNR w KQkq - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(2)
 	actual := game.Position().CountBackwardPawns(White)
@@ -104,7 +104,7 @@ func TestBackwardPawns(t *testing.T) {
 
 func TestCandidatePawns(t *testing.T) {
 	fen := "7k/p7/8/PP6/5ppp/8/5P1P/K7 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(1)
 	actual := game.Position().CountCandidatePawns(White)
@@ -121,7 +121,7 @@ func TestCandidatePawns(t *testing.T) {
 
 func TestDoublePawns(t *testing.T) {
 	fen := "7k/1p6/8/PP3p1p/P4p1p/PP6/8/K7 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(3)
 	actual := game.Position().CountDoublePawns(White)
@@ -138,7 +138,7 @@ func TestDoublePawns(t *testing.T) {
 
 func TestIsolatedPawns(t *testing.T) {
 	fen := "7k/8/2p1P3/P2p1p1p/5p2/6P1/7P/K7 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(2)
 	actual := game.Position().CountIsolatedPawns(White)
@@ -155,7 +155,7 @@ func TestIsolatedPawns(t *testing.T) {
 
 func TestPassedPawns(t *testing.T) {
 	fen := "7k/8/1Pp1P3/3p1p1p/P4p2/1p4P1/7P/K7 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expectedF, expectedS := int16(1), int16(2)
 	actualF, actualS := game.Position().CountPassedPawns(White)
@@ -171,7 +171,7 @@ func TestPassedPawns(t *testing.T) {
 
 func TestCountKnightOutpostsWhiteSixthRank(t *testing.T) {
 	fen := "r4rk1/p4ppp/1p1N2n1/pPp1P3/8/8/1PP2PPP/2KRR3 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(1)
 	actual := game.Position().CountKnightOutposts(White)
@@ -188,7 +188,7 @@ func TestCountKnightOutpostsWhiteSixthRank(t *testing.T) {
 
 func TestCountKnightOutpostsWhiteFifthRank(t *testing.T) {
 	fen := "r4rk1/p4ppp/1p1p2n1/1PpN4/4P3/8/1PP2PPP/2KRR3 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(1)
 	actual := game.Position().CountKnightOutposts(White)
@@ -205,7 +205,7 @@ func TestCountKnightOutpostsWhiteFifthRank(t *testing.T) {
 
 func TestCountKnightOutpostsBlackThirdRank(t *testing.T) {
 	fen := "r4rk1/p5pp/1p1p4/1P2p3/1Pp1P1P1/3n1N2/P4P1P/2KRR3 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(0)
 	actual := game.Position().CountKnightOutposts(White)
@@ -222,7 +222,7 @@ func TestCountKnightOutpostsBlackThirdRank(t *testing.T) {
 
 func TestCountKnightOutpostsBlackFourthRank(t *testing.T) {
 	fen := "r4rk1/p5pp/1p1p4/1Pp1p3/3nP1P1/2N5/PP3P1P/2KRR3 w - - 0 1"
-	game := FromFen(fen, true)
+	game := FromFen(fen)
 
 	expected := int16(0)
 	actual := game.Position().CountKnightOutposts(White)

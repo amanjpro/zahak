@@ -2,35 +2,82 @@ package search
 
 import (
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
+type Runner struct {
+	mu           sync.RWMutex
+	Engines      []*Engine
+	globalInfo   Info
+	nodesVisited int64
+	Stop         bool
+	TimeManager  *TimeManager
+	DebugMode    bool
+	cacheHits    int64
+	pv           PVLine
+	isBookmove   bool
+	depth        int8
+	move         Move
+	score        int16
+}
+
 const MAX_TIME int64 = 9_223_372_036_854_775_807
 
 type Info struct {
-	fpCounter                  int
-	efpCounter                 int
-	rfpCounter                 int
-	razoringCounter            int
-	checkExtentionCounter      int
-	nullMoveCounter            int
-	lmrCounter                 int
-	lmpCounter                 int
-	deltaPruningCounter        int
-	seeQuiescenceCounter       int
-	seeCounter                 int
-	mainSearchCounter          int
-	zwCounter                  int
-	researchCounter            int
-	quiesceCounter             int
-	killerCounter              int
-	historyCounter             int
-	probCutCounter             int
-	historyPruningCounter      int
-	internalIterativeReduction int
+	fpCounter                  int64
+	efpCounter                 int64
+	rfpCounter                 int64
+	razoringCounter            int64
+	checkExtentionCounter      int64
+	nullMoveCounter            int64
+	lmrCounter                 int64
+	lmpCounter                 int64
+	deltaPruningCounter        int64
+	seeQuiescenceCounter       int64
+	seeCounter                 int64
+	mainSearchCounter          int64
+	zwCounter                  int64
+	researchCounter            int64
+	quiesceCounter             int64
+	killerCounter              int64
+	historyCounter             int64
+	probCutCounter             int64
+	historyPruningCounter      int64
+	internalIterativeReduction int64
+}
+
+func (e *Engine) ShareInfo() {
+	atomic.AddInt64(&e.parent.globalInfo.fpCounter, e.info.fpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.efpCounter, e.info.efpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.rfpCounter, e.info.rfpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.razoringCounter, e.info.razoringCounter)
+	atomic.AddInt64(&e.parent.globalInfo.checkExtentionCounter, e.info.checkExtentionCounter)
+	atomic.AddInt64(&e.parent.globalInfo.nullMoveCounter, e.info.nullMoveCounter)
+	atomic.AddInt64(&e.parent.globalInfo.lmrCounter, e.info.lmrCounter)
+	atomic.AddInt64(&e.parent.globalInfo.lmpCounter, e.info.lmpCounter)
+	atomic.AddInt64(&e.parent.globalInfo.deltaPruningCounter, e.info.deltaPruningCounter)
+	atomic.AddInt64(&e.parent.globalInfo.seeQuiescenceCounter, e.info.seeQuiescenceCounter)
+	atomic.AddInt64(&e.parent.globalInfo.seeCounter, e.info.seeCounter)
+	atomic.AddInt64(&e.parent.globalInfo.mainSearchCounter, e.info.mainSearchCounter)
+	atomic.AddInt64(&e.parent.globalInfo.zwCounter, e.info.zwCounter)
+	atomic.AddInt64(&e.parent.globalInfo.researchCounter, e.info.researchCounter)
+	atomic.AddInt64(&e.parent.globalInfo.quiesceCounter, e.info.quiesceCounter)
+	atomic.AddInt64(&e.parent.globalInfo.killerCounter, e.info.killerCounter)
+	atomic.AddInt64(&e.parent.globalInfo.historyCounter, e.info.historyCounter)
+	atomic.AddInt64(&e.parent.globalInfo.probCutCounter, e.info.probCutCounter)
+	atomic.AddInt64(&e.parent.globalInfo.historyPruningCounter, e.info.historyPruningCounter)
+	atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
+
+	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
+	atomic.AddInt64(&e.parent.cacheHits, e.cacheHits)
+	e.info = NoInfo
+	e.nodesVisited = 0
+	e.cacheHits = 0
 }
 
 func (i *Info) Print() {
@@ -61,31 +108,52 @@ type Engine struct {
 	Ply                uint16
 	nodesVisited       int64
 	cacheHits          int64
-	pv                 PVLine
-	move               Move
-	score              int16
 	positionMoves      []Move
 	killerMoves        [][]Move
 	searchHistory      [][]int32
 	MovePickers        []*MovePicker
-	StartTime          time.Time
 	triedQuietMoves    [][]Move
 	info               Info
 	pred               Predecessors
+	score              int16
 	innerLines         []PVLine
 	staticEvals        []int16
 	TranspositionTable *Cache
-	DebugMode          bool
-	Pondering          bool
+	Pawnhash           *PawnCache
 	TotalTime          float64
-	TimeManager        *TimeManager
 	doPruning          bool
+	isMainThread       bool
+	StartTime          time.Time
+	parent             *Runner
+	startDepth         int8
 }
 
 var MAX_DEPTH int8 = int8(100)
 
-func NewEngine(tt *Cache) *Engine {
-	line := NewPVLine(MAX_DEPTH)
+func (e *Engine) TimeManager() *TimeManager {
+	return e.parent.TimeManager
+}
+
+func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
+	t := &Runner{}
+	engines := make([]*Engine, numberOfThreads)
+	for i := 0; i < numberOfThreads; i++ {
+		var engine *Engine
+		if i == 0 {
+			engine = NewEngine(tt, ph, t)
+			engine.isMainThread = true
+		} else {
+			engine = NewEngine(tt, NewPawnCache(ph.Size()), t)
+		}
+		engines[i] = engine
+	}
+	t.pv = NewPVLine(MAX_DEPTH)
+	t.globalInfo = NoInfo
+	t.Engines = engines
+	return t
+}
+
+func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 	innerLines := make([]PVLine, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
 		line := NewPVLine(MAX_DEPTH)
@@ -101,39 +169,48 @@ func NewEngine(tt *Cache) *Engine {
 		Ply:                0,
 		nodesVisited:       0,
 		cacheHits:          0,
-		pv:                 line,
-		move:               EmptyMove,
 		score:              0,
 		positionMoves:      make([]Move, MAX_DEPTH),
 		killerMoves:        make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
 		searchHistory:      make([][]int32, 12), // We have 12 pieces only
 		MovePickers:        movePickers,
-		StartTime:          time.Now(),
 		triedQuietMoves:    make([][]Move, 250),
 		info:               NoInfo,
 		pred:               NewPredecessors(),
 		innerLines:         innerLines,
 		staticEvals:        make([]int16, MAX_DEPTH),
 		TranspositionTable: tt,
-		DebugMode:          false,
-		Pondering:          false,
+		Pawnhash:           ph,
+		StartTime:          time.Now(),
 		TotalTime:          0,
-		TimeManager:        nil,
 		doPruning:          false,
+		isMainThread:       false,
+		parent:             parent,
 	}
 }
 
-func (e *Engine) InitTimeManager(availableTimeInMillis int64, isPerMove bool,
-	increment int64, movesToTimeControl int64) {
-	e.TimeManager = NewTimeManager(e.StartTime, availableTimeInMillis, isPerMove, increment, movesToTimeControl)
+func (t *Runner) AddTimeManager(tm *TimeManager) {
+	t.TimeManager = tm
 }
 
-func (e *Engine) AttachTimeManager(tm *TimeManager) {
-	tm.StartTime = e.StartTime
-	e.TimeManager = tm
+func (r *Runner) Ponderhit() {
+	r.TimeManager.StartTime = time.Now()
+	r.TimeManager.Pondering = false
+	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
 var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+func (r *Runner) ClearForSearch() {
+	r.nodesVisited = 0
+	r.score = -MAX_INT
+	r.depth = 0
+	r.isBookmove = false
+	r.cacheHits = 0
+	r.pv.Pop() // pop our move
+	r.pv.Pop() // pop our opponent's move
+	r.Stop = false
+}
 
 func (e *Engine) ClearForSearch() {
 	for i := 0; i < len(e.innerLines); i++ {
@@ -169,21 +246,11 @@ func (e *Engine) ClearForSearch() {
 
 	e.nodesVisited = 0
 	e.cacheHits = 0
-	e.pv.Pop() // pop our move
-	e.pv.Pop() // pop our opponent's move
 
 	e.info = NoInfo
+	e.StartTime = time.Now()
 
 	e.pred.Clear()
-
-	e.StartTime = time.Now()
-	if e.TimeManager != nil {
-		e.TimeManager.StartTime = e.StartTime
-	}
-}
-
-func (e *Engine) NodesVisited() int64 {
-	return e.nodesVisited
 }
 
 func (e *Engine) KillerMoveScore(move Move, depthLeft int8) int32 {
@@ -267,33 +334,35 @@ func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square
 	}
 }
 
-func (e *Engine) SendBestMove() {
-	mv := e.Move()
-	if e.pv.moveCount >= 2 {
-		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), e.pv.MoveAt(1).ToString())
+func (r *Runner) SendBestMove() {
+	mv := r.Move()
+	pv := r.pv
+	if pv.moveCount >= 2 {
+		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), pv.MoveAt(1).ToString())
 	} else {
 		fmt.Printf("bestmove %s\n", mv.ToString())
 	}
 }
 
-func (e *Engine) Move() Move {
-	return e.move
+func (r *Runner) Move() Move {
+	return r.move
 }
 
-func (e *Engine) Score() int16 {
-	return e.score
+func (r *Runner) Score() int16 {
+	return r.score
 }
 
-func (e *Engine) SendPv(depth int8) {
+func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
 	if depth == -1 {
-		depth = e.pv.moveCount
+		depth = pv.moveCount
 	}
 	thinkTime := time.Since(e.StartTime)
-	nps := int64(float64(e.nodesVisited) / thinkTime.Seconds())
-	fmt.Printf("info depth %d seldepth %d tbhits %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
-		depth, e.pv.moveCount, e.cacheHits, e.TranspositionTable.Consumed(),
-		e.nodesVisited, nps, ScoreToCp(e.score),
-		thinkTime.Milliseconds(), e.pv.ToString())
+	nodesVisited := e.parent.nodesVisited
+	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
+	fmt.Printf("info depth %d seldepth %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
+		depth, pv.moveCount, e.TranspositionTable.Consumed(),
+		nodesVisited, nps, ScoreToCp(score),
+		thinkTime.Milliseconds(), pv.ToString())
 	e.TotalTime = thinkTime.Seconds()
 }
 
