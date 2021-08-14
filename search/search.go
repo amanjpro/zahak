@@ -207,10 +207,21 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Mate distance pruning
-		alpha = max16(alpha, LOSS_IN_MAX)
-		beta = min16(beta, WIN_IN_MAX-1)
-		if alpha >= beta {
-			return alpha
+		// winning
+		matingValue := CHECKMATE_EVAL - int16(searchHeight)
+		if matingValue < beta {
+			beta = matingValue
+			if alpha >= matingValue {
+				return matingValue
+			}
+		}
+		// losing
+		matingValue = -CHECKMATE_EVAL + int16(searchHeight)
+		if matingValue > alpha {
+			alpha = matingValue
+			if beta <= matingValue {
+				return matingValue
+			}
 		}
 	}
 
