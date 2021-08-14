@@ -4,6 +4,124 @@ import (
 	"math/bits"
 )
 
+func (p *Position) IsPseudoLegal(move Move) bool {
+	turn := p.Turn()
+	src := SquareMask[move.Source()]
+	dest := SquareMask[move.Destination()]
+	board := p.Board
+	var ownPieces, enemyPieces, enemyKing, enemyPawns uint64
+	var canQueenSideCastle, canKingSideCastle bool
+	var queenSideRookSquare, kingSideRookSquare Square
+	if turn == White {
+		ownPieces = board.whitePieces
+		enemyPieces = board.blackPieces
+		enemyKing = board.blackKing
+		enemyPawns = board.blackPawn
+		canQueenSideCastle = p.HasTag(WhiteCanCastleQueenSide)
+		canKingSideCastle = p.HasTag(WhiteCanCastleKingSide)
+		queenSideRookSquare = A1
+		kingSideRookSquare = H1
+	} else {
+		ownPieces = board.blackPieces
+		enemyPieces = board.whitePieces
+		enemyKing = board.whiteKing
+		enemyPawns = board.whitePawn
+		canQueenSideCastle = p.HasTag(BlackCanCastleQueenSide)
+		canKingSideCastle = p.HasTag(BlackCanCastleKingSide)
+		queenSideRookSquare = A8
+		kingSideRookSquare = H8
+	}
+	allPieces := enemyPieces | ownPieces
+
+	// we are moving own pieces, and do not capture own pieces
+	if ownPieces&src == 0 || ownPieces&dest != 0 {
+		return false
+	}
+	if move.IsEnPassant() {
+		ep := findEnPassantCaptureSquare(move)
+		if ep != p.EnPassant || enemyPawns&dest == 0 {
+			return false
+		}
+	}
+
+	// if we do capture enemy pieces, we should have Capture tag
+	if enemyPieces&dest != 0 && !move.IsCapture() {
+		return false
+	}
+
+	// the board is consistent with capturing piece
+	if move.IsCapture() {
+		cp := move.CapturedPiece()
+		if cp == WhitePawn && board.whitePawn&dest == 0 {
+			return false
+		} else if cp == WhiteKnight && board.whiteKnight&dest == 0 {
+			return false
+		} else if cp == WhiteBishop && board.whiteBishop&dest == 0 {
+			return false
+		} else if cp == WhiteRook && board.whiteRook&dest == 0 {
+			return false
+		} else if cp == WhiteQueen && board.whiteQueen&dest == 0 {
+			return false
+		} else if cp == BlackPawn && board.blackPawn&dest == 0 {
+			return false
+		} else if cp == BlackKnight && board.blackKnight&dest == 0 {
+			return false
+		} else if cp == BlackBishop && board.blackBishop&dest == 0 {
+			return false
+		} else if cp == BlackRook && board.blackRook&dest == 0 {
+			return false
+		} else if cp == BlackQueen && board.blackQueen&dest == 0 {
+			return false
+		}
+	}
+
+	// We are not capturing enemy king
+	if enemyKing&dest != 0 {
+		return false
+	}
+
+	// Check that sliding pieces (2 push pawn, rook, bishop and queen, are not jumping over anything)
+	movingPieceType := move.MovingPiece().Type()
+	if movingPieceType == Queen || movingPieceType == Bishop || movingPieceType == Rook || movingPieceType == Pawn {
+		squares := squaresInBetween[src][dest]
+		if squares&allPieces != 0 {
+			return false
+		}
+	}
+	// Check that castling is correct (has castling right, the squares that matter are not in check)
+	if move.IsQueenSideCastle() {
+		if !canQueenSideCastle && p.IsInCheck() {
+			return false
+		}
+		// check in between squares
+		checkFreeSquares := squaresInBetween[src][dest]
+		emptySquares := squaresInBetween[src][queenSideRookSquare]
+		if emptySquares&allPieces != 0 {
+			return false
+		}
+		taboo := tabooSquares(board, turn)
+		if taboo&checkFreeSquares != 0 {
+			return false
+		}
+	} else if move.IsKingSideCastle() {
+		if !canKingSideCastle || p.IsInCheck() {
+			return false
+		}
+		// check in between squares
+		checkFreeSquares := squaresInBetween[src][dest]
+		emptySquares := squaresInBetween[src][kingSideRookSquare]
+		if emptySquares&allPieces != 0 {
+			return false
+		}
+		taboo := tabooSquares(board, turn)
+		if taboo&checkFreeSquares != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (p *Position) PseudoLegalMoves() []Move {
 	ml := NewMoveList(500)
 
@@ -954,6 +1072,7 @@ func computeSlideAttacks(f int, occ uint64, fs []func(sq uint64) uint64) uint64 
 	return result
 }
 
+var squaresInBetween [64][64]uint64
 var rookAttacksArray [64][1 << 12]uint64
 var bishopAttacksArray [64][1 << 9]uint64
 var SquareMask = initSquareMask()
@@ -1008,5 +1127,42 @@ func init() {
 			var attacks = computeSlideAttacks(sq, occ, bishopShifts[:])
 			bishopAttacksArray[sq][((bishopMask[sq]&occ)*bishopMult[sq])>>bishopShift] = attacks
 		}
+
+		for s1 := 0; s1 < 64; s1++ {
+			for s2 := 0; s2 < 64; s2++ {
+				squaresInBetween[s1][s2] = 0
+				if (queenAttacks(Square(s1), 0, 0) & SquareMask[s2]) != 0 {
+					var delta = ((s2 - s1) / squareDistance(s1, s2))
+					for s := s1 + delta; s != s2; s += delta {
+						squaresInBetween[s1][s2] |= SquareMask[s]
+					}
+				}
+			}
+		}
 	}
+}
+
+func fileDistance(sq1 int, sq2 int) int {
+	diff := int(Square(sq1).File() - Square(sq2).File())
+	if diff < 0 {
+		return -diff
+	}
+	return diff
+}
+
+func rankDistance(sq1 int, sq2 int) int {
+	diff := int(Square(sq1).Rank() - Square(sq2).Rank())
+	if diff < 0 {
+		return -diff
+	}
+	return diff
+}
+
+func squareDistance(sq1, sq2 int) int {
+	fileDist := fileDistance(sq1, sq2)
+	rankDist := rankDistance(sq1, sq2)
+	if fileDist > rankDist {
+		return fileDist
+	}
+	return rankDist
 }

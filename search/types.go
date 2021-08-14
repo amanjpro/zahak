@@ -290,6 +290,13 @@ func (e *Engine) KillerMoveScore(move Move, searchHeight int8) int32 {
 	return 0
 }
 
+func (e *Engine) KillerMoveAt(depthLeft int8) (Move, Move) {
+	if depthLeft < 0 || e.killerMoves[depthLeft] == nil {
+		return EmptyMove, EmptyMove
+	}
+	return e.killerMoves[depthLeft][0], e.killerMoves[depthLeft][1]
+}
+
 func historyBonus(current int32, bonus int32) int32 {
 	return current + 32*bonus - current*abs32(bonus)/512
 }
