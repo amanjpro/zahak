@@ -45,7 +45,6 @@ type Info struct {
 	killerCounter              int64
 	historyCounter             int64
 	probCutCounter             int64
-	singularExtensionCounter   int64
 	historyPruningCounter      int64
 	internalIterativeReduction int64
 }
@@ -71,7 +70,6 @@ func (e *Engine) ShareInfo() {
 	atomic.AddInt64(&e.parent.globalInfo.probCutCounter, e.info.probCutCounter)
 	atomic.AddInt64(&e.parent.globalInfo.historyPruningCounter, e.info.historyPruningCounter)
 	atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
-	atomic.AddInt64(&e.parent.globalInfo.singularExtensionCounter, e.info.singularExtensionCounter)
 
 	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
 	atomic.AddInt64(&e.parent.cacheHits, e.cacheHits)
@@ -100,7 +98,6 @@ func (i *Info) Print() {
 	fmt.Printf("info string Killer Moves: %d\n", i.killerCounter)
 	fmt.Printf("info string History Moves: %d\n", i.historyCounter)
 	fmt.Printf("info string History Pruning: %d\n", i.historyPruningCounter)
-	fmt.Printf("info string Singular Extension: %d\n", i.singularExtensionCounter)
 	fmt.Printf("info string Internal Iterative Reduction: %d\n", i.internalIterativeReduction)
 }
 
@@ -127,8 +124,6 @@ type Engine struct {
 	StartTime          time.Time
 	parent             *Runner
 	startDepth         int8
-	skipMove           Move
-	TempMovePicker     *MovePicker
 }
 
 var MAX_DEPTH int8 = int8(100)
@@ -189,8 +184,6 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 		doPruning:          false,
 		isMainThread:       false,
 		parent:             parent,
-		TempMovePicker:     EmptyMovePicker(),
-		skipMove:           EmptyMove,
 	}
 }
 
@@ -204,7 +197,7 @@ func (r *Runner) Ponderhit() {
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
@@ -230,8 +223,6 @@ func (e *Engine) ClearForSearch() {
 			e.killerMoves[i][j] = EmptyMove
 		}
 	}
-
-	e.skipMove = EmptyMove
 
 	for i := 0; i < len(e.searchHistory); i++ {
 		if e.searchHistory[i] == nil {
