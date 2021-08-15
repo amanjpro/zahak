@@ -26,8 +26,6 @@ type Runner struct {
 	score        int16
 }
 
-const MAX_TIME int64 = 9_223_372_036_854_775_807
-
 type Info struct {
 	fpCounter                  int64
 	efpCounter                 int64
