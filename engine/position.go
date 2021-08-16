@@ -5,16 +5,18 @@ import (
 )
 
 type Position struct {
-	Board            *Bitboard
-	EnPassant        Square
-	Tag              PositionTag
-	hash             uint64
-	pawnhash         uint64
-	Positions        map[uint64]int
-	HalfMoveClock    uint8
-	MaterialsOnBoard [12]int16
-	MiddlegamePSQT   int16
-	EndgamePSQT      int16
+	Board               *Bitboard
+	EnPassant           Square
+	Tag                 PositionTag
+	hash                uint64
+	pawnhash            uint64
+	Positions           map[uint64]int
+	HalfMoveClock       uint8
+	MaterialsOnBoard    [12]int16
+	WhiteMiddlegamePSQT int16
+	WhiteEndgamePSQT    int16
+	BlackMiddlegamePSQT int16
+	BlackEndgamePSQT    int16
 }
 
 type PositionTag uint8
@@ -384,7 +386,161 @@ func (p *Position) Hash() uint64 {
 }
 
 func (p *Position) MaterialAndPSQT() {
-	// TODO: Do me
+
+	var blackCentipawnsMG, blackCentipawnsEG, whiteCentipawnsMG, whiteCentipawnsEG int16
+	board := p.Board
+
+	blackPawnsCount := int16(0)
+	blackKnightsCount := int16(0)
+	blackBishopsCount := int16(0)
+	blackRooksCount := int16(0)
+	blackQueensCount := int16(0)
+
+	whitePawnsCount := int16(0)
+	whiteKnightsCount := int16(0)
+	whiteBishopsCount := int16(0)
+	whiteRooksCount := int16(0)
+	whiteQueensCount := int16(0)
+
+	// PST for other black pieces
+	pieceIter := board.blackPawn
+	for pieceIter != 0 {
+		blackPawnsCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackCentipawnsEG += LatePawnPst[index]
+		blackCentipawnsMG += EarlyPawnPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.blackKnight
+	for pieceIter != 0 {
+		blackKnightsCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackCentipawnsEG += LateKnightPst[index]
+		blackCentipawnsMG += EarlyKnightPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.blackBishop
+	for pieceIter != 0 {
+		blackBishopsCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackCentipawnsEG += LateBishopPst[index]
+		blackCentipawnsMG += EarlyBishopPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.blackRook
+	for pieceIter != 0 {
+		blackRooksCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackCentipawnsEG += LateRookPst[index]
+		blackCentipawnsMG += EarlyRookPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.blackQueen
+	for pieceIter != 0 {
+		blackQueensCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackCentipawnsEG += LateQueenPst[index]
+		blackCentipawnsMG += EarlyQueenPst[index]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.blackKing
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		blackCentipawnsEG += LateKingPst[index]
+		blackCentipawnsMG += EarlyKingPst[index]
+		pieceIter ^= mask
+	}
+
+	// PST for other white pieces
+	pieceIter = board.whitePawn
+	for pieceIter != 0 {
+		whitePawnsCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteCentipawnsEG += LatePawnPst[Flip[index]]
+		whiteCentipawnsMG += EarlyPawnPst[Flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.whiteKnight
+	for pieceIter != 0 {
+		whiteKnightsCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteCentipawnsEG += LateKnightPst[Flip[index]]
+		whiteCentipawnsMG += EarlyKnightPst[Flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.whiteBishop
+	for pieceIter != 0 {
+		whiteBishopsCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteCentipawnsEG += LateBishopPst[Flip[index]]
+		whiteCentipawnsMG += EarlyBishopPst[Flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.whiteRook
+	for pieceIter != 0 {
+		whiteRooksCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteCentipawnsEG += LateRookPst[Flip[index]]
+		whiteCentipawnsMG += EarlyRookPst[Flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.whiteQueen
+	for pieceIter != 0 {
+		whiteQueensCount++
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteCentipawnsEG += LateQueenPst[Flip[index]]
+		whiteCentipawnsMG += EarlyQueenPst[Flip[index]]
+		pieceIter ^= mask
+	}
+
+	pieceIter = board.whiteKing
+	for pieceIter != 0 {
+		index := bits.TrailingZeros64(pieceIter)
+		mask := SquareMask[index]
+		whiteCentipawnsEG += LateKingPst[Flip[index]]
+		whiteCentipawnsMG += EarlyKingPst[Flip[index]]
+		pieceIter ^= mask
+	}
+
+	p.WhiteMiddlegamePSQT = whiteCentipawnsMG
+	p.WhiteEndgamePSQT = whiteCentipawnsEG
+	p.BlackMiddlegamePSQT = blackCentipawnsMG
+	p.BlackEndgamePSQT = blackCentipawnsEG
+
+	p.MaterialsOnBoard[WhitePawn-1] = whitePawnsCount
+	p.MaterialsOnBoard[WhiteKnight-1] = whiteKnightsCount
+	p.MaterialsOnBoard[WhiteBishop-1] = whiteBishopsCount
+	p.MaterialsOnBoard[WhiteRook-1] = whiteRooksCount
+	p.MaterialsOnBoard[WhiteQueen-1] = whiteQueensCount
+	p.MaterialsOnBoard[WhiteKing-1] = 1
+
+	p.MaterialsOnBoard[BlackPawn-1] = blackPawnsCount
+	p.MaterialsOnBoard[BlackKnight-1] = blackKnightsCount
+	p.MaterialsOnBoard[BlackBishop-1] = blackBishopsCount
+	p.MaterialsOnBoard[BlackRook-1] = blackRooksCount
+	p.MaterialsOnBoard[BlackQueen-1] = blackQueensCount
+	p.MaterialsOnBoard[BlackKing-1] = 1
+
 }
 
 func findEnPassantCaptureSquare(move Move) Square {
@@ -411,7 +567,9 @@ func (p *Position) Copy() *Position {
 		copyMap,
 		p.HalfMoveClock,
 		mob,
-		p.MiddlegamePSQT,
-		p.EndgamePSQT,
+		p.WhiteMiddlegamePSQT,
+		p.WhiteEndgamePSQT,
+		p.BlackMiddlegamePSQT,
+		p.BlackEndgamePSQT,
 	}
 }

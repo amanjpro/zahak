@@ -126,6 +126,8 @@ func positionFromFen(fen string) Position {
 		mob,
 		0,
 		0,
+		0,
+		0,
 	}
 
 	p.MaterialAndPSQT()
