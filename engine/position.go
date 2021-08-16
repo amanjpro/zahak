@@ -5,13 +5,16 @@ import (
 )
 
 type Position struct {
-	Board         *Bitboard
-	EnPassant     Square
-	Tag           PositionTag
-	hash          uint64
-	pawnhash      uint64
-	Positions     map[uint64]int
-	HalfMoveClock uint8
+	Board            *Bitboard
+	EnPassant        Square
+	Tag              PositionTag
+	hash             uint64
+	pawnhash         uint64
+	Positions        map[uint64]int
+	HalfMoveClock    uint8
+	MaterialsOnBoard [12]int16
+	MiddlegamePSQT   int16
+	EndgamePSQT      int16
 }
 
 type PositionTag uint8
@@ -380,6 +383,10 @@ func (p *Position) Hash() uint64 {
 	return p.hash
 }
 
+func (p *Position) MaterialAndPSQT() {
+	// TODO: Do me
+}
+
 func findEnPassantCaptureSquare(move Move) Square {
 	rank := move.Source().Rank()
 	file := move.Destination().File()
@@ -391,6 +398,10 @@ func (p *Position) Copy() *Position {
 	for k, v := range p.Positions {
 		copyMap[k] = v
 	}
+	var mob [12]int16
+	for i, m := range p.MaterialsOnBoard {
+		mob[i] = m
+	}
 	return &Position{
 		p.Board.copy(),
 		p.EnPassant,
@@ -399,5 +410,8 @@ func (p *Position) Copy() *Position {
 		p.pawnhash,
 		copyMap,
 		p.HalfMoveClock,
+		mob,
+		p.MiddlegamePSQT,
+		p.EndgamePSQT,
 	}
 }

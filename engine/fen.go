@@ -114,6 +114,7 @@ func positionFromFen(fen string) Position {
 	if err != nil {
 		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
 	}
+	var mob [12]int16
 	p := Position{
 		bitboardFromFen(fen),
 		NoSquare,
@@ -122,7 +123,12 @@ func positionFromFen(fen string) Position {
 		0,
 		make(map[uint64]int, 100),
 		uint8(halfMoveClock),
+		mob,
+		0,
+		0,
 	}
+
+	p.MaterialAndPSQT()
 
 	if parts[1] == "b" {
 		p.SetTag(BlackToMove)
