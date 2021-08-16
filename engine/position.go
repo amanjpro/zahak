@@ -408,8 +408,8 @@ func (p *Position) MaterialAndPSQT() {
 		blackPawnsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		blackCentipawnsEG += LatePawnPst[index]
-		blackCentipawnsMG += EarlyPawnPst[index]
+		blackCentipawnsEG += LatePieceSquareTables[BlackPawn-1][index]
+		blackCentipawnsMG += EarlyPieceSquareTables[BlackPawn-1][index]
 		pieceIter ^= mask
 	}
 
@@ -418,8 +418,8 @@ func (p *Position) MaterialAndPSQT() {
 		blackKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		blackCentipawnsEG += LateKnightPst[index]
-		blackCentipawnsMG += EarlyKnightPst[index]
+		blackCentipawnsEG += LatePieceSquareTables[BlackKnight-1][index]
+		blackCentipawnsMG += EarlyPieceSquareTables[BlackKnight-1][index]
 		pieceIter ^= mask
 	}
 
@@ -428,8 +428,8 @@ func (p *Position) MaterialAndPSQT() {
 		blackBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		blackCentipawnsEG += LateBishopPst[index]
-		blackCentipawnsMG += EarlyBishopPst[index]
+		blackCentipawnsEG += LatePieceSquareTables[BlackBishop-1][index]
+		blackCentipawnsMG += EarlyPieceSquareTables[BlackBishop-1][index]
 		pieceIter ^= mask
 	}
 
@@ -438,8 +438,8 @@ func (p *Position) MaterialAndPSQT() {
 		blackRooksCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		blackCentipawnsEG += LateRookPst[index]
-		blackCentipawnsMG += EarlyRookPst[index]
+		blackCentipawnsEG += LatePieceSquareTables[BlackRook-1][index]
+		blackCentipawnsMG += EarlyPieceSquareTables[BlackRook-1][index]
 		pieceIter ^= mask
 	}
 
@@ -448,8 +448,8 @@ func (p *Position) MaterialAndPSQT() {
 		blackQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		blackCentipawnsEG += LateQueenPst[index]
-		blackCentipawnsMG += EarlyQueenPst[index]
+		blackCentipawnsEG += LatePieceSquareTables[BlackQueen-1][index]
+		blackCentipawnsMG += EarlyPieceSquareTables[BlackQueen-1][index]
 		pieceIter ^= mask
 	}
 
@@ -457,8 +457,8 @@ func (p *Position) MaterialAndPSQT() {
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		blackCentipawnsEG += LateKingPst[index]
-		blackCentipawnsMG += EarlyKingPst[index]
+		blackCentipawnsEG += LatePieceSquareTables[BlackKing-1][index]
+		blackCentipawnsMG += EarlyPieceSquareTables[BlackKing-1][index]
 		pieceIter ^= mask
 	}
 
@@ -468,8 +468,8 @@ func (p *Position) MaterialAndPSQT() {
 		whitePawnsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePawnPst[Flip[index]]
-		whiteCentipawnsMG += EarlyPawnPst[Flip[index]]
+		whiteCentipawnsEG += LatePieceSquareTables[WhitePawn-1][index]
+		whiteCentipawnsMG += EarlyPieceSquareTables[WhitePawn-1][index]
 		pieceIter ^= mask
 	}
 
@@ -478,8 +478,8 @@ func (p *Position) MaterialAndPSQT() {
 		whiteKnightsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		whiteCentipawnsEG += LateKnightPst[Flip[index]]
-		whiteCentipawnsMG += EarlyKnightPst[Flip[index]]
+		whiteCentipawnsEG += LatePieceSquareTables[WhiteKnight-1][index]
+		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteKnight-1][index]
 		pieceIter ^= mask
 	}
 
@@ -488,8 +488,8 @@ func (p *Position) MaterialAndPSQT() {
 		whiteBishopsCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		whiteCentipawnsEG += LateBishopPst[Flip[index]]
-		whiteCentipawnsMG += EarlyBishopPst[Flip[index]]
+		whiteCentipawnsEG += LatePieceSquareTables[WhiteBishop-1][index]
+		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteBishop-1][index]
 		pieceIter ^= mask
 	}
 
@@ -498,8 +498,8 @@ func (p *Position) MaterialAndPSQT() {
 		whiteRooksCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		whiteCentipawnsEG += LateRookPst[Flip[index]]
-		whiteCentipawnsMG += EarlyRookPst[Flip[index]]
+		whiteCentipawnsEG += LatePieceSquareTables[WhiteRook-1][index]
+		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteRook-1][index]
 		pieceIter ^= mask
 	}
 
@@ -508,8 +508,8 @@ func (p *Position) MaterialAndPSQT() {
 		whiteQueensCount++
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		whiteCentipawnsEG += LateQueenPst[Flip[index]]
-		whiteCentipawnsMG += EarlyQueenPst[Flip[index]]
+		whiteCentipawnsEG += LatePieceSquareTables[WhiteQueen-1][index]
+		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteQueen-1][index]
 		pieceIter ^= mask
 	}
 
@@ -517,8 +517,8 @@ func (p *Position) MaterialAndPSQT() {
 	for pieceIter != 0 {
 		index := bits.TrailingZeros64(pieceIter)
 		mask := SquareMask[index]
-		whiteCentipawnsEG += LateKingPst[Flip[index]]
-		whiteCentipawnsMG += EarlyKingPst[Flip[index]]
+		whiteCentipawnsEG += LatePieceSquareTables[WhiteKing-1][index]
+		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteKing-1][index]
 		pieceIter ^= mask
 	}
 

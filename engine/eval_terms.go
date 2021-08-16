@@ -202,3 +202,49 @@ var Flip = [64]int16{
 	8, 9, 10, 11, 12, 13, 14, 15,
 	0, 1, 2, 3, 4, 5, 6, 7,
 }
+
+var EarlyPieceSquareTables [12][64]int16
+var LatePieceSquareTables [12][64]int16
+
+func init() {
+	for j := 0; j < 64; j++ {
+		// White pawn
+		EarlyPieceSquareTables[WhitePawn-1][j] = EarlyPawnPst[Flip[j]]
+		LatePieceSquareTables[WhitePawn-1][j] = LatePawnPst[Flip[j]]
+		// White knight
+		EarlyPieceSquareTables[WhiteKnight-1][j] = EarlyKnightPst[Flip[j]]
+		LatePieceSquareTables[WhiteKnight-1][j] = LateKnightPst[Flip[j]]
+		// White bishop
+		EarlyPieceSquareTables[WhiteBishop-1][j] = EarlyBishopPst[Flip[j]]
+		LatePieceSquareTables[WhiteBishop-1][j] = LateBishopPst[Flip[j]]
+		// White rook
+		EarlyPieceSquareTables[WhiteRook-1][j] = EarlyRookPst[Flip[j]]
+		LatePieceSquareTables[WhiteRook-1][j] = LateRookPst[Flip[j]]
+		// White queen
+		EarlyPieceSquareTables[WhiteQueen-1][j] = EarlyQueenPst[Flip[j]]
+		LatePieceSquareTables[WhiteQueen-1][j] = LateQueenPst[Flip[j]]
+		// White king
+		EarlyPieceSquareTables[WhiteKing-1][j] = EarlyKingPst[Flip[j]]
+		LatePieceSquareTables[WhiteKing-1][j] = LateKingPst[Flip[j]]
+
+		// Black pawn
+		EarlyPieceSquareTables[BlackPawn-1][j] = EarlyPawnPst[j]
+		LatePieceSquareTables[BlackPawn-1][j] = LatePawnPst[j]
+		// Black knight
+		EarlyPieceSquareTables[BlackKnight-1][j] = EarlyKnightPst[j]
+		LatePieceSquareTables[BlackKnight-1][j] = LateKnightPst[j]
+		// Black bishop
+		EarlyPieceSquareTables[BlackBishop-1][j] = EarlyBishopPst[j]
+		LatePieceSquareTables[BlackBishop-1][j] = LateBishopPst[j]
+		// Black rook
+		EarlyPieceSquareTables[BlackRook-1][j] = EarlyRookPst[j]
+		LatePieceSquareTables[BlackRook-1][j] = LateRookPst[j]
+		// Black queen
+		EarlyPieceSquareTables[BlackQueen-1][j] = EarlyQueenPst[j]
+		LatePieceSquareTables[BlackQueen-1][j] = LateQueenPst[j]
+		// Black king
+		EarlyPieceSquareTables[BlackKing-1][j] = EarlyKingPst[j]
+		LatePieceSquareTables[BlackKing-1][j] = LateKingPst[j]
+
+	}
+}
