@@ -245,6 +245,5 @@ func init() {
 		// Black king
 		EarlyPieceSquareTables[BlackKing-1][j] = EarlyKingPst[j]
 		LatePieceSquareTables[BlackKing-1][j] = LateKingPst[j]
-
 	}
 }

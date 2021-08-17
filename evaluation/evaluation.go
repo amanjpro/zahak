@@ -103,7 +103,7 @@ func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 
 func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 	var drawDivider int16 = 0
-	position.MaterialAndPSQT()
+	// position.MaterialAndPSQT()
 	board := position.Board
 	turn := position.Turn()
 
