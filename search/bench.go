@@ -69,8 +69,7 @@ func RunBenchmark() {
 	nodes := int64(0)
 	totalTime := float64(0)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
-	var pawnHashHits int64 = 0
-	var pawnHashMisses int64 = 0
+	var pawnHashHits, pawnHashMisses int64
 	for _, fen := range fens {
 		runner.Engines[0].TranspositionTable = NewCache(cacheSize)
 		runner.Engines[0].Pawnhash = NewPawnCache(1)

@@ -45,10 +45,10 @@ func (c *PawnCache) Get(hash uint64) (int16, int16, bool) {
 	key := c.hash(hash)
 	item := c.items[key]
 	if item.Hash == hash {
-		c.PawnhashMisses += 1
+		c.PawnhashHits += 1
 		return item.Middlegame, item.Endgame, true
 	}
-	c.PawnhashHits += 1
+	c.PawnhashMisses += 1
 	return 0, 0, false
 }
 
