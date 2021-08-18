@@ -6,7 +6,6 @@ import (
 
 type Game struct {
 	position      *Position
-	startPosition Position
 	moves         []Move
 	numberOfMoves uint16
 }
@@ -51,13 +50,11 @@ func (g *Game) MoveClock() uint16 {
 
 func NewGame(
 	position *Position,
-	startPosition Position,
 	moves []Move,
 	numberOfMoves uint16) Game {
 
 	return Game{
 		position,
-		startPosition,
 		moves,
 		numberOfMoves,
 	}

@@ -130,8 +130,6 @@ func positionFromFen(fen string) Position {
 		0,
 	}
 
-	p.MaterialAndPSQT()
-
 	if parts[1] == "b" {
 		p.SetTag(BlackToMove)
 	} else {
@@ -172,6 +170,7 @@ func positionFromFen(fen string) Position {
 	}
 
 	p.Positions[p.Hash()] = 1
+	p.MaterialAndPSQT()
 	return p
 }
 
@@ -189,7 +188,6 @@ func FromFen(fen string) Game {
 
 	return NewGame(
 		&p,
-		*p.Copy(),
 		[]Move{},
 		uint16(moveCount),
 	)

@@ -192,16 +192,15 @@ func TestUnMakeMovePromotion(t *testing.T) {
 
 func TestIncrementalEval(t *testing.T) {
 	for _, pos := range positions {
+		// compute the materials first first
+		originalEval := getEval(pos)
 		for _, mov := range pos.PseudoLegalMoves() {
-			pos.MaterialAndPSQT()
 			if ep, tg, hc, ok := pos.MakeMove(mov); ok {
 				incrementalEval := getEval(pos)
 				pos.MaterialAndPSQT()
 				fromScratchEval := getEval(pos)
 				pos.UnMakeMove(mov, tg, ep, hc)
 				decrementalEval := getEval(pos)
-				pos.MaterialAndPSQT()
-				originalEval := getEval(pos)
 				if incrementalEval != fromScratchEval {
 					t.Errorf("Updated eval != Fresh eval ->\nMov: %v, Fresh Eval: %d, Incremental Eval: %d, \nPos:%v\n", mov.ToString(), fromScratchEval, incrementalEval, pos.Fen())
 				}
@@ -218,8 +217,6 @@ func getEval(p *Position) int16 {
 	w := []int16{100, 300, 350, 400, 900, 2000}
 	for i := 0; i < 6; i++ {
 		wcp += p.MaterialsOnBoard[i] * w[i]
-	}
-	for i := 0; i < 6; i++ {
 		bcp += p.MaterialsOnBoard[i+6] * w[i]
 	}
 	wcp += p.WhiteEndgamePSQT
