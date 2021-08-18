@@ -116,6 +116,8 @@ The history of Zahak's rating is summerized here:
 - Internal Iterative Reduction (for non-PV nodes only)
 - SEE pruning both in QS and normal search
 - ProbCut
+- Singular Extension
+- Multi-Cut
 
 ## Evaluation
 
