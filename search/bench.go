@@ -69,6 +69,7 @@ func RunBenchmark() {
 	nodes := int64(0)
 	totalTime := float64(0)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
+	var pawnHashHits, pawnHashMisses int64
 	for _, fen := range fens {
 		runner.Engines[0].TranspositionTable = NewCache(cacheSize)
 		runner.Engines[0].Pawnhash = NewPawnCache(1)
@@ -76,6 +77,8 @@ func RunBenchmark() {
 		runner.Engines[0].Position = game.Position()
 		runner.Engines[0].Search(depth)
 		nodes += runner.nodesVisited
+		pawnHashMisses += runner.Engines[0].Pawnhash.PawnhashMisses
+		pawnHashHits += runner.Engines[0].Pawnhash.PawnhashHits
 		totalTime += runner.Engines[0].TotalTime
 	}
 
@@ -83,6 +86,6 @@ func RunBenchmark() {
 	fmt.Printf("Time spent %d\n", int64(totalTime*1000))
 	fmt.Printf("Nodes %d\n", nodes)
 	fmt.Printf("nps %d\n", int64(float64(nodes)/totalTime))
-	fmt.Printf("Pawn Miss %d\n", runner.Engines[0].Pawnhash.PawnhashHits)
-	fmt.Printf("Pawn Hit %d\n", runner.Engines[0].Pawnhash.PawnhashMisses)
+	fmt.Printf("Pawn Miss %d\n", pawnHashMisses)
+	fmt.Printf("Pawn Hit %d\n", pawnHashHits)
 }
