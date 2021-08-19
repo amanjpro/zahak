@@ -126,6 +126,26 @@ func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 	blackCentipawnsMG := position.BlackMiddlegamePSQT
 	blackCentipawnsEG := position.BlackEndgamePSQT
 
+	allPiecesCount :=
+		whitePawnsCount +
+			blackPawnsCount +
+			whiteKnightsCount +
+			blackKnightsCount +
+			whiteBishopsCount +
+			blackBishopsCount +
+			whiteRooksCount +
+			blackRooksCount +
+			whiteQueensCount +
+			blackQueensCount
+
+	// KPK endgame, ask the bitbase
+	if allPiecesCount == 1 && (whitePawnsCount == 1 || blackPawnsCount == 1) {
+		if whitePawnsCount == 1 {
+			return KpkProbe(board, White, turn)
+		}
+		return KpkProbe(board, Black, turn)
+	}
+
 	whites := board.GetWhitePieces()
 	blacks := board.GetBlackPieces()
 	all := whites | blacks
@@ -171,17 +191,6 @@ func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 
 	// Draw scenarios
 	{
-		allPiecesCount :=
-			whitePawnsCount +
-				blackPawnsCount +
-				whiteKnightsCount +
-				blackKnightsCount +
-				whiteBishopsCount +
-				blackBishopsCount +
-				whiteRooksCount +
-				blackRooksCount +
-				whiteQueensCount +
-				blackQueensCount
 
 		if (allPiecesCount == 2 && whiteRooksCount == 1 && (blackKnightsCount == 1 || blackBishopsCount == 1)) ||
 			(allPiecesCount == 2 && blackRooksCount == 1 && (whiteKnightsCount == 1 || whiteBishopsCount == 1)) ||

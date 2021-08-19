@@ -232,3 +232,42 @@ func TestKingSafetyBlackNotCastling(t *testing.T) {
 		t.Errorf(err)
 	}
 }
+
+func TestKpkDraw(t *testing.T) {
+	fen := "1k6/7p/8/8/8/8/8/7K w - - 0 1"
+	game := FromFen(fen)
+
+	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
+	expected := int16(0)
+
+	if actual != expected {
+		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
+
+func TestKpkLoss(t *testing.T) {
+	fen := "8/7p/8/8/4k3/8/8/2K5 w - - 10 6"
+	game := FromFen(fen)
+
+	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
+	expected := -MAX_NON_CHECKMATE + 1000
+
+	if actual != expected {
+		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
+
+func TestKpkWin(t *testing.T) {
+	fen := "8/7p/8/3k4/8/8/8/2K5 b - - 9 5"
+	game := FromFen(fen)
+
+	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
+	expected := MAX_NON_CHECKMATE - 1000
+
+	if actual != expected {
+		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
+		t.Errorf(err)
+	}
+}
