@@ -487,7 +487,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						if !firstLayerOfSingularity {
 							e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, LowerBound, e.Ply)
 						}
-						e.AddHistory(hashmove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
+						e.AddHistory(hashmove, currentMove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
 					return bestscore
 				}
@@ -635,7 +635,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						if !firstLayerOfSingularity {
 							e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
 						}
-						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
+						e.AddHistory(move, currentMove, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
 					return score
 				}
