@@ -57,19 +57,19 @@ GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes.
 __Please Note__ that GRL tests the engiens with their default hash size, which
 means it doesn't really represent the actual strength/weakness of the engines
 in the list.  As of version 4.0, Zahak is also listed on [CEGT 40/4 Rating
-List](http://www.cegt.net/blitz.htm).
+List](http://www.cegt.net/blitz.htm). Also, starting from version 5.0, Zahak is listed on [Fast GM rating list 60+06 too](http://www.fastgm.de/60-0.60.html).
 
 The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   |
-|-------------|------------------------------|-------------------------|---------------------------|---------------------------|
-| 5.0         | 2714                         | 2686                    | 2553                      | 2665 (unstable rating)    |
-| 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    |
-| 3.0         | 2407                         | 2378                    | N/A                       | N/A                       |
-| 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       | N/A                       |
-| 1.0.0       | 2011                         | N/A                     | N/A                       | N/A                       |
-| 0.3.0       | 1922                         | N/A                     | N/A                       | N/A                       |
-| 0.2.1       | 1824                         | N/A                     | N/A                       | N/A                       |
+| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   | **Fast GM 60+06"** |
+|-------------|------------------------------|-------------------------|---------------------------|---------------------------|--------------------|
+| 5.0         | 2712                         | 2686                    | 2553                      | 2671 (unstable rating)    | 2505               |
+| 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    | N/A                |
+| 3.0         | 2407                         | 2378                    | N/A                       | N/A                       | N/A                |
+| 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       | N/A                       | N/A                |
+| 1.0.0       | 2011                         | N/A                     | N/A                       | N/A                       | N/A                |
+| 0.3.0       | 1922                         | N/A                     | N/A                       | N/A                       | N/A                |
+| 0.2.1       | 1824                         | N/A                     | N/A                       | N/A                       | N/A                |
 
 # Implemented Features:
 
