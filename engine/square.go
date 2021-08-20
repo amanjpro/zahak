@@ -39,8 +39,10 @@ func (sq Square) String() string {
 	return sq.Name()
 }
 
+const DarkSquares uint64 = 0xAA55AA55AA55AA55
+
 func (sq Square) GetColor() Color {
-	if uint64(sq)&0xAA55AA55AA55AA55 != 0 {
+	if (DarkSquares>>uint64(sq))&1 != 0 {
 		return Black
 	}
 	return White

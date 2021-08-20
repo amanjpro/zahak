@@ -42,6 +42,9 @@ const WhiteFShield = uint64(1<<F2 | 1<<F3)
 const WhiteGShield = uint64(1<<G2 | 1<<G3)
 const WhiteHShield = uint64(1<<H2 | 1<<H3)
 
+const Rank2Fill = uint64(1<<A2 | 1<<B2 | 1<<C2 | 1<<D2 | 1<<E2 | 1<<F2 | 1<<G2 | 1<<H2)
+const Rank7Fill = uint64(1<<A7 | 1<<B7 | 1<<C7 | 1<<D7 | 1<<E7 | 1<<F7 | 1<<G7 | 1<<H7)
+
 func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 	if isEndgame {
 		switch piece {
@@ -244,6 +247,18 @@ func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 			(allPiecesCount == 2 && (whiteKnightsCount == 1 || whiteBishopsCount == 1) && blackPawnsCount == 1) ||
 			(allPiecesCount == 3 && blackRooksCount == 1 && whiteRooksCount == 1 && (whiteKnightsCount == 1 || blackKnightsCount == 1 || blackBishopsCount == 1 || whiteBishopsCount == 1)) {
 			drawDivider = 3
+		} else if whiteRooksCount+blackRooksCount+whiteKnightsCount+blackKnightsCount+whiteQueensCount+blackQueensCount == 0 &&
+			abs16(whitePawnsCount-blackPawnsCount) <= 1 && whiteBishopsCount == 1 && blackBishopsCount == 1 {
+			wColor := Square(bits.TrailingZeros64(board.GetBitboardOf(WhiteBishop))).GetColor()
+			bColor := Square(bits.TrailingZeros64(board.GetBitboardOf(BlackBishop))).GetColor()
+			// Opposite Color Bishop
+			if wColor != bColor {
+				promotingWhitePawns := bbWhitePawn & Rank7Fill
+				promotingBlackPawns := bbBlackPawn & Rank2Fill
+				if promotingBlackPawns == 0 && promotingWhitePawns == 0 {
+					drawDivider = 3
+				}
+			}
 		}
 	}
 
@@ -724,4 +739,11 @@ func min16(x int16, y int16) int16 {
 		return x
 	}
 	return y
+}
+
+func abs16(x int16) int16 {
+	if x >= 0 {
+		return x
+	}
+	return -x
 }
