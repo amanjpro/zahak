@@ -138,12 +138,61 @@ func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 			whiteQueensCount +
 			blackQueensCount
 
+	bbBlackPawn := board.GetBitboardOf(BlackPawn)
+	bbWhitePawn := board.GetBitboardOf(WhitePawn)
+	// Special endgame scenarios
 	// KPK endgame, ask the bitbase
 	if allPiecesCount == 1 && (whitePawnsCount == 1 || blackPawnsCount == 1) {
 		if whitePawnsCount == 1 {
 			return KpkProbe(board, White, turn)
 		}
 		return KpkProbe(board, Black, turn)
+	} else if allPiecesCount == 2 && ((whitePawnsCount == 1 && whiteBishopsCount == 1) || (blackPawnsCount == 1 && blackBishopsCount == 1)) {
+		queeningColor := NoColor
+		// Is it wrong bishop?
+		if whiteBishopsCount == 1 { // White is winning
+			bishopColor := Square(bits.TrailingZeros64(board.GetBitboardOf(WhiteBishop))).GetColor()
+			if bbWhitePawn&H_FileFill != 0 {
+				queeningColor = Black
+			} else if bbWhitePawn&A_FileFill != 0 {
+				queeningColor = White
+			}
+			if queeningColor != NoColor && queeningColor != bishopColor {
+				res := KpkProbe(board, White, turn)
+				if res == 0 {
+					return 0
+				} else if turn == White {
+					return res + BlackBishop.Weight()
+				} else {
+					return res - BlackBishop.Weight()
+				}
+			}
+		} else { // Black is winning
+			bishopColor := Square(bits.TrailingZeros64(board.GetBitboardOf(BlackBishop))).GetColor()
+			if bbBlackPawn&H_FileFill != 0 {
+				queeningColor = White
+			} else if bbBlackPawn&A_FileFill != 0 {
+				queeningColor = Black
+			}
+			if queeningColor != NoColor && queeningColor != bishopColor {
+				res := KpkProbe(board, Black, turn)
+				if res == 0 {
+					return 0
+				} else if turn == Black {
+					return res + BlackBishop.Weight()
+				} else {
+					return res - BlackBishop.Weight()
+				}
+			}
+			res := KpkProbe(board, Black, turn)
+			if res == 0 {
+				return 0
+			} else if turn == Black {
+				return res + BlackBishop.Weight()
+			} else {
+				return res - BlackBishop.Weight()
+			}
+		}
 	}
 
 	whites := board.GetWhitePieces()
@@ -155,9 +204,6 @@ func Evaluate(position *Position, pawnhash *PawnCache) int16 {
 
 	bbBlackRook := board.GetBitboardOf(BlackRook)
 	bbWhiteRook := board.GetBitboardOf(WhiteRook)
-
-	bbBlackPawn := board.GetBitboardOf(BlackPawn)
-	bbWhitePawn := board.GetBitboardOf(WhitePawn)
 
 	whiteKingIndex := bits.TrailingZeros64(bbWhiteKing)
 	blackKingIndex := bits.TrailingZeros64(bbBlackKing)

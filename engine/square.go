@@ -40,7 +40,7 @@ func (sq Square) String() string {
 }
 
 func (sq Square) GetColor() Color {
-	if ((sq / 8) % 2) == (sq % 2) {
+	if uint64(sq)&0xAA55AA55AA55AA55 != 0 {
 		return Black
 	}
 	return White
