@@ -251,7 +251,7 @@ func TestKpkLoss(t *testing.T) {
 	game := FromFen(fen)
 
 	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-	expected := -MAX_NON_CHECKMATE + 1000
+	expected := -WinningKpk + (8 - 2)
 
 	if actual != expected {
 		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)
@@ -264,7 +264,7 @@ func TestKpkWin(t *testing.T) {
 	game := FromFen(fen)
 
 	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-	expected := MAX_NON_CHECKMATE - 1000
+	expected := WinningKpk - (8 - 2)
 
 	if actual != expected {
 		err := fmt.Sprintf("Expected: %d\nGot: %d\n", expected, actual)

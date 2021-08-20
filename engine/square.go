@@ -61,7 +61,7 @@ func (s Square) Name() string {
 }
 
 func (sq Square) File() File {
-	return File(sq % 8)
+	return File(sq & 7)
 }
 
 func (sq Square) Rank() Rank {
