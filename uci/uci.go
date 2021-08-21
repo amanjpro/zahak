@@ -178,7 +178,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	fields := strings.Fields(cmd)
 
 	pos := game.Position()
-	noTC := false
+	noTC := true
 	timeToThink := 0
 	inc := 0
 	movesToGo := 0
@@ -229,6 +229,9 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		uci.runner.Engines[i].Ply = ply
 	}
 
+	if timeToThink == 0 && inc == 0 {
+		noTC = true
+	}
 	if !noTC {
 		if pondering {
 			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
