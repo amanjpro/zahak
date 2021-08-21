@@ -34,6 +34,9 @@ func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
 		EmptyMove,
 		true,
 		false,
+		EmptyMove,
+		EmptyMove,
+		1,
 	}
 
 	expectedOrder := []Move{10, 20, 18, 17, 16, 15, 14, 13, 12, 11, 9, 8, 7, 6, 5, 4, 3, 2, 1, 19}
@@ -82,6 +85,9 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 		EmptyMove,
 		true,
 		false,
+		EmptyMove,
+		EmptyMove,
+		1,
 	}
 
 	expectedOrder := []Move{capture, 20, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 19}
@@ -143,6 +149,9 @@ func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 		EmptyMove,
 		false,
 		false,
+		EmptyMove,
+		EmptyMove,
+		1,
 	}
 
 	expectedOrder := []Move{20, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 19}

@@ -17,6 +17,9 @@ type MovePicker struct {
 	currentMove     Move
 	canUseHashMove  bool
 	isQuiescence    bool
+	killer1         Move
+	killer2         Move
+	killerIndex     int
 }
 
 func EmptyMovePicker() *MovePicker {
@@ -60,6 +63,9 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 			nextQuiet = 1
 		}
 	}
+
+	mp.killer1, mp.killer2 = e.KillerMoveAt(searchHeight)
+	mp.killerIndex = 1
 	mp.quietMoveList.Size = 0
 	mp.quietMoveList.Next = nextQuiet
 	mp.quietMoveList.IsScored = false
@@ -118,7 +124,6 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 		if move == mp.hashmove {
 			scores[i] = 900_000_000
 			mp.captureMoveList.Swap(0, i)
-			mp.captureMoveList.Next = 1
 			if highestNonHashIndex == 0 {
 				highestNonHashIndex = i
 			}
@@ -171,8 +176,8 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 
 func (mp *MovePicker) scoreQuietMoves() int {
 
-	var highestNonHashIndex int = -1
-	var highestNonHashScore int32 = math.MinInt32
+	var highestNonSpecialIndex int = -1
+	var highestNonSpecialScore int32 = math.MinInt32
 	engine := mp.engine
 	depthLeft := mp.depthLeft
 	searchHeight := mp.searchHeight
@@ -184,6 +189,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 		counterMove = engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
 	}
 
+	// firstIndex := mp.quietMoveList.Next
 	_ = scores[size-1]
 	_ = moves[size-1]
 
@@ -193,43 +199,45 @@ func (mp *MovePicker) scoreQuietMoves() int {
 		if move == mp.hashmove {
 			scores[i] = 900_000_000
 			mp.quietMoveList.Swap(0, i)
-			mp.quietMoveList.Next = 1
-			if highestNonHashIndex == 0 {
-				highestNonHashIndex = i
+			if highestNonSpecialIndex == 0 {
+				highestNonSpecialIndex = i
 			}
 			continue
 		}
 
-		dest := move.Destination()
-		piece := move.MovingPiece()
 		killer := engine.KillerMoveScore(move, searchHeight)
 		var history int32
 
 		if killer != 0 {
 			scores[i] = killer
-			goto end
-		}
+			// mp.quietMoveList.Swap(firstIndex, i)
+			// if highestNonSpecialIndex == firstIndex {
+			// 	highestNonSpecialIndex = i
+			// }
+			// firstIndex += 1
+			// continue
 
-		if move == counterMove {
+		} else if move == counterMove {
 			scores[i] = 70_000_000
-			goto end
+		} else {
+			dest := move.Destination()
+			piece := move.MovingPiece()
+			history = engine.MoveHistoryScore(piece, dest, depthLeft)
+			scores[i] = history
 		}
 
-		history = engine.MoveHistoryScore(piece, dest, depthLeft)
-		scores[i] = history
-
-	end:
-		if highestNonHashScore < scores[i] {
-			highestNonHashIndex = i
-			highestNonHashScore = scores[i]
+		if highestNonSpecialScore < scores[i] {
+			highestNonSpecialIndex = i
+			highestNonSpecialScore = scores[i]
 		}
 	}
 	mp.quietMoveList.IsScored = true
-	return highestNonHashIndex
+	return highestNonSpecialIndex
 }
 
 func (mp *MovePicker) Reset() {
 	mp.canUseHashMove = mp.hashmove != EmptyMove
+	mp.killerIndex = 1
 	mp.quietMoveList.Next = 0
 	mp.captureMoveList.Next = 0
 	if mp.canUseHashMove {
@@ -292,6 +300,24 @@ func (mp *MovePicker) getNextCapture() Move {
 }
 
 func (mp *MovePicker) getNextQuiet() Move {
+	// if mp.killerIndex == 1 {
+	// 	if mp.killer1 != EmptyMove && mp.engine.Position.IsPseudoLegal(mp.killer1) {
+	// 		mp.killerIndex += 1
+	// 		mp.quietMoveList.IncNext()
+	// 		return mp.killer1
+	// 	} else {
+	// 		mp.killerIndex += 1
+	// 	}
+	// } else if mp.killerIndex == 2 {
+	// 	if mp.killer2 != EmptyMove && mp.engine.Position.IsPseudoLegal(mp.killer2) {
+	// 		mp.killerIndex += 1
+	// 		mp.quietMoveList.IncNext()
+	// 		return mp.killer2
+	// 	} else {
+	// 		mp.killerIndex += 1
+	// 	}
+	// }
+
 	if mp.quietMoveList.IsEmpty() {
 		mp.generateQuietMoves()
 	}

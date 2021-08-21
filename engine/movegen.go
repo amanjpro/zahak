@@ -6,8 +6,10 @@ import (
 
 func (p *Position) IsPseudoLegal(move Move) bool {
 	turn := p.Turn()
-	src := SquareMask[move.Source()]
-	dest := SquareMask[move.Destination()]
+	src := move.Source()
+	dest := move.Destination()
+	srcMask := SquareMask[src]
+	destMask := SquareMask[dest]
 	board := p.Board
 	var ownPieces, enemyPieces, enemyKing, enemyPawns uint64
 	var canQueenSideCastle, canKingSideCastle bool
@@ -34,54 +36,39 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 	allPieces := enemyPieces | ownPieces
 
 	// we are moving own pieces, and do not capture own pieces
-	if ownPieces&src == 0 || ownPieces&dest != 0 {
+	if ownPieces&srcMask == 0 || ownPieces&destMask != 0 {
 		return false
 	}
 	if move.IsEnPassant() {
 		ep := findEnPassantCaptureSquare(move)
-		if ep != p.EnPassant || enemyPawns&dest == 0 {
+		if ep != p.EnPassant || enemyPawns&destMask == 0 {
+			return false
+		}
+	} else if move.IsCapture() {
+		// the board is consistent with capturing piece
+		// if we do capture enemy pieces, we should have Capture tag
+		if enemyPieces&destMask != 0 {
+			return false
+		}
+		cp := move.CapturedPiece()
+		if board.GetBitboardOf(cp)&destMask == 0 {
 			return false
 		}
 	}
 
-	// if we do capture enemy pieces, we should have Capture tag
-	if enemyPieces&dest != 0 && !move.IsCapture() {
+	// We are moving the right piece
+	movingPiece := move.MovingPiece()
+	if board.GetBitboardOf(movingPiece)&destMask == 0 {
 		return false
 	}
 
-	// the board is consistent with capturing piece
-	if move.IsCapture() {
-		cp := move.CapturedPiece()
-		if cp == WhitePawn && board.whitePawn&dest == 0 {
-			return false
-		} else if cp == WhiteKnight && board.whiteKnight&dest == 0 {
-			return false
-		} else if cp == WhiteBishop && board.whiteBishop&dest == 0 {
-			return false
-		} else if cp == WhiteRook && board.whiteRook&dest == 0 {
-			return false
-		} else if cp == WhiteQueen && board.whiteQueen&dest == 0 {
-			return false
-		} else if cp == BlackPawn && board.blackPawn&dest == 0 {
-			return false
-		} else if cp == BlackKnight && board.blackKnight&dest == 0 {
-			return false
-		} else if cp == BlackBishop && board.blackBishop&dest == 0 {
-			return false
-		} else if cp == BlackRook && board.blackRook&dest == 0 {
-			return false
-		} else if cp == BlackQueen && board.blackQueen&dest == 0 {
-			return false
-		}
-	}
-
 	// We are not capturing enemy king
-	if enemyKing&dest != 0 {
+	if enemyKing&destMask != 0 {
 		return false
 	}
 
 	// Check that sliding pieces (2 push pawn, rook, bishop and queen, are not jumping over anything)
-	movingPieceType := move.MovingPiece().Type()
+	movingPieceType := movingPiece.Type()
 	if movingPieceType == Queen || movingPieceType == Bishop || movingPieceType == Rook || movingPieceType == Pawn {
 		squares := squaresInBetween[src][dest]
 		if squares&allPieces != 0 {
