@@ -39,8 +39,10 @@ func (sq Square) String() string {
 	return sq.Name()
 }
 
+const DarkSquares uint64 = 0xAA55AA55AA55AA55
+
 func (sq Square) GetColor() Color {
-	if ((sq / 8) % 2) == (sq % 2) {
+	if (DarkSquares>>uint64(sq))&1 != 0 {
 		return Black
 	}
 	return White
@@ -61,7 +63,7 @@ func (s Square) Name() string {
 }
 
 func (sq Square) File() File {
-	return File(sq % 8)
+	return File(sq & 7)
 }
 
 func (sq Square) Rank() Rank {
