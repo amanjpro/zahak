@@ -429,7 +429,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 
 				// Search to reduced depth with a zero window a bit lower than ttScore
-				threshold := max16(nEval-2*int16(depthLeft), -CHECKMATE_EVAL)
+				threshold := max16(nEval-3*int16(depthLeft)/2, -CHECKMATE_EVAL)
 
 				e.skipMove = hashmove
 				e.skipHeight = searchHeight
@@ -457,7 +457,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						e.skipMove = hashmove
 						e.innerLines[searchHeight].Recycle()
 						e.MovePickers[searchHeight] = e.TempMovePicker
-						score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
+						score = e.alphaBeta((depthLeft+5)/3, searchHeight, beta-1, beta)
 						e.MovePickers[searchHeight] = movePicker
 						e.innerLines[searchHeight].Recycle()
 						e.skipMove = EmptyMove
