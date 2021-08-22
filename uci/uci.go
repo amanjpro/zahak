@@ -178,7 +178,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	fields := strings.Fields(cmd)
 
 	pos := game.Position()
-	noTC := true
+	noTC := false
 	timeToThink := 0
 	inc := 0
 	movesToGo := 0
