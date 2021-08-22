@@ -11,6 +11,7 @@ import (
 )
 
 func (r *Runner) Search(depth int8) {
+
 	if len(r.Engines) == 1 {
 		e := r.Engines[0]
 		e.Search(depth)
@@ -227,6 +228,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	firstLayerOfSingularity := e.skipHeight == searchHeight && e.skipMove != EmptyMove
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
+	ttHit = ttHit && position.IsPseudoLegal(nHashMove)
+	if !ttHit {
+		nHashMove = EmptyMove
+	}
+
 	if !isPvNode && ttHit && nDepth >= depthLeft && !firstLayerOfSingularity {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()

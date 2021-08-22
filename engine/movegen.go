@@ -39,31 +39,29 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 	if ownPieces&srcMask == 0 || ownPieces&destMask != 0 {
 		return false
 	}
+
 	if move.IsEnPassant() {
 		ep := findEnPassantCaptureSquare(move)
-		if ep != p.EnPassant || enemyPawns&destMask == 0 {
+		if p.EnPassant != dest || enemyPawns&SquareMask[ep] == 0 {
 			return false
 		}
 	} else if move.IsCapture() {
 		// the board is consistent with capturing piece
 		// if we do capture enemy pieces, we should have Capture tag
-		if enemyPieces&destMask != 0 {
+		if enemyPieces&destMask == 0 {
 			return false
 		}
 		cp := move.CapturedPiece()
 		if board.GetBitboardOf(cp)&destMask == 0 {
 			return false
 		}
+	} else if enemyPieces&destMask != 0 { // It is not a capture? then don't go to an occupied square
+		return false
 	}
 
 	// We are moving the right piece
 	movingPiece := move.MovingPiece()
-	if board.GetBitboardOf(movingPiece)&destMask == 0 {
-		return false
-	}
-
-	// We are not capturing enemy king
-	if enemyKing&destMask != 0 {
+	if board.GetBitboardOf(movingPiece)&srcMask == 0 {
 		return false
 	}
 
@@ -75,9 +73,22 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 			return false
 		}
 	}
+
+	// We are not capturing enemy king
+	if enemyKing&destMask != 0 {
+		return false
+	}
+
+	var taboo uint64
+	if canQueenSideCastle || canKingSideCastle {
+		taboo = tabooSquares(board, turn)
+		if movingPieceType == King && destMask&taboo != 0 {
+			return false
+		}
+	}
 	// Check that castling is correct (has castling right, the squares that matter are not in check)
 	if move.IsQueenSideCastle() {
-		if !canQueenSideCastle && p.IsInCheck() {
+		if !canQueenSideCastle || p.IsInCheck() {
 			return false
 		}
 		// check in between squares
@@ -86,7 +97,6 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 		if emptySquares&allPieces != 0 {
 			return false
 		}
-		taboo := tabooSquares(board, turn)
 		if taboo&checkFreeSquares != 0 {
 			return false
 		}
@@ -100,7 +110,6 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 		if emptySquares&allPieces != 0 {
 			return false
 		}
-		taboo := tabooSquares(board, turn)
 		if taboo&checkFreeSquares != 0 {
 			return false
 		}
