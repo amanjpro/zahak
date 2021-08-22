@@ -33,9 +33,9 @@ const (
 type Color int8
 
 const (
-	NoColor Color = iota
-	White
+	NoColor Color = iota - 1
 	Black
+	White
 )
 
 func (c Color) Other() Color {
