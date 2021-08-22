@@ -61,7 +61,7 @@ List](http://www.cegt.net/blitz.htm). Also, starting from version 5.0, Zahak is 
 
 The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   | **Fast GM 60+06"** |
+| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   | **Fast GM 60+06** |
 |-------------|------------------------------|-------------------------|---------------------------|---------------------------|--------------------|
 | 5.0         | 2730                         | 2686                    | 2553                      | 2676                      | 2505               |
 | 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    | N/A                |
