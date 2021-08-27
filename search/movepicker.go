@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"math"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -83,6 +84,8 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 			mp.killer2 = EmptyMove
 		}
 		mp.killerIndex = 1
+		mp.generateQuietMoves()
+		mp.scoreQuietMoves()
 	} else {
 		mp.killerIndex = 0
 		mp.killer1, mp.killer2 = EmptyMove, EmptyMove
@@ -207,6 +210,8 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	_ = scores[size-1]
 	_ = moves[size-1]
 
+	killerFound := 0
+
 	for i := 0; i < size; i++ {
 		move := moves[i]
 
@@ -217,7 +222,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 				highestNonSpecialIndex = i
 			}
 			nextSpecialIndex += 1
-		} else if mp.killer1 == move || mp.killer2 == move {
+		} else if engine.KillerMoveScore(move, moveOrder) != 0 {
 			score := int32(80_000_000)
 			if mp.killer1 == move {
 				score = 90_000_000
@@ -227,6 +232,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			if highestNonSpecialIndex == nextSpecialIndex {
 				highestNonSpecialIndex = i
 			}
+			killerFound += 1
 			nextSpecialIndex += 1
 		} else {
 			if move == counterMove {
@@ -242,6 +248,24 @@ func (mp *MovePicker) scoreQuietMoves() int {
 				highestNonSpecialIndex = i
 				highestNonSpecialScore = scores[i]
 			}
+		}
+	}
+	if killerFound == 1 {
+		if (mp.killer1 == EmptyMove && mp.killer2 == EmptyMove) || (mp.killer1 != EmptyMove && mp.killer2 != EmptyMove) {
+			fmt.Println(mp.position.Board.Draw(), mp.killer1.ToString(), mp.killer2.ToString())
+			panic("WHAT HAPPENED 1")
+		}
+	}
+	if killerFound == 2 {
+		if mp.killer1 == EmptyMove || mp.killer2 == EmptyMove {
+			fmt.Println(mp.position.Board.Draw(), mp.killer1.ToString(), mp.killer2.ToString())
+			panic("WHAT HAPPENED 2")
+		}
+	}
+	if killerFound == 0 {
+		if mp.position.IsPseudoLegal(mp.killer1) || mp.position.IsPseudoLegal(mp.killer2) {
+			fmt.Println(mp.position.Board.Draw(), mp.killer1.ToString(), mp.killer2.ToString())
+			panic("WHAT HAPPENED 3")
 		}
 	}
 	mp.quietMoveList.IsScored = true
