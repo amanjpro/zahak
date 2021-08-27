@@ -78,7 +78,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	var isInCheck = e.Position.IsInCheck()
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, -1, EmptyMove, !isInCheck)
+	movePicker.RecycleWith(position, e, -1, searchHeight, EmptyMove, !isInCheck)
 
 	bestscore := standPat
 	noisyMoves := -1
