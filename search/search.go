@@ -227,6 +227,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	firstLayerOfSingularity := e.skipHeight == searchHeight && e.skipMove != EmptyMove
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
+	nEval = evalFromTT(nEval, searchHeight)
 	if !isPvNode && ttHit && nDepth >= depthLeft && !firstLayerOfSingularity {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
@@ -633,7 +634,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if score >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							e.TranspositionTable.Set(hash, move, score, depthLeft, LowerBound, e.Ply)
+							e.TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						e.AddHistory(move, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -659,9 +660,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
-			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
+			e.TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact, e.Ply)
 		} else {
-			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, UpperBound, e.Ply)
+			e.TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
 		}
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 {
