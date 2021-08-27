@@ -12,7 +12,8 @@ type MovePicker struct {
 	hashmove        Move
 	quietMoveList   *MoveList
 	captureMoveList *MoveList
-	moveOrder       int8
+	searchHeight    int8
+	depthLeft       int8
 	canUseHashMove  bool
 	isQuiescence    bool
 }
@@ -26,7 +27,8 @@ func EmptyMovePicker() *MovePicker {
 		hashmove:        EmptyMove,
 		quietMoveList:   qml,
 		captureMoveList: cml,
-		moveOrder:       0,
+		searchHeight:    0,
+		depthLeft:       0,
 		canUseHashMove:  false,
 		isQuiescence:    false,
 	}
@@ -34,10 +36,11 @@ func EmptyMovePicker() *MovePicker {
 
 }
 
-func (mp *MovePicker) RecycleWith(p *Position, e *Engine, moveOrder int8, hashmove Move, isQuiescence bool) {
+func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, searchHeight int8, hashmove Move, isQuiescence bool) {
 	mp.engine = e
 	mp.position = p
-	mp.moveOrder = moveOrder
+	mp.searchHeight = searchHeight
+	mp.depthLeft = depthLeft
 	mp.hashmove = hashmove
 	mp.isQuiescence = isQuiescence
 	mp.canUseHashMove = hashmove != EmptyMove
@@ -164,7 +167,8 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	var highestNonHashIndex int = -1
 	var highestNonHashScore int32 = math.MinInt32
 	engine := mp.engine
-	moveOrder := mp.moveOrder
+	depthLeft := mp.depthLeft
+	searchHeight := mp.searchHeight
 	scores := mp.quietMoveList.Scores
 	moves := mp.quietMoveList.Moves
 	size := mp.quietMoveList.Size
@@ -187,7 +191,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 
 		dest := move.Destination()
 		piece := move.MovingPiece()
-		killer := engine.KillerMoveScore(move, moveOrder)
+		killer := engine.KillerMoveScore(move, searchHeight)
 		var history int32
 
 		if killer != 0 {
@@ -195,7 +199,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			goto end
 		}
 
-		history = engine.MoveHistoryScore(piece, dest, moveOrder)
+		history = engine.MoveHistoryScore(piece, dest, depthLeft)
 		scores[i] = history
 
 	end:

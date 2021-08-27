@@ -266,14 +266,14 @@ func (e *Engine) ClearForSearch() {
 	e.pred.Clear()
 }
 
-func (e *Engine) KillerMoveScore(move Move, depthLeft int8) int32 {
-	if move == EmptyMove || depthLeft < 0 || e.killerMoves[depthLeft] == nil {
+func (e *Engine) KillerMoveScore(move Move, searchHeight int8) int32 {
+	if move == EmptyMove || searchHeight < 0 || e.killerMoves[searchHeight] == nil {
 		return 0
 	}
-	if e.killerMoves[depthLeft][0] == move {
+	if e.killerMoves[searchHeight][0] == move {
 		return 90_000_000
 	}
-	if e.killerMoves[depthLeft][1] == move {
+	if e.killerMoves[searchHeight][1] == move {
 		return 80_000_000
 	}
 	return 0
@@ -286,9 +286,9 @@ func historyBonus(current int32, bonus int32) int32 {
 func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, depthLeft int8, searchHeight int8, quietMovesCounter int) {
 	if depthLeft >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 		e.info.killerCounter += 1
-		if e.killerMoves[depthLeft][0] != move {
-			e.killerMoves[depthLeft][1] = e.killerMoves[depthLeft][0]
-			e.killerMoves[depthLeft][0] = move
+		if e.killerMoves[searchHeight][0] != move {
+			e.killerMoves[searchHeight][1] = e.killerMoves[searchHeight][0]
+			e.killerMoves[searchHeight][0] = move
 		}
 
 		if depthLeft <= 1 {
@@ -325,11 +325,11 @@ func (e *Engine) RemoveMoveHistory(killerMove Move, quietMovesCounter int, depth
 	}
 }
 
-func (e *Engine) AddKillerMove(move Move, depthLeft int8) {
+func (e *Engine) AddKillerMove(move Move, searchHeight int8) {
 	if !move.IsCapture() {
 		e.info.killerCounter += 1
-		e.killerMoves[depthLeft][1] = e.killerMoves[depthLeft][0]
-		e.killerMoves[depthLeft][0] = move
+		e.killerMoves[searchHeight][1] = e.killerMoves[searchHeight][0]
+		e.killerMoves[searchHeight][0] = move
 	}
 }
 

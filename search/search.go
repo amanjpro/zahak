@@ -325,7 +325,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				hashMove = nHashMove
 			}
 			movePicker := e.MovePickers[searchHeight]
-			movePicker.RecycleWith(position, e, depthLeft, hashMove, true)
+			movePicker.RecycleWith(position, e, depthLeft, searchHeight, hashMove, true)
 			seeScores := movePicker.captureMoveList.Scores
 			i := 0
 			for true {
@@ -382,7 +382,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, depthLeft, nHashMove, false)
+	movePicker.RecycleWith(position, e, depthLeft, searchHeight, nHashMove, false)
 	oldAlpha := alpha
 
 	// using fail soft with negamax:
@@ -582,7 +582,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// History pruning
 				lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-				if killerScore <= 0 && !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
+				if /* killerScore <= 0 && */ !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
 					e.info.historyPruningCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue
@@ -594,9 +594,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
-				if killerScore > 0 {
-					LMR -= 1
-				}
+				// if killerScore > 0 {
+				// 	LMR -= 1
+				// }
 
 				if isPvNode {
 					LMR -= 1
@@ -606,9 +606,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				// if killerScore <= 0 && quietScores[quietMoves] > 0 {
-				// 	LMR -= 1 //int8(quietScores[quietMoves] / 8192)
-				// }
+				LMR -= int8(e.MoveHistoryScore(move.MovingPiece(), move.Destination(), depthLeft) / 24576)
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}
