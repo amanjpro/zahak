@@ -13,7 +13,7 @@ var mp = EmptyMovePicker()
 func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
 	mp := &MovePicker{
 		nil,
-		nil,
+		NewEngine(nil, nil, nil),
 		10,
 		&MoveList{
 			Moves:    []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
@@ -64,7 +64,7 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 	capture := NewMove(E1, E2, WhitePawn, WhiteKing, NoType, Capture)
 	mp := &MovePicker{
 		nil,
-		nil,
+		NewEngine(nil, nil, nil),
 		capture,
 		&MoveList{
 			Moves:    []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
@@ -128,7 +128,7 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 	mp := &MovePicker{
 		nil,
-		nil,
+		NewEngine(nil, nil, nil),
 		0,
 		&MoveList{
 			Moves:    []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
@@ -660,6 +660,7 @@ func TestMovePickerQuiescenceSearch(t *testing.T) {
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
 	}
+
 	mp.Reset()
 
 	for i = 0; ; i++ {

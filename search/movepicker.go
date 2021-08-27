@@ -115,6 +115,12 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 		return
 	}
 	mp.hashmove = pvMove
+	if mp.killer1 == pvMove {
+		mp.killer1 = EmptyMove
+	}
+	if mp.killer2 == pvMove {
+		mp.killer2 = EmptyMove
+	}
 	mp.canUseHashMove = true
 	if pvMove.IsCapture() || pvMove.PromoType() != NoType {
 		mp.captureMoveList.Next = 1
@@ -343,13 +349,15 @@ func (mp *MovePicker) getNextCapture() Move {
 func (mp *MovePicker) getNextQuiet() Move {
 	if mp.killerIndex == 1 {
 		mp.killerIndex += 1
-		if mp.killer1 != EmptyMove && mp.position.IsPseudoLegal(mp.killer1) {
+		if mp.position.IsPseudoLegal(mp.killer1) {
 			mp.quietMoveList.IncNext()
 			return mp.killer1
 		}
-	} else if mp.killerIndex == 2 {
+	}
+
+	if mp.killerIndex == 2 {
 		mp.killerIndex += 1
-		if mp.killer2 != EmptyMove && mp.position.IsPseudoLegal(mp.killer2) {
+		if mp.position.IsPseudoLegal(mp.killer2) {
 			mp.quietMoveList.IncNext()
 			return mp.killer2
 		}
@@ -379,6 +387,9 @@ func (mp *MovePicker) getNextQuiet() Move {
 	} else {
 		bestIndex = mp.scoreQuietMoves()
 	}
+	// if bestIndex == -1 {
+	// 	fmt.Println(mp.position.Fen(), mp.quietMoveList.Next, mp.quietMoveList.Size)
+	// }
 	best := mp.quietMoveList.Moves[bestIndex]
 	mp.quietMoveList.Swap(next, bestIndex)
 	mp.quietMoveList.IncNext()
