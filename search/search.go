@@ -538,9 +538,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		move = movePicker.Next()
+
 		if move == EmptyMove {
 			break
 		}
+		// if !position.IsPseudoLegal(move) {
+		// 	fmt.Println(position.Board.Draw(), move.ToString())
+		// 	panic("WHAT HAPPENED")
+		// }
 
 		isCaptureMove := move.IsCapture()
 		promoType := move.PromoType()

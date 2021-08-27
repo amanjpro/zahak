@@ -5,6 +5,9 @@ import (
 )
 
 func (p *Position) IsPseudoLegal(move Move) bool {
+	if move == EmptyMove {
+		return false
+	}
 	turn := p.Turn()
 	src := move.Source()
 	dest := move.Destination()
