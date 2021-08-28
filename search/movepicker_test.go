@@ -31,6 +31,7 @@ func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
 		},
 		1,
 		0,
+		EmptyMove,
 		true,
 		false,
 	}
@@ -78,6 +79,7 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 		},
 		1,
 		0,
+		EmptyMove,
 		true,
 		false,
 	}
@@ -138,6 +140,7 @@ func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 		},
 		1,
 		0,
+		EmptyMove,
 		false,
 		false,
 	}

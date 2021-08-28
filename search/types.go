@@ -115,6 +115,7 @@ type Engine struct {
 	positionMoves      []Move
 	killerMoves        [][]Move
 	searchHistory      [][]int32
+	countermoves       [][]Move
 	MovePickers        []*MovePicker
 	triedQuietMoves    [][]Move
 	info               Info
@@ -180,6 +181,7 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 		positionMoves:      make([]Move, MAX_DEPTH),
 		killerMoves:        make([][]Move, 125), // We assume there will be at most 126 iterations for each move/search
 		searchHistory:      make([][]int32, 12), // We have 12 pieces only
+		countermoves:       make([][]Move, 12),  // We have 12 pieces only
 		MovePickers:        movePickers,
 		triedQuietMoves:    make([][]Move, 250),
 		info:               NoInfo,
@@ -248,6 +250,15 @@ func (e *Engine) ClearForSearch() {
 		}
 	}
 
+	for i := 0; i < len(e.countermoves); i++ {
+		if e.countermoves[i] == nil {
+			e.countermoves[i] = make([]Move, 64) // Number of Squares
+		}
+		for j := 0; j < len(e.countermoves[i]); j++ {
+			e.countermoves[i][j] = EmptyMove
+		}
+	}
+
 	for i := 0; i < len(e.triedQuietMoves); i++ {
 		if e.triedQuietMoves[i] == nil {
 			e.triedQuietMoves[i] = make([]Move, 250) // Number of potential legal moves per position
@@ -283,7 +294,7 @@ func historyBonus(current int32, bonus int32) int32 {
 	return current + 32*bonus - current*abs32(bonus)/512
 }
 
-func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, depthLeft int8, searchHeight int8, quietMovesCounter int) {
+func (e *Engine) AddHistory(move Move, previousMove Move, movingPiece Piece, destination Square, depthLeft int8, searchHeight int8, quietMovesCounter int) {
 	if depthLeft >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 		e.info.killerCounter += 1
 		if e.killerMoves[searchHeight][0] != move {
@@ -298,6 +309,9 @@ func (e *Engine) AddHistory(move Move, movingPiece Piece, destination Square, de
 		e.RemoveMoveHistory(move, quietMovesCounter, depthLeft, searchHeight)
 		e.info.historyCounter += 1
 		e.searchHistory[movingPiece-1][destination] = historyBonus(e.searchHistory[movingPiece-1][destination], int32(depthLeft*depthLeft))
+		if previousMove != EmptyMove {
+			e.countermoves[previousMove.MovingPiece()-1][previousMove.Destination()] = move
+		}
 	}
 }
 
