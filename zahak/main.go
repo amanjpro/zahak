@@ -24,6 +24,7 @@ func main() {
 	if len(args) > 1 && args[1] == "bench" {
 		RunBenchmark()
 	} else {
+		var genEpdFlag = flag.Bool("gen-epds", false, "Generate open EPDs for self-play")
 		var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
 		var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
 		var tuneFlag = flag.Bool("tune", false, "Peform texel tuning for optimal evaluation values")
@@ -52,7 +53,9 @@ func main() {
 			defer pprof.StopCPUProfile()
 			defer mem.Close() // error handling omitted for example
 		}
-		if *prepareTuningFlag && *epdPath != "" {
+		if *genEpdFlag {
+			GenerateEpds()
+		} else if *prepareTuningFlag && *epdPath != "" {
 			PrepareTuningData(*epdPath)
 		} else if *tuneFlag && *epdPath != "" {
 			paramsToExclude := make(map[int]bool)
