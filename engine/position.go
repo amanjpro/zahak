@@ -432,23 +432,56 @@ func (p *Position) IsDraw() bool {
 			p.Board.blackQueen != 0 || p.Board.whiteQueen != 0 {
 			return false
 		} else {
+			wKnights := bitScanForward(p.Board.whiteKnight)
+			bKnights := bitScanForward(p.Board.blackKnight)
+			wBishops := bitScanForward(p.Board.whiteBishop)
+			bBishops := bitScanForward(p.Board.blackBishop)
 
-			wKnightsNum := p.MaterialsOnBoard[WhiteKnight]
-			bKnightsNum := p.MaterialsOnBoard[BlackKnight]
-			wBishopsNum := p.MaterialsOnBoard[WhiteBishop]
-			bBishopsNum := p.MaterialsOnBoard[BlackBishop]
+			wKnightsNum := 0
+			bKnightsNum := 0
+			wBishopsNum := 0
+			bBishopsNum := 0
+
+			if wKnights != 64 {
+				wKnightsNum = 1
+			}
+
+			if bKnights != 64 {
+				bKnightsNum = 1
+			}
+
+			if wBishops != 64 {
+				wBishopsNum = 1
+			}
+
+			if bBishops != 64 {
+				bBishopsNum = 1
+			}
 
 			all := wKnightsNum + bKnightsNum + wBishopsNum + bBishopsNum
 
 			// both sides have a bare king
 			// one side has a king and a minor piece against a bare king
+
 			if all <= 1 {
-				return true
-			} else if wKnightsNum == 0 && bKnightsNum == 0 && wBishopsNum == 1 && bBishopsNum == 1 {
-				// both sides have a king and a bishop, the bishops being the same color
-				wBishops := bitScanForward(p.Board.whiteBishop)
-				bBishops := bitScanForward(p.Board.blackBishop)
-				return Square(bBishops).GetColor() == Square(wBishops).GetColor()
+				if wKnightsNum != 0 {
+					return bits.OnesCount64(p.Board.whiteKnight) == 1
+				} else if bKnightsNum != 0 {
+					return bits.OnesCount64(p.Board.blackKnight) == 1
+				} else if wBishopsNum != 0 {
+					return bits.OnesCount64(p.Board.whiteBishop) == 1
+				} else if bBishopsNum != 0 {
+					return bits.OnesCount64(p.Board.blackBishop) == 1
+				}
+			}
+			// both sides have a king and a bishop, the bishops being the same color
+			if wKnightsNum == 0 && bKnightsNum == 0 {
+				otherWB := p.Board.whiteBishop ^ (1 << wBishops)
+				otherBB := p.Board.blackBishop ^ (1 << bBishops)
+				if otherWB == 0 && otherBB == 0 &&
+					Square(bBishops).GetColor() == Square(wBishops).GetColor() {
+					return true
+				}
 			}
 		}
 	}
