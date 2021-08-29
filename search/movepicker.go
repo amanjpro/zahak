@@ -1,7 +1,6 @@
 package search
 
 import (
-	// "fmt"
 	"math"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -89,8 +88,6 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 		if mp.currentMove != EmptyMove {
 			mp.counterMove = mp.engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
 		}
-		// mp.generateQuietMoves()
-		// mp.scoreQuietMoves()
 	} else {
 		mp.killerIndex = 0
 		mp.killer1, mp.killer2 = EmptyMove, EmptyMove
@@ -164,7 +161,7 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 		dest := move.Destination()
 		piece := move.MovingPiece()
 		promoType := move.PromoType()
-		//
+
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
@@ -210,7 +207,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	var highestNonSpecialScore int32 = math.MinInt32
 	engine := mp.engine
 	depthLeft := mp.depthLeft
-	// searchHeight := mp.searchHeight
 	scores := mp.quietMoveList.Scores
 	moves := mp.quietMoveList.Moves
 	size := mp.quietMoveList.Size
@@ -218,8 +214,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	nextSpecialIndex := 0
 	_ = scores[size-1]
 	_ = moves[size-1]
-
-	// killerFound := 0
 
 	for i := 0; i < size; i++ {
 		move := moves[i]
@@ -231,7 +225,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 				highestNonSpecialIndex = i
 			}
 			nextSpecialIndex += 1
-			// } else if engine.KillerMoveScore(move, searchHeight) != 0 {
 		} else if mp.killer1 == move || mp.killer2 == move {
 			score := int32(80_000_000)
 			if mp.killer1 == move {
@@ -242,7 +235,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			if highestNonSpecialIndex == nextSpecialIndex {
 				highestNonSpecialIndex = i
 			}
-			// killerFound += 1
 			nextSpecialIndex += 1
 		} else {
 			if move == mp.counterMove {
@@ -260,26 +252,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			}
 		}
 	}
-	// fstLegal := mp.position.IsPseudoLegal(mp.killer1)
-	// sndLegal := mp.position.IsPseudoLegal(mp.killer2)
-	// if killerFound == 1 {
-	// 	if (fstLegal && sndLegal) || (!fstLegal && !sndLegal) {
-	// 		fmt.Println(mp.position.Board.Draw(), mp.killer1.ToString(), fstLegal, mp.killer2.ToString(), sndLegal)
-	// 		panic("WHAT HAPPENED 1")
-	// 	}
-	// }
-	// if killerFound == 2 {
-	// 	if !(fstLegal && sndLegal) {
-	// 		fmt.Println(mp.position.Board.Draw(), mp.killer1.ToString(), fstLegal, mp.killer2.ToString(), sndLegal)
-	// 		panic("WHAT HAPPENED 2")
-	// 	}
-	// }
-	// if killerFound == 0 {
-	// 	if fstLegal || sndLegal {
-	// 		fmt.Println(mp.position.Board.Draw(), mp.killer1.ToString(), fstLegal, mp.killer2.ToString(), sndLegal)
-	// 		panic("WHAT HAPPENED 3")
-	// 	}
-	// }
 	mp.quietMoveList.IsScored = true
 	return highestNonSpecialIndex
 }
@@ -389,9 +361,6 @@ func (mp *MovePicker) getNextQuiet() Move {
 	} else {
 		bestIndex = mp.scoreQuietMoves()
 	}
-	// if bestIndex == -1 {
-	// 	fmt.Println(mp.position.Fen(), mp.quietMoveList.Next, mp.quietMoveList.Size)
-	// }
 	best := mp.quietMoveList.Moves[bestIndex]
 	mp.quietMoveList.Swap(next, bestIndex)
 	mp.quietMoveList.IncNext()
