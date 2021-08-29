@@ -308,7 +308,7 @@ func (mp *MovePicker) getNextCapture() Move {
 	} else {
 		bestIndex = mp.scoreCaptureMoves()
 	}
-	if mp.captureMoveList.Scores[bestIndex] < 0 {
+	if mp.captureMoveList.Scores[bestIndex] < 0 && !mp.isQuiescence {
 		alt := mp.getNextQuiet()
 		if alt != EmptyMove {
 			return alt
