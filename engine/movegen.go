@@ -219,10 +219,6 @@ func isKingAttacked(b *Bitboard, colorOfKing Color) bool {
 		return true
 	}
 
-	if colorOfKing == White {
-		return opPawnAttacks != 0
-	}
-
 	return false
 }
 

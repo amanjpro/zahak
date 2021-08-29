@@ -529,6 +529,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	quietScores := movePicker.quietMoveList.Scores
 	var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
+	// var counterMove Move
+	// if currentMove != EmptyMove {
+	// 	counterMove = e.countermoves[currentMove.MovingPiece()-1][currentMove.Destination()]
+	// }
 	for true {
 
 		if isRootNode {

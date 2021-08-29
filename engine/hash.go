@@ -104,7 +104,7 @@ func updatePawnHash(pos *Position, move Move, captureSquare Square, promoPiece P
 	movingPiece := move.MovingPiece()
 	source := move.Source()
 
-	if movingPiece.Type() == Pawn {
+	if movingPiece == WhitePawn || movingPiece == BlackPawn {
 		hash ^= piecesZC[int8(movingPiece)-1][source]
 		if promoPiece == NoPiece {
 			hash ^= piecesZC[int8(movingPiece)-1][move.Destination()]

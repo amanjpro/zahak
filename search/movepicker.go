@@ -21,6 +21,7 @@ type MovePicker struct {
 	killer1         Move
 	killer2         Move
 	killerIndex     int
+	counterMove     Move
 }
 
 func EmptyMovePicker() *MovePicker {
@@ -39,6 +40,7 @@ func EmptyMovePicker() *MovePicker {
 		killer1:         EmptyMove,
 		killer2:         EmptyMove,
 		killerIndex:     0,
+		counterMove:     EmptyMove,
 	}
 	return mp
 
@@ -84,11 +86,15 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 			mp.killer2 = EmptyMove
 		}
 		mp.killerIndex = 1
+		if mp.currentMove != EmptyMove {
+			mp.counterMove = mp.engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
+		}
 		// mp.generateQuietMoves()
 		// mp.scoreQuietMoves()
 	} else {
 		mp.killerIndex = 0
 		mp.killer1, mp.killer2 = EmptyMove, EmptyMove
+		mp.counterMove = EmptyMove
 	}
 }
 
@@ -208,10 +214,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	scores := mp.quietMoveList.Scores
 	moves := mp.quietMoveList.Moves
 	size := mp.quietMoveList.Size
-	var counterMove Move
-	if mp.currentMove != EmptyMove {
-		counterMove = engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
-	}
 
 	nextSpecialIndex := 0
 	_ = scores[size-1]
@@ -243,7 +245,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			// killerFound += 1
 			nextSpecialIndex += 1
 		} else {
-			if move == counterMove {
+			if move == mp.counterMove {
 				scores[i] = 70_000_000
 			} else {
 				dest := move.Destination()
