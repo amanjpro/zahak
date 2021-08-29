@@ -11,6 +11,7 @@ import (
 )
 
 func (r *Runner) Search(depth int8) {
+
 	if len(r.Engines) == 1 {
 		e := r.Engines[0]
 		e.Search(depth)
@@ -227,6 +228,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	firstLayerOfSingularity := e.skipHeight == searchHeight && e.skipMove != EmptyMove
 	hash := position.Hash()
 	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
+	ttHit = ttHit && position.IsPseudoLegal(nHashMove)
+	if !ttHit {
+		nHashMove = EmptyMove
+	}
+
 	if !isPvNode && ttHit && nDepth >= depthLeft && !firstLayerOfSingularity {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
@@ -532,6 +538,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		move = movePicker.Next()
+
 		if move == EmptyMove {
 			break
 		}
@@ -561,12 +568,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			notPromoting := !IsPromoting(move)
 			LMR := int8(0)
 
-			killerScore := e.KillerMoveScore(move, searchHeight)
+			isKiller := movePicker.killer1 == move || movePicker.killer2 == move
 			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
 				// Late Move Pruning
 				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-					legalMoves > pruningThreashold && killerScore <= 0 && abs16(alpha) < WIN_IN_MAX {
+					legalMoves > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
 					e.info.lmpCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue // LMP
@@ -582,7 +589,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// History pruning
 				lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-				if /* killerScore <= 0 && */ !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
+				if /* !isKiller && */ !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
 					e.info.historyPruningCounter += 1
 					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 					continue

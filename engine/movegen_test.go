@@ -563,3 +563,14 @@ func containsMove(moves1 []Move, move Move) bool {
 	}
 	return exists
 }
+
+func TestIsPseudoLegal(t *testing.T) {
+	for _, pos := range positions {
+		// compute the materials first first
+		for _, mov := range pos.PseudoLegalMoves() {
+			if !pos.IsPseudoLegal(mov) {
+				t.Error(fmt.Sprintf("Expected pseudo legal move, marked as illegal: %s\n%s and %d\n", pos.Fen(), mov.ToString(), mov))
+			}
+		}
+	}
+}
