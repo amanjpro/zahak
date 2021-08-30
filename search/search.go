@@ -552,6 +552,36 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			isQuiet = true
 			quietMoves += 1
 		}
+		notPromoting := move.PromoType() == NoType
+		isKiller := movePicker.killer1 == move || movePicker.killer2 == move
+
+		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
+
+			// Late Move Pruning
+			if notPromoting && !isCaptureMove && depthLeft <= 8 &&
+				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
+				e.info.lmpCounter += 1
+				// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
+				// to avoid returning quiets, after the first LMP cut
+				movePicker.isQuiescence = true
+				continue // LMP
+			}
+
+			// SEE pruning
+			if isCaptureMove && seeScores[noisyMoves] < 0 &&
+				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+				e.info.seeCounter += 1
+				// position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+				continue
+			}
+
+			// History pruning
+			lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
+			if isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
+				e.info.historyPruningCounter += 1
+				continue
+			}
+		}
 
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
 			legalMoves += 1
@@ -564,37 +594,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			e.NoteMove(move, legalQuiteMove, searchHeight)
-			isCheckMove := position.IsInCheck()
-			notPromoting := !IsPromoting(move)
 			LMR := int8(0)
-
-			isKiller := movePicker.killer1 == move || movePicker.killer2 == move
-			if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
-
-				// Late Move Pruning
-				if notPromoting && !isCaptureMove && !isCheckMove && depthLeft <= 8 &&
-					legalMoves > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
-					e.info.lmpCounter += 1
-					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-					continue // LMP
-				}
-
-				// SEE pruning
-				if isCaptureMove && seeScores[noisyMoves] < 0 &&
-					!isCheckMove && depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
-					e.info.seeCounter += 1
-					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-					continue
-				}
-
-				// History pruning
-				lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-				if /* !isKiller && */ !isCheckMove && isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves > lmrThreashold {
-					e.info.historyPruningCounter += 1
-					position.UnMakeMove(move, oldTag, oldEnPassant, hc)
-					continue
-				}
-			}
 
 			// Late Move Reduction
 			if !isInCheck && e.doPruning && isQuiet && depthLeft > 2 && legalMoves > lmrThreashold {
