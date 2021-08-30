@@ -256,20 +256,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	return highestNonSpecialIndex
 }
 
-func (mp *MovePicker) Reset() {
-	mp.canUseHashMove = mp.hashmove != EmptyMove
-	mp.killerIndex = 1
-	mp.quietMoveList.Next = 0
-	mp.captureMoveList.Next = 0
-	if mp.canUseHashMove {
-		if mp.hashmove.IsCapture() || mp.hashmove.PromoType() != NoType {
-			mp.captureMoveList.Next = 1
-		} else {
-			mp.quietMoveList.Next = 1
-		}
-	}
-}
-
 func (mp *MovePicker) Next() Move {
 	if mp.hashmove != EmptyMove && mp.canUseHashMove {
 		mp.canUseHashMove = false

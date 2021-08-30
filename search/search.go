@@ -569,7 +569,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// SEE pruning
 			if isCaptureMove && seeScores[noisyMoves] < 0 &&
-				/* !isCheckMove && */ depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.seeCounter += 1
 				// position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				continue
@@ -577,9 +577,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// History pruning
 			lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
-			if /* !isKiller && */ /* !isCheckMove && */ isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
+			if isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
 				e.info.historyPruningCounter += 1
-				// position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				continue
 			}
 		}

@@ -10,7 +10,7 @@ import (
 
 var mp = EmptyMovePicker()
 
-func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
+func TestMovepickerNextWithQuietHashmove(t *testing.T) {
 	mp := &MovePicker{
 		nil,
 		NewEngine(nil, nil, nil),
@@ -49,19 +49,9 @@ func TestMovepickerNextAndResetWithQuietHashmove(t *testing.T) {
 			t.Error(fmt.Sprintf("Expected %d But got %d\n", expected, int32(actual)))
 		}
 	}
-
-	mp.Reset()
-
-	for i := 0; i < 20; i++ {
-		actual := mp.Next()
-		expected := expectedOrder[i]
-		if actual != Move(expected) {
-			t.Error(fmt.Sprintf("MovePicker Reset is broken.\nExpected %d But got %d\n", expected, int32(actual)))
-		}
-	}
 }
 
-func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
+func TestMovepickerNextWithCaptureHashmove(t *testing.T) {
 	capture := NewMove(E1, E2, WhitePawn, WhiteKing, NoType, Capture)
 	mp := &MovePicker{
 		nil,
@@ -108,26 +98,9 @@ func TestMovepickerNextAndResetWithCaptureHashmove(t *testing.T) {
 	if i != 20 {
 		t.Error("Wrong number of moves!")
 	}
-
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := expectedOrder[i]
-		if actual != Move(expected) {
-			t.Error(fmt.Sprintf("MovePicker Reset is broken.\nExpected %d But got %d\n", expected, int32(actual)))
-		}
-	}
-
-	if i != 20 {
-		t.Error("Wrong number of moves in reset!")
-	}
 }
 
-func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
+func TestMovepickerNextWithNoHashmove(t *testing.T) {
 	mp := &MovePicker{
 		nil,
 		NewEngine(nil, nil, nil),
@@ -173,22 +146,6 @@ func TestMovepickerNextAndResetWithNoHashmove(t *testing.T) {
 
 	if i != 20 {
 		t.Error("Wrong number of moves!")
-	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := expectedOrder[i]
-		if actual != Move(expected) {
-			t.Error(fmt.Sprintf("MovePicker Reset is broken.\nExpected %d But got %d\n", expected, int32(actual)))
-		}
-	}
-
-	if i != 20 {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
@@ -259,22 +216,6 @@ func TestMovePickerNormalSearch(t *testing.T) {
 
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
-	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
@@ -349,22 +290,6 @@ func TestUpgradeMoveToHashmoveQuiet(t *testing.T) {
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
 	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
-	}
 }
 
 func TestMovePickerNormalSearchNoHashmove(t *testing.T) {
@@ -434,22 +359,6 @@ func TestMovePickerNormalSearchNoHashmove(t *testing.T) {
 
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
-	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
@@ -521,22 +430,6 @@ func TestMovePickerNormalSearchCaptureHashmove(t *testing.T) {
 
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
-	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
@@ -610,22 +503,6 @@ func TestMovePickerNormalSearchUpgradeToHashmoveCapture(t *testing.T) {
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
 	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
-	}
 }
 
 func TestMovePickerQuiescenceSearch(t *testing.T) {
@@ -662,23 +539,6 @@ func TestMovePickerQuiescenceSearch(t *testing.T) {
 
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
-	}
-
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
@@ -725,22 +585,6 @@ func TestMovePickerNormalSearchWithPromotionNoHashmove(t *testing.T) {
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
 	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
-	}
 }
 
 func TestMovePickerNormalSearchWithPromotionPromotionQuietHashmove(t *testing.T) {
@@ -786,22 +630,6 @@ func TestMovePickerNormalSearchWithPromotionPromotionQuietHashmove(t *testing.T)
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
 	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
-	}
 }
 
 func TestMovePickerNormalSearchWithPromotionPromotionCaptureHashmove(t *testing.T) {
@@ -846,22 +674,6 @@ func TestMovePickerNormalSearchWithPromotionPromotionCaptureHashmove(t *testing.
 
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
-	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
@@ -909,22 +721,6 @@ func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionQuietHashmove(t *t
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
 	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
-	}
 }
 
 func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionCaptureHashmove(t *testing.T) {
@@ -970,22 +766,6 @@ func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionCaptureHashmove(t 
 
 	if i != len(moves) {
 		t.Error("Wrong number of moves!")
-	}
-	mp.Reset()
-
-	for i = 0; ; i++ {
-		actual := mp.Next()
-		if actual == EmptyMove {
-			break
-		}
-		expected := moves[i]
-		if actual != expected {
-			t.Error(fmt.Sprintf("Reset is broken.\nMove number %d Expected %s But got %s which has score of %d\n", i+1, expected.ToString(), actual.ToString(), mp.getScore(actual)))
-		}
-	}
-
-	if i != len(moves) {
-		t.Error("Wrong number of moves in reset!")
 	}
 }
 
