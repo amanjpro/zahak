@@ -446,21 +446,34 @@ func loadPositions(path string, actionFn func(string)) {
 }
 
 func parseLine(line string) (string, float64) {
-	fields := strings.Fields(line)
-	fen := strings.Join(fields[:4], " ")
-	fen = fmt.Sprintf("%s 0 1", fen)
-
-	outcomeStr := strings.Trim(fields[5], "\";")
+	fields := strings.Split(line, "|")
+	fen := strings.TrimSpace(fields[0])
+	res := strings.TrimSpace(fields[1])
 	var outcome float64
-	if outcomeStr == "1/2-1/2" {
-		outcome = 0.5
-	} else if outcomeStr == "1-0" {
-		outcome = 1.0
-	} else if outcomeStr == "0-1" {
-		outcome = 0.0
+	if res == "Black" {
+		outcome = 0
+	} else if res == "White" {
+		outcome = 1
 	} else {
-		panic(fmt.Sprintf("Unexpected output %s", outcomeStr))
+		outcome = 0.5
 	}
+	return fen, outcome
+	// fields := strings.Fields(line)
+	// fen := strings.Join(fields[:4], " ")
+	// fen = fmt.Sprintf("%s 0 1", fen)
+	//
+	// outcomeStr := strings.Trim(fields[5], "\";")
+	// var outcome float64
+	// if outcomeStr == "1/2-1/2" {
+	// 	outcome = 0.5
+	// } else if outcomeStr == "1-0" {
+	// 	outcome = 1.0
+	// } else if outcomeStr == "0-1" {
+	// 	outcome = 0.0
+	// } else {
+	// 	panic(fmt.Sprintf("Unexpected output %s", outcomeStr))
+	// }
+
 	//
 	// fen := strings.Trim(strings.Join(fields[:6], " "), ";")
 	//
@@ -508,7 +521,9 @@ func Tune(path string, toExclude map[int]bool) {
 	})
 
 	fmt.Printf("%d positions loaded\n", len(testPositions))
+	// Optimal K is 1.640449
 	K := findK()
+
 	fmt.Printf("Optimal K is %f\n", K)
 	optimalGuesses := localOptimize(initialGuesses, K)
 	// tuningVars := make([]Parameter, len(initialGuesses))
