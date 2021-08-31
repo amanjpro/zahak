@@ -203,6 +203,8 @@ func updateEvalParams(guesses []int16) {
 	EndgameKnightOutpostAward = guesses[821]
 	MiddlegameBishopPairAward = guesses[822]
 	EndgameBishopPairAward = guesses[823]
+
+	UpdatePSQTs()
 }
 
 func toEvalParams(guesses []float64) []int16 {
@@ -377,6 +379,7 @@ func findK() float64 {
 }
 
 func linearEvaluation(pos *Position) int16 {
+	pos.MaterialAndPSQT()
 	eval := Evaluate(pos, pawnhash)
 	if pos.Turn() == Black {
 		return -eval

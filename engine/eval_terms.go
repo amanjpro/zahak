@@ -207,6 +207,10 @@ var EarlyPieceSquareTables [12][64]int16
 var LatePieceSquareTables [12][64]int16
 
 func init() {
+	UpdatePSQTs()
+}
+
+func UpdatePSQTs() {
 	for j := 0; j < 64; j++ {
 		// White pawn
 		EarlyPieceSquareTables[WhitePawn-1][j] = EarlyPawnPst[Flip[j]]
