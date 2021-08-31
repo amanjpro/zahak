@@ -552,13 +552,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			isQuiet = true
 			quietMoves += 1
 		}
-		notPromoting := move.PromoType() == NoType
 		isKiller := movePicker.killer1 == move || movePicker.killer2 == move
 
 		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
 			// Late Move Pruning
-			if notPromoting && !isCaptureMove && depthLeft <= 8 &&
+			if isQuiet && depthLeft <= 8 &&
 				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
 				e.info.lmpCounter += 1
 				// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
