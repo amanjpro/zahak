@@ -233,19 +233,16 @@ func (p *Position) CountIsolatedPawns(color Color) int16 {
 	return 0
 }
 
-const lowHalf uint64 = 0x00000000FFFFFFFF
-const hiHalf uint64 = 0xFFFFFFFF00000000
-
-func (p *Position) CountPassedPawns(color Color) (int16, int16) {
+func (p *Position) PassedPawns(color Color) uint64 {
 	switch color {
 	case White:
 		passers := wPassedPawns(p.Board.whitePawn, p.Board.blackPawn)
-		return int16(bits.OnesCount64(passers & lowHalf)), int16(bits.OnesCount64(passers & hiHalf))
+		return passers
 	case Black:
 		passers := bPassedPawns(p.Board.blackPawn, p.Board.whitePawn)
-		return int16(bits.OnesCount64(passers & hiHalf)), int16(bits.OnesCount64(passers & lowHalf))
+		return passers
 	}
-	return 0, 0
+	return 0
 }
 
 // We actually cheat here. We treat the knight like a pawn, and find out if

@@ -101,7 +101,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			continue
 		}
 
-		// promoType := move.PromoType()
 		if !IsPromoting(move) {
 			margin := p + move.CapturedPiece().Weight()
 			if standPat+margin <= alpha {
