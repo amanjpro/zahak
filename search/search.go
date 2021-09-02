@@ -556,6 +556,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
+			if depthLeft < 8 && isQuiet && !isKiller && currentMove != EmptyMove && eval+p*int16(depthLeft) <= alpha && abs16(alpha) < WIN_IN_MAX {
+				e.info.efpCounter += 1
+				continue
+			}
+
 			// Late Move Pruning
 			if isQuiet && depthLeft <= 8 &&
 				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
@@ -570,7 +575,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			if isCaptureMove && seeScores[noisyMoves] < 0 &&
 				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.seeCounter += 1
-				continue
+				break
 			}
 
 			// History pruning

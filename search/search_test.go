@@ -164,7 +164,7 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(25)
+	e.Search(32)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
