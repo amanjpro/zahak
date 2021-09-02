@@ -75,7 +75,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game := FromFen(fen)
 
 	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-	expected := int16(-10)
+	expected := int16(-9)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -86,7 +86,7 @@ func TestPawnStructureEval(t *testing.T) {
 	game = FromFen(fen)
 
 	actual = Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-	expected = int16(-10)
+	expected = int16(-9)
 
 	if actual != expected {
 		err := fmt.Sprintf("Backward Pawn - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -99,7 +99,7 @@ func TestRookStructureEval(t *testing.T) {
 	game := FromFen(fen)
 
 	actual := Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-	expected := int16(42)
+	expected := int16(43)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - White:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -110,7 +110,7 @@ func TestRookStructureEval(t *testing.T) {
 	game = FromFen(fen)
 
 	actual = Evaluate(game.Position(), NewPawnCache(DEFAULT_PAWNHASH_SIZE))
-	expected = int16(42)
+	expected = int16(43)
 
 	if actual != expected {
 		err := fmt.Sprintf("Semi-open file - Black:\nExpected: %d\nGot: %d\n", expected, actual)
@@ -152,10 +152,10 @@ func TestKingSafetyWhiteOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		blackMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
-		blackEG: -(EndgameKingZoneMissingPawnPenalty * 1),
-		whiteMG: -(MiddlegamePawnShieldPenalty*1 + 1*MiddlegameKingZoneOpenFilePenalty),
-		whiteEG: -(EndgamePawnShieldPenalty*1 + 1*EndgameKingZoneOpenFilePenalty),
+		blackMG: -(MiddlegameKingZoneMissingPawnPenalty*1 + 8*MiddlegameKingVirtualMobilityPenalty),
+		blackEG: -(EndgameKingZoneMissingPawnPenalty*1 + 8*EndgameKingVirtualMobilityPenalty),
+		whiteMG: -(MiddlegamePawnShieldPenalty*1 + 1*MiddlegameKingZoneOpenFilePenalty + 15*MiddlegameKingVirtualMobilityPenalty),
+		whiteEG: -(EndgamePawnShieldPenalty*1 + 1*EndgameKingZoneOpenFilePenalty + 15*EndgameKingVirtualMobilityPenalty),
 	}
 
 	if actual != expected {
@@ -175,10 +175,10 @@ func TestKingSafetyBlackOnG(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
-		whiteEG: -(EndgameKingZoneMissingPawnPenalty * 1),
-		blackMG: -(MiddlegamePawnShieldPenalty*1 + 1*MiddlegameKingZoneOpenFilePenalty),
-		blackEG: -(EndgamePawnShieldPenalty*1 + 1*EndgameKingZoneOpenFilePenalty),
+		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty*1 + 8*MiddlegameKingVirtualMobilityPenalty),
+		whiteEG: -(EndgameKingZoneMissingPawnPenalty*1 + 8*EndgameKingVirtualMobilityPenalty),
+		blackMG: -(MiddlegamePawnShieldPenalty*1 + 1*MiddlegameKingZoneOpenFilePenalty + 15*MiddlegameKingVirtualMobilityPenalty),
+		blackEG: -(EndgamePawnShieldPenalty*1 + 1*EndgameKingZoneOpenFilePenalty + 15*EndgameKingVirtualMobilityPenalty),
 	}
 
 	if actual != expected {
@@ -198,10 +198,10 @@ func TestKingSafetySemiOpenFile(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty * 2),
-		whiteEG: -(EndgameKingZoneMissingPawnPenalty * 2),
-		blackMG: -(MiddlegameKingZoneMissingPawnPenalty * 1),
-		blackEG: -(EndgameKingZoneMissingPawnPenalty * 1),
+		whiteMG: -(MiddlegameKingZoneMissingPawnPenalty*2 + 20*MiddlegameKingVirtualMobilityPenalty),
+		whiteEG: -(EndgameKingZoneMissingPawnPenalty*2 + 20*EndgameKingVirtualMobilityPenalty),
+		blackMG: -(MiddlegameKingZoneMissingPawnPenalty*1 + 13*MiddlegameKingVirtualMobilityPenalty),
+		blackEG: -(EndgameKingZoneMissingPawnPenalty*1 + 13*EndgameKingVirtualMobilityPenalty),
 	}
 
 	if actual != expected {
@@ -221,10 +221,10 @@ func TestKingSafetyBlackNotCastling(t *testing.T) {
 
 	actual := KingSafety(blackKing, whiteKing, blackPawn, whitePawn, false, false)
 	expected := Eval{
-		whiteMG: -MiddlegameNotCastlingPenalty,
-		whiteEG: -EndgameNotCastlingPenalty,
-		blackMG: -MiddlegameNotCastlingPenalty,
-		blackEG: -EndgameNotCastlingPenalty,
+		whiteMG: -MiddlegameNotCastlingPenalty - 19*MiddlegameKingVirtualMobilityPenalty,
+		whiteEG: -EndgameNotCastlingPenalty - 19*EndgameKingVirtualMobilityPenalty,
+		blackMG: -MiddlegameNotCastlingPenalty - 19*MiddlegameKingVirtualMobilityPenalty,
+		blackEG: -EndgameNotCastlingPenalty - 19*EndgameKingVirtualMobilityPenalty,
 	}
 
 	if actual != expected {

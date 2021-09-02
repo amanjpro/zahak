@@ -626,6 +626,15 @@ func KingSafety(blackKing uint64, whiteKing uint64, blackPawn uint64,
 		blackCentipawnsMG -= MiddlegameNotCastlingPenalty
 		blackCentipawnsEG -= EndgameNotCastlingPenalty
 	}
+
+	wKingVirtualMobility := bits.OnesCount64(QueenAttacks(Square(bits.TrailingZeros64(whiteKing)), whitePawn, whitePawn))
+	whiteCentipawnsMG -= int16(wKingVirtualMobility) * MiddlegameKingVirtualMobilityPenalty
+	whiteCentipawnsEG -= int16(wKingVirtualMobility) * EndgameKingVirtualMobilityPenalty
+
+	bKingVirtualMobility := bits.OnesCount64(QueenAttacks(Square(bits.TrailingZeros64(blackKing)), blackPawn, blackPawn))
+	blackCentipawnsMG -= int16(bKingVirtualMobility) * MiddlegameKingVirtualMobilityPenalty
+	blackCentipawnsEG -= int16(bKingVirtualMobility) * EndgameKingVirtualMobilityPenalty
+
 	return Eval{blackMG: blackCentipawnsMG, whiteMG: whiteCentipawnsMG, blackEG: blackCentipawnsEG, whiteEG: whiteCentipawnsEG}
 }
 
