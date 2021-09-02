@@ -56,3 +56,7 @@ func NewPawnCache(megabytes int) *PawnCache {
 	size := int(megabytes * 1024 * 1024 / PAWN_ENTRY_SIZE)
 	return &PawnCache{make([]PawnEval, RoundPowerOfTwo(size)), 1, 0, 0}
 }
+
+func NewDummyPawnCache() *PawnCache {
+	return &PawnCache{make([]PawnEval, 1), 1, 0, 0}
+}

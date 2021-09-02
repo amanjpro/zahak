@@ -43,7 +43,13 @@ const WhiteGShield = uint64(1<<G2 | 1<<G3)
 const WhiteHShield = uint64(1<<H2 | 1<<H3)
 
 const Rank2Fill = uint64(1<<A2 | 1<<B2 | 1<<C2 | 1<<D2 | 1<<E2 | 1<<F2 | 1<<G2 | 1<<H2)
+const Rank3Fill = uint64(1<<A3 | 1<<B3 | 1<<C3 | 1<<D3 | 1<<E3 | 1<<F3 | 1<<G3 | 1<<H3)
+const Rank4Fill = uint64(1<<A4 | 1<<B4 | 1<<C4 | 1<<D4 | 1<<E4 | 1<<F4 | 1<<G4 | 1<<H4)
+const Rank5Fill = uint64(1<<A5 | 1<<B5 | 1<<C5 | 1<<D5 | 1<<E5 | 1<<F5 | 1<<G5 | 1<<H5)
+const Rank6Fill = uint64(1<<A6 | 1<<B6 | 1<<C6 | 1<<D6 | 1<<E6 | 1<<F6 | 1<<G6 | 1<<H6)
 const Rank7Fill = uint64(1<<A7 | 1<<B7 | 1<<C7 | 1<<D7 | 1<<E7 | 1<<F7 | 1<<G7 | 1<<H7)
+
+var RankFills = []uint64{Rank2Fill, Rank3Fill, Rank4Fill, Rank5Fill, Rank6Fill, Rank7Fill}
 
 func PSQT(piece Piece, sq Square, isEndgame bool) int16 {
 	if isEndgame {
@@ -437,19 +443,18 @@ func PawnStructureEval(p *Position) Eval {
 	var blackMG, whiteMG, blackEG, whiteEG int16
 
 	// passed pawns
-	countP, countS := p.CountPassedPawns(Black)
-	blackMG += MiddlegamePassedPawnAward * countP
-	blackEG += EndgamePassedPawnAward * countP
+	bPassers := p.PassedPawns(Black)
+	wPassers := p.PassedPawns(White)
 
-	blackMG += MiddlegameAdvancedPassedPawnAward * countS
-	blackEG += EndgameAdvancedPassedPawnAward * countS
+	for i := 0; i < 6; i++ {
+		wp := int16(bits.OnesCount64(wPassers & RankFills[i]))
+		bp := int16(bits.OnesCount64(bPassers & RankFills[5-i]))
 
-	countP, countS = p.CountPassedPawns(White)
-	whiteMG += MiddlegamePassedPawnAward * countP
-	whiteEG += EndgamePassedPawnAward * countP
-
-	whiteMG += MiddlegameAdvancedPassedPawnAward * countS
-	whiteEG += EndgameAdvancedPassedPawnAward * countS
+		whiteMG += wp * MiddlegamePassedPawnBonus[i]
+		whiteEG += wp * EndgamePassedPawnBonus[i]
+		blackMG += bp * MiddlegamePassedPawnBonus[i]
+		blackEG += bp * EndgamePassedPawnBonus[i]
+	}
 
 	// candidate passed pawns
 	count := p.CountCandidatePawns(Black)

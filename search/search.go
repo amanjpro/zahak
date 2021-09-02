@@ -570,7 +570,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			if isCaptureMove && seeScores[noisyMoves] < 0 &&
 				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.seeCounter += 1
-				// position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 				continue
 			}
 
@@ -600,7 +599,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
-				// if killerScore > 0 {
+				// if !isInCheck {
+				// 	LMR += 1
+				// }
+				//
+				// if isKiller {
 				// 	LMR -= 1
 				// }
 

@@ -157,15 +157,15 @@ func TestPassedPawns(t *testing.T) {
 	fen := "7k/8/1Pp1P3/3p1p1p/P4p2/1p4P1/7P/K7 w - - 0 1"
 	game := FromFen(fen)
 
-	expectedF, expectedS := int16(1), int16(2)
-	actualF, actualS := game.Position().CountPassedPawns(White)
-	if actualF != expectedF || actualS != expectedS {
-		t.Error(fmt.Sprintf("Expected: (%d, %d)\n, Got: (%d, %d)\n", expectedF, expectedS, actualF, actualS))
+	expected := uint64(1<<E6 | 1<<B6 | 1<<A4)
+	actual := game.Position().PassedPawns(White)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
 	}
-	expectedF, expectedS = int16(2), int16(1)
-	actualF, actualS = game.Position().CountPassedPawns(Black)
-	if actualF != expectedF || actualS != expectedS {
-		t.Error(fmt.Sprintf("Expected: (%d, %d)\n, Got: (%d, %d)\n", expectedF, expectedS, actualF, actualS))
+	expected = uint64(1<<B3 | 1<<C6 | 1<<D5)
+	actual = game.Position().PassedPawns(Black)
+	if actual != expected {
+		t.Error(fmt.Sprintf("Expected: %d\n, Got: %d\n", expected, actual))
 	}
 }
 
