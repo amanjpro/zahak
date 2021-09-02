@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"runtime"
 
 	// "strconv"
 	"strings"
@@ -24,7 +25,7 @@ type TestPosition struct {
 var testPositions []TestPosition
 var initialGuesses = computeInitialGuesses()
 var K_PRECISION = 10
-var NUM_PROCESSORS = 16
+var NUM_PROCESSORS = runtime.NumCPU()
 var initialK = 1.0
 var skipParams map[int]bool
 var answers = make(chan float64)
@@ -126,6 +127,8 @@ func computeInitialGuesses() []int16 {
 	guesses = append(guesses, EndgameKnightOutpostAward)              // 829
 	guesses = append(guesses, MiddlegameBishopPairAward)              // 830
 	guesses = append(guesses, EndgameBishopPairAward)                 // 831
+	guesses = append(guesses, MiddlegameKingVirtualMobilityPenalty)   // 832
+	guesses = append(guesses, EndgameKingVirtualMobilityPenalty)      // 833
 
 	return guesses
 }
@@ -202,6 +205,8 @@ func updateEvalParams(guesses []int16) {
 	EndgameKnightOutpostAward = guesses[829]
 	MiddlegameBishopPairAward = guesses[830]
 	EndgameBishopPairAward = guesses[831]
+	MiddlegameKingVirtualMobilityPenalty = guesses[832]
+	EndgameKingVirtualMobilityPenalty = guesses[833]
 
 	UpdatePSQTs()
 	pawnhash = NewDummyPawnCache()
@@ -297,6 +302,8 @@ func printOptimalGuesses(guesses []int16) {
 	fmt.Printf("var EndgameKnightOutpostAward int16 = %d\n", guesses[829])
 	fmt.Printf("var MiddlegameBishopPairAward int16 = %d\n", guesses[830])
 	fmt.Printf("var EndgameBishopPairAward int16 = %d\n", guesses[831])
+	fmt.Printf("var MiddlegameKingVirtualMobilityPenalty int16 = %d\n", guesses[832])
+	fmt.Printf("var EndgameKingVirtualMobilityPenalty int16 = %d\n", guesses[833])
 
 	fmt.Println("===================================================")
 }

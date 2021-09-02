@@ -5,20 +5,17 @@ import (
 	. "github.com/amanjpro/zahak/evaluation"
 )
 
-const blackMask = uint64(0x000000000000FF00)
-const whiteMask = uint64(0x00FF000000000000)
-
 func dynamicMargin(pos *Position) int16 {
 
 	color := pos.Turn()
 	delta := p
 
 	if color == White {
-		if pos.Board.GetBitboardOf(WhitePawn)&whiteMask != 0 {
+		if pos.Board.GetBitboardOf(WhitePawn)&Rank7Fill != 0 {
 			delta = q
 		}
 	} else {
-		if pos.Board.GetBitboardOf(BlackPawn)&blackMask != 0 {
+		if pos.Board.GetBitboardOf(BlackPawn)&Rank2Fill != 0 {
 			delta = q
 		}
 	}
