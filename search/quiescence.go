@@ -95,7 +95,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		if isCaptureMove && seeScores[noisyMoves] < 0 {
 			// SEE pruning
 			e.info.seeQuiescenceCounter += 1
-			continue
+			break
 		}
 
 		if !IsPromoting(move) {

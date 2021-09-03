@@ -86,7 +86,10 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 		}
 		mp.killerIndex = 1
 		if mp.currentMove != EmptyMove {
-			mp.counterMove = mp.engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
+			counterMove := mp.engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
+			if counterMove != mp.killer1 && counterMove != mp.killer2 && counterMove != hashmove {
+				mp.counterMove = counterMove
+			}
 		}
 	} else {
 		mp.killerIndex = 0
@@ -236,15 +239,18 @@ func (mp *MovePicker) scoreQuietMoves() int {
 				highestNonSpecialIndex = i
 			}
 			nextSpecialIndex += 1
-		} else {
-			if move == mp.counterMove {
-				scores[i] = 70_000_000
-			} else {
-				dest := move.Destination()
-				piece := move.MovingPiece()
-				history := engine.MoveHistoryScore(piece, dest, depthLeft)
-				scores[i] = history
+		} else if move == mp.counterMove {
+			scores[i] = 70_000_000
+			mp.quietMoveList.Swap(nextSpecialIndex, i)
+			if highestNonSpecialIndex == nextSpecialIndex {
+				highestNonSpecialIndex = i
 			}
+			nextSpecialIndex += 1
+		} else {
+			dest := move.Destination()
+			piece := move.MovingPiece()
+			history := engine.MoveHistoryScore(piece, dest, depthLeft)
+			scores[i] = history
 
 			if highestNonSpecialScore < scores[i] {
 				highestNonSpecialIndex = i
@@ -320,6 +326,14 @@ func (mp *MovePicker) getNextQuiet() Move {
 		if mp.position.IsPseudoLegal(mp.killer2) {
 			mp.quietMoveList.IncNext()
 			return mp.killer2
+		}
+	}
+
+	if mp.killerIndex == 3 {
+		mp.killerIndex += 1
+		if mp.position.IsPseudoLegal(mp.counterMove) {
+			mp.quietMoveList.IncNext()
+			return mp.counterMove
 		}
 	}
 
