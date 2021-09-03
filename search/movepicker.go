@@ -89,6 +89,8 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 			counterMove := mp.engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
 			if counterMove != mp.killer1 && counterMove != mp.killer2 && counterMove != hashmove {
 				mp.counterMove = counterMove
+			} else {
+				mp.counterMove = EmptyMove
 			}
 		}
 	} else {
