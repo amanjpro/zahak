@@ -552,11 +552,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			isQuiet = true
 			quietMoves += 1
 		}
-		isKiller := movePicker.killer1 == move || movePicker.killer2 == move
+		isKiller := movePicker.killer1 == move || movePicker.killer2 == move || movePicker.counterMove == move
 
 		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
-			if depthLeft < 8 && isQuiet && !isKiller && currentMove != EmptyMove && eval+p*int16(depthLeft) <= alpha && abs16(alpha) < WIN_IN_MAX {
+			if depthLeft < 8 && isQuiet && !isKiller && eval+p*int16(depthLeft) <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.efpCounter += 1
 				continue
 			}
@@ -600,14 +600,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			// Late Move Reduction
-			if !isInCheck && e.doPruning && isQuiet && depthLeft > 2 && legalMoves > lmrThreashold {
+			if e.doPruning && isQuiet && depthLeft > 2 && legalMoves > lmrThreashold {
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
-				// if !isInCheck {
-				// 	LMR += 1
-				// }
-				//
+				if isInCheck {
+					LMR -= 1
+				}
+
 				if isKiller {
 					LMR -= 1
 				}
