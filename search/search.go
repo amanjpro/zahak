@@ -608,9 +608,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				// 	LMR += 1
 				// }
 				//
-				// if isKiller {
-				// 	LMR -= 1
-				// }
+				if isKiller {
+					LMR -= 1
+				}
 
 				if isPvNode {
 					LMR -= 1
