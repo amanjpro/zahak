@@ -161,30 +161,43 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 	}
 }
 
-func (e *Engine) aspirationWindow(prevScore int16, iterationDepth int8) int16 {
+func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 	e.doPruning = iterationDepth > 3
 	if iterationDepth <= 6 {
 		return e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
 	} else {
-		alphaMargin := int16(25)
-		betaMargin := int16(25)
-		for i := 0; i < 2; i++ {
-			alpha := max16(prevScore-alphaMargin, -MAX_INT)
-			beta := min16(prevScore+betaMargin, MAX_INT)
-			score := e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if e.startDepth == 0 {
+		var initialWindow int16 = 12
+		var delta int16 = 16
+
+		alpha := max16(score-initialWindow, -MAX_INT)
+		beta := min16(score+initialWindow, MAX_INT)
+		originalDepth := iterationDepth
+
+		for true {
+			beta = min16(beta, MAX_INT)
+			alpha = max16(alpha, -MAX_INT)
+
+			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
+			if e.startDepth == 0 || e.TimeManager().AbruptStop {
 				return -MAX_INT
 			}
 			if score <= alpha {
-				alphaMargin *= 2
+				alpha = max16(alpha-delta, -MAX_INT)
+				beta = (alpha + 3*beta) / 4
+				iterationDepth = originalDepth
 			} else if score >= beta {
-				betaMargin *= 2
+				beta = min16(beta+delta, MAX_INT)
+				if abs16(score) < WIN_IN_MAX {
+					iterationDepth -= 1
+				}
 			} else {
 				return score
 			}
+			delta += delta * 2 / 3
 		}
 	}
-	return e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
+	// We should never get here
+	return -MAX_INT
 }
 
 func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16) int16 {
@@ -671,7 +684,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.parent.mu.RUnlock()
 		}
 	}
-	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) && !firstLayerOfSingularity {
+	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.TranspositionTable.Set(hash, hashmove, bestscore, depthLeft, Exact, e.Ply)
 		} else {
