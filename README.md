@@ -187,3 +187,6 @@ Zahak wouldn't have been possible without:
 - [Chess Programming Wiki](https://www.chessprogramming.org/)
 - Niels Abildskov the author of [Loki](https://github.com/BimmerBass/Loki), who helped me with Texel Tuning
 - [Nasrin Zaza](https://www.linkedin.com/in/nasrin-zaza/) for the amazing logo
+- OpenSource engines like: Weiss, Ethereal, CounterGo, Cheng and Berserk (in no specific order)
+- OpenBench community on Discord
+- No4b for helping me with some evaluation terms
