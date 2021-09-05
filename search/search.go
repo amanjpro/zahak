@@ -178,7 +178,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 			alpha = max16(alpha, -MAX_INT)
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if e.startDepth == 0 || e.TimeManager().AbruptStop {
+			if e.startDepth == 0 || e.TimeManager().AbruptStop || e.parent.Stop {
 				return -MAX_INT
 			}
 			if score <= alpha {
