@@ -101,6 +101,7 @@ The history of Zahak's rating is summerized here:
 - Promotions
 - Static Exchange Evaluation followed by LVA-MVV for equal captures according to SEE
 - Killer Moves Heuristics
+- Countermove Heuristics
 - Move History Heuristics
 
 ### Selectivity
@@ -108,7 +109,7 @@ The history of Zahak's rating is summerized here:
 - Null-Move Pruning
 - Delta Pruning
 - Reverse Futility Pruning
-- Futility Pruning in quiescence search
+- Futility Pruning
 - Late Move Reduction
 - Razoring
 - Check Extensions
@@ -116,6 +117,7 @@ The history of Zahak's rating is summerized here:
 - Internal Iterative Reduction (for non-PV nodes only)
 - SEE pruning both in QS and normal search
 - ProbCut
+- History Leaf Pruning
 - Singular Extension
 - Multi-Cut
 
@@ -131,6 +133,7 @@ The history of Zahak's rating is summerized here:
 - Material balance
 - Bishop Pair
 - Outposts
+- Draw pattern recognition: RvN, RvB, RNvR, RBvR, Wrong Bishop, OCB, KPK
 
 # Command line options
 
