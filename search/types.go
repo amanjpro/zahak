@@ -11,14 +11,14 @@ import (
 )
 
 type Runner struct {
+	nodesVisited int64
+	cacheHits    int64
+	globalInfo   Info
 	mu           sync.RWMutex
 	Engines      []*Engine
-	globalInfo   Info
-	nodesVisited int64
 	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
-	cacheHits    int64
 	pv           PVLine
 	isBookmove   bool
 	depth        int8
