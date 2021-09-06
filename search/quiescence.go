@@ -127,3 +127,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 	return bestscore
 }
+
+func (e *Engine) Quiescence(alpha int16, beta int16, searchHeight int8) int16 {
+	return e.quiescence(alpha, beta, searchHeight)
+}
