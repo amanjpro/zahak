@@ -54,15 +54,17 @@ well as the [4040
 rating](https://ccrl.chessdom.com/ccrl/4040/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents).
 He is also listed in [Rebel's Gambit rating (i.e.
 GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes.
-__Please Note__ that GRL tests the engiens with their default hash size, which
-means it doesn't really represent the actual strength/weakness of the engines
-in the list.  As of version 4.0, Zahak is also listed on [CEGT 40/4 Rating
-List](http://www.cegt.net/blitz.htm). Also, starting from version 5.0, Zahak is listed on [Fast GM rating list 60+06 too](http://www.fastgm.de/60-0.60.html).
+__Please Note__ Up until including Zahak 5.0, GRL tests are done with the engine's
+default hash size, which means it doesn't really represent the actual 
+strength/weakness of the engines in the list.  As of version 4.0, Zahak is also
+listed on [CEGT 40/4 Rating List](http://www.cegt.net/blitz.htm). Also, starting
+from version 5.0, Zahak is listed on [Fast GM rating list 60+06 too](http://www.fastgm.de/60-0.60.html).
 
 The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   | **Fast GM 60+06** |
+| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   |  **Fast GM 60+06** |
 |-------------|------------------------------|-------------------------|---------------------------|---------------------------|--------------------|
+| 6.x         | N/A                          | 2785                    | N/A                       | N/A                       | N/A                |
 | 5.0         | 2730                         | 2686                    | 2553                      | 2676                      | 2505               |
 | 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    | N/A                |
 | 3.0         | 2407                         | 2378                    | N/A                       | N/A                       | N/A                |
