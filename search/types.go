@@ -201,7 +201,7 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 	}
 }
 
-func (e *Engine) setStaticEvals(height int, eval int16) {
+func (e *Engine) SetStaticEvals(height int, eval int16) {
 	e.staticEvals[height] = eval
 }
 
