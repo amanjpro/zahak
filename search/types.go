@@ -201,6 +201,10 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 	}
 }
 
+func (e *Engine) setStaticEvals(height int, eval int16) {
+	e.staticEvals[height] = eval
+}
+
 func (t *Runner) AddTimeManager(tm *TimeManager) {
 	t.TimeManager = tm
 }
