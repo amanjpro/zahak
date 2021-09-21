@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -9,6 +10,13 @@ import (
 )
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+var randgen *rand.Rand
+
+func init() {
+	src := rand.NewSource(time.Now().UnixNano())
+	randgen = rand.New(src)
+}
 
 func GenerateEpds() {
 	cacheSize := uint32(32)
@@ -18,7 +26,9 @@ func GenerateEpds() {
 
 	game := FromFen(startFen)
 	engine.Position = game.Position()
-	gen(engine, 8)
+	for true {
+		gen(engine, 8)
+	}
 }
 
 func gen(e *Engine, depthLeft int) {
@@ -29,10 +39,12 @@ func gen(e *Engine, depthLeft int) {
 		}
 	} else {
 		moves := e.Position.PseudoLegalMoves()
-		for _, move := range moves {
+		for i := 0; i < 4*len(moves); i++ {
+			move := moves[randgen.Intn(len(moves))]
 			if oldEnPassant, oldTag, hc, ok := e.Position.MakeMove(move); ok {
 				gen(e, depthLeft-1)
 				e.Position.UnMakeMove(move, oldTag, oldEnPassant, hc)
+				return
 			}
 		}
 	}
