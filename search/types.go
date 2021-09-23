@@ -279,6 +279,8 @@ func (e *Engine) ClearForSearch() {
 	e.StartTime = time.Now()
 
 	e.pred.Clear()
+
+	e.Position.Net.Recalculate(e.Position.NetInput())
 }
 
 func (e *Engine) KillerMoveScore(move Move, searchHeight int8) int32 {

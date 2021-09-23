@@ -115,8 +115,16 @@ func positionFromFen(fen string) Position {
 		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
 	}
 	var mob [12]int16
+	net := NetworkState{}
+
+	net.HiddenOutputs = make([][]float32, MaximumDepth)
+	for i := 0; i < MaximumDepth; i++ {
+		net.HiddenOutputs[i] = make([]float32, NetHiddenSize)
+	}
 	p := Position{
 		bitboardFromFen(fen),
+		&net,
+		&Updates{},
 		NoSquare,
 		0,
 		0,
@@ -170,6 +178,7 @@ func positionFromFen(fen string) Position {
 	}
 
 	p.Positions[p.Hash()] = 1
+	p.Net.Recalculate(p.NetInput())
 	p.MaterialAndPSQT()
 	return p
 }

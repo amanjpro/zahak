@@ -40,6 +40,7 @@ func NewUCI(version string, withBook bool, bookPath string) *UCI {
 }
 
 func (uci *UCI) Start() {
+	LoadNetwork("/tmp/epoch-50.nnue")
 	var game Game = FromFen(startFen)
 	var depth = int8(MAX_DEPTH)
 	if uci.withBook {
@@ -70,11 +71,13 @@ func (uci *UCI) Start() {
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
+				fmt.Printf("id EvalFile %d\n", NetworkId)
 				fmt.Print("option name Ponder type check default false\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
 				fmt.Printf("option name Pawnhash type spin default %d min 1 max %d\n", DEFAULT_PAWNHASH_SIZE, MAX_PAWNHASH_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
 				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
+				fmt.Print("option name EvalFile type string\n")
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -103,7 +106,11 @@ func (uci *UCI) Start() {
 					}
 				}
 			default:
-				if strings.HasPrefix(cmd, "setoption name Ponder value") {
+				if strings.HasPrefix(cmd, "setoption name EvalFile value") {
+					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
+					LoadNetwork(path)
+					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", NetworkId)
+				} else if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
 				} else if strings.HasPrefix(cmd, "setoption name Book value ") {
 					options := strings.Fields(cmd)

@@ -6,6 +6,8 @@ import (
 
 type Position struct {
 	Board               *Bitboard
+	Net                 *NetworkState
+	Updates             *Updates
 	EnPassant           Square
 	Tag                 PositionTag
 	hash                uint64
@@ -131,7 +133,30 @@ func (p *Position) partialUnMakeMove(move Move) {
 	}
 }
 
+func (p *Position) NetInput() []int16 {
+	input := make([]int16, 0, 32)
+
+	for j := 0; j < 64; j++ {
+		sq := Square(j)
+
+		piece := p.Board.PieceAt(sq)
+		if piece != NoPiece {
+			input = append(input, calculateNetInputIndex(sq, piece-1))
+		}
+	}
+	return input
+}
+
+func (p *Position) GameMakeMove(move Move) (Square, PositionTag, uint8, bool) {
+	return p.makeMoveHelper(move, false)
+}
+
 func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
+	return p.makeMoveHelper(move, true)
+}
+
+func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, PositionTag, uint8, bool) {
+	p.Updates.Size = 0
 	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
@@ -143,6 +168,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 	promoPiece := NoPiece
 
 	p.Board.Move(source, dest, movingPiece, NoPiece)
+	p.Updates.Add(Update{Index: calculateNetInputIndex(source, movingPiece-1), Value: Remove})
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
 		p.HalfMoveClock = 0
@@ -156,9 +182,11 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		ep := findEnPassantCaptureSquare(move)
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
+		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece-1), Value: Remove})
 	} else if move.IsCapture() {
 		captureSquare = dest
 		p.Board.Clear(dest, capturedPiece)
+		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece-1), Value: Remove})
 	}
 
 	if movingPiece == WhitePawn &&
@@ -176,6 +204,28 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 	if promoType != NoType {
 		promoPiece = GetPiece(promoType, p.Turn())
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
+		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, promoPiece-1), Value: Add})
+	} else {
+		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, movingPiece-1), Value: Add})
+	}
+
+	turn := p.Turn()
+	if move.IsQueenSideCastle() {
+		if turn == White {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A1, WhiteRook-1), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D1, WhiteRook-1), Value: Add})
+		} else {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A8, WhiteRook-1), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D8, WhiteRook-1), Value: Add})
+		}
+	} else if move.IsKingSideCastle() {
+		if turn == White {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H1, WhiteRook-1), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F1, WhiteRook-1), Value: Add})
+		} else {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H8, WhiteRook-1), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F8, WhiteRook-1), Value: Add})
+		}
 	}
 
 	if movingPiece == BlackKing {
@@ -210,7 +260,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		return NoSquare, 0, 0, false
 	}
 
-	movingSide := p.Turn()
+	// movingSide := p.Turn()
 	p.ToggleTurn()
 
 	// Set check tag
@@ -220,70 +270,74 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		p.ClearTag(InCheck)
 	}
 
-	// update psqt and material balance
-	{
-		if movingSide == White {
-			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
-			p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
-			if promoPiece == NoPiece {
-				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
-				p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
-				if move.IsQueenSideCastle() {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][A1]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][A1]
-					p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][D1]
-					p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][D1]
-				} else if move.IsKingSideCastle() {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][H1]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][H1]
-					p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][F1]
-					p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][F1]
-				}
-			} else {
-				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
-				p.WhiteEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
-				p.MaterialsOnBoard[movingPiece-1] -= 1
-				p.MaterialsOnBoard[promoPiece-1] += 1
-			}
-
-			if capturedPiece != NoPiece {
-				p.MaterialsOnBoard[capturedPiece-1] -= 1
-				p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-				p.BlackEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
-			}
-		} else {
-			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
-			p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
-			if promoPiece == NoPiece {
-				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
-				p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
-				if move.IsQueenSideCastle() {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][A8]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][A8]
-					p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][D8]
-					p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][D8]
-				} else if move.IsKingSideCastle() {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][H8]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][H8]
-					p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][F8]
-					p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][F8]
-				}
-			} else {
-				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
-				p.BlackEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
-				p.MaterialsOnBoard[movingPiece-1] -= 1
-				p.MaterialsOnBoard[promoPiece-1] += 1
-			}
-
-			if capturedPiece != NoPiece {
-				p.MaterialsOnBoard[capturedPiece-1] -= 1
-				p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-				p.WhiteEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
-			}
-		}
+	if updateHidden {
+		p.Net.UpdateHidden(p.Updates)
 	}
+
+	// update psqt and material balance
+	// {
+	// 	if movingSide == White {
+	// 		p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
+	// 		p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
+	// 		if promoPiece == NoPiece {
+	// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
+	// 			p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
+	// 			if move.IsQueenSideCastle() {
+	// 				p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][A1]
+	// 				p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][A1]
+	// 				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][D1]
+	// 				p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][D1]
+	// 			} else if move.IsKingSideCastle() {
+	// 				p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][H1]
+	// 				p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][H1]
+	// 				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][F1]
+	// 				p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][F1]
+	// 			}
+	// 		} else {
+	// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
+	// 			p.WhiteEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
+	// 			p.MaterialsOnBoard[movingPiece-1] -= 1
+	// 			p.MaterialsOnBoard[promoPiece-1] += 1
+	// 		}
+	//
+	// 		if capturedPiece != NoPiece {
+	// 			p.MaterialsOnBoard[capturedPiece-1] -= 1
+	// 			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
+	// 			p.BlackEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
+	// 		}
+	// 	} else {
+	// 		p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
+	// 		p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
+	// 		if promoPiece == NoPiece {
+	// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
+	// 			p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
+	// 			if move.IsQueenSideCastle() {
+	// 				p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][A8]
+	// 				p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][A8]
+	// 				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][D8]
+	// 				p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][D8]
+	// 			} else if move.IsKingSideCastle() {
+	// 				p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][H8]
+	// 				p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][H8]
+	// 				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][F8]
+	// 				p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][F8]
+	// 			}
+	// 		} else {
+	// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
+	// 			p.BlackEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
+	// 			p.MaterialsOnBoard[movingPiece-1] -= 1
+	// 			p.MaterialsOnBoard[promoPiece-1] += 1
+	// 		}
+	//
+	// 		if capturedPiece != NoPiece {
+	// 			p.MaterialsOnBoard[capturedPiece-1] -= 1
+	// 			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
+	// 			p.WhiteEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
+	// 		}
+	// 	}
+	// }
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	updatePawnHash(p, move, captureSquare, promoPiece)
+	// updatePawnHash(p, move, captureSquare, promoPiece)
 	return ep, tag, hc, true
 }
 
@@ -338,72 +392,73 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	}
 
 	if isLegal {
+		p.Net.RevertHidden()
 		// Unmake: update psqt and material balance
-		{
-			movingSide := p.Turn()
-			if movingSide == White {
-				// PSQT update
-				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
-				p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
-				if promoPiece == NoPiece {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
-					if move.IsQueenSideCastle() {
-						p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][A1]
-						p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][A1]
-						p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][D1]
-						p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][D1]
-					} else if move.IsKingSideCastle() {
-						p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][H1]
-						p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][H1]
-						p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][F1]
-						p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][F1]
-					}
-				} else {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
-					p.MaterialsOnBoard[movingPiece-1] += 1
-					p.MaterialsOnBoard[promoPiece-1] -= 1
-				}
-
-				if capturedPiece != NoPiece {
-					p.MaterialsOnBoard[capturedPiece-1] += 1
-					p.BlackMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-					p.BlackEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
-				}
-			} else {
-				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
-				p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
-				if promoPiece == NoPiece {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
-					if move.IsQueenSideCastle() {
-						p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][A8]
-						p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][A8]
-						p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][D8]
-						p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][D8]
-					} else if move.IsKingSideCastle() {
-						p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][H8]
-						p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][H8]
-						p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][F8]
-						p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][F8]
-					}
-				} else {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
-					p.MaterialsOnBoard[movingPiece-1] += 1
-					p.MaterialsOnBoard[promoPiece-1] -= 1
-				}
-
-				if capturedPiece != NoPiece {
-					p.MaterialsOnBoard[capturedPiece-1] += 1
-					p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-					p.WhiteEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
-				}
-			}
-		}
+		// {
+		// movingSide := p.Turn()
+		// if movingSide == White {
+		// 	// PSQT update
+		// 	p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
+		// 	p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
+		// 	if promoPiece == NoPiece {
+		// 		p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
+		// 		p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
+		// 		if move.IsQueenSideCastle() {
+		// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][A1]
+		// 			p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][A1]
+		// 			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][D1]
+		// 			p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][D1]
+		// 		} else if move.IsKingSideCastle() {
+		// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][H1]
+		// 			p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][H1]
+		// 			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][F1]
+		// 			p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][F1]
+		// 		}
+		// 	} else {
+		// 		p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
+		// 		p.WhiteEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
+		// 		p.MaterialsOnBoard[movingPiece-1] += 1
+		// 		p.MaterialsOnBoard[promoPiece-1] -= 1
+		// 	}
+		//
+		// 	if capturedPiece != NoPiece {
+		// 		p.MaterialsOnBoard[capturedPiece-1] += 1
+		// 		p.BlackMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
+		// 		p.BlackEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
+		// 	}
+		// } else {
+		// 	p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
+		// 	p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
+		// 	if promoPiece == NoPiece {
+		// 		p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
+		// 		p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
+		// 		if move.IsQueenSideCastle() {
+		// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][A8]
+		// 			p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][A8]
+		// 			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][D8]
+		// 			p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][D8]
+		// 		} else if move.IsKingSideCastle() {
+		// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][H8]
+		// 			p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][H8]
+		// 			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][F8]
+		// 			p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][F8]
+		// 		}
+		// 	} else {
+		// 		p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
+		// 		p.BlackEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
+		// 		p.MaterialsOnBoard[movingPiece-1] += 1
+		// 		p.MaterialsOnBoard[promoPiece-1] -= 1
+		// 	}
+		//
+		// 	if capturedPiece != NoPiece {
+		// 		p.MaterialsOnBoard[capturedPiece-1] += 1
+		// 		p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
+		// 		p.WhiteEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
+		// 	}
+		// }
+		// }
 		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
-		updatePawnHash(p, move, captureSquare, promoPiece)
+		// updatePawnHash(p, move, captureSquare, promoPiece)
 	}
 }
 
@@ -671,6 +726,15 @@ func (p *Position) MaterialAndPSQT() {
 
 }
 
+func (p *Position) Evaluate() int16 {
+	p.Net.QuickFeed()
+	eval := int16(p.Net.Output)
+	if p.Turn() == Black {
+		eval *= -1
+	}
+	return eval
+}
+
 func findEnPassantCaptureSquare(move Move) Square {
 	rank := move.Source().Rank()
 	file := move.Destination().File()
@@ -688,6 +752,8 @@ func (p *Position) Copy() *Position {
 	}
 	return &Position{
 		p.Board.copy(),
+		p.Net.copy(),
+		&Updates{},
 		p.EnPassant,
 		p.Tag,
 		p.hash,
