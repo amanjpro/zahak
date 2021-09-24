@@ -248,26 +248,3 @@ func TestUpdateZobristHash(t *testing.T) {
 		}
 	}
 }
-
-func TestUpdateZobristPawnHash(t *testing.T) {
-	for _, pos := range positions {
-		pos.pawnhash = 0 // Reset the positions
-		originalHash := pos.Pawnhash()
-		for _, mov := range pos.PseudoLegalMoves() {
-			if ep, tg, hc, ok := pos.MakeMove(mov); ok {
-				incrementHash := pos.Pawnhash()
-				pos.pawnhash = 0
-				freshHash := pos.Pawnhash()
-				pos.UnMakeMove(mov, tg, ep, hc)
-				unmadeHash := pos.Pawnhash()
-				pos.pawnhash = originalHash
-				if incrementHash != freshHash {
-					t.Errorf("Updated hash != Fresh hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
-				}
-				if unmadeHash != originalHash {
-					t.Errorf("Undone hash (reverse from unmake) != original hash ->\nMov: %v\nPos:\n%v\n", mov.ToString(), pos.Board.Draw())
-				}
-			}
-		}
-	}
-}

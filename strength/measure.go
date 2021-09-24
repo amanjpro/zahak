@@ -8,7 +8,6 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 	. "github.com/amanjpro/zahak/search"
 )
 
@@ -80,7 +79,7 @@ func RunTestPositions(path string) {
 		os.Stdout = w
 
 		game := FromFen(epd.fen)
-		r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+		r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 		r.AddTimeManager(NewTimeManager(time.Now(), 15000, true, 0, 0, false))
 		pos := game.Position()
 		r.Engines[0].Position = pos

@@ -5,20 +5,14 @@ import (
 )
 
 type Position struct {
-	Board               *Bitboard
-	Net                 *NetworkState
-	Updates             *Updates
-	EnPassant           Square
-	Tag                 PositionTag
-	hash                uint64
-	pawnhash            uint64
-	Positions           map[uint64]int
-	HalfMoveClock       uint8
-	MaterialsOnBoard    [12]int16
-	WhiteMiddlegamePSQT int16
-	WhiteEndgamePSQT    int16
-	BlackMiddlegamePSQT int16
-	BlackEndgamePSQT    int16
+	Board         *Bitboard
+	Net           *NetworkState
+	Updates       *Updates
+	EnPassant     Square
+	Tag           PositionTag
+	hash          uint64
+	Positions     map[uint64]int
+	HalfMoveClock uint8
 }
 
 type PositionTag uint8
@@ -274,70 +268,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		p.Net.UpdateHidden(p.Updates)
 	}
 
-	// update psqt and material balance
-	// {
-	// 	if movingSide == White {
-	// 		p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
-	// 		p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
-	// 		if promoPiece == NoPiece {
-	// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
-	// 			p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
-	// 			if move.IsQueenSideCastle() {
-	// 				p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][A1]
-	// 				p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][A1]
-	// 				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][D1]
-	// 				p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][D1]
-	// 			} else if move.IsKingSideCastle() {
-	// 				p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][H1]
-	// 				p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][H1]
-	// 				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][F1]
-	// 				p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][F1]
-	// 			}
-	// 		} else {
-	// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
-	// 			p.WhiteEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
-	// 			p.MaterialsOnBoard[movingPiece-1] -= 1
-	// 			p.MaterialsOnBoard[promoPiece-1] += 1
-	// 		}
-	//
-	// 		if capturedPiece != NoPiece {
-	// 			p.MaterialsOnBoard[capturedPiece-1] -= 1
-	// 			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-	// 			p.BlackEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
-	// 		}
-	// 	} else {
-	// 		p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
-	// 		p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
-	// 		if promoPiece == NoPiece {
-	// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
-	// 			p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
-	// 			if move.IsQueenSideCastle() {
-	// 				p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][A8]
-	// 				p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][A8]
-	// 				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][D8]
-	// 				p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][D8]
-	// 			} else if move.IsKingSideCastle() {
-	// 				p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][H8]
-	// 				p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][H8]
-	// 				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][F8]
-	// 				p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][F8]
-	// 			}
-	// 		} else {
-	// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
-	// 			p.BlackEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
-	// 			p.MaterialsOnBoard[movingPiece-1] -= 1
-	// 			p.MaterialsOnBoard[promoPiece-1] += 1
-	// 		}
-	//
-	// 		if capturedPiece != NoPiece {
-	// 			p.MaterialsOnBoard[capturedPiece-1] -= 1
-	// 			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-	// 			p.WhiteEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
-	// 		}
-	// 	}
-	// }
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	// updatePawnHash(p, move, captureSquare, promoPiece)
 	return ep, tag, hc, true
 }
 
@@ -393,72 +324,7 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 
 	if isLegal {
 		p.Net.RevertHidden()
-		// Unmake: update psqt and material balance
-		// {
-		// movingSide := p.Turn()
-		// if movingSide == White {
-		// 	// PSQT update
-		// 	p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
-		// 	p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
-		// 	if promoPiece == NoPiece {
-		// 		p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
-		// 		p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
-		// 		if move.IsQueenSideCastle() {
-		// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][A1]
-		// 			p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][A1]
-		// 			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][D1]
-		// 			p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][D1]
-		// 		} else if move.IsKingSideCastle() {
-		// 			p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][H1]
-		// 			p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][H1]
-		// 			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][F1]
-		// 			p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][F1]
-		// 		}
-		// 	} else {
-		// 		p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
-		// 		p.WhiteEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
-		// 		p.MaterialsOnBoard[movingPiece-1] += 1
-		// 		p.MaterialsOnBoard[promoPiece-1] -= 1
-		// 	}
-		//
-		// 	if capturedPiece != NoPiece {
-		// 		p.MaterialsOnBoard[capturedPiece-1] += 1
-		// 		p.BlackMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-		// 		p.BlackEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
-		// 	}
-		// } else {
-		// 	p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
-		// 	p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
-		// 	if promoPiece == NoPiece {
-		// 		p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
-		// 		p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
-		// 		if move.IsQueenSideCastle() {
-		// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][A8]
-		// 			p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][A8]
-		// 			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][D8]
-		// 			p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][D8]
-		// 		} else if move.IsKingSideCastle() {
-		// 			p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][H8]
-		// 			p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][H8]
-		// 			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][F8]
-		// 			p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][F8]
-		// 		}
-		// 	} else {
-		// 		p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
-		// 		p.BlackEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
-		// 		p.MaterialsOnBoard[movingPiece-1] += 1
-		// 		p.MaterialsOnBoard[promoPiece-1] -= 1
-		// 	}
-		//
-		// 	if capturedPiece != NoPiece {
-		// 		p.MaterialsOnBoard[capturedPiece-1] += 1
-		// 		p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-		// 		p.WhiteEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
-		// 	}
-		// }
-		// }
 		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
-		// updatePawnHash(p, move, captureSquare, promoPiece)
 	}
 }
 
@@ -552,178 +418,12 @@ func (p *Position) IsFIDEDrawRule() bool {
 	return (ok && value >= 3)
 }
 
-func (p *Position) Pawnhash() uint64 {
-	if p.pawnhash == 0 {
-		hash := generateZobristPawnHash(p)
-		p.pawnhash = hash
-	}
-	return p.pawnhash
-}
-
 func (p *Position) Hash() uint64 {
 	if p.hash == 0 {
 		hash := generateZobristHash(p)
 		p.hash = hash
 	}
 	return p.hash
-}
-
-func (p *Position) MaterialAndPSQT() {
-
-	var blackCentipawnsMG, blackCentipawnsEG, whiteCentipawnsMG, whiteCentipawnsEG int16
-	board := p.Board
-
-	blackPawnsCount := int16(0)
-	blackKnightsCount := int16(0)
-	blackBishopsCount := int16(0)
-	blackRooksCount := int16(0)
-	blackQueensCount := int16(0)
-
-	whitePawnsCount := int16(0)
-	whiteKnightsCount := int16(0)
-	whiteBishopsCount := int16(0)
-	whiteRooksCount := int16(0)
-	whiteQueensCount := int16(0)
-
-	// PST for other black pieces
-	pieceIter := board.blackPawn
-	for pieceIter != 0 {
-		blackPawnsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackPawn-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackPawn-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackKnight
-	for pieceIter != 0 {
-		blackKnightsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackKnight-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackKnight-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackBishop
-	for pieceIter != 0 {
-		blackBishopsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackBishop-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackBishop-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackRook
-	for pieceIter != 0 {
-		blackRooksCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackRook-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackRook-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackQueen
-	for pieceIter != 0 {
-		blackQueensCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackQueen-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackQueen-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackKing
-	for pieceIter != 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackKing-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackKing-1][index]
-		pieceIter ^= mask
-	}
-
-	// PST for other white pieces
-	pieceIter = board.whitePawn
-	for pieceIter != 0 {
-		whitePawnsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhitePawn-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhitePawn-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteKnight
-	for pieceIter != 0 {
-		whiteKnightsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteKnight-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteKnight-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteBishop
-	for pieceIter != 0 {
-		whiteBishopsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteBishop-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteBishop-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteRook
-	for pieceIter != 0 {
-		whiteRooksCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteRook-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteRook-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteQueen
-	for pieceIter != 0 {
-		whiteQueensCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteQueen-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteQueen-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteKing
-	for pieceIter != 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteKing-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteKing-1][index]
-		pieceIter ^= mask
-	}
-
-	p.WhiteMiddlegamePSQT = whiteCentipawnsMG
-	p.WhiteEndgamePSQT = whiteCentipawnsEG
-	p.BlackMiddlegamePSQT = blackCentipawnsMG
-	p.BlackEndgamePSQT = blackCentipawnsEG
-
-	p.MaterialsOnBoard[WhitePawn-1] = whitePawnsCount
-	p.MaterialsOnBoard[WhiteKnight-1] = whiteKnightsCount
-	p.MaterialsOnBoard[WhiteBishop-1] = whiteBishopsCount
-	p.MaterialsOnBoard[WhiteRook-1] = whiteRooksCount
-	p.MaterialsOnBoard[WhiteQueen-1] = whiteQueensCount
-	p.MaterialsOnBoard[WhiteKing-1] = 1
-
-	p.MaterialsOnBoard[BlackPawn-1] = blackPawnsCount
-	p.MaterialsOnBoard[BlackKnight-1] = blackKnightsCount
-	p.MaterialsOnBoard[BlackBishop-1] = blackBishopsCount
-	p.MaterialsOnBoard[BlackRook-1] = blackRooksCount
-	p.MaterialsOnBoard[BlackQueen-1] = blackQueensCount
-	p.MaterialsOnBoard[BlackKing-1] = 1
-
 }
 
 func (p *Position) Evaluate() int16 {
@@ -746,10 +446,6 @@ func (p *Position) Copy() *Position {
 	for k, v := range p.Positions {
 		copyMap[k] = v
 	}
-	var mob [12]int16
-	for i, m := range p.MaterialsOnBoard {
-		mob[i] = m
-	}
 	newPos := &Position{
 		p.Board.copy(),
 		NewNetworkState(),
@@ -757,14 +453,8 @@ func (p *Position) Copy() *Position {
 		p.EnPassant,
 		p.Tag,
 		p.hash,
-		p.pawnhash,
 		copyMap,
 		p.HalfMoveClock,
-		mob,
-		p.WhiteMiddlegamePSQT,
-		p.WhiteEndgamePSQT,
-		p.BlackMiddlegamePSQT,
-		p.BlackEndgamePSQT,
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos

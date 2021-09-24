@@ -2,7 +2,6 @@ package search
 
 import (
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 func dynamicMargin(pos *Position) int16 {

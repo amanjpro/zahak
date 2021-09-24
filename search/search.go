@@ -7,7 +7,6 @@ import (
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 func (r *Runner) Search(depth int8) {

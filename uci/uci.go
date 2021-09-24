@@ -11,7 +11,6 @@ import (
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 	. "github.com/amanjpro/zahak/search"
 )
 
@@ -32,7 +31,7 @@ type UCI struct {
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
-		NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1),
+		NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1),
 		nil,
 		withBook,
 		bookPath,
@@ -69,7 +68,6 @@ func (uci *UCI) Start() {
 				fmt.Printf("id EvalFile %d\n", NetworkId)
 				fmt.Print("option name Ponder type check default false\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
-				fmt.Printf("option name Pawnhash type spin default %d min 1 max %d\n", DEFAULT_PAWNHASH_SIZE, MAX_PAWNHASH_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
 				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
 				fmt.Print("option name EvalFile type string\n")
@@ -82,14 +80,11 @@ func (uci *UCI) Start() {
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
 				size := uci.runner.Engines[0].TranspositionTable.Size()
-				pawnSize := uci.runner.Engines[0].Pawnhash.Size()
 				newTT := NewCache(size)
 				for i := 0; i < len(uci.runner.Engines); i++ {
-					uci.runner.Engines[i].Pawnhash = nil
 					uci.runner.Engines[i].TranspositionTable = nil
 					runtime.GC()
 					uci.runner.Engines[i].TranspositionTable = newTT
-					uci.runner.Engines[i].Pawnhash = NewPawnCache(pawnSize)
 				}
 				game = FromFen(startFen)
 			case "stop":
@@ -119,16 +114,7 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					cpu, _ := strconv.Atoi(v)
-					uci.runner = NewRunner(uci.runner.Engines[0].TranspositionTable, uci.runner.Engines[0].Pawnhash, cpu)
-				} else if strings.HasPrefix(cmd, "setoption name Pawnhash value") {
-					options := strings.Fields(cmd)
-					mg := options[len(options)-1]
-					pawnSize, _ := strconv.Atoi(mg)
-					for i := 0; i < len(uci.runner.Engines); i++ {
-						uci.runner.Engines[i].Pawnhash = nil
-						runtime.GC()
-						uci.runner.Engines[i].Pawnhash = NewPawnCache(pawnSize)
-					}
+					uci.runner = NewRunner(uci.runner.Engines[0].TranspositionTable, cpu)
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
