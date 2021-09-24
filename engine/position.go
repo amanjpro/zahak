@@ -750,9 +750,9 @@ func (p *Position) Copy() *Position {
 	for i, m := range p.MaterialsOnBoard {
 		mob[i] = m
 	}
-	return &Position{
+	newPos := &Position{
 		p.Board.copy(),
-		p.Net.copy(),
+		NewNetworkState(),
 		&Updates{},
 		p.EnPassant,
 		p.Tag,
@@ -766,4 +766,6 @@ func (p *Position) Copy() *Position {
 		p.BlackMiddlegamePSQT,
 		p.BlackEndgamePSQT,
 	}
+	newPos.Net.Recalculate(newPos.NetInput())
+	return newPos
 }

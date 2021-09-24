@@ -1,31 +1,39 @@
 revision := $(shell git rev-list -1 HEAD)
 version := $(shell git tag | sort -r | head -n1)
+netfile := default.nn
 
-build:
+ifdef EVALFILE
+	netfile := $(EVALFILE)
+endif
+netgen:
+	go run -ldflags "-X 'main.netPath=$(netfile)'" netgen/nn.go
+
+.PHONY: netgen
+build: netgen
 	mkdir -p bin
 	go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
 ifdef EXE
 	mv bin/zahak bin/$(EXE)
 endif
 
-run_perft:
+run_perft: netgen
 	mkdir -p bin
 	go build -o bin ./...
 	bin/zahak -perft
 
-run:
+run: netgen
 	mkdir -p bin
 	go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
 	bin/zahak
 
-test:
+test: netgen
 	go test ./...
 
 clean:
 	go clean ./...
 	rm -rf bin
 
-dist:
+dist: netgen
 	echo "Compiling for every OS and Platform"
 	GOOS=linux GOARCH=arm go build -ldflags "-X 'main.version=$(version)'" -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
 	GOOS=linux GOARCH=arm64 go build -ldflags "-X 'main.version=$(version)'" -o bin ./... && mv bin/zahak bin/zahak-linux-arm64

@@ -38,6 +38,15 @@ type NetworkState struct {
 	Output        float32
 }
 
+func NewNetworkState() *NetworkState {
+	net := NetworkState{}
+	net.HiddenOutputs = make([][]float32, MaximumDepth)
+	for i := 0; i < MaximumDepth; i++ {
+		net.HiddenOutputs[i] = make([]float32, NetHiddenSize)
+	}
+	return &net
+}
+
 type Change int8
 
 const (
@@ -65,15 +74,16 @@ func (n *NetworkState) RevertHidden() {
 
 func (n *NetworkState) UpdateHidden(updates *Updates) {
 	n.CurrentHidden += 1
-	hiddenOutput := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < len(hiddenOutput); i++ {
-		hiddenOutput[i] = n.HiddenOutputs[n.CurrentHidden-1][i]
+	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
+	pastHiddenOutputs := n.HiddenOutputs[n.CurrentHidden-1]
+	for i := 0; i < NetHiddenSize; i++ {
+		hiddenOutputs[i] = pastHiddenOutputs[i]
 	}
 
 	for i := 0; i < updates.Size; i++ {
 		d := updates.Diff[i]
-		for j := 0; j < len(hiddenOutput); j++ {
-			hiddenOutput[j] += float32(d.Value) * HiddenWeights[int(d.Index)*len(hiddenOutput)+j]
+		for j := 0; j < NetHiddenSize; j++ {
+			hiddenOutputs[j] += float32(d.Value) * HiddenWeights[int(d.Index)*NetHiddenSize+j]
 		}
 	}
 }
@@ -81,18 +91,18 @@ func (n *NetworkState) UpdateHidden(updates *Updates) {
 func (n *NetworkState) FeedInput(input []int16) {
 
 	// apply hidden layer
-	hiddenOutput := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < len(hiddenOutput); i++ {
-		hiddenOutput[i] = 0
+	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
+	for i := 0; i < NetHiddenSize; i++ {
+		hiddenOutputs[i] = 0
 	}
 	for index := 0; index < len(input); index++ {
 		i := int(input[index])
-		for j := 0; j < len(hiddenOutput); j++ {
-			hiddenOutput[j] += HiddenWeights[i*len(hiddenOutput)+j]
+		for j := 0; j < NetHiddenSize; j++ {
+			hiddenOutputs[j] += HiddenWeights[i*NetHiddenSize+j]
 		}
 	}
-	for i := 0; i < len(hiddenOutput); i++ {
-		hiddenOutput[i] = hiddenOutput[i] + HiddenBiases[i]
+	for i := 0; i < NetHiddenSize; i++ {
+		hiddenOutputs[i] = hiddenOutputs[i] + HiddenBiases[i]
 	}
 
 	n.QuickFeed()
@@ -101,9 +111,9 @@ func (n *NetworkState) FeedInput(input []int16) {
 func (n *NetworkState) QuickFeed() {
 	// apply output layer
 	output := float32(0)
-	hiddenOutput := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < len(hiddenOutput); i++ {
-		output += ReLu(hiddenOutput[i]) * OutputWeights[i]
+	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
+	for i := 0; i < NetHiddenSize; i++ {
+		output += ReLu(hiddenOutputs[i]) * OutputWeights[i]
 	}
 	output = output + OutputBias
 
@@ -113,22 +123,6 @@ func (n *NetworkState) QuickFeed() {
 func (n *NetworkState) Evaluate(input []int16) float32 {
 	n.FeedInput(input)
 	return n.Output
-}
-
-func (n *NetworkState) copy() *NetworkState {
-	newNet := NetworkState{
-		CurrentHidden: 0,
-		Output:        n.Output,
-	}
-	newNet.HiddenOutputs = make([][]float32, MaximumDepth)
-	for i := 0; i < MaximumDepth; i++ {
-		newNet.HiddenOutputs[i] = make([]float32, len(n.HiddenOutputs[i]))
-
-	}
-	for j := 0; j < len(n.HiddenOutputs[0]); j++ {
-		newNet.HiddenOutputs[0][j] = n.HiddenOutputs[0][j]
-	}
-	return &newNet
 }
 
 // load a neural network from file
@@ -181,7 +175,7 @@ func LoadNetwork(path string) {
 
 	NetworkId = id
 
-	HiddenWeights = make([]float32, inputs*neurons)
+	HiddenWeights = make([]float32, NetHiddenSize*NetInputSize)
 	for j := 0; j < len(HiddenWeights); j++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
@@ -190,7 +184,7 @@ func LoadNetwork(path string) {
 		HiddenWeights[j] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
 	}
 
-	HiddenBiases = make([]float32, neurons)
+	HiddenBiases = make([]float32, NetHiddenSize)
 	for j := 0; j < len(HiddenBiases); j++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
@@ -199,7 +193,7 @@ func LoadNetwork(path string) {
 		HiddenBiases[j] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
 	}
 
-	OutputWeights = make([]float32, neurons)
+	OutputWeights = make([]float32, NetHiddenSize*NetOutputSize)
 	for j := 0; j < len(OutputWeights); j++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {

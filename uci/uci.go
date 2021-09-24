@@ -40,7 +40,6 @@ func NewUCI(version string, withBook bool, bookPath string) *UCI {
 }
 
 func (uci *UCI) Start() {
-	LoadNetwork("/tmp/epoch-50.nnue")
 	var game Game = FromFen(startFen)
 	var depth = int8(MAX_DEPTH)
 	if uci.withBook {
@@ -63,11 +62,7 @@ func (uci *UCI) Start() {
 			case "quit":
 				return
 			case "eval":
-				dir := int16(1)
-				if game.Position().Turn() == Black {
-					dir = -1
-				}
-				fmt.Printf("%d\n", dir*Evaluate(game.Position(), uci.runner.Engines[0].Pawnhash))
+				fmt.Printf("%d\n", game.Position().Evaluate())
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
