@@ -5,13 +5,15 @@ netfile := default.nn
 ifdef EVALFILE
 	netfile := $(EVALFILE)
 endif
+
+.PHONY: netgen
 netgen:
 	go run -ldflags "-X 'main.netPath=$(netfile)'" netgen/nn.go
 
-.PHONY: netgen
 build: netgen
 	mkdir -p bin
 	go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
+
 ifdef EXE
 	mv bin/zahak bin/$(EXE)
 endif

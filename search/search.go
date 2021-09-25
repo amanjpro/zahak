@@ -215,7 +215,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if searchHeight >= MAX_DEPTH-1 {
-		// eval := Evaluate(position, pawnhash)
 		eval := position.Evaluate()
 		e.staticEvals[searchHeight] = eval
 		return eval
@@ -228,7 +227,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if depthLeft <= 0 {
-		// e.staticEvals[searchHeight] = Evaluate(position, pawnhash)
 		e.staticEvals[searchHeight] = position.Evaluate()
 		return e.quiescence(alpha, beta, searchHeight)
 	}
@@ -280,9 +278,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	var eval int16 = -MAX_INT
 	if !isRootNode && currentMove == EmptyMove {
-		eval = -1 * e.staticEvals[searchHeight-1] //+ Tempo + Tempo)
+		eval = -1 * e.staticEvals[searchHeight-1]
 	} else {
-		eval = position.Evaluate() //position, pawnhash)
+		eval = position.Evaluate()
 	}
 
 	e.staticEvals[searchHeight] = eval
@@ -359,7 +357,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						e.innerLines[searchHeight+1].Recycle()
 						e.pred.Push(position.Hash())
 						e.positionMoves[searchHeight+1] = move
-						childEval := position.Evaluate() //position, pawnhash)
+						childEval := position.Evaluate()
 						e.staticEvals[searchHeight+1] = childEval
 						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
 						e.pred.Pop()

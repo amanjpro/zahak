@@ -107,7 +107,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 		if ep, tg, hc, ok := position.MakeMove(move); ok {
 			e.positionMoves[searchHeight+1] = move
-			e.staticEvals[searchHeight+1] = position.Evaluate() //position, pawnhash)
+			e.staticEvals[searchHeight+1] = position.Evaluate()
 
 			e.pred.Push(position.Hash())
 			score := -e.quiescence(-beta, -alpha, searchHeight+1)

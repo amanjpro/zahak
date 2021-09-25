@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -187,5 +188,28 @@ func TestUnMakeMovePromotion(t *testing.T) {
 	if startHash != newHash {
 		t.Errorf("Move was not undone properly\nGot hash: %d\n", newHash)
 		t.Errorf("But expected: %d\n", startHash)
+	}
+}
+
+func TestIncrementalEval(t *testing.T) {
+	for _, pos := range positions {
+		// compute the materials first first
+		originalEval := pos.Evaluate()
+		for _, mov := range pos.PseudoLegalMoves() {
+			if ep, tg, hc, ok := pos.MakeMove(mov); ok {
+				incrementalEval := pos.Evaluate()
+				clonePos := positionFromFen(fmt.Sprintf("%s %d", pos.Fen(), 1))
+				clonePos.Net.Recalculate(clonePos.NetInput())
+				fromScratchEval := clonePos.Evaluate()
+				pos.UnMakeMove(mov, tg, ep, hc)
+				decrementalEval := pos.Evaluate()
+				if incrementalEval != fromScratchEval {
+					t.Errorf("Updated eval != Fresh eval ->\nMov: %v, Fresh Eval: %d, Incremental Eval: %d, \nPos:%v\n", mov.ToString(), fromScratchEval, incrementalEval, pos.Fen())
+				}
+				if decrementalEval != originalEval {
+					t.Errorf("Undone eval (reverse from unmake) != original eval ->\nMov: %v, Original Eval: %d, Decremental Eval: %d, \nPos:%v\n", mov.ToString(), originalEval, decrementalEval, pos.Fen())
+				}
+			}
+		}
 	}
 }

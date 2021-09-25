@@ -194,31 +194,31 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	}
 
 	// Do promotion
+	turn := p.Turn()
 	promoType := move.PromoType()
 	if promoType != NoType {
-		promoPiece = GetPiece(promoType, p.Turn())
+		promoPiece = GetPiece(promoType, turn)
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
 		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, promoPiece-1), Value: Add})
 	} else {
 		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, movingPiece-1), Value: Add})
 	}
 
-	turn := p.Turn()
 	if move.IsQueenSideCastle() {
 		if turn == White {
 			p.Updates.Add(Update{Index: calculateNetInputIndex(A1, WhiteRook-1), Value: Remove})
 			p.Updates.Add(Update{Index: calculateNetInputIndex(D1, WhiteRook-1), Value: Add})
 		} else {
-			p.Updates.Add(Update{Index: calculateNetInputIndex(A8, WhiteRook-1), Value: Remove})
-			p.Updates.Add(Update{Index: calculateNetInputIndex(D8, WhiteRook-1), Value: Add})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A8, BlackRook-1), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D8, BlackRook-1), Value: Add})
 		}
 	} else if move.IsKingSideCastle() {
 		if turn == White {
 			p.Updates.Add(Update{Index: calculateNetInputIndex(H1, WhiteRook-1), Value: Remove})
 			p.Updates.Add(Update{Index: calculateNetInputIndex(F1, WhiteRook-1), Value: Add})
 		} else {
-			p.Updates.Add(Update{Index: calculateNetInputIndex(H8, WhiteRook-1), Value: Remove})
-			p.Updates.Add(Update{Index: calculateNetInputIndex(F8, WhiteRook-1), Value: Add})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H8, BlackRook-1), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F8, BlackRook-1), Value: Add})
 		}
 	}
 
@@ -427,8 +427,8 @@ func (p *Position) Hash() uint64 {
 }
 
 func (p *Position) Evaluate() int16 {
-	p.Net.QuickFeed()
-	eval := int16(p.Net.Output)
+	output := p.Net.QuickFeed()
+	eval := int16(output)
 	if p.Turn() == Black {
 		eval *= -1
 	}
@@ -446,10 +446,15 @@ func (p *Position) Copy() *Position {
 	for k, v := range p.Positions {
 		copyMap[k] = v
 	}
+	newUpdates := Updates{
+		Diff: make([]Update, 4),
+		Size: 0,
+	}
+
 	newPos := &Position{
 		p.Board.copy(),
 		NewNetworkState(),
-		&Updates{},
+		&newUpdates,
 		p.EnPassant,
 		p.Tag,
 		p.hash,

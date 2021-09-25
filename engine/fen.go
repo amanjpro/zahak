@@ -114,11 +114,14 @@ func positionFromFen(fen string) Position {
 	if err != nil {
 		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
 	}
-
+	newUpdates := Updates{
+		Diff: make([]Update, 40),
+		Size: 0,
+	}
 	p := Position{
 		bitboardFromFen(fen),
 		NewNetworkState(),
-		&Updates{},
+		&newUpdates,
 		NoSquare,
 		0,
 		0,

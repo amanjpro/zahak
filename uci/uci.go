@@ -65,7 +65,7 @@ func (uci *UCI) Start() {
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
 				fmt.Print("id author Amanj\n")
-				fmt.Printf("id EvalFile %d\n", NetworkId)
+				fmt.Printf("id EvalFile %d\n", CurrentNetworkId)
 				fmt.Print("option name Ponder type check default false\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
@@ -99,7 +99,7 @@ func (uci *UCI) Start() {
 				if strings.HasPrefix(cmd, "setoption name EvalFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
 					LoadNetwork(path)
-					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", NetworkId)
+					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", CurrentNetworkId)
 				} else if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
 				} else if strings.HasPrefix(cmd, "setoption name Book value ") {
