@@ -272,8 +272,13 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	return ep, tag, hc, true
 }
 
+func (p *Position) GameUnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
+	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
+}
+
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
+	p.Net.RevertHidden()
 }
 
 func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square, halfClock uint8, isLegal bool) {
@@ -323,7 +328,6 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	}
 
 	if isLegal {
-		p.Net.RevertHidden()
 		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
 	}
 }

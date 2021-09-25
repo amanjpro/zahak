@@ -26,7 +26,7 @@ func (p *Position) ParseMoves(moveStr []string) []Move {
 		}
 		ep, tg, hc, _ := p.GameMakeMove(parsed)
 		otherMoves := p.ParseMoves(moveStr[1:])
-		p.UnMakeMove(parsed, tg, ep, hc)
+		p.GameUnMakeMove(parsed, tg, ep, hc)
 		return append(append([]Move{}, parsed), otherMoves...)
 	}
 }

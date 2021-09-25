@@ -64,11 +64,6 @@ type Update struct {
 	Value Change
 }
 
-func (n *NetworkState) Recalculate(input []int16) {
-	n.CurrentHidden = 0
-	n.FeedInput(input)
-}
-
 func calculateNetInputIndex(sq Square, piece Piece) int16 {
 	return int16(piece)*64 + int16(sq)
 }
@@ -90,8 +85,7 @@ func (n *NetworkState) UpdateHidden(updates *Updates) {
 	}
 }
 
-func (n *NetworkState) FeedInput(input []int16) float32 {
-
+func (n *NetworkState) Recalculate(input []int16) {
 	// apply hidden layer
 	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
 	for i := 0; i < NetHiddenSize; i++ {
@@ -106,8 +100,6 @@ func (n *NetworkState) FeedInput(input []int16) float32 {
 	for i := 0; i < NetHiddenSize; i++ {
 		hiddenOutputs[i] = hiddenOutputs[i] + n.HiddenBiases[i]
 	}
-
-	return n.QuickFeed()
 }
 
 func (n *NetworkState) QuickFeed() float32 {
