@@ -5,7 +5,8 @@ import (
 )
 
 const CHECKMATE_EVAL int16 = 30000
-const MAX_NON_CHECKMATE int16 = 25000
+const MAX_NON_CHECKMATE float32 = 25000
+const MIN_NON_CHECKMATE float32 = -MAX_NON_CHECKMATE
 
 type Position struct {
 	Board         *Bitboard
@@ -435,11 +436,10 @@ func (p *Position) Hash() uint64 {
 
 func (p *Position) Evaluate() int16 {
 	output := p.Net.QuickFeed()
-	eval := int16(output)
 	if p.Turn() == Black {
-		eval *= -1
+		return -toEval(output)
 	}
-	return toEval(eval)
+	return toEval(output)
 }
 
 func findEnPassantCaptureSquare(move Move) Square {
@@ -472,11 +472,11 @@ func (p *Position) Copy() *Position {
 	return newPos
 }
 
-func toEval(eval int16) int16 {
-	if eval >= CHECKMATE_EVAL {
-		return MAX_NON_CHECKMATE
-	} else if eval <= -CHECKMATE_EVAL {
-		return -MAX_NON_CHECKMATE
+func toEval(eval float32) int16 {
+	if eval >= MAX_NON_CHECKMATE {
+		return int16(MAX_NON_CHECKMATE)
+	} else if eval <= MIN_NON_CHECKMATE {
+		return int16(MIN_NON_CHECKMATE)
 	}
-	return eval
+	return int16(eval)
 }

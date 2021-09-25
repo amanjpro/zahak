@@ -206,7 +206,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isPvNode := alpha != beta-1
 
 	position := e.Position
-	// pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
