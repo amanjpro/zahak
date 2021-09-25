@@ -79,25 +79,26 @@ func (n *NetworkState) UpdateHidden(updates *Updates) {
 
 	for i := 0; i < updates.Size; i++ {
 		d := updates.Diff[i]
-		for j := 0; j < NetHiddenSize; j++ {
+		for j := 0; j < len(hiddenOutputs); j++ {
 			hiddenOutputs[j] += float32(d.Value) * n.HiddenWeights[int(d.Index)*NetHiddenSize+j]
 		}
 	}
 }
 
 func (n *NetworkState) Recalculate(input []int16) {
+	n.CurrentHidden = 0
 	// apply hidden layer
 	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < NetHiddenSize; i++ {
+	for i := 0; i < len(hiddenOutputs); i++ {
 		hiddenOutputs[i] = 0
 	}
 	for index := 0; index < len(input); index++ {
 		i := int(input[index])
-		for j := 0; j < NetHiddenSize; j++ {
+		for j := 0; j < len(hiddenOutputs); j++ {
 			hiddenOutputs[j] += n.HiddenWeights[i*NetHiddenSize+j]
 		}
 	}
-	for i := 0; i < NetHiddenSize; i++ {
+	for i := 0; i < len(hiddenOutputs); i++ {
 		hiddenOutputs[i] = hiddenOutputs[i] + n.HiddenBiases[i]
 	}
 }
@@ -106,7 +107,7 @@ func (n *NetworkState) QuickFeed() float32 {
 	// apply output layer
 	output := float32(0)
 	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < NetHiddenSize; i++ {
+	for i := 0; i < len(hiddenOutputs); i++ {
 		output += ReLu(hiddenOutputs[i]) * n.OutputWeights[i]
 	}
 	return output + n.OutputBias
