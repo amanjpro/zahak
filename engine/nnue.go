@@ -13,9 +13,9 @@ const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
 
-var CurrentHiddenWeights [NetInputSize * NetHiddenSize]float32
-var CurrentHiddenBiases [NetHiddenSize]float32
-var CurrentOutputWeights [NetHiddenSize]float32
+var CurrentHiddenWeights []float32
+var CurrentHiddenBiases []float32
+var CurrentOutputWeights []float32
 var CurrentOutputBias float32
 var CurrentNetworkId uint32
 
@@ -30,21 +30,27 @@ func (u *Updates) Add(update Update) {
 }
 
 type NetworkState struct {
-	HiddenOutputs [][]float32
-	CurrentHidden int
-	HiddenWeights [NetInputSize * NetHiddenSize]float32
-	HiddenBiases  [NetHiddenSize]float32
-	OutputWeights [NetHiddenSize]float32
-	OutputBias    float32
+	HiddenOutputs     [][]float32
+	EmptyHiddenOutput []float32
+	CurrentHidden     int
+	HiddenWeights     []float32
+	HiddenBiases      []float32
+	OutputWeights     []float32
+	OutputBias        float32
 }
 
 func NewNetworkState() *NetworkState {
 	net := NetworkState{
-		HiddenWeights: CurrentHiddenWeights,
-		HiddenBiases:  CurrentHiddenBiases,
-		OutputWeights: CurrentOutputWeights,
+		HiddenWeights: make([]float32, NetInputSize*NetHiddenSize),
+		HiddenBiases:  make([]float32, NetHiddenSize),
+		OutputWeights: make([]float32, NetHiddenSize),
 		OutputBias:    CurrentOutputBias,
 	}
+
+	copy(net.HiddenWeights, CurrentHiddenWeights)
+	copy(net.HiddenBiases, CurrentHiddenBiases)
+	copy(net.OutputWeights, CurrentOutputWeights)
+	net.EmptyHiddenOutput = make([]float32, NetHiddenSize)
 	net.HiddenOutputs = make([][]float32, MaximumDepth)
 	for i := 0; i < MaximumDepth; i++ {
 		net.HiddenOutputs[i] = make([]float32, NetHiddenSize)
@@ -79,8 +85,9 @@ func (n *NetworkState) UpdateHidden(updates *Updates) {
 
 	for i := 0; i < updates.Size; i++ {
 		d := updates.Diff[i]
+		weights := n.HiddenWeights
 		for j := 0; j < len(hiddenOutputs); j++ {
-			hiddenOutputs[j] += float32(d.Value) * n.HiddenWeights[int(d.Index)*NetHiddenSize+j]
+			hiddenOutputs[j] += float32(d.Value) * weights[int(d.Index)*NetHiddenSize+j]
 		}
 	}
 }
@@ -89,13 +96,13 @@ func (n *NetworkState) Recalculate(input []int16) {
 	n.CurrentHidden = 0
 	// apply hidden layer
 	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < len(hiddenOutputs); i++ {
-		hiddenOutputs[i] = 0
-	}
+	copy(hiddenOutputs, n.EmptyHiddenOutput)
+
 	for index := 0; index < len(input); index++ {
 		i := int(input[index])
+		weights := n.HiddenWeights
 		for j := 0; j < len(hiddenOutputs); j++ {
-			hiddenOutputs[j] += n.HiddenWeights[i*NetHiddenSize+j]
+			hiddenOutputs[j] += weights[i*NetHiddenSize+j]
 		}
 	}
 	for i := 0; i < len(hiddenOutputs); i++ {

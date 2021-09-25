@@ -61,6 +61,7 @@ func (uci *UCI) Start() {
 			case "quit":
 				return
 			case "eval":
+				game.Position().Net.Recalculate(game.Position().NetInput())
 				fmt.Printf("%d\n", game.Position().Evaluate())
 			case "uci":
 				fmt.Printf("id name Zahak %s\n", uci.version)
