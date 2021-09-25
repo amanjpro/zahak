@@ -4,6 +4,9 @@ import (
 	"math/bits"
 )
 
+const CHECKMATE_EVAL int16 = 30000
+const MAX_NON_CHECKMATE int16 = 25000
+
 type Position struct {
 	Board         *Bitboard
 	Net           *NetworkState
@@ -436,7 +439,7 @@ func (p *Position) Evaluate() int16 {
 	if p.Turn() == Black {
 		eval *= -1
 	}
-	return eval
+	return toEval(eval)
 }
 
 func findEnPassantCaptureSquare(move Move) Square {
@@ -467,4 +470,13 @@ func (p *Position) Copy() *Position {
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos
+}
+
+func toEval(eval int16) int16 {
+	if eval >= CHECKMATE_EVAL {
+		return MAX_NON_CHECKMATE
+	} else if eval <= -CHECKMATE_EVAL {
+		return -MAX_NON_CHECKMATE
+	}
+	return eval
 }
