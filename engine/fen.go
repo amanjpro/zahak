@@ -115,7 +115,7 @@ func positionFromFen(fen string) Position {
 		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
 	}
 	newUpdates := Updates{
-		Diff: make([]Update, 40),
+		Diff: make([]Update, 4),
 		Size: 0,
 	}
 	p := Position{
