@@ -150,37 +150,37 @@ func LoadNetwork(path string) {
 	if err != nil {
 		panic(err)
 	}
-	inputs := binary.LittleEndian.Uint32(buf[:4])
-	outputs := binary.LittleEndian.Uint32(buf[4:8])
-	layers := binary.LittleEndian.Uint32(buf[8:])
+	// inputs := binary.LittleEndian.Uint32(buf[:4])
+	// outputs := binary.LittleEndian.Uint32(buf[4:8])
+	// layers := binary.LittleEndian.Uint32(buf[8:])
 
-	if inputs != NetInputSize || outputs != NetOutputSize || layers != NetLayers {
-		panic("Topology is not supported, exiting")
-	}
+	// if inputs != NetInputSize || outputs != NetOutputSize || layers != NetLayers {
+	// 	panic("Topology is not supported, exiting")
+	// }
 
 	buf = make([]byte, 4)
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
 		panic(err)
 	}
-	neurons := binary.LittleEndian.Uint32(buf)
-	if neurons != NetHiddenSize {
-		panic("Topology is not supported, exiting")
-	}
+	// neurons := binary.LittleEndian.Uint32(buf)
+	// if neurons != NetHiddenSize {
+	// 	panic("Topology is not supported, exiting")
+	// }
 
 	CurrentNetworkId = id
 
-	// HiddenWeights = make([]float32, NetHiddenSize*NetInputSize)
-	for j := 0; j < len(CurrentHiddenWeights); j++ {
+	CurrentHiddenWeights = make([]float32, NetHiddenSize*NetInputSize)
+	for i := uint32(0); i < NetHiddenSize*NetInputSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
 		}
-		CurrentHiddenWeights[j] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+		CurrentHiddenWeights[i] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
 	}
 
-	// HiddenBiases = make([]float32, NetHiddenSize)
-	for j := 0; j < len(CurrentHiddenBiases); j++ {
+	CurrentHiddenBiases = make([]float32, NetHiddenSize)
+	for j := uint32(0); j < NetHiddenSize; j++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
@@ -188,8 +188,8 @@ func LoadNetwork(path string) {
 		CurrentHiddenBiases[j] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
 	}
 
-	// OutputWeights = make([]float32, NetHiddenSize*NetOutputSize)
-	for j := 0; j < len(CurrentOutputWeights); j++ {
+	CurrentOutputWeights = make([]float32, NetHiddenSize)
+	for j := uint32(0); j < NetOutputSize*NetHiddenSize; j++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)

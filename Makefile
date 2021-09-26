@@ -12,20 +12,17 @@ netgen:
 
 build: netgen
 	mkdir -p bin
-	go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
+	# go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
+	go build -compiler gccgo -gccgoflags -O3 -o bin ./...
 
 ifdef EXE
 	mv bin/zahak bin/$(EXE)
 endif
 
-run_perft: netgen
-	mkdir -p bin
-	go build -o bin ./...
+run_perft: netgen build
 	bin/zahak -perft
 
-run: netgen
-	mkdir -p bin
-	go build -ldflags "-X 'main.version=$(revision)'" -o bin ./...
+run: netgen build
 	bin/zahak
 
 test: netgen
