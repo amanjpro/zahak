@@ -71,7 +71,7 @@ type Update struct {
 }
 
 func calculateNetInputIndex(sq Square, piece Piece) int16 {
-	return int16(piece)*64 + int16(sq)
+	return int16(piece-1)*64 + int16(sq)
 }
 
 func (n *NetworkState) RevertHidden() {
@@ -134,9 +134,9 @@ func LoadNetwork(path string) {
 	if err != nil {
 		panic(err)
 	}
-	if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
-		panic("Magic word does not match expected, exiting")
-	}
+	// if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
+	// 	panic("Magic word does not match expected, exiting")
+	// }
 
 	_, err = io.ReadFull(f, buf)
 	if err != nil {

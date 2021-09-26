@@ -139,7 +139,7 @@ func (p *Position) NetInput() []int16 {
 
 		piece := p.Board.PieceAt(sq)
 		if piece != NoPiece {
-			input = append(input, calculateNetInputIndex(sq, piece-1))
+			input = append(input, calculateNetInputIndex(sq, piece))
 		}
 	}
 	return input
@@ -166,7 +166,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	promoPiece := NoPiece
 
 	p.Board.Move(source, dest, movingPiece, NoPiece)
-	p.Updates.Add(Update{Index: calculateNetInputIndex(source, movingPiece-1), Value: Remove})
+	p.Updates.Add(Update{Index: calculateNetInputIndex(source, movingPiece), Value: Remove})
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
 		p.HalfMoveClock = 0
@@ -180,11 +180,11 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		ep := findEnPassantCaptureSquare(move)
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
-		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece-1), Value: Remove})
+		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece), Value: Remove})
 	} else if move.IsCapture() {
 		captureSquare = dest
 		p.Board.Clear(dest, capturedPiece)
-		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece-1), Value: Remove})
+		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece), Value: Remove})
 	}
 
 	if movingPiece == WhitePawn &&
@@ -203,26 +203,26 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	if promoType != NoType {
 		promoPiece = GetPiece(promoType, turn)
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
-		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, promoPiece-1), Value: Add})
+		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, promoPiece), Value: Add})
 	} else {
-		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, movingPiece-1), Value: Add})
+		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, movingPiece), Value: Add})
 	}
 
 	if move.IsQueenSideCastle() {
 		if turn == White {
-			p.Updates.Add(Update{Index: calculateNetInputIndex(A1, WhiteRook-1), Value: Remove})
-			p.Updates.Add(Update{Index: calculateNetInputIndex(D1, WhiteRook-1), Value: Add})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A1, WhiteRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D1, WhiteRook), Value: Add})
 		} else {
-			p.Updates.Add(Update{Index: calculateNetInputIndex(A8, BlackRook-1), Value: Remove})
-			p.Updates.Add(Update{Index: calculateNetInputIndex(D8, BlackRook-1), Value: Add})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A8, BlackRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D8, BlackRook), Value: Add})
 		}
 	} else if move.IsKingSideCastle() {
 		if turn == White {
-			p.Updates.Add(Update{Index: calculateNetInputIndex(H1, WhiteRook-1), Value: Remove})
-			p.Updates.Add(Update{Index: calculateNetInputIndex(F1, WhiteRook-1), Value: Add})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H1, WhiteRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F1, WhiteRook), Value: Add})
 		} else {
-			p.Updates.Add(Update{Index: calculateNetInputIndex(H8, BlackRook-1), Value: Remove})
-			p.Updates.Add(Update{Index: calculateNetInputIndex(F8, BlackRook-1), Value: Add})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H8, BlackRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F8, BlackRook), Value: Add})
 		}
 	}
 
