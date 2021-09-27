@@ -97,13 +97,13 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			break
 		}
 
-		if !IsPromoting(move) {
-			margin := p + move.CapturedPiece().Weight()
-			if standPat+margin <= alpha {
-				e.info.fpCounter += 1
-				continue
-			}
-		}
+		// if !IsPromoting(move) {
+		// 	margin := p + move.CapturedPiece().Weight()
+		// 	if standPat+margin <= alpha {
+		// 		e.info.fpCounter += 1
+		// 		continue
+		// 	}
+		// }
 
 		if ep, tg, hc, ok := position.MakeMove(move); ok {
 			e.positionMoves[searchHeight+1] = move

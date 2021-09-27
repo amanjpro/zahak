@@ -106,7 +106,7 @@ func (n *NetworkState) Recalculate(input []int16) {
 		}
 	}
 	for i := 0; i < len(hiddenOutputs); i++ {
-		hiddenOutputs[i] = hiddenOutputs[i] + n.HiddenBiases[i]
+		hiddenOutputs[i] += n.HiddenBiases[i]
 	}
 }
 
@@ -114,7 +114,7 @@ func (n *NetworkState) QuickFeed() float32 {
 	// apply output layer
 	output := float32(0)
 	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < len(hiddenOutputs); i++ {
+	for i := 0; i < len(n.OutputWeights); i++ {
 		output += ReLu(hiddenOutputs[i]) * n.OutputWeights[i]
 	}
 	return output + n.OutputBias
@@ -180,21 +180,21 @@ func LoadNetwork(path string) {
 	}
 
 	CurrentHiddenBiases = make([]float32, NetHiddenSize)
-	for j := uint32(0); j < NetHiddenSize; j++ {
+	for i := uint32(0); i < NetHiddenSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
 		}
-		CurrentHiddenBiases[j] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+		CurrentHiddenBiases[i] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
 	}
 
 	CurrentOutputWeights = make([]float32, NetHiddenSize)
-	for j := uint32(0); j < NetOutputSize*NetHiddenSize; j++ {
+	for i := uint32(0); i < NetOutputSize*NetHiddenSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
 		}
-		CurrentOutputWeights[j] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+		CurrentOutputWeights[i] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
 	}
 
 	_, err = io.ReadFull(f, buf)
