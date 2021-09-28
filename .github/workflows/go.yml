@@ -19,7 +19,7 @@ jobs:
         go-version: 1.16
 
     - name: Setup GCC Go
-      run: sudo apt install -y gccgo-11 & sudo cp /usr/bin/gccgo{-11,}
+      run: sudo apt install -y gccgo-11 & sudo cp $(which gccgo-11) $(which gccgo-11 | sed s/-11//g)
 
     - name: Build
       run: make build
