@@ -25,7 +25,7 @@ func (g *Game) Move(m Move) {
 
 	if g.IsLegalMove(m) {
 		g.moves = append(g.moves, m)
-		pos.MakeMove(m)
+		pos.GameMakeMove(m)
 		if pos.Turn() == White {
 			g.numberOfMoves += 1
 		}

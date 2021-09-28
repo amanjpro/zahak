@@ -4,19 +4,19 @@ import (
 	"math/bits"
 )
 
+const CHECKMATE_EVAL int16 = 30000
+const MAX_NON_CHECKMATE float32 = 25000
+const MIN_NON_CHECKMATE float32 = -MAX_NON_CHECKMATE
+
 type Position struct {
-	Board               *Bitboard
-	EnPassant           Square
-	Tag                 PositionTag
-	hash                uint64
-	pawnhash            uint64
-	Positions           map[uint64]int
-	HalfMoveClock       uint8
-	MaterialsOnBoard    [12]int16
-	WhiteMiddlegamePSQT int16
-	WhiteEndgamePSQT    int16
-	BlackMiddlegamePSQT int16
-	BlackEndgamePSQT    int16
+	Board         *Bitboard
+	Net           *NetworkState
+	Updates       *Updates
+	EnPassant     Square
+	Tag           PositionTag
+	hash          uint64
+	Positions     map[uint64]int
+	HalfMoveClock uint8
 }
 
 type PositionTag uint8
@@ -131,7 +131,30 @@ func (p *Position) partialUnMakeMove(move Move) {
 	}
 }
 
+func (p *Position) NetInput() []int16 {
+	input := make([]int16, 0, 32)
+
+	for j := 0; j < 64; j++ {
+		sq := Square(j)
+
+		piece := p.Board.PieceAt(sq)
+		if piece != NoPiece {
+			input = append(input, calculateNetInputIndex(sq, piece))
+		}
+	}
+	return input
+}
+
+func (p *Position) GameMakeMove(move Move) (Square, PositionTag, uint8, bool) {
+	return p.makeMoveHelper(move, false)
+}
+
 func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
+	return p.makeMoveHelper(move, true)
+}
+
+func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, PositionTag, uint8, bool) {
+	p.Updates.Size = 0
 	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
@@ -143,6 +166,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 	promoPiece := NoPiece
 
 	p.Board.Move(source, dest, movingPiece, NoPiece)
+	p.Updates.Add(Update{Index: calculateNetInputIndex(source, movingPiece), Value: Remove})
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
 		p.HalfMoveClock = 0
@@ -156,9 +180,11 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		ep := findEnPassantCaptureSquare(move)
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
+		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece), Value: Remove})
 	} else if move.IsCapture() {
 		captureSquare = dest
 		p.Board.Clear(dest, capturedPiece)
+		p.Updates.Add(Update{Index: calculateNetInputIndex(captureSquare, capturedPiece), Value: Remove})
 	}
 
 	if movingPiece == WhitePawn &&
@@ -172,10 +198,32 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 	}
 
 	// Do promotion
+	turn := p.Turn()
 	promoType := move.PromoType()
 	if promoType != NoType {
-		promoPiece = GetPiece(promoType, p.Turn())
+		promoPiece = GetPiece(promoType, turn)
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
+		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, promoPiece), Value: Add})
+	} else {
+		p.Updates.Add(Update{Index: calculateNetInputIndex(dest, movingPiece), Value: Add})
+	}
+
+	if move.IsQueenSideCastle() {
+		if turn == White {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A1, WhiteRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D1, WhiteRook), Value: Add})
+		} else {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(A8, BlackRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(D8, BlackRook), Value: Add})
+		}
+	} else if move.IsKingSideCastle() {
+		if turn == White {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H1, WhiteRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F1, WhiteRook), Value: Add})
+		} else {
+			p.Updates.Add(Update{Index: calculateNetInputIndex(H8, BlackRook), Value: Remove})
+			p.Updates.Add(Update{Index: calculateNetInputIndex(F8, BlackRook), Value: Add})
+		}
 	}
 
 	if movingPiece == BlackKing {
@@ -210,7 +258,7 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		return NoSquare, 0, 0, false
 	}
 
-	movingSide := p.Turn()
+	// movingSide := p.Turn()
 	p.ToggleTurn()
 
 	// Set check tag
@@ -220,75 +268,21 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 		p.ClearTag(InCheck)
 	}
 
-	// update psqt and material balance
-	{
-		if movingSide == White {
-			p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
-			p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
-			if promoPiece == NoPiece {
-				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
-				p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
-				if move.IsQueenSideCastle() {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][A1]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][A1]
-					p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][D1]
-					p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][D1]
-				} else if move.IsKingSideCastle() {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][H1]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][H1]
-					p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][F1]
-					p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][F1]
-				}
-			} else {
-				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
-				p.WhiteEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
-				p.MaterialsOnBoard[movingPiece-1] -= 1
-				p.MaterialsOnBoard[promoPiece-1] += 1
-			}
-
-			if capturedPiece != NoPiece {
-				p.MaterialsOnBoard[capturedPiece-1] -= 1
-				p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-				p.BlackEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
-			}
-		} else {
-			p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][source]
-			p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][source]
-			if promoPiece == NoPiece {
-				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][dest]
-				p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][dest]
-				if move.IsQueenSideCastle() {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][A8]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][A8]
-					p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][D8]
-					p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][D8]
-				} else if move.IsKingSideCastle() {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][H8]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][H8]
-					p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][F8]
-					p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][F8]
-				}
-			} else {
-				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[promoPiece-1][dest]
-				p.BlackEndgamePSQT += LatePieceSquareTables[promoPiece-1][dest]
-				p.MaterialsOnBoard[movingPiece-1] -= 1
-				p.MaterialsOnBoard[promoPiece-1] += 1
-			}
-
-			if capturedPiece != NoPiece {
-				p.MaterialsOnBoard[capturedPiece-1] -= 1
-				p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-				p.WhiteEndgamePSQT -= LatePieceSquareTables[capturedPiece-1][captureSquare]
-			}
-		}
+	if updateHidden {
+		p.Net.UpdateHidden(p.Updates)
 	}
+
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
-	updatePawnHash(p, move, captureSquare, promoPiece)
 	return ep, tag, hc, true
+}
+
+func (p *Position) GameUnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
+	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
 }
 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
+	p.Net.RevertHidden()
 }
 
 func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square, halfClock uint8, isLegal bool) {
@@ -338,72 +332,7 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	}
 
 	if isLegal {
-		// Unmake: update psqt and material balance
-		{
-			movingSide := p.Turn()
-			if movingSide == White {
-				// PSQT update
-				p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
-				p.WhiteEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
-				if promoPiece == NoPiece {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
-					if move.IsQueenSideCastle() {
-						p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][A1]
-						p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][A1]
-						p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][D1]
-						p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][D1]
-					} else if move.IsKingSideCastle() {
-						p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[WhiteRook-1][H1]
-						p.WhiteEndgamePSQT += LatePieceSquareTables[WhiteRook-1][H1]
-						p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[WhiteRook-1][F1]
-						p.WhiteEndgamePSQT -= LatePieceSquareTables[WhiteRook-1][F1]
-					}
-				} else {
-					p.WhiteMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
-					p.WhiteEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
-					p.MaterialsOnBoard[movingPiece-1] += 1
-					p.MaterialsOnBoard[promoPiece-1] -= 1
-				}
-
-				if capturedPiece != NoPiece {
-					p.MaterialsOnBoard[capturedPiece-1] += 1
-					p.BlackMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-					p.BlackEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
-				}
-			} else {
-				p.BlackMiddlegamePSQT += EarlyPieceSquareTables[movingPiece-1][source]
-				p.BlackEndgamePSQT += LatePieceSquareTables[movingPiece-1][source]
-				if promoPiece == NoPiece {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[movingPiece-1][dest]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[movingPiece-1][dest]
-					if move.IsQueenSideCastle() {
-						p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][A8]
-						p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][A8]
-						p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][D8]
-						p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][D8]
-					} else if move.IsKingSideCastle() {
-						p.BlackMiddlegamePSQT += EarlyPieceSquareTables[BlackRook-1][H8]
-						p.BlackEndgamePSQT += LatePieceSquareTables[BlackRook-1][H8]
-						p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[BlackRook-1][F8]
-						p.BlackEndgamePSQT -= LatePieceSquareTables[BlackRook-1][F8]
-					}
-				} else {
-					p.BlackMiddlegamePSQT -= EarlyPieceSquareTables[promoPiece-1][dest]
-					p.BlackEndgamePSQT -= LatePieceSquareTables[promoPiece-1][dest]
-					p.MaterialsOnBoard[movingPiece-1] += 1
-					p.MaterialsOnBoard[promoPiece-1] -= 1
-				}
-
-				if capturedPiece != NoPiece {
-					p.MaterialsOnBoard[capturedPiece-1] += 1
-					p.WhiteMiddlegamePSQT += EarlyPieceSquareTables[capturedPiece-1][captureSquare]
-					p.WhiteEndgamePSQT += LatePieceSquareTables[capturedPiece-1][captureSquare]
-				}
-			}
-		}
 		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
-		updatePawnHash(p, move, captureSquare, promoPiece)
 	}
 }
 
@@ -497,14 +426,6 @@ func (p *Position) IsFIDEDrawRule() bool {
 	return (ok && value >= 3)
 }
 
-func (p *Position) Pawnhash() uint64 {
-	if p.pawnhash == 0 {
-		hash := generateZobristPawnHash(p)
-		p.pawnhash = hash
-	}
-	return p.pawnhash
-}
-
 func (p *Position) Hash() uint64 {
 	if p.hash == 0 {
 		hash := generateZobristHash(p)
@@ -513,162 +434,12 @@ func (p *Position) Hash() uint64 {
 	return p.hash
 }
 
-func (p *Position) MaterialAndPSQT() {
-
-	var blackCentipawnsMG, blackCentipawnsEG, whiteCentipawnsMG, whiteCentipawnsEG int16
-	board := p.Board
-
-	blackPawnsCount := int16(0)
-	blackKnightsCount := int16(0)
-	blackBishopsCount := int16(0)
-	blackRooksCount := int16(0)
-	blackQueensCount := int16(0)
-
-	whitePawnsCount := int16(0)
-	whiteKnightsCount := int16(0)
-	whiteBishopsCount := int16(0)
-	whiteRooksCount := int16(0)
-	whiteQueensCount := int16(0)
-
-	// PST for other black pieces
-	pieceIter := board.blackPawn
-	for pieceIter != 0 {
-		blackPawnsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackPawn-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackPawn-1][index]
-		pieceIter ^= mask
+func (p *Position) Evaluate() int16 {
+	output := p.Net.QuickFeed()
+	if p.Turn() == Black {
+		return -toEval(output)
 	}
-
-	pieceIter = board.blackKnight
-	for pieceIter != 0 {
-		blackKnightsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackKnight-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackKnight-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackBishop
-	for pieceIter != 0 {
-		blackBishopsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackBishop-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackBishop-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackRook
-	for pieceIter != 0 {
-		blackRooksCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackRook-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackRook-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackQueen
-	for pieceIter != 0 {
-		blackQueensCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackQueen-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackQueen-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.blackKing
-	for pieceIter != 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		blackCentipawnsEG += LatePieceSquareTables[BlackKing-1][index]
-		blackCentipawnsMG += EarlyPieceSquareTables[BlackKing-1][index]
-		pieceIter ^= mask
-	}
-
-	// PST for other white pieces
-	pieceIter = board.whitePawn
-	for pieceIter != 0 {
-		whitePawnsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhitePawn-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhitePawn-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteKnight
-	for pieceIter != 0 {
-		whiteKnightsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteKnight-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteKnight-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteBishop
-	for pieceIter != 0 {
-		whiteBishopsCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteBishop-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteBishop-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteRook
-	for pieceIter != 0 {
-		whiteRooksCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteRook-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteRook-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteQueen
-	for pieceIter != 0 {
-		whiteQueensCount++
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteQueen-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteQueen-1][index]
-		pieceIter ^= mask
-	}
-
-	pieceIter = board.whiteKing
-	for pieceIter != 0 {
-		index := bits.TrailingZeros64(pieceIter)
-		mask := SquareMask[index]
-		whiteCentipawnsEG += LatePieceSquareTables[WhiteKing-1][index]
-		whiteCentipawnsMG += EarlyPieceSquareTables[WhiteKing-1][index]
-		pieceIter ^= mask
-	}
-
-	p.WhiteMiddlegamePSQT = whiteCentipawnsMG
-	p.WhiteEndgamePSQT = whiteCentipawnsEG
-	p.BlackMiddlegamePSQT = blackCentipawnsMG
-	p.BlackEndgamePSQT = blackCentipawnsEG
-
-	p.MaterialsOnBoard[WhitePawn-1] = whitePawnsCount
-	p.MaterialsOnBoard[WhiteKnight-1] = whiteKnightsCount
-	p.MaterialsOnBoard[WhiteBishop-1] = whiteBishopsCount
-	p.MaterialsOnBoard[WhiteRook-1] = whiteRooksCount
-	p.MaterialsOnBoard[WhiteQueen-1] = whiteQueensCount
-	p.MaterialsOnBoard[WhiteKing-1] = 1
-
-	p.MaterialsOnBoard[BlackPawn-1] = blackPawnsCount
-	p.MaterialsOnBoard[BlackKnight-1] = blackKnightsCount
-	p.MaterialsOnBoard[BlackBishop-1] = blackBishopsCount
-	p.MaterialsOnBoard[BlackRook-1] = blackRooksCount
-	p.MaterialsOnBoard[BlackQueen-1] = blackQueensCount
-	p.MaterialsOnBoard[BlackKing-1] = 1
-
+	return toEval(output)
 }
 
 func findEnPassantCaptureSquare(move Move) Square {
@@ -682,22 +453,30 @@ func (p *Position) Copy() *Position {
 	for k, v := range p.Positions {
 		copyMap[k] = v
 	}
-	var mob [12]int16
-	for i, m := range p.MaterialsOnBoard {
-		mob[i] = m
+	newUpdates := Updates{
+		Diff: make([]Update, 4),
+		Size: 0,
 	}
-	return &Position{
+
+	newPos := &Position{
 		p.Board.copy(),
+		NewNetworkState(),
+		&newUpdates,
 		p.EnPassant,
 		p.Tag,
 		p.hash,
-		p.pawnhash,
 		copyMap,
 		p.HalfMoveClock,
-		mob,
-		p.WhiteMiddlegamePSQT,
-		p.WhiteEndgamePSQT,
-		p.BlackMiddlegamePSQT,
-		p.BlackEndgamePSQT,
 	}
+	newPos.Net.Recalculate(newPos.NetInput())
+	return newPos
+}
+
+func toEval(eval float32) int16 {
+	if eval >= MAX_NON_CHECKMATE {
+		return int16(MAX_NON_CHECKMATE)
+	} else if eval <= MIN_NON_CHECKMATE {
+		return int16(MIN_NON_CHECKMATE)
+	}
+	return int16(eval)
 }

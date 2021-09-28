@@ -7,7 +7,6 @@ import (
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 func (r *Runner) Search(depth int8) {
@@ -207,7 +206,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isPvNode := alpha != beta-1
 
 	position := e.Position
-	pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
@@ -216,7 +214,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if searchHeight >= MAX_DEPTH-1 {
-		eval := Evaluate(position, pawnhash)
+		eval := position.Evaluate()
 		e.staticEvals[searchHeight] = eval
 		return eval
 	}
@@ -228,7 +226,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if depthLeft <= 0 {
-		e.staticEvals[searchHeight] = Evaluate(position, pawnhash)
+		e.staticEvals[searchHeight] = position.Evaluate()
 		return e.quiescence(alpha, beta, searchHeight)
 	}
 
@@ -279,9 +277,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	var eval int16 = -MAX_INT
 	if !isRootNode && currentMove == EmptyMove {
-		eval = -1 * (e.staticEvals[searchHeight-1] + Tempo + Tempo)
+		eval = -1 * e.staticEvals[searchHeight-1]
 	} else {
-		eval = Evaluate(position, pawnhash)
+		eval = position.Evaluate()
 	}
 
 	e.staticEvals[searchHeight] = eval
@@ -293,7 +291,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if pruningAllowed {
 		// Razoring
-		razoringMargin := eval + int16(depthLeft)*p + p
+		razoringMargin := eval + r // int16(depthLeft)*p + p
 		if depthLeft < 3 && eval+razoringMargin < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			e.info.razoringCounter += 1
@@ -358,7 +356,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						e.innerLines[searchHeight+1].Recycle()
 						e.pred.Push(position.Hash())
 						e.positionMoves[searchHeight+1] = move
-						childEval := Evaluate(position, pawnhash)
+						childEval := position.Evaluate()
 						e.staticEvals[searchHeight+1] = childEval
 						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
 						e.pred.Pop()
@@ -464,27 +462,28 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if score < threshold {
 					e.info.singularExtensionCounter += 1
 					extension += 1
-				}
+				} else {
 
-				// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
-				if pruningAllowed {
-					if threshold >= beta {
-						e.info.multiCutCounter += 1
-						return beta
-					} else if score >= beta {
-						e.skipHeight = 0
-						e.skipMove = hashmove
-						e.innerLines[searchHeight].Recycle()
-						e.MovePickers[searchHeight] = e.TempMovePicker
-						score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
-						e.MovePickers[searchHeight] = movePicker
-						e.innerLines[searchHeight].Recycle()
-						e.skipMove = EmptyMove
-						e.skipHeight = MAX_DEPTH
-						e.info.multiCutCounter += 1
-
-						if score >= beta {
+					// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
+					if pruningAllowed {
+						if threshold >= beta {
+							e.info.multiCutCounter += 1
 							return beta
+						} else if score >= beta {
+							e.skipHeight = searchHeight
+							e.skipMove = hashmove
+							e.innerLines[searchHeight].Recycle()
+							e.MovePickers[searchHeight] = e.TempMovePicker
+							score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
+							e.MovePickers[searchHeight] = movePicker
+							e.innerLines[searchHeight].Recycle()
+							e.skipMove = EmptyMove
+							e.skipHeight = MAX_DEPTH
+							e.info.multiCutCounter += 1
+
+							if score >= beta {
+								return beta
+							}
 						}
 					}
 				}

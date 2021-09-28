@@ -2,7 +2,6 @@ package search
 
 import (
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 func dynamicMargin(pos *Position) int16 {
@@ -42,7 +41,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.VisitNode()
 
 	position := e.Position
-	pawnhash := e.Pawnhash
+	// pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
@@ -98,17 +97,17 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			break
 		}
 
-		if !IsPromoting(move) {
-			margin := p + move.CapturedPiece().Weight()
-			if standPat+margin <= alpha {
-				e.info.fpCounter += 1
-				continue
-			}
-		}
+		// if !IsPromoting(move) {
+		// 	margin := p + move.CapturedPiece().Weight()
+		// 	if standPat+margin <= alpha {
+		// 		e.info.fpCounter += 1
+		// 		continue
+		// 	}
+		// }
 
 		if ep, tg, hc, ok := position.MakeMove(move); ok {
 			e.positionMoves[searchHeight+1] = move
-			e.staticEvals[searchHeight+1] = Evaluate(position, pawnhash)
+			e.staticEvals[searchHeight+1] = position.Evaluate()
 
 			e.pred.Push(position.Hash())
 			score := -e.quiescence(-beta, -alpha, searchHeight+1)

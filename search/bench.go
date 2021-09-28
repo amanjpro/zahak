@@ -5,7 +5,6 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 var fens = []string{
@@ -65,20 +64,16 @@ func RunBenchmark() {
 
 	cacheSize := uint32(32)
 	depth := int8(7)
-	runner := NewRunner(NewCache(cacheSize), NewPawnCache(1), 1)
+	runner := NewRunner(NewCache(cacheSize), 1)
 	nodes := int64(0)
 	totalTime := float64(0)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
-	var pawnHashHits, pawnHashMisses int64
 	for _, fen := range fens {
 		runner.Engines[0].TranspositionTable = NewCache(cacheSize)
-		runner.Engines[0].Pawnhash = NewPawnCache(1)
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
 		runner.Engines[0].Search(depth)
 		nodes += runner.nodesVisited
-		pawnHashMisses += runner.Engines[0].Pawnhash.PawnhashMisses
-		pawnHashHits += runner.Engines[0].Pawnhash.PawnhashHits
 		totalTime += runner.Engines[0].TotalTime
 	}
 
@@ -86,6 +81,4 @@ func RunBenchmark() {
 	fmt.Printf("Time spent %d\n", int64(totalTime*1000))
 	fmt.Printf("Nodes %d\n", nodes)
 	fmt.Printf("nps %d\n", int64(float64(nodes)/totalTime))
-	fmt.Printf("Pawn Miss %d\n", pawnHashMisses)
-	fmt.Printf("Pawn Hit %d\n", pawnHashHits)
 }

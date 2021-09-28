@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -193,14 +194,15 @@ func TestUnMakeMovePromotion(t *testing.T) {
 func TestIncrementalEval(t *testing.T) {
 	for _, pos := range positions {
 		// compute the materials first first
-		originalEval := getEval(pos)
+		originalEval := pos.Evaluate()
 		for _, mov := range pos.PseudoLegalMoves() {
 			if ep, tg, hc, ok := pos.MakeMove(mov); ok {
-				incrementalEval := getEval(pos)
-				pos.MaterialAndPSQT()
-				fromScratchEval := getEval(pos)
+				incrementalEval := pos.Evaluate()
+				clonePos := positionFromFen(fmt.Sprintf("%s %d", pos.Fen(), 1))
+				clonePos.Net.Recalculate(clonePos.NetInput())
+				fromScratchEval := clonePos.Evaluate()
 				pos.UnMakeMove(mov, tg, ep, hc)
-				decrementalEval := getEval(pos)
+				decrementalEval := pos.Evaluate()
 				if incrementalEval != fromScratchEval {
 					t.Errorf("Updated eval != Fresh eval ->\nMov: %v, Fresh Eval: %d, Incremental Eval: %d, \nPos:%v\n", mov.ToString(), fromScratchEval, incrementalEval, pos.Fen())
 				}
@@ -210,19 +212,4 @@ func TestIncrementalEval(t *testing.T) {
 			}
 		}
 	}
-}
-
-func getEval(p *Position) int16 {
-	var wcp, bcp int16
-	w := []int16{100, 300, 350, 400, 900, 2000}
-	for i := 0; i < 6; i++ {
-		wcp += p.MaterialsOnBoard[i] * w[i]
-		bcp += p.MaterialsOnBoard[i+6] * w[i]
-	}
-	wcp += p.WhiteEndgamePSQT
-	wcp += p.WhiteMiddlegamePSQT
-	bcp += p.BlackEndgamePSQT
-	bcp += p.BlackMiddlegamePSQT
-
-	return wcp - bcp
 }

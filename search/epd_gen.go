@@ -6,7 +6,6 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -20,7 +19,7 @@ func init() {
 
 func GenerateEpds() {
 	cacheSize := uint32(32)
-	runner := NewRunner(NewCache(cacheSize), NewPawnCache(1), 1)
+	runner := NewRunner(NewCache(cacheSize), 1)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
 	engine := runner.Engines[0]
 
@@ -33,7 +32,7 @@ func GenerateEpds() {
 
 func gen(e *Engine, depthLeft int) {
 	if depthLeft == 0 {
-		eval := Evaluate(e.Position, e.Pawnhash)
+		eval := e.Position.Evaluate()
 		if abs16(eval) < 700 {
 			fmt.Printf("%s 8 ce %d;\n", e.Position.Fen(), eval)
 		}

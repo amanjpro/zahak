@@ -6,12 +6,11 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
 
 func TestBlackShouldFindEscape(t *testing.T) {
 	game := FromFen("3rbbn1/BQ1kp3/2p1q2p/N4p2/8/3P4/P1P2PPP/5RK1 b - - 0 27")
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -27,7 +26,7 @@ func TestBlackShouldFindEscape(t *testing.T) {
 
 func TestBlackCanFindASimpleTactic(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/2r4n/3K4 b - - 0 1")
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -43,7 +42,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 
 func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/2K5 b - - 1 1")
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -58,7 +57,7 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 
 func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/3K4 w - - 0 1")
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -73,7 +72,7 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 
 func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1")
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -92,7 +91,7 @@ func TestSearchOnlyMove(t *testing.T) {
 
 func TestWhiteCanFindMateInTwo(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pbn2/3r4/4K3 w - - 2 2")
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -160,7 +159,7 @@ func TestNestedMakeUnMake(t *testing.T) {
 func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	fen := "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1"
 	game := FromFen(fen)
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
@@ -176,7 +175,7 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	fen := "k7/3RR3/8/8/8/1q6/8/K1RRRR2 b - - 0 1"
 	game := FromFen(fen)
-	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), NewPawnCache(DEFAULT_PAWNHASH_SIZE), 1)
+	r := NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1)
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()

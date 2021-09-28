@@ -7,8 +7,10 @@ import (
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
-	. "github.com/amanjpro/zahak/evaluation"
 )
+
+const Rank2Fill = uint64(1<<A2 | 1<<B2 | 1<<C2 | 1<<D2 | 1<<E2 | 1<<F2 | 1<<G2 | 1<<H2)
+const Rank7Fill = uint64(1<<A7 | 1<<B7 | 1<<C7 | 1<<D7 | 1<<E7 | 1<<F7 | 1<<G7 | 1<<H7)
 
 type Runner struct {
 	nodesVisited int64
@@ -124,7 +126,6 @@ type Engine struct {
 	innerLines         []PVLine
 	staticEvals        []int16
 	TranspositionTable *Cache
-	Pawnhash           *PawnCache
 	TotalTime          float64
 	doPruning          bool
 	isMainThread       bool
@@ -142,16 +143,16 @@ func (e *Engine) TimeManager() *TimeManager {
 	return e.parent.TimeManager
 }
 
-func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
+func NewRunner(tt *Cache, numberOfThreads int) *Runner {
 	t := &Runner{}
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
 		if i == 0 {
-			engine = NewEngine(tt, ph, t)
+			engine = NewEngine(tt, t)
 			engine.isMainThread = true
 		} else {
-			engine = NewEngine(tt, NewPawnCache(ph.Size()), t)
+			engine = NewEngine(tt, t)
 		}
 		engines[i] = engine
 	}
@@ -161,7 +162,7 @@ func NewRunner(tt *Cache, ph *PawnCache, numberOfThreads int) *Runner {
 	return t
 }
 
-func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
+func NewEngine(tt *Cache, parent *Runner) *Engine {
 	innerLines := make([]PVLine, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
 		line := NewPVLine(MAX_DEPTH)
@@ -189,7 +190,6 @@ func NewEngine(tt *Cache, ph *PawnCache, parent *Runner) *Engine {
 		innerLines:         innerLines,
 		staticEvals:        make([]int16, MAX_DEPTH),
 		TranspositionTable: tt,
-		Pawnhash:           ph,
 		StartTime:          time.Now(),
 		TotalTime:          0,
 		doPruning:          false,
@@ -279,6 +279,8 @@ func (e *Engine) ClearForSearch() {
 	e.StartTime = time.Now()
 
 	e.pred.Clear()
+
+	e.Position.Net.Recalculate(e.Position.NetInput())
 }
 
 func (e *Engine) KillerMoveScore(move Move, searchHeight int8) int32 {
