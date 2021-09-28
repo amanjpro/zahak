@@ -19,7 +19,7 @@ jobs:
         go-version: 1.16
 
     - name: Setup GCC Go
-      run: sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test & sudo apt install -y gccgo-11
+      run: sudo apt install -y gccgo-11 & cp /usr/bin/gccgo{-11,}
 
     - name: Build
       run: make build
