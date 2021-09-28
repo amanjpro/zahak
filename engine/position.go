@@ -434,14 +434,6 @@ func (p *Position) Hash() uint64 {
 	return p.hash
 }
 
-func (p *Position) Evaluate() int16 {
-	output := p.Net.QuickFeed()
-	if p.Turn() == Black {
-		return -toEval(output)
-	}
-	return toEval(output)
-}
-
 func findEnPassantCaptureSquare(move Move) Square {
 	rank := move.Source().Rank()
 	file := move.Destination().File()
@@ -470,13 +462,4 @@ func (p *Position) Copy() *Position {
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos
-}
-
-func toEval(eval float32) int16 {
-	if eval >= MAX_NON_CHECKMATE {
-		return int16(MAX_NON_CHECKMATE)
-	} else if eval <= MIN_NON_CHECKMATE {
-		return int16(MIN_NON_CHECKMATE)
-	}
-	return int16(eval)
 }
