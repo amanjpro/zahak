@@ -9,7 +9,7 @@ const Rank7Fill = uint64(1<<A7 | 1<<B7 | 1<<C7 | 1<<D7 | 1<<E7 | 1<<F7 | 1<<G7 |
 
 func (p *Position) Evaluate() int16 {
 	board := p.Board
-	turn := p.Turn()
+	// turn := p.Turn()
 	var drawDivider int16 = 0
 
 	whitePawnsCount := bits.OnesCount64(board.whitePawn)
@@ -36,63 +36,63 @@ func (p *Position) Evaluate() int16 {
 			whiteQueensCount +
 			blackQueensCount
 
-	bbWhitePawn := board.whitePawn
-	bbBlackPawn := board.blackPawn
-
-	// Special endgame scenarios
-	// KPK endgame, ask the bitbase
-	if allPiecesCount == 1 && (whitePawnsCount == 1 || blackPawnsCount == 1) {
-		if whitePawnsCount == 1 {
-			return KpkProbe(board, White, turn)
-		}
-		return KpkProbe(board, Black, turn)
-	} else if allPiecesCount == 2 && ((whitePawnsCount == 1 && whiteBishopsCount == 1) || (blackPawnsCount == 1 && blackBishopsCount == 1)) {
-		queeningColor := NoColor
-		// Is it wrong bishop?
-		if whiteBishopsCount == 1 { // White is winning
-			bishopColor := Square(bits.TrailingZeros64(board.GetBitboardOf(WhiteBishop))).GetColor()
-			if bbWhitePawn&H_FileFill != 0 {
-				queeningColor = Black
-			} else if bbWhitePawn&A_FileFill != 0 {
-				queeningColor = White
-			}
-			if queeningColor != NoColor && queeningColor != bishopColor {
-				res := KpkProbe(board, White, turn)
-				if res == 0 {
-					return 0
-				} else if turn == White {
-					return res + BlackBishop.Weight()
-				} else {
-					return res - BlackBishop.Weight()
-				}
-			}
-		} else { // Black is winning
-			bishopColor := Square(bits.TrailingZeros64(board.GetBitboardOf(BlackBishop))).GetColor()
-			if bbBlackPawn&H_FileFill != 0 {
-				queeningColor = White
-			} else if bbBlackPawn&A_FileFill != 0 {
-				queeningColor = Black
-			}
-			if queeningColor != NoColor && queeningColor != bishopColor {
-				res := KpkProbe(board, Black, turn)
-				if res == 0 {
-					return 0
-				} else if turn == Black {
-					return res + BlackBishop.Weight()
-				} else {
-					return res - BlackBishop.Weight()
-				}
-			}
-			res := KpkProbe(board, Black, turn)
-			if res == 0 {
-				return 0
-			} else if turn == Black {
-				return res + BlackBishop.Weight()
-			} else {
-				return res - BlackBishop.Weight()
-			}
-		}
-	}
+	// bbWhitePawn := board.whitePawn
+	// bbBlackPawn := board.blackPawn
+	//
+	// // Special endgame scenarios
+	// // KPK endgame, ask the bitbase
+	// if allPiecesCount == 1 && (whitePawnsCount == 1 || blackPawnsCount == 1) {
+	// 	if whitePawnsCount == 1 {
+	// 		return KpkProbe(board, White, turn)
+	// 	}
+	// 	return KpkProbe(board, Black, turn)
+	// } else if allPiecesCount == 2 && ((whitePawnsCount == 1 && whiteBishopsCount == 1) || (blackPawnsCount == 1 && blackBishopsCount == 1)) {
+	// 	queeningColor := NoColor
+	// 	// Is it wrong bishop?
+	// 	if whiteBishopsCount == 1 { // White is winning
+	// 		bishopColor := Square(bits.TrailingZeros64(board.GetBitboardOf(WhiteBishop))).GetColor()
+	// 		if bbWhitePawn&H_FileFill != 0 {
+	// 			queeningColor = Black
+	// 		} else if bbWhitePawn&A_FileFill != 0 {
+	// 			queeningColor = White
+	// 		}
+	// 		if queeningColor != NoColor && queeningColor != bishopColor {
+	// 			res := KpkProbe(board, White, turn)
+	// 			if res == 0 {
+	// 				return 0
+	// 			} else if turn == White {
+	// 				return res + BlackBishop.Weight()
+	// 			} else {
+	// 				return res - BlackBishop.Weight()
+	// 			}
+	// 		}
+	// 	} else { // Black is winning
+	// 		bishopColor := Square(bits.TrailingZeros64(board.GetBitboardOf(BlackBishop))).GetColor()
+	// 		if bbBlackPawn&H_FileFill != 0 {
+	// 			queeningColor = White
+	// 		} else if bbBlackPawn&A_FileFill != 0 {
+	// 			queeningColor = Black
+	// 		}
+	// 		if queeningColor != NoColor && queeningColor != bishopColor {
+	// 			res := KpkProbe(board, Black, turn)
+	// 			if res == 0 {
+	// 				return 0
+	// 			} else if turn == Black {
+	// 				return res + BlackBishop.Weight()
+	// 			} else {
+	// 				return res - BlackBishop.Weight()
+	// 			}
+	// 		}
+	// 		res := KpkProbe(board, Black, turn)
+	// 		if res == 0 {
+	// 			return 0
+	// 		} else if turn == Black {
+	// 			return res + BlackBishop.Weight()
+	// 		} else {
+	// 			return res - BlackBishop.Weight()
+	// 		}
+	// 	}
+	// }
 
 	// Other Draw scenarios
 	{
@@ -103,18 +103,18 @@ func (p *Position) Evaluate() int16 {
 			(allPiecesCount == 2 && (whiteKnightsCount == 1 || whiteBishopsCount == 1) && blackPawnsCount == 1) ||
 			(allPiecesCount == 3 && blackRooksCount == 1 && whiteRooksCount == 1 && (whiteKnightsCount == 1 || blackKnightsCount == 1 || blackBishopsCount == 1 || whiteBishopsCount == 1)) {
 			drawDivider = 3
-		} else if whiteRooksCount+blackRooksCount+whiteKnightsCount+blackKnightsCount+whiteQueensCount+blackQueensCount == 0 &&
-			abs16(int16(whitePawnsCount-blackPawnsCount)) <= 1 && whiteBishopsCount == 1 && blackBishopsCount == 1 {
-			wColor := Square(bits.TrailingZeros64(board.GetBitboardOf(WhiteBishop))).GetColor()
-			bColor := Square(bits.TrailingZeros64(board.GetBitboardOf(BlackBishop))).GetColor()
-			// Opposite Color Bishop
-			if wColor != bColor {
-				promotingWhitePawns := bbWhitePawn & Rank7Fill
-				promotingBlackPawns := bbBlackPawn & Rank2Fill
-				if promotingBlackPawns == 0 && promotingWhitePawns == 0 {
-					drawDivider = 3
-				}
-			}
+			// } else if whiteRooksCount+blackRooksCount+whiteKnightsCount+blackKnightsCount+whiteQueensCount+blackQueensCount == 0 &&
+			// 	abs16(int16(whitePawnsCount-blackPawnsCount)) <= 1 && whiteBishopsCount == 1 && blackBishopsCount == 1 {
+			// 	wColor := Square(bits.TrailingZeros64(board.GetBitboardOf(WhiteBishop))).GetColor()
+			// 	bColor := Square(bits.TrailingZeros64(board.GetBitboardOf(BlackBishop))).GetColor()
+			// 	// Opposite Color Bishop
+			// 	if wColor != bColor {
+			// 		promotingWhitePawns := bbWhitePawn & Rank7Fill
+			// 		promotingBlackPawns := bbBlackPawn & Rank2Fill
+			// 		if promotingBlackPawns == 0 && promotingWhitePawns == 0 {
+			// 			drawDivider = 2
+			// 		}
+			// 	}
 		}
 	}
 
