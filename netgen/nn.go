@@ -1,4 +1,5 @@
-//+build ignore
+//go:build ignore
+// +build ignore
 
 package main
 
@@ -10,7 +11,7 @@ import (
 	// . "github.com/amanjpro/zahak/zahak"
 )
 
-var netPath = "~/Downloads/e7b3838.nn"
+var netPath = "default.nn"
 var Version = "dev"
 
 func main() {

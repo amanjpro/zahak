@@ -20,12 +20,14 @@ var CurrentOutputBias float32
 var CurrentNetworkId uint32
 
 type Updates struct {
-	Diff []Update
-	Size int
+	Indices []int16
+	Coeffs  []int8
+	Size    int
 }
 
-func (u *Updates) Add(update Update) {
-	u.Diff[u.Size] = update
+func (u *Updates) Add(index int16, coeff int8) {
+	u.Indices[u.Size] = index
+	u.Coeffs[u.Size] = coeff
 	u.Size += 1
 }
 
@@ -58,17 +60,8 @@ func NewNetworkState() *NetworkState {
 	return &net
 }
 
-type Change int8
-
-const (
-	Remove Change = -1
-	Add    Change = 1
-)
-
-type Update struct {
-	Index int16
-	Value Change
-}
+const Remove int8 = -1
+const Add int8 = 1
 
 func calculateNetInputIndex(sq Square, piece Piece) int16 {
 	return int16(piece-1)*64 + int16(sq)
@@ -76,20 +69,6 @@ func calculateNetInputIndex(sq Square, piece Piece) int16 {
 
 func (n *NetworkState) RevertHidden() {
 	n.CurrentHidden -= 1
-}
-
-func (n *NetworkState) UpdateHidden(updates *Updates) {
-	n.CurrentHidden += 1
-	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	copy(hiddenOutputs, n.HiddenOutputs[n.CurrentHidden-1])
-
-	for i := 0; i < updates.Size; i++ {
-		d := updates.Diff[i]
-		weights := n.HiddenWeights
-		for j := 0; j < len(hiddenOutputs); j++ {
-			hiddenOutputs[j] += float32(d.Value) * weights[int(d.Index)*NetHiddenSize+j]
-		}
-	}
 }
 
 func (n *NetworkState) Recalculate(input []int16) {
@@ -108,16 +87,6 @@ func (n *NetworkState) Recalculate(input []int16) {
 	for i := 0; i < len(hiddenOutputs); i++ {
 		hiddenOutputs[i] += n.HiddenBiases[i]
 	}
-}
-
-func (n *NetworkState) QuickFeed() float32 {
-	// apply output layer
-	output := float32(0)
-	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	for i := 0; i < len(n.OutputWeights); i++ {
-		output += ReLu(hiddenOutputs[i]) * n.OutputWeights[i]
-	}
-	return output + n.OutputBias
 }
 
 // load a neural network from file
