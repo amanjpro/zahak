@@ -72,6 +72,7 @@ func (uci *UCI) Start() {
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
 				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
 				fmt.Print("option name EvalFile type string\n")
+				fmt.Print("option name BookFile type string\n")
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -101,6 +102,12 @@ func (uci *UCI) Start() {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
 					LoadNetwork(path)
 					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", CurrentNetworkId)
+				} else if strings.HasPrefix(cmd, "setoption name BookFile value") {
+					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name BookFile value", ""))
+					uci.bookPath = path
+					if uci.withBook {
+						InitBook(uci.bookPath)
+					}
 				} else if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
 				} else if strings.HasPrefix(cmd, "setoption name Book value ") {
@@ -109,6 +116,7 @@ func (uci *UCI) Start() {
 					if opt == "false" {
 						ResetBook()
 					} else if !IsBoookLoaded() && opt == "true" { // if it is loaded, no need to reload
+						uci.withBook = true
 						InitBook(uci.bookPath)
 					}
 				} else if strings.HasPrefix(cmd, "setoption name Threads value") {
