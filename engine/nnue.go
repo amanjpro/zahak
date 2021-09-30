@@ -43,15 +43,12 @@ type NetworkState struct {
 
 func NewNetworkState() *NetworkState {
 	net := NetworkState{
-		HiddenWeights: make([]float32, NetInputSize*NetHiddenSize),
-		HiddenBiases:  make([]float32, NetHiddenSize),
-		OutputWeights: make([]float32, NetHiddenSize),
+		HiddenWeights: CurrentHiddenWeights,
+		HiddenBiases:  CurrentHiddenBiases,
+		OutputWeights: CurrentOutputWeights,
 		OutputBias:    CurrentOutputBias,
 	}
 
-	copy(net.HiddenWeights, CurrentHiddenWeights)
-	copy(net.HiddenBiases, CurrentHiddenBiases)
-	copy(net.OutputWeights, CurrentOutputWeights)
 	net.EmptyHiddenOutput = make([]float32, NetHiddenSize)
 	net.HiddenOutputs = make([][]float32, MaximumDepth)
 	for i := 0; i < MaximumDepth; i++ {
