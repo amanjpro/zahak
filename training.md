@@ -54,7 +54,7 @@ bin/zahak -gen-epds
 The above command basically spits perfectly randomly generated starting
 positions that you can use it as an EPD book. All you need is to capture the
 output and store it in file, In Windows you can do this: `bin\zahak -gen-epds >
-FILE` while in Linux/Mac you can do this: `bin/zahak -gen-epds | FILE`.
+FILE` while in Linux/Mac you can do this: `bin/zahak -gen-epds > FILE`.
 
 Now I have millions of games! What next?
 
