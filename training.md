@@ -1,6 +1,6 @@
 # Training for Zahak
 
-So you are thinking o trainig networks for Zahak? Great! You know what? If you
+So you are thinking of trainig networks for Zahak? Great! You know what? If you
 produce a net that beats the latest strongest at the time, your net will be
 promoted to the master net! Not only that, your name will also be listed under
 the authors list! The only condition here that needs to be respected is the
