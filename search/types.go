@@ -408,7 +408,7 @@ func ScoreToCp(score int16) string {
 		if score < 0 {
 			return fmt.Sprintf("mate -%d", (CHECKMATE_EVAL+score)/2)
 		} else {
-			return fmt.Sprintf("mate +%d", (CHECKMATE_EVAL-score)/2)
+			return fmt.Sprintf("mate +%d", (CHECKMATE_EVAL-score+1)/2)
 		}
 	}
 	return fmt.Sprintf("cp %d", score)
