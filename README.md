@@ -163,6 +163,10 @@ command: `zahak -book PATH_TO_BOOK`.
 
 A bunch of free books are available [here](https://github.com/michaeldv/donna_opening_books)
 
+# Training Networks
+
+Please refer to [this guide](https://github.com/amanjpro/zahak/blob/master/training.md).
+
 # Building
 
 To build the project, simply run `make build`, testing with `make test`, and running with `make run`.
