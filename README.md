@@ -64,7 +64,7 @@ The history of Zahak's rating is summerized here:
 
 | **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   |  **Fast GM 60+06** | **Fast GM 10m+6s** |
 |-------------|------------------------------|-------------------------|---------------------------|---------------------------|--------------------|--------------------|
-| 6.x         | N/A                          | 2785                    | 2664                      | N/A                       | N/A                | 2720               |
+| 6.x         | N/A                          | 2785                    | 2664                      | 2800 (unstable rating)    | N/A                | 2720               |
 | 5.0         | 2730                         | 2686                    | 2553                      | 2676                      | 2505               | N/A                |
 | 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    | N/A                | N/A                |
 | 3.0         | 2407                         | 2378                    | N/A                       | N/A                       | N/A                | N/A                |
@@ -125,17 +125,8 @@ The history of Zahak's rating is summerized here:
 
 ## Evaluation
 
-- Tapered Eval
-- Tuned Evaluation using Texel Method
-- Mobility and Aggressivity
-- King safety and attacking kings
-- Rook structure
-- Pawn structure
-- Tuned Piece Square Table (PST)
-- Material balance
-- Bishop Pair
-- Outposts
-- Draw pattern recognition: RvN, RvB, RNvR, RBvR, Wrong Bishop, OCB, KPK
+- NNUE
+- Draw pattern recognition: RvN, RvB, RNvR, RBvR
 
 # Command line options
 
@@ -150,22 +141,18 @@ Usage of bin/zahak:
   
   -book string
         Path to openning book in PolyGlot (bin) format
-  -exclude-params string
-        Exclude parameters when tuning, format: 1, 9, 10, 11 or 1, 9-11
   -perft
         Provide this to run perft tests
   -perft-tree
         Run the engine in prefttree mode
-  -prepare-tuning-data
-        Prepare quiet EPDs for tuning
+  -gen-epds
+        Generate opening EPDs for self-play
   -profile
         Run the engine in profiling mode
   -slow
         Run all perft tests, even the very slow tests
   -test-positions string
         Path to EPD positions, used to test the strength of the engine
-  -tune
-        Peform texel tuning for optimal evaluation values
 ```
 
 # Opening Books
