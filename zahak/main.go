@@ -23,12 +23,12 @@ func main() {
 	if len(args) > 1 && args[1] == "bench" {
 		RunBenchmark()
 	} else {
-		var genEpdFlag = flag.Bool("gen-epds", false, "Generate open EPDs for self-play")
+		var genEpdFlag = flag.Bool("gen-epds", false, "Generate opening EPDs for self-play")
 		var perftFlag = flag.Bool("perft", false, "Provide this to run perft tests")
 		var slowFlag = flag.Bool("slow", false, "Run all perft tests, even the very slow tests")
 		var perftTreeFlag = flag.Bool("perft-tree", false, "Run the engine in prefttree mode")
 		var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
-		var bookPath = flag.String("book", "", "Path to openning book in PolyGlot (bin) format")
+		var bookPath = flag.String("book", "", "Path to opening book in PolyGlot (bin) format")
 		var epdPath = flag.String("test-positions", "", "Path to EPD positions, used to test the strength of the engine")
 		flag.Parse()
 		if *profileFlag {
