@@ -539,3 +539,30 @@ func isCheckmateEval(eval int16) bool {
 	}
 	return absEval >= CHECKMATE_EVAL-int16(MAX_DEPTH)
 }
+
+var ttWin = CHECKMATE_EVAL - int16(MAX_DEPTH)
+var ttLoss = -CHECKMATE_EVAL + int16(MAX_DEPTH)
+
+func evalToTT(value int16, searchHeight int8) int16 {
+	if value >= ttWin && value <= CHECKMATE_EVAL {
+		return CHECKMATE_EVAL
+	}
+
+	if value <= ttLoss && value >= -CHECKMATE_EVAL {
+		return CHECKMATE_EVAL
+	}
+
+	return value
+}
+
+func evalFromTT(value int16, searchHeight int8) int16 {
+	if value == CHECKMATE_EVAL {
+		return value - int16(searchHeight)
+	}
+
+	if value == -CHECKMATE_EVAL {
+		return value + int16(searchHeight)
+	}
+
+	return value
+}
