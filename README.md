@@ -178,6 +178,7 @@ You can also run it in perfttree mode with `./zahak -preft-tree`.
 Zahak wouldn't have been possible without:
 - [VICE videos](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
 - [Chess Programming Wiki](https://www.chessprogramming.org/)
+- Aryan Parekh the author of [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), who helped me with NNUE
 - Niels Abildskov the author of [Loki](https://github.com/BimmerBass/Loki), who helped me with Texel Tuning
 - [Nasrin Zaza](https://www.linkedin.com/in/nasrin-zaza/) for the amazing logo
 - OpenSource engines like: Weiss, Ethereal, CounterGo, Cheng and Berserk (in no specific order)
