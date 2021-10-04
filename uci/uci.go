@@ -100,10 +100,18 @@ func (uci *UCI) Start() {
 			default:
 				if strings.HasPrefix(cmd, "setoption name EvalFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
+					if path == "" {
+						fmt.Print("info string no eval file is selected, ignoring\n")
+						continue
+					}
 					LoadNetwork(path)
 					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", CurrentNetworkId)
 				} else if strings.HasPrefix(cmd, "setoption name BookFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name BookFile value", ""))
+					if path == "" {
+						fmt.Print("info string no eval file is selected, ignoring\n")
+						continue
+					}
 					uci.bookPath = path
 					if uci.withBook {
 						InitBook(uci.bookPath)

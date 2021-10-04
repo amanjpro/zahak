@@ -64,7 +64,7 @@ The history of Zahak's rating is summerized here:
 
 | **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   |  **Fast GM 60+06** | **Fast GM 10m+6s** |
 |-------------|------------------------------|-------------------------|---------------------------|---------------------------|--------------------|--------------------|
-| 7.0         | N/A                          | 2929                    | N/A                       | N/A                       | N/A                | N/A                |
+| 7.x         | N/A                          | 2929                    | N/A                       | N/A                       | N/A                | N/A                |
 | 6.x         | N/A                          | 2785                    | 2664                      | 2800 (unstable rating)    | N/A                | 2720               |
 | 5.0         | 2730                         | 2686                    | 2553                      | 2676                      | 2505               | N/A                |
 | 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    | N/A                | N/A                |
