@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := default
+
 revision := $(shell git rev-list -1 HEAD)
 version := $(shell git tag | sort -r | head -n1)
 netfile := default.nn
