@@ -63,7 +63,7 @@ var fens = []string{
 func RunBenchmark() {
 
 	cacheSize := uint32(32)
-	depth := int8(7)
+	depth := int8(12)
 	runner := NewRunner(NewCache(cacheSize), 1)
 	nodes := int64(0)
 	totalTime := float64(0)

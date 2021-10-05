@@ -16,7 +16,7 @@ build: netgen
 	go build -o bin ./...
 
 ifdef EXE
-	mv bin/zahak bin/$(EXE)
+	mv bin/zahak $(EXE)
 endif
 
 run_perft: netgen build
@@ -46,3 +46,5 @@ dist:
 	GOOS=windows GOARCH=386 go build -o bin ./... && mv bin/zahak.exe bin/zahak-windows-386.exe
 
 all: build
+
+default: build
