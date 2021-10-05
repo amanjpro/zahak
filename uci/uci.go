@@ -3,6 +3,7 @@ package uci
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"runtime"
 	"strconv"
@@ -45,9 +46,13 @@ func (uci *UCI) Start() {
 		InitBook(uci.bookPath)
 	}
 	reader := bufio.NewReader(os.Stdin)
+	defer os.Stdin.Close()
 
 	for true {
 		cmd, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
 		cmd = strings.Trim(cmd, "\n\r")
 		if err == nil {
 			switch cmd {
