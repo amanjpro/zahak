@@ -203,10 +203,10 @@ func TestIncrementalEval(t *testing.T) {
 				fromScratchEval := clonePos.Evaluate()
 				pos.UnMakeMove(mov, tg, ep, hc)
 				decrementalEval := pos.Evaluate()
-				if incrementalEval != fromScratchEval {
+				if abs16(incrementalEval-fromScratchEval) > 1 {
 					t.Errorf("Updated eval != Fresh eval ->\nMov: %v, Fresh Eval: %d, Incremental Eval: %d, \nPos:%v\n", mov.ToString(), fromScratchEval, incrementalEval, pos.Fen())
 				}
-				if decrementalEval != originalEval {
+				if abs16(decrementalEval-originalEval) > 1 {
 					t.Errorf("Undone eval (reverse from unmake) != original eval ->\nMov: %v, Original Eval: %d, Decremental Eval: %d, \nPos:%v\n", mov.ToString(), originalEval, decrementalEval, pos.Fen())
 				}
 			}
