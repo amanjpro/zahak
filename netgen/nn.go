@@ -68,6 +68,7 @@ func main() {
 
 	f.WriteString(fmt.Sprintf("CurrentOutputBias = %g\n", CurrentOutputBias))
 	f.WriteString(fmt.Sprintf("CurrentNetworkId = %d\n", CurrentNetworkId))
+	f.WriteString(fmt.Sprintf("NetHiddenSize = %d\n", NetHiddenSize))
 
 	f.WriteString("}\n")
 }
