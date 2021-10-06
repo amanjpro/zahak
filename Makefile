@@ -1,24 +1,35 @@
 .DEFAULT_GOAL := default
 
-revision := $(shell git rev-list -1 HEAD)
-version := $(shell git tag | sort -r | head -n1)
+ifneq ($(OS), Windows_NT)
+	revision := $(shell git rev-list -1 HEAD)
+	version := $(shell git tag | sort -r | head -n1)
+endif
+
 netfile := default.nn
 
 ifdef EVALFILE
 	netfile := $(EVALFILE)
 endif
 
+RM=rm -f engine/nn.go
+MKDIR=mkdir -p bin
+MV=mv bin/zahak $(EXE)
+ifeq ($(OS), Windows_NT)
+	RM=del engine/nn.go
+	MKDIR=IF not exist bin (mkdir bin)
+	MV=move bin\zahak $(EXE)
+endif
+
 .PHONY: netgen
-netgen:
-	rm -f engine/nn.go
+netgen: clean
 	go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
 
 build: netgen
-	mkdir -p bin
+	$(MKDIR)
 	go build -o bin ./...
 
 ifdef EXE
-	mv bin/zahak $(EXE)
+	$(MV)
 endif
 
 run_perft: netgen build
@@ -32,12 +43,10 @@ test: netgen
 
 clean:
 	go clean ./...
-	rm -rf bin
+	$(RM)
 
-dist:
-	echo "Compiling for every OS and Platform"
-	mkdir -p bin
-	rm -f engine/nn.go
+dist: clean
+	$(MKDIR)
 	go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(version)'" netgen/nn.go
 	GOOS=linux GOARCH=arm go build -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
 	GOOS=linux GOARCH=arm64 go build -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
