@@ -8,11 +8,11 @@ import (
 )
 
 const NetInputSize = 768
-const NetHiddenSize = 128
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
 
+var NetHiddenSize = 128
 var CurrentHiddenWeights []float32
 var CurrentHiddenBiases []float32
 var CurrentOutputWeights []float32
@@ -100,9 +100,9 @@ func LoadNetwork(path string) {
 	if err != nil {
 		panic(err)
 	}
-	// if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
-	// 	panic("Magic word does not match expected, exiting")
-	// }
+	if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
+		panic("Magic word does not match expected, exiting")
+	}
 
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
@@ -116,28 +116,26 @@ func LoadNetwork(path string) {
 	if err != nil {
 		panic(err)
 	}
-	// inputs := binary.LittleEndian.Uint32(buf[:4])
-	// outputs := binary.LittleEndian.Uint32(buf[4:8])
-	// layers := binary.LittleEndian.Uint32(buf[8:])
+	inputs := binary.LittleEndian.Uint32(buf[:4])
+	outputs := binary.LittleEndian.Uint32(buf[4:8])
+	layers := binary.LittleEndian.Uint32(buf[8:])
 
-	// if inputs != NetInputSize || outputs != NetOutputSize || layers != NetLayers {
-	// 	panic("Topology is not supported, exiting")
-	// }
+	if inputs != NetInputSize || outputs != NetOutputSize || layers != NetLayers {
+		panic("Topology is not supported, exiting")
+	}
 
 	buf = make([]byte, 4)
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
 		panic(err)
 	}
-	// neurons := binary.LittleEndian.Uint32(buf)
-	// if neurons != NetHiddenSize {
-	// 	panic("Topology is not supported, exiting")
-	// }
+	neurons := binary.LittleEndian.Uint32(buf)
+	NetHiddenSize = int(neurons)
 
 	CurrentNetworkId = id
 
 	CurrentHiddenWeights = make([]float32, NetHiddenSize*NetInputSize)
-	for i := uint32(0); i < NetHiddenSize*NetInputSize; i++ {
+	for i := 0; i < NetHiddenSize*NetInputSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
@@ -146,7 +144,7 @@ func LoadNetwork(path string) {
 	}
 
 	CurrentHiddenBiases = make([]float32, NetHiddenSize)
-	for i := uint32(0); i < NetHiddenSize; i++ {
+	for i := 0; i < NetHiddenSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
@@ -155,7 +153,7 @@ func LoadNetwork(path string) {
 	}
 
 	CurrentOutputWeights = make([]float32, NetHiddenSize)
-	for i := uint32(0); i < NetOutputSize*NetHiddenSize; i++ {
+	for i := 0; i < NetOutputSize*NetHiddenSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
