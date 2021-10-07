@@ -7,6 +7,7 @@ import (
 const CHECKMATE_EVAL int16 = 30000
 const MAX_NON_CHECKMATE float32 = 25000
 const MIN_NON_CHECKMATE float32 = -MAX_NON_CHECKMATE
+const CASTLING_FLAG = WhiteCanCastleQueenSide | WhiteCanCastleKingSide | BlackCanCastleQueenSide | BlackCanCastleKingSide
 
 type Position struct {
 	Board         *Bitboard
@@ -35,6 +36,10 @@ func (p *Position) SetTag(tag PositionTag)      { p.Tag |= tag }
 func (p *Position) ClearTag(tag PositionTag)    { p.Tag &= ^tag }
 func (p *Position) ToggleTag(tag PositionTag)   { p.Tag ^= tag }
 func (p *Position) HasTag(tag PositionTag) bool { return p.Tag&tag != 0 }
+
+func (p *Position) HasCastling() bool {
+	return p.HasTag(CASTLING_FLAG)
+}
 
 func (p *Position) Turn() Color {
 	if p.HasTag(WhiteToMove) {
