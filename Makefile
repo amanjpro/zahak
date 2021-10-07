@@ -15,9 +15,9 @@ RM=rm -f engine/nn.go
 MKDIR=mkdir -p bin
 MV=mv bin/zahak $(EXE)
 ifeq ($(OS), Windows_NT)
-	RM=del engine/nn.go
+	RM=del engine\nn.go
 	MKDIR=IF not exist bin (mkdir bin)
-	MV=move bin\zahak $(EXE)
+	MV=move bin\zahak.exe $(EXE).exe
 endif
 
 .PHONY: netgen
