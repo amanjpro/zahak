@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := default
 
 ifneq ($(OS), Windows_NT)
-	revision := $(shell git rev-list -1 HEAD)
+	revision := $(shell git rev-list -1 HEAD || echo dev)
 	version := $(shell git tag | sort -r | head -n1)
 endif
 
