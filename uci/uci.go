@@ -80,7 +80,7 @@ func (uci *UCI) Start() {
 				fmt.Print("option name EvalFile type string default <empty>\n")
 				fmt.Print("option name BookFile type string default <empty>\n")
 				fmt.Print("option name SyzygyPath type string default <empty>\n")
-				fmt.Print("option name SyzygyProbeDepth type int default %d min 0 max 128\n", DefaultProbeDepth)
+				fmt.Printf("option name SyzygyProbeDepth type spin default %d min 0 max 128\n", DefaultProbeDepth)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
