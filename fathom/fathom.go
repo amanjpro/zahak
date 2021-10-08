@@ -44,9 +44,13 @@ func SetSyzygyPath(path string) {
 
 func ClearSyzygy() {
 	C.tb_free()
+	MaxPieceCount = 0
 }
 
 func ProbeWDL(pos *Position, depth int8) uint32 {
+	if MaxPieceCount == 0 {
+		return TB_RESULT_FAILED
+	}
 
 	board := pos.Board
 	allPiecesCount := bits.OnesCount64(board.GetWhitePieces() | board.GetBlackPieces())
@@ -82,6 +86,9 @@ func ProbeWDL(pos *Position, depth int8) uint32 {
 var promoPieces = [5]PieceType{NoType, Queen, Rook, Bishop, Knight}
 
 func ProbeDTZ(pos *Position) Move {
+	if MaxPieceCount == 0 {
+		return EmptyMove
+	}
 
 	board := pos.Board
 
