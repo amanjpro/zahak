@@ -44,14 +44,22 @@ func ClearSyzygy() {
 }
 
 func ProbeWDL(pos *Position, depth int8) uint32 {
-	if MaxPieceCount == 0 &&
-		pos.HalfMoveClock != 0 &&
-		pos.HasCastling() &&
-		!depthCardinalityCheck(pos, depth) {
+
+	board := pos.Board
+	allPiecesCount := bits.OnesCount64(board.GetWhitePieces() | board.GetBlackPieces())
+	if MaxPieceCount == 0 ||
+		pos.HalfMoveClock != 0 ||
+		pos.HasCastling() ||
+		depth < MinProbeDepth ||
+		allPiecesCount > MaxPieceCount {
 		return TB_RESULT_FAILED
 	}
 
-	board := pos.Board
+	ep := pos.EnPassant
+	if ep == NoSquare {
+		ep = A1
+	}
+
 	return uint32(C.tb_probe_wdl(
 		C.uint64_t(board.GetWhitePieces()),
 		C.uint64_t(board.GetBlackPieces()),
@@ -63,15 +71,9 @@ func ProbeWDL(pos *Position, depth int8) uint32 {
 		C.uint64_t(board.Pawns()),
 		C.uint(pos.HalfMoveClock),
 		C.uint(0),
-		C.uint(pos.EnPassant),
+		C.uint(ep),
 		C.bool(pos.Turn() == White),
 	))
-}
-
-func depthCardinalityCheck(pos *Position, depth int8) bool {
-	board := pos.Board
-	cardinality := bits.OnesCount64(board.GetWhitePieces() | board.GetBlackPieces())
-	return cardinality < MaxPieceCount || (cardinality == MaxPieceCount && depth >= MinProbeDepth)
 }
 
 var promoPieces = [5]PieceType{NoType, Queen, Rook, Bishop, Knight}
@@ -80,9 +82,14 @@ func ProbeDTZ(pos *Position) Move {
 
 	board := pos.Board
 
-	cardinality := bits.OnesCount64(board.GetWhitePieces() | board.GetBlackPieces())
-	if pos.HasCastling() && cardinality > MaxPieceCount {
+	allPiecesCount := bits.OnesCount64(board.GetWhitePieces() | board.GetBlackPieces())
+	if pos.HasCastling() || allPiecesCount > MaxPieceCount {
 		return EmptyMove
+	}
+
+	ep := pos.EnPassant
+	if ep == NoSquare {
+		ep = A1
 	}
 
 	res := uint32(C.tb_probe_root(
@@ -96,30 +103,22 @@ func ProbeDTZ(pos *Position) Move {
 		C.uint64_t(board.Pawns()),
 		C.uint(pos.HalfMoveClock),
 		C.uint(0),
-		C.uint(pos.EnPassant),
+		C.uint(ep),
 		C.bool(pos.Turn() == White),
 		nil,
 	))
 
-	if res == TB_RESULT_FAILED || res == TB_RESULT_STALEMATE || res == TB_RESULT_CHECKMATE {
+	if res == TB_RESULT_FAILED {
 		return EmptyMove
 	}
 
-	start := Square(TB_GET_FROM(res))
-	end := Square(TB_GET_TO(res))
-	ep := Square(TB_GET_EP(res))
+	src := Square(TB_GET_FROM(res))
+	dest := Square(TB_GET_TO(res))
 	promo := TB_GET_PROMOTES(res)
-	piece := board.PieceAt(start)
-	capturedPiece := board.PieceAt(end)
-	var tags MoveTag = 0
-	if capturedPiece != NoPiece {
-		tags |= Capture
-	}
+	piece := board.PieceAt(src)
+	capturedPiece := board.PieceAt(dest)
 
-	if ep != 0 {
-		tags |= EnPassant
-	}
-	return NewMove(start, end, piece, capturedPiece, promoPieces[promo], tags)
+	return NewMove(src, dest, piece, capturedPiece, promoPieces[promo], 0)
 }
 
 // From fathom source, translitrated to Go
