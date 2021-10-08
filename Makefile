@@ -14,19 +14,21 @@ endif
 RM=rm -f engine/nn.go
 MKDIR=mkdir -p bin
 MV=mv bin/zahak $(EXE)
+EXPORT=CGO_ENABLED=1
 ifeq ($(OS), Windows_NT)
 	RM=del engine\nn.go
 	MKDIR=IF not exist bin (mkdir bin)
 	MV=move bin\zahak.exe $(EXE).exe
+	EXPORT=""
 endif
 
 .PHONY: netgen
 netgen: clean
-	go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
+	$(EXPORT) go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
 
 build: netgen
 	$(MKDIR)
-	go build -o bin ./...
+	$(EXPORT) go build -o bin ./...
 
 ifdef EXE
 	$(MV)
