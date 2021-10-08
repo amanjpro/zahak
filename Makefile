@@ -14,19 +14,21 @@ endif
 RM=rm -f engine/nn.go
 MKDIR=mkdir -p bin
 MV=mv bin/zahak $(EXE)
+FLAGS=CC=cc
 ifeq ($(OS), Windows_NT)
 	RM=del engine\nn.go
 	MKDIR=IF not exist bin (mkdir bin)
 	MV=move bin\zahak.exe $(EXE).exe
+	FLAGS=""
 endif
 
 .PHONY: netgen
 netgen: clean
-	go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
+	$(FLAGS) go run -gcflags "-B" -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
 
 build: netgen
 	$(MKDIR)
-	go build -o bin ./...
+	$(FLAGS) go build -gcflags "-B" -o bin ./...
 
 ifdef EXE
 	$(MV)
@@ -47,14 +49,14 @@ clean:
 
 dist: clean
 	$(MKDIR)
-	go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(version)'" netgen/nn.go
-	GOOS=linux GOARCH=arm go build -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
-	GOOS=linux GOARCH=arm64 go build -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
-	GOOS=linux GOARCH=amd64 go build -o bin ./... && mv bin/zahak bin/zahak-linux-amd64
-	GOOS=darwin GOARCH=amd64 go build -o bin ./... && mv bin/zahak bin/zahak-darwin-amd64
-	GOOS=darwin GOARCH=arm64 go build -o bin ./... && mv bin/zahak bin/zahak-darwin-m1-arm64
-	GOOS=windows GOARCH=amd64 go build -o bin ./... && mv bin/zahak.exe bin/zahak-windows-amd64.exe
-	GOOS=windows GOARCH=386 go build -o bin ./... && mv bin/zahak.exe bin/zahak-windows-386.exe
+	$(FLAGS) go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(version)'" netgen/nn.go
+	$(FLAGS) GOOS=linux GOARCH=arm go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
+	$(FLAGS) GOOS=linux GOARCH=arm64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
+	$(FLAGS) GOOS=linux GOARCH=amd64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-amd64
+	$(FLAGS) GOOS=darwin GOARCH=amd64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-darwin-amd64
+	$(FLAGS) GOOS=darwin GOARCH=arm64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-darwin-m1-arm64
+	$(FLAGS) GOOS=windows GOARCH=amd64 go build -gcflags "-B" -o bin ./... && mv bin/zahak.exe bin/zahak-windows-amd64.exe
+	$(FLAGS) GOOS=windows GOARCH=386 go build -gcflags "-B" -o bin ./... && mv bin/zahak.exe bin/zahak-windows-386.exe
 
 all: build
 

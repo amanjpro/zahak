@@ -12,6 +12,7 @@ import (
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/fathom"
 	. "github.com/amanjpro/zahak/search"
 )
 
@@ -76,8 +77,10 @@ func (uci *UCI) Start() {
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
 				fmt.Printf("option name Book type check default %t\n", uci.withBook)
 				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
-				fmt.Print("option name EvalFile type string\n")
-				fmt.Print("option name BookFile type string\n")
+				fmt.Print("option name EvalFile type string default <empty>\n")
+				fmt.Print("option name BookFile type string default <empty>\n")
+				fmt.Print("option name SyzygyPath type string default <empty>\n")
+				fmt.Printf("option name SyzygyProbeDepth type spin default %d min 0 max 128\n", DefaultProbeDepth)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -103,9 +106,24 @@ func (uci *UCI) Start() {
 					}
 				}
 			default:
-				if strings.HasPrefix(cmd, "setoption name EvalFile value") {
+				if strings.HasPrefix(cmd, "tb-probe") {
+					fmt.Println(ProbeWDL(game.Position(), 0))
+					dtz := ProbeDTZ(game.Position())
+					fmt.Println(dtz.ToString())
+				} else if strings.HasPrefix(cmd, "setoption name SyzygyProbeDepth value") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					depth, _ := strconv.Atoi(v)
+					MinProbeDepth = int8(depth)
+				} else if strings.HasPrefix(cmd, "setoption name SyzygyPath value") {
+					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name SyzygyPath value", ""))
+					if path == "" || path == "<empty>" {
+						ClearSyzygy()
+					}
+					SetSyzygyPath(path)
+				} else if strings.HasPrefix(cmd, "setoption name EvalFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
-					if path == "" {
+					if path == "" || path == "<empty>" {
 						fmt.Print("info string no eval file is selected, ignoring\n")
 						continue
 					}
@@ -113,7 +131,7 @@ func (uci *UCI) Start() {
 					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", CurrentNetworkId)
 				} else if strings.HasPrefix(cmd, "setoption name BookFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name BookFile value", ""))
-					if path == "" {
+					if path == "" || path == "<empty>" {
 						fmt.Print("info string no eval file is selected, ignoring\n")
 						continue
 					}

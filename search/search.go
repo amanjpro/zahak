@@ -7,9 +7,21 @@ import (
 
 	. "github.com/amanjpro/zahak/book"
 	. "github.com/amanjpro/zahak/engine"
+	. "github.com/amanjpro/zahak/fathom"
 )
 
+const TB_WIN_BOUND int16 = 27000
+const TB_LOSS_BOUND int16 = -27000
+
 func (r *Runner) Search(depth int8) {
+	e := r.Engines[0]
+	if bestmove := ProbeDTZ(e.Position); bestmove != EmptyMove {
+		for e.TimeManager().Pondering {
+			// busy waiting
+		}
+		fmt.Printf("bestmove %s\n", bestmove.ToString())
+		return
+	}
 
 	if len(r.Engines) == 1 {
 		e := r.Engines[0]
@@ -25,6 +37,9 @@ func (r *Runner) Search(depth int8) {
 			}(r.Engines[i], depth, i)
 		}
 		wg.Wait()
+		for e.TimeManager().Pondering {
+			// busy waiting
+		}
 		r.SendBestMove()
 	}
 }
@@ -38,6 +53,9 @@ func (e *Engine) Search(depth int8) {
 	e.parent.ClearForSearch()
 	e.ClearForSearch()
 	e.rootSearch(depth, 1, 1)
+	for e.TimeManager().Pondering {
+		// busy waiting
+	}
 	e.parent.SendBestMove()
 }
 
@@ -257,6 +275,42 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if nType == Exact {
 			e.CacheHit()
 			return nEval
+		}
+	}
+
+	// tablebase - we do not do this at root
+	if !isRootNode {
+		tbResult := ProbeWDL(position, depthLeft)
+
+		if tbResult != TB_RESULT_FAILED {
+			e.info.tbHit += 1
+
+			var flag NodeType
+			var score int16
+			switch tbResult {
+			case TB_WIN:
+				score = TB_WIN_BOUND - int16(searchHeight)
+				flag = LowerBound
+			case TB_LOSS:
+				score = -TB_WIN_BOUND + int16(searchHeight)
+				flag = UpperBound
+			default:
+				score = 0
+				flag = Exact
+			}
+
+			// if the tablebase gives us what we want, then we accept it's score and return
+			if flag == Exact || (flag == LowerBound && score >= beta) || (flag == UpperBound && score <= alpha) {
+				e.TranspositionTable.Set(hash, EmptyMove, score, depthLeft, flag, e.Ply)
+				return score
+			}
+
+			// for pv node searches we adjust our a/b search accordingly
+			if isPvNode {
+				if flag == LowerBound {
+					alpha = max16(alpha, score)
+				}
+			}
 		}
 	}
 

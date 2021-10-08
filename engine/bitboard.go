@@ -21,6 +21,30 @@ type Bitboard struct {
 	blackPieces uint64
 }
 
+func (b *Bitboard) Pawns() uint64 {
+	return b.whitePawn | b.blackPawn
+}
+
+func (b *Bitboard) Knights() uint64 {
+	return b.whiteKnight | b.blackKnight
+}
+
+func (b *Bitboard) Bishops() uint64 {
+	return b.whiteBishop | b.blackBishop
+}
+
+func (b *Bitboard) Rooks() uint64 {
+	return b.whiteRook | b.blackRook
+}
+
+func (b *Bitboard) Queens() uint64 {
+	return b.whiteQueen | b.blackQueen
+}
+
+func (b *Bitboard) Kings() uint64 {
+	return b.whiteKing | b.blackKing
+}
+
 func (b *Bitboard) GetWhitePieces() uint64 {
 	return b.whitePieces
 }

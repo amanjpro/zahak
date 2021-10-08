@@ -48,6 +48,7 @@ type Info struct {
 	historyPruningCounter      int64
 	multiCutCounter            int64
 	internalIterativeReduction int64
+	tbHit                      int64
 }
 
 func (e *Engine) ShareInfo() {
@@ -73,6 +74,7 @@ func (e *Engine) ShareInfo() {
 	atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
 	atomic.AddInt64(&e.parent.globalInfo.singularExtensionCounter, e.info.singularExtensionCounter)
 	atomic.AddInt64(&e.parent.globalInfo.multiCutCounter, e.info.multiCutCounter)
+	atomic.AddInt64(&e.parent.globalInfo.tbHit, e.info.tbHit)
 
 	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
 	atomic.AddInt64(&e.parent.cacheHits, e.cacheHits)
@@ -212,7 +214,7 @@ func (r *Runner) Ponderhit() {
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
@@ -396,8 +398,8 @@ func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
 	thinkTime := time.Since(e.StartTime)
 	nodesVisited := e.parent.nodesVisited
 	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
-	fmt.Printf("info depth %d seldepth %d hashfull %d nodes %d nps %d score %s time %d pv %s\n",
-		depth, pv.moveCount, e.TranspositionTable.Consumed(),
+	fmt.Printf("info depth %d seldepth %d hashfull %d tbhits %d nodes %d nps %d score %s time %d pv %s\n",
+		depth, pv.moveCount, e.TranspositionTable.Consumed(), e.parent.globalInfo.tbHit,
 		nodesVisited, nps, ScoreToCp(score),
 		thinkTime.Milliseconds(), pv.ToString())
 	e.TotalTime = thinkTime.Seconds()
