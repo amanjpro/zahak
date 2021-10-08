@@ -120,10 +120,8 @@ func (uci *UCI) Start() {
 					if path == "" || path == "<empty>" {
 						ClearSyzygy()
 					}
-					fmt.Println(path)
 					SetSyzygyPath(path)
 				} else if strings.HasPrefix(cmd, "setoption name EvalFile value") {
-
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
 					if path == "" || path == "<empty>" {
 						fmt.Print("info string no eval file is selected, ignoring\n")

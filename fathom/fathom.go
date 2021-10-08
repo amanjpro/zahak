@@ -5,6 +5,7 @@ package fathom
 // #include <stdlib.h>
 import "C"
 import (
+	"fmt"
 	"math/bits"
 	"strings"
 	"unsafe"
@@ -29,7 +30,13 @@ const (
 func SetSyzygyPath(path string) {
 	cPath := C.CString(strings.TrimSpace(path))
 	defer C.free(unsafe.Pointer(cPath))
+	C.tb_init(cPath)
 	MaxPieceCount = int(C.TB_LARGEST)
+	if MaxPieceCount != 0 {
+		fmt.Printf("string info loaded syzygy tablebase %d men\n", MaxPieceCount)
+	} else {
+		fmt.Print("string info no syzygy tablebase was found\n")
+	}
 }
 
 func ClearSyzygy() {

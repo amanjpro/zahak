@@ -283,7 +283,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		tbResult := ProbeWDL(position, depthLeft)
 
 		if tbResult != TB_RESULT_FAILED {
-			// data->tbhits++;
+			e.info.tbHit += 1
 
 			var flag NodeType
 			var score int16
