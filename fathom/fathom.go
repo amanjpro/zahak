@@ -1,3 +1,6 @@
+//go:build !nocgo
+// +build !nocgo
+
 package fathom
 
 // #cgo CFLAGS: -O3 -std=gnu11 -w
@@ -15,8 +18,8 @@ import (
 
 const DefaultProbeDepth = 0
 
-var MaxPieceCount = 0
 var MinProbeDepth int8 = DefaultProbeDepth
+var MaxPieceCount = 0
 
 const (
 	TB_LOSS          uint32 = 0 /* LOSS */
