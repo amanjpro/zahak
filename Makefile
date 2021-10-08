@@ -22,11 +22,11 @@ endif
 
 .PHONY: netgen
 netgen: clean
-	go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
+	CC=cc go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
 
 build: netgen
 	$(MKDIR)
-	go build -o bin ./...
+	CC=cc go build -o bin ./...
 
 ifdef EXE
 	$(MV)
