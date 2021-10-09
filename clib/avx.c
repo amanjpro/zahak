@@ -15,7 +15,7 @@ void update_hidden(int* previous_outputs, int16_t* update_indices, int8_t* updat
 }
 
 void quick_feed(int hidden_outputs[], int hidden_outputs_len, int weights[], int weights_len, int *res) {
-  int output = 0.0f;
+  int output = 0;
 	for(int i = 0; i < weights_len; i++){
     int value = hidden_outputs[i];
 		output += (value<0?0:value) * weights[i];
