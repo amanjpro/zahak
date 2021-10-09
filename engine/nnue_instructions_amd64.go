@@ -6,7 +6,6 @@ package engine
 import "unsafe"
 
 //go:noescape
-
 func _update_hidden(previous_outputs, update_indices, update_coeffs, update_size, weights, outputs, outputs_len unsafe.Pointer)
 
 //go:noescape
