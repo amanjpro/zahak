@@ -3,14 +3,14 @@
 
 package engine
 
-func (n *NetworkState) QuickFeed() float32 {
+func (n *NetworkState) QuickFeed() int16 {
 	// apply output layer
-	output := float32(0)
+	output := int32(0)
 	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
 	for i := 0; i < len(n.OutputWeights); i++ {
 		output += ReLu(hiddenOutputs[i]) * n.OutputWeights[i]
 	}
-	return output + n.OutputBias
+	return int16((res + n.OutputBias) / QPrecision / QPrecision)
 }
 
 func (n *NetworkState) UpdateHidden(updates *Updates) {
@@ -21,7 +21,7 @@ func (n *NetworkState) UpdateHidden(updates *Updates) {
 	for i := 0; i < updates.Size; i++ {
 		weights := n.HiddenWeights
 		for j := 0; j < len(hiddenOutputs); j++ {
-			hiddenOutputs[j] += float32(updates.Coeffs[i]) * weights[int(updates.Indices[i])*NetHiddenSize+j]
+			hiddenOutputs[j] += int32(updates.Coeffs[i]) * weights[int(updates.Indices[i])*NetHiddenSize+j]
 		}
 	}
 }

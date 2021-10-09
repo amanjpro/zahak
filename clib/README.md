@@ -21,7 +21,7 @@ $ clang -S -mavx -ffast-math -masm=intel -mno-red-zone -mstackrealign -mllvm -in
 ```
 - Convert the assembly code to GoASM:
 ```
-$ c2goasm -a -f avx.s engine/nnue_instructions_amd64.s
+$ c2goasm -a -f clib/avx.s engine/nnue_instructions_amd64.s
 ```
 
 Enjoy!

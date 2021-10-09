@@ -25,13 +25,13 @@ func (n *NetworkState) UpdateHidden(updates *Updates) {
 	_update_hidden(p1, p2, p3, p4, p5, p6, p7)
 }
 
-func (n *NetworkState) QuickFeed() float32 {
+func (n *NetworkState) QuickFeed() int16 {
 	p1 := unsafe.Pointer(&n.HiddenOutputs[n.CurrentHidden][0])
 	p2 := unsafe.Pointer(uintptr(NetHiddenSize))
 	p3 := unsafe.Pointer(&n.OutputWeights[0])
 	p4 := unsafe.Pointer(uintptr(NetHiddenSize))
-	var res float32
+	var res int32
 
 	_quick_feed(p1, p2, p3, p4, unsafe.Pointer(&res))
-	return res + n.OutputBias
+	return int16((res + n.OutputBias) / QPrecision / QPrecision)
 }
