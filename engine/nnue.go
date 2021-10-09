@@ -12,7 +12,7 @@ const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
-const QPrecision int32 = 256
+const QPrecision int32 = 1024
 
 var NetHiddenSize = 128
 var CurrentHiddenWeights []int32
@@ -183,6 +183,5 @@ func ReLu(x int32) int32 {
 }
 
 func quantize(x float32) int32 {
-	x *= float32(QPrecision)
-	return int32(math.Round(float64(x)))
+	return int32(math.Round(float64(x) * float64(QPrecision)))
 }
