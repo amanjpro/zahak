@@ -165,9 +165,9 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.parent.globalInfo.Print()
 			}
-			if isCheckmateEval(e.score) {
-				break
-			}
+			// if isCheckmateEval(e.score) {
+			// 	break
+			// }
 		}
 	}
 
