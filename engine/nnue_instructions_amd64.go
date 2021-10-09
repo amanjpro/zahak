@@ -33,5 +33,6 @@ func (n *NetworkState) QuickFeed() int16 {
 	var res int32
 
 	_quick_feed(p1, p2, p3, p4, unsafe.Pointer(&res))
-	return int16((res + n.OutputBias) / QPrecision / QPrecision)
+	res += n.OutputBias
+	return int16(res) / QPrecision / QPrecision
 }
