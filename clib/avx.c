@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-void update_hidden(int* previous_outputs, int16_t* update_indices, int8_t* update_coeffs, int update_size, int16_t* weights, int16_t* outputs, int outputs_len) {
+void update_hidden(int16_t* previous_outputs, int16_t* update_indices, int8_t* update_coeffs, int update_size, int16_t* weights, int16_t* outputs, int outputs_len) {
 	for(int i = 0; i < outputs_len; i++){
     outputs[i] = previous_outputs[i];
   }
