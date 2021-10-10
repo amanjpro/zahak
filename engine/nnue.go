@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math"
 	"os"
@@ -12,8 +11,8 @@ const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
-const QPrecisionIn int16 = 16
-const QPrecisionOut int16 = 32
+const QPrecisionIn int16 = 2
+const QPrecisionOut int16 = 6
 
 var NetHiddenSize = 128
 var CurrentHiddenWeights []int16
@@ -189,11 +188,5 @@ func quantize(x float32, outputLayer bool) int16 {
 	if outputLayer {
 		q = float64(QPrecisionOut)
 	}
-	i := int32(math.Round(float64(x) * q))
-	i16 := int16(i)
-	if i != int32(i16) {
-		fmt.Println(i, i16, outputLayer)
-		panic("HERE")
-	}
-	return i16
+	return int16(math.Round(float64(x) * q))
 }
