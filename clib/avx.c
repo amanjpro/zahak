@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-void update_hidden(int* previous_outputs, int16_t* update_indices, int8_t* update_coeffs, int update_size, int* weights, int* outputs, int outputs_len) {
+void update_hidden(int* previous_outputs, int16_t* update_indices, int8_t* update_coeffs, int update_size, int16_t* weights, int16_t* outputs, int outputs_len) {
 	for(int i = 0; i < outputs_len; i++){
     outputs[i] = previous_outputs[i];
   }
@@ -14,8 +14,8 @@ void update_hidden(int* previous_outputs, int16_t* update_indices, int8_t* updat
 	}
 }
 
-void quick_feed(int hidden_outputs[], int hidden_outputs_len, int weights[], int weights_len, int *res) {
-  int output = 0;
+void quick_feed(int16_t hidden_outputs[], int hidden_outputs_len, int16_t weights[], int weights_len, int16_t *res) {
+  int16_t output = 0;
 	for(int i = 0; i < weights_len; i++){
     int value = hidden_outputs[i];
 		output += (value<0?0:value) * weights[i];
