@@ -12,7 +12,8 @@ const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
-const QPrecision int32 = 1024
+const QPrecisionIn int32 = 32
+const QPrecisionOut int32 = 512
 
 var NetHiddenSize = 128
 var CurrentHiddenWeights []int32
@@ -146,7 +147,7 @@ func LoadNetwork(path string) error {
 		if err != nil {
 			panic(err)
 		}
-		CurrentHiddenWeights[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)))
+		CurrentHiddenWeights[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), false)
 	}
 
 	CurrentHiddenBiases = make([]int32, NetHiddenSize)
@@ -155,7 +156,7 @@ func LoadNetwork(path string) error {
 		if err != nil {
 			panic(err)
 		}
-		CurrentHiddenBiases[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)))
+		CurrentHiddenBiases[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), false)
 	}
 
 	CurrentOutputWeights = make([]int32, NetHiddenSize)
@@ -164,14 +165,14 @@ func LoadNetwork(path string) error {
 		if err != nil {
 			panic(err)
 		}
-		CurrentOutputWeights[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)))
+		CurrentOutputWeights[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), true)
 	}
 
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
 		panic(err)
 	}
-	CurrentOutputBias = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)))
+	CurrentOutputBias = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), true)
 	return nil
 }
 
@@ -182,6 +183,10 @@ func ReLu(x int32) int32 {
 	return x
 }
 
-func quantize(x float32) int32 {
-	return int32(math.Round(float64(x) * float64(QPrecision)))
+func quantize(x float32, outputLayer bool) int32 {
+	q := float64(QPrecisionIn)
+	if outputLayer {
+		q = float64(QPrecisionOut)
+	}
+	return int32(math.Round(float64(x) * q))
 }

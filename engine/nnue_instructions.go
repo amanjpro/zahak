@@ -10,8 +10,8 @@ func (n *NetworkState) QuickFeed() int16 {
 	for i := 0; i < len(n.OutputWeights); i++ {
 		output += ReLu(hiddenOutputs[i]) * n.OutputWeights[i]
 	}
-	output += n.OutputBias
-	return int16(output / QPrecision / QPrecision)
+	output += n.OutputBias * QPrecisionIn
+	return int16(output / QPrecisionIn / QPrecisionOut)
 }
 
 func (n *NetworkState) UpdateHidden(updates *Updates) {
