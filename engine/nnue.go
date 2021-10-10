@@ -85,13 +85,7 @@ func (n *NetworkState) Recalculate(input []int16) {
 		}
 	}
 	for i := 0; i < len(hiddenOutputs); i++ {
-		b := hiddenOutputs[i]
 		hiddenOutputs[i] += n.HiddenBiases[i]
-		h32 := int32(hiddenOutputs[i]) + int32(n.HiddenBiases[i])
-		if h32 != int32(hiddenOutputs[i]) {
-			fmt.Println(h32, hiddenOutputs[i], b, n.HiddenBiases[i])
-			panic("HERE")
-		}
 	}
 }
 
