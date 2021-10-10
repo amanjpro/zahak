@@ -49,7 +49,7 @@ func (p *Position) Evaluate() int16 {
 
 	output := p.Net.QuickFeed()
 	if p.Turn() == Black {
-		return -toEval(output)
+		return -toEval(output) >> drawDivider
 	}
 	return toEval(output) >> drawDivider
 
