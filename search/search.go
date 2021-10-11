@@ -365,26 +365,25 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// NullMove pruning
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
-		if isNullMoveAllowed && depthLeft > 3 && eval > beta {
-			var R = min8(4+depthLeft/4, depthLeft)
-			// if eval >= beta+150 {
-			// 	R = min8(R, depthLeft)
-			// } else {
-			// 	R = min8(R, depthLeft-1)
-			// }
-			// if R >= 2 {
-			ep := position.MakeNullMove()
-			e.pred.Push(position.Hash())
-			e.innerLines[searchHeight+1].Recycle()
-			e.positionMoves[searchHeight+1] = EmptyMove
-			score := -e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
-			e.pred.Pop()
-			position.UnMakeNullMove(ep)
-			if score >= beta {
-				e.info.nullMoveCounter += 1
-				return score
+		if isNullMoveAllowed && depthLeft >= 3 && eval > beta {
+			var R = 4 + depthLeft/6
+			R = min8(R, depthLeft)
+			if eval >= beta+250 {
+				R += 1
 			}
-			// }
+			if R >= 2 {
+				ep := position.MakeNullMove()
+				e.pred.Push(position.Hash())
+				e.innerLines[searchHeight+1].Recycle()
+				e.positionMoves[searchHeight+1] = EmptyMove
+				score := -e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
+				e.pred.Pop()
+				position.UnMakeNullMove(ep)
+				if score >= beta {
+					e.info.nullMoveCounter += 1
+					return score
+				}
+			}
 		}
 
 		// Prob cut
