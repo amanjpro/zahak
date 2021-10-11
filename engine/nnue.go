@@ -11,8 +11,8 @@ const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
-const QPrecisionIn int16 = 2
-const QPrecisionOut int16 = 6
+const QPrecisionIn int16 = 4
+const QPrecisionOut int16 = 32
 
 var NetHiddenSize = 128
 var CurrentHiddenWeights []int16
