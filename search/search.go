@@ -389,7 +389,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// Prob cut
 		// The idea is basically cherry picked from multiple engines, Weiss, Ethereal and Berserk for example
-		probBeta := min16(beta+110, WIN_IN_MAX)
+		probBeta := min16(beta+120, WIN_IN_MAX)
 		if depthLeft > 4 && abs16(beta) < WIN_IN_MAX && !(ttHit && nDepth >= depthLeft-3 && nEval < probBeta) {
 
 			hashMove := EmptyMove
@@ -487,11 +487,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 			// Singular Extension
 			var extension int8
-			if depthLeft > 8 &&
+			if depthLeft >= 8 &&
 				hashmove == nHashMove &&
 				ttHit &&
 				e.skipMove == EmptyMove &&
-				nDepth > depthLeft-3 &&
+				nDepth >= depthLeft-3 &&
 				nType != UpperBound &&
 				!position.IsInCheck() && // Check moves are automatically extended
 				abs16(nEval) < WIN_IN_MAX &&
@@ -501,13 +501,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 
 				// Search to reduced depth with a zero window a bit lower than ttScore
-				threshold := max16(nEval-2*int16(depthLeft), -CHECKMATE_EVAL)
+				threshold := max16(nEval-3*int16(depthLeft)/2, -CHECKMATE_EVAL)
 
 				e.skipMove = hashmove
 				e.skipHeight = searchHeight
 				e.innerLines[searchHeight].Recycle()
 				e.MovePickers[searchHeight] = e.TempMovePicker
-				score := e.alphaBeta(depthLeft/2-1, searchHeight, threshold-1, threshold)
+				score := e.alphaBeta((depthLeft-1)/2, searchHeight, threshold-1, threshold)
 				e.MovePickers[searchHeight] = movePicker
 				e.innerLines[searchHeight].Recycle()
 				e.skipMove = EmptyMove
