@@ -116,8 +116,8 @@ func positionFromFen(fen string) Position {
 	}
 	halfMoveClock = 0
 	newUpdates := Updates{
-		Indices: make([]int16, 4),
-		Coeffs:  make([]int8, 4),
+		Indices: make([]int16, 5),
+		Coeffs:  make([]int8, 5),
 		Size:    0,
 	}
 	p := Position{

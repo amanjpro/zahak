@@ -144,7 +144,7 @@ func (p *Position) partialUnMakeMove(move Move) {
 }
 
 func (p *Position) NetInput() []int16 {
-	input := make([]int16, 0, 32)
+	input := make([]int16, 0, 33)
 
 	for j := 0; j < 64; j++ {
 		sq := Square(j)
@@ -153,6 +153,9 @@ func (p *Position) NetInput() []int16 {
 		if piece != NoPiece {
 			input = append(input, calculateNetInputIndex(sq, piece))
 		}
+	}
+	if p.Turn() == White {
+		input = append(input, 768)
 	}
 	return input
 }
