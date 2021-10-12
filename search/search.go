@@ -334,11 +334,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return -MAX_INT
 	}
 
-	var eval int16 = -MAX_INT
+	var eval int16 = position.Evaluate() //-MAX_INT
 	// if !isRootNode && currentMove == EmptyMove {
 	// 	eval = -1 * e.staticEvals[searchHeight-1]
 	// } else {
-	eval = position.Evaluate()
+	// eval =
 	// }
 
 	e.staticEvals[searchHeight] = eval

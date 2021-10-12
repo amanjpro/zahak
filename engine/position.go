@@ -50,6 +50,7 @@ func (p *Position) Turn() Color {
 
 func (p *Position) MakeNullMove() Square {
 	ep := p.EnPassant
+	p.Updates.Size = 0
 	p.EnPassant = NoSquare
 	p.HalfMoveClock += 1
 	p.ToggleTurn()
