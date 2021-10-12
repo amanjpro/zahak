@@ -26,29 +26,30 @@ jobs:
     with:
       go-version: 1.16
 
-  - name: Build
-    run: make build
+    steps:
+      - name: Build
+        run: make build
 
-  - name: Test
-    run: make test
+      - name: Test
+        run: make test
 
-  - name: Set env
-    run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
-  - name: Distribute
-      run: |
-        go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
-        go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{matrix.os.ext}} ./...
-        # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # fi
-  - name: Create Release and Upload Assets
-    id: create-release-and-upload-asset
-    run: |
-      set -x
-      assets=()
-      for asset in zahak-; do
-        assets+=("-a" "$asset")
-      done
-      tag_name="$TAG_NAME"
-      hub release create "${assets[@]}" -m "$tag_name" "$tag_name" || hub release edit "${assets[@]}" -m "$tag_name" "$tag_name"
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set env
+        run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
+      - name: Distribute
+          run: |
+            go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
+            go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{matrix.os.ext}} ./...
+            # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # fi
+      - name: Create Release and Upload Assets
+        id: create-release-and-upload-asset
+        run: |
+          set -x
+          assets=()
+          for asset in zahak-; do
+            assets+=("-a" "$asset")
+          done
+          tag_name="$TAG_NAME"
+          hub release create "${assets[@]}" -m "$tag_name" "$tag_name" || hub release edit "${assets[@]}" -m "$tag_name" "$tag_name"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
