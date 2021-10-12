@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const NetInputSize = 768
+const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128

@@ -54,6 +54,12 @@ func (p *Position) MakeNullMove() Square {
 	p.HalfMoveClock += 1
 	p.ToggleTurn()
 	updateHashForNullMove(p, NoSquare, ep)
+	if p.Turn() == White {
+		p.Updates.Add(768, Add)
+	} else {
+		p.Updates.Add(768, Remove)
+	}
+	p.Net.UpdateHidden(p.Updates)
 	return ep
 }
 
@@ -62,6 +68,7 @@ func (p *Position) UnMakeNullMove(ep Square) {
 	p.EnPassant = ep
 	p.HalfMoveClock -= 1
 	p.ToggleTurn()
+	p.Net.RevertHidden()
 }
 
 func (p *Position) ToggleTurn() {
@@ -273,6 +280,12 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		p.ClearTag(InCheck)
 	}
 
+	if p.Turn() == White {
+		p.Updates.Add(768, Add)
+	} else {
+		p.Updates.Add(768, Remove)
+	}
+
 	if updateHidden {
 		p.Net.UpdateHidden(p.Updates)
 	}
@@ -451,8 +464,8 @@ func (p *Position) Copy() *Position {
 		copyMap[k] = v
 	}
 	newUpdates := Updates{
-		Indices: make([]int16, 4),
-		Coeffs:  make([]int8, 4),
+		Indices: make([]int16, 5),
+		Coeffs:  make([]int8, 5),
 		Size:    0,
 	}
 
