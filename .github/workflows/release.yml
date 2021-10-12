@@ -36,11 +36,11 @@ jobs:
       - name: Set env
         run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
       - name: Distribute
-          run: |
-            go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
-            go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{matrix.os.ext}} ./...
-            # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            # fi
+        run: |
+          go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
+          go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{matrix.os.ext}} ./...
+          # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          # fi
       - name: Create Release and Upload Assets
         id: create-release-and-upload-asset
         run: |
