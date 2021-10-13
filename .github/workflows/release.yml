@@ -52,6 +52,7 @@ jobs:
 
       - name: Create Release and Upload Assets
         id: create-release-and-upload-asset
+        shell: bash
         run: |
           set -x
           assets=()
