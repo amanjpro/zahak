@@ -26,6 +26,7 @@ jobs:
           go test ./...
           
       - name: Set env
+        shell: bash
         run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
       - name: Distribute
         shell: bash
