@@ -28,6 +28,7 @@ jobs:
       - name: Set env
         run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
       - name: Distribute
+        shell: bash
         run: |
            if [ "$RUNNER_OS" == "Windows" ]; then
              mkdir bin
