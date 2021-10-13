@@ -32,12 +32,18 @@ jobs:
         run: |
           go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
           ext=""
+          osName="linux"
           if ${{matrix.os}} == windows-latest; then
             ext=".exe"
+            osName="windows"
           fi
-          go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx"$ext" ./...
-          # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-          # fi
+          if ${{matrix.os}} == macos-latest; then
+            osName="darwin"
+          fi
+          go build -gcflags -B -o zahak-"$osName"-amd64-$TAG_NAME-avx"$ext" ./...
+          if ${{matrix.os}} == ubuntu-latest; then
+            echo "soon"
+          fi
       - name: Create Release and Upload Assets
         id: create-release-and-upload-asset
         run: |
