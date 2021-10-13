@@ -8,15 +8,25 @@ on:
 jobs:
   build:
     name: Create Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
+    runs-on: ${{ matrix.os.environment }}
+    strategy:
+      matrix:
+        os:
+          - name: linux
+            environment: ubuntu-latest
+            ext: ''
+          - name: windows
+            environment: windows-latest
+            ext: '.exe'
+          - name: darwin
+            environment: macos-latest
+            ext: ''
+          - name: Set up Go
+    uses: actions/setup-go@v2
+    with:
+      go-version: 1.16
 
+    steps:
       - name: Build
         run: make build
 
@@ -27,23 +37,19 @@ jobs:
         run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
       - name: Distribute
         run: |
-          make dist
-          mv bin/zahak-linux-amd64 bin/zahak-linux-amd64-"$TAG_NAME"
-          mv bin/zahak-linux-arm32 bin/zahak-linux-arm32-"$TAG_NAME"
-          mv bin/zahak-linux-arm64 bin/zahak-linux-arm64-"$TAG_NAME"
-          mv bin/zahak-darwin-amd64 bin/zahak-darwin-amd64-"$TAG_NAME"
-          mv bin/zahak-darwin-m1-arm64 bin/zahak-darwin-m1-arm64-"$TAG_NAME"
-          mv bin/zahak-windows-amd64.exe bin/zahak-windows-amd64-"$TAG_NAME".exe
-          mv bin/zahak-windows-386.exe bin/zahak-windows-386-"$TAG_NAME".exe
+          go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
+          go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{matrix.os.ext}} ./...
+          # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          # fi
       - name: Create Release and Upload Assets
         id: create-release-and-upload-asset
         run: |
           set -x
           assets=()
-          for asset in bin/zahak-*; do
+          for asset in zahak-; do
             assets+=("-a" "$asset")
           done
           tag_name="$TAG_NAME"
-          hub release create "${assets[@]}" -m "$tag_name" "$tag_name"
+          hub release create "${assets[@]}" -m "$tag_name" "$tag_name" || hub release edit "${assets[@]}" -m "$tag_name" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
