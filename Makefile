@@ -14,7 +14,7 @@ endif
 RM=rm -f engine/nn.go
 MKDIR=mkdir -p bin
 MV=mv bin/zahak $(EXE)
-FLAGS=CC=cc
+FLAGS=CC=cc CGO_ENABLED="1"
 ifeq ($(OS), Windows_NT)
 	RM=del engine\nn.go
 	MKDIR=IF not exist bin (mkdir bin)
@@ -47,8 +47,9 @@ clean:
 	go clean ./...
 	$(RM)
 
-dist: clean
+cross-build: clean
 	$(MKDIR)
+	echo "!!!! WARNING !!!! Cross build will not support Syzygy Probing"
 	$(FLAGS) go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(version)'" netgen/nn.go
 	$(FLAGS) GOOS=linux GOARCH=arm go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
 	$(FLAGS) GOOS=linux GOARCH=arm64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
