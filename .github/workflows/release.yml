@@ -8,20 +8,10 @@ on:
 jobs:
   build:
     name: Create Release
-    runs-on: ${{ matrix.os.environment }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          - name: linux
-            environment: ubuntu-latest
-            ext: ''
-          - name: windows
-            environment: windows-latest
-            ext: '.exe'
-          - name: darwin
-            environment: macos-latest
-            ext: ''
-          - name: Set up Go
+        os: [ubuntu-latest, widows-latest, macos-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -41,7 +31,11 @@ jobs:
       - name: Distribute
         run: |
           go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
-          go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{matrix.os.ext}} ./...
+          ext=""
+          if ${{matrix.os}} == windows-latest; then
+            ext=".exe"
+          fi
+          go build -gcflags -B -o zahak-${{matrix.os.name}}-amd64-$TAG_NAME-avx${{ext}} ./...
           # if [[ "$OSTYPE" == "linux-gnu"* ]]; then
           # fi
       - name: Create Release and Upload Assets
