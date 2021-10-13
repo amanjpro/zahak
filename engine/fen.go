@@ -108,12 +108,13 @@ func bitboardFromFen(fen string) *Bitboard {
 func positionFromFen(fen string) Position {
 	parts := strings.Fields(fen)
 	if len(parts) != 6 {
-		panic(fmt.Sprintf("Invalid FEN notation %s, there should be 6 parts", fen))
+		fmt.Printf("string info invalid FEN notation %s, there should be 6 parts\n", fen)
 	}
 	halfMoveClock, err := strconv.Atoi(parts[4])
 	if err != nil {
-		panic(fmt.Sprintf("Invalid FEN notation %s, half move clock is not set correctly %s", fen, parts[4]))
+		fmt.Printf("string info invalid FEN notation %s, half move clock is not set correctly %s\n", fen, parts[4])
 	}
+	halfMoveClock = 0
 	newUpdates := Updates{
 		Indices: make([]int16, 4),
 		Coeffs:  make([]int8, 4),
@@ -148,20 +149,21 @@ func positionFromFen(fen string) Position {
 		} else if ch == '-' && i == len(parts[2])-1 {
 			break
 		} else {
-			panic(fmt.Sprintf("Invalid FEN notation %s, castling part is not correct %s", fen, parts[2]))
+			fmt.Printf("string info invalid FEN notation %s, castling part is not correct %s\n", fen, parts[2])
+			break
 		}
 	}
 
 	sq, ok := NameToSquareMap[parts[3]]
 	rank := sq.Rank()
 	if !ok && parts[3] != "-" {
-		panic(fmt.Sprintf("Invalid FEN notation %s, en-passant part is not correct '%s'", fen, parts[3]))
+		fmt.Printf("string info invalid FEN notation %s, en-passant part is not correct '%s'\n", fen, parts[3])
 	} else if ok && rank != Rank3 && rank != Rank6 {
-		panic(fmt.Sprintf("Invalid FEN notation %s, en-passant part is not on the right rank %s", fen, parts[3]))
+		fmt.Printf("string info invalid FEN notation %s, en-passant part is not on the right rank %s\n", fen, parts[3])
 	} else if rank == Rank3 && p.Turn() == White {
-		panic(fmt.Sprintf("Invalid FEN notation %s, en-passant part is not on the right rank %s", fen, parts[3]))
+		fmt.Printf("string info invalid FEN notation %s, en-passant part is not on the right rank %s\n", fen, parts[3])
 	} else if rank == Rank5 && p.Turn() == Black {
-		panic(fmt.Sprintf("Invalid FEN notation %s, en-passant part is not on the right rank %s", fen, parts[3]))
+		fmt.Printf("string info invalid FEN notation %s, en-passant part is not on the right rank %s\n", fen, parts[3])
 	} else if ok {
 		p.EnPassant = sq
 	}
@@ -177,13 +179,13 @@ func positionFromFen(fen string) Position {
 func FromFen(fen string) Game {
 	parts := strings.Fields(fen)
 	if len(parts) != 6 {
-		panic(fmt.Sprintf("Invalid FEN notation %s, there should be 6 parts", fen))
+		fmt.Printf("string info invalid FEN notation %s, there should be 6 parts\n", fen)
 	}
 	p := positionFromFen(fen)
 
 	moveCount, err := strconv.Atoi(parts[5])
 	if err != nil {
-		panic(fmt.Sprintf("Invalid FEN notation %s, move count is not set correctly %s", fen, parts[5]))
+		fmt.Sprintf("string info invalid FEN notation %s, move count is not set correctly %s\n", fen, parts[5])
 	}
 
 	return NewGame(
