@@ -20,32 +20,32 @@ jobs:
         with:
           go-version: 1.16
 
-      - name: Build
-        run: make build
-
       - name: Test
-        run: make test
-
+        run: |
+          go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
+          go test ./...
+          
       - name: Set env
         run: echo "TAG_NAME=$(echo ${{github.ref}} | sed 's/refs\/tags\///g')" >> $GITHUB_ENV
       - name: Distribute
         run: |
-          go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
-          ext=""
-          osName="linux"
-          if [[ ${{matrix.os}} == windows-latest ]]; then
-            ext=".exe"
-            osName="windows"
-          fi
-          if [[ ${{matrix.os}} == macos-latest ]]; then
-            osName="darwin"
-          fi
-          if [[ ${{matrix.os}} == ubuntu-latest ]]; then
-            sudo apt-get update -y && sudo apt-get install -y gcc make gcc-arm-linux-gnueabi binutils-arm-linux-gnueabi gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
-            CC=arm-linux-gnueabi-gcc GOOS=linux GOARCH=arm go build -gcflags -B -o bin ./... && mv bin/zahak bin/zahak-"$osName"-arm32-"$TAG_NAME"
-            CC=aarch64-linux-gnu-gcc GOOS=linux GOARCH=arm64 go build -gcflags -B -o bin ./... && mv bin/zahak bin/zahak-"$osName"-arm64-"$TAG_NAME"
-          fi
-          go build -gcflags -B -o bin ./... && mv bin/zahak"$ext" bin/zahak-"$osName"-amd64-"$TAG_NAME"-avx"$ext"
+           if [ "$RUNNER_OS" == "Windows" ]; then
+             go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
+             go build -gcflags -B -o bin ./...; mv bin/zahak.exe bin/zahak-windows-amd64-"$TAG_NAME"-avx.exe
+           else
+             go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
+             osName="linux"
+
+             if [[ ${{matrix.os}} == macos-latest ]]; then
+               osName="darwin"
+             fi
+             if [[ ${{matrix.os}} == ubuntu-latest ]]; then
+               sudo apt-get update -y && sudo apt-get install -y gcc make gcc-arm-linux-gnueabi binutils-arm-linux-gnueabi gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu
+               CC=arm-linux-gnueabi-gcc GOOS=linux GOARCH=arm go build -gcflags -B -o bin ./... && mv bin/zahak bin/zahak-"$osName"-arm32-"$TAG_NAME"
+               CC=aarch64-linux-gnu-gcc GOOS=linux GOARCH=arm64 go build -gcflags -B -o bin ./... && mv bin/zahak bin/zahak-"$osName"-arm64-"$TAG_NAME"
+             fi
+            go build -gcflags -B -o bin ./... && mv bin/zahak"$ext" bin/zahak-"$osName"-amd64-"$TAG_NAME"-avx"$ext"
+           fi
 
       - name: Create Release and Upload Assets
         id: create-release-and-upload-asset
