@@ -7,6 +7,7 @@ import (
 	"unsafe"
 )
 
+//go:noescape
 func _prefetch(item unsafe.Pointer)
 
 func (c *Cache) Prefetch(hash uint64) {
