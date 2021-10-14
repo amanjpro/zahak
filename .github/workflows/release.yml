@@ -33,7 +33,7 @@ jobs:
            if [ "$RUNNER_OS" == "Windows" ]; then
              mkdir bin
              go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
-             CGO_ENABLED="1" go build -gcflags -B -o bin ./...; mv bin/zahak.exe bin/zahak-windows-amd64-"$TAG_NAME"-avx.exe
+             CC=gcc CGO_ENABLED="1" go build -gcflags -B -o bin ./...; mv bin/zahak.exe bin/zahak-windows-amd64-"$TAG_NAME"-avx.exe
            else
              mkdir bin
              go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
