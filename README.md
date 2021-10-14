@@ -178,11 +178,18 @@ To build the project, simply run `make build`, testing with `make test`, and run
 Other features exist, for example you can run `perft` with `./zahak -perft` or profile it with `./zahak -profile`.
 You can also run it in perfttree mode with `./zahak -preft-tree`.
 
+# Contributors
+
+Thanks to the following names, for generating data for training Zahak's network:
+
+- Basti Dangca.
+
 # Acknowledgement
 
 Zahak wouldn't have been possible without:
 - [VICE videos](https://www.youtube.com/playlist?list=PLZ1QII7yudbc-Ky058TEaOstZHVbT-2hg)
 - [Chess Programming Wiki](https://www.chessprogramming.org/)
+- [The official OpenBench instance](http://chess.grantnet.us/index/), and the all the hardware donators (noopwn4ftw and others)
 - Aryan Parekh the author of [Bit-Genie](https://github.com/Aryan1508/Bit-Genie), who helped me with NNUE
 - Niels Abildskov the author of [Loki](https://github.com/BimmerBass/Loki), who helped me with Texel Tuning
 - [Nasrin Zaza](https://www.linkedin.com/in/nasrin-zaza/) for the amazing logo
