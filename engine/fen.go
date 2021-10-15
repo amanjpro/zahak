@@ -185,7 +185,7 @@ func FromFen(fen string) Game {
 
 	moveCount, err := strconv.Atoi(parts[5])
 	if err != nil {
-		fmt.Sprintf("string info invalid FEN notation %s, move count is not set correctly %s\n", fen, parts[5])
+		fmt.Printf("string info invalid FEN notation %s, move count is not set correctly %s\n", fen, parts[5])
 	}
 
 	return NewGame(
