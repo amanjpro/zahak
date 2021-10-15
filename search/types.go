@@ -225,6 +225,7 @@ func (r *Runner) ClearForSearch() {
 	r.pv.Pop() // pop our move
 	r.pv.Pop() // pop our opponent's move
 	r.Stop = false
+	r.globalInfo = NoInfo
 }
 
 func (e *Engine) ClearForSearch() {
