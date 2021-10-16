@@ -348,14 +348,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	pruningAllowed := !isPvNode && !isInCheck && e.doPruning && !firstLayerOfSingularity
 
 	if pruningAllowed {
-
-		if ttHit && nDepth >= depthLeft {
-			if nEval > eval && nType == LowerBound ||
-				nEval > eval && nType == UpperBound {
-				eval = nEval
-			}
-		}
-
 		// Razoring
 		razoringMargin := eval + r // int16(depthLeft)*p + p
 		if depthLeft < 3 && eval+razoringMargin < beta {
