@@ -117,9 +117,7 @@ func (uci *UCI) Start() {
 					MinProbeDepth = int8(depth)
 				} else if strings.HasPrefix(cmd, "setoption name SyzygyPath value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name SyzygyPath value", ""))
-					if path == "" || path == "<empty>" {
-						ClearSyzygy()
-					}
+					ClearSyzygy()
 					SetSyzygyPath(path)
 				} else if strings.HasPrefix(cmd, "setoption name EvalFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name EvalFile value", ""))
@@ -127,8 +125,12 @@ func (uci *UCI) Start() {
 						fmt.Print("info string no eval file is selected, ignoring\n")
 						continue
 					}
-					LoadNetwork(path)
-					fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", CurrentNetworkId)
+					err := LoadNetwork(path)
+					if err != nil {
+						fmt.Printf("info string an error happened when loading the network %s\n", err)
+					} else {
+						fmt.Printf("info string new EvalFile loaded, the id of the new EvalFile is %d\n", CurrentNetworkId)
+					}
 				} else if strings.HasPrefix(cmd, "setoption name BookFile value") {
 					path := strings.TrimSpace(strings.ReplaceAll(cmd, "setoption name BookFile value", ""))
 					if path == "" || path == "<empty>" {

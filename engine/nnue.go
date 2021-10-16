@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math"
 	"os"
@@ -87,10 +88,10 @@ func (n *NetworkState) Recalculate(input []int16) {
 }
 
 // load a neural network from file
-func LoadNetwork(path string) {
+func LoadNetwork(path string) error {
 	f, err := os.Open(path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer f.Close()
 
@@ -98,15 +99,15 @@ func LoadNetwork(path string) {
 	buf := make([]byte, 4)
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
-		panic("Magic word does not match expected, exiting")
+		return fmt.Errorf("Magic word does not match expected, exiting")
 	}
 
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	id := binary.LittleEndian.Uint32(buf)
 
@@ -114,20 +115,20 @@ func LoadNetwork(path string) {
 	buf = make([]byte, 12)
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	inputs := binary.LittleEndian.Uint32(buf[:4])
 	outputs := binary.LittleEndian.Uint32(buf[4:8])
 	layers := binary.LittleEndian.Uint32(buf[8:])
 
 	if inputs != NetInputSize || outputs != NetOutputSize || layers != NetLayers {
-		panic("Topology is not supported, exiting")
+		return fmt.Errorf("Topology is not supported, exiting")
 	}
 
 	buf = make([]byte, 4)
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	neurons := binary.LittleEndian.Uint32(buf)
 	NetHiddenSize = int(neurons)
@@ -166,6 +167,7 @@ func LoadNetwork(path string) {
 		panic(err)
 	}
 	CurrentOutputBias = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+	return nil
 }
 
 func ReLu(x float32) float32 {

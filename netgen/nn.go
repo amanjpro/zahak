@@ -15,7 +15,10 @@ var netPath = "default.nn"
 var Version = "dev"
 
 func main() {
-	LoadNetwork(netPath)
+	err := LoadNetwork(netPath)
+	if err != nil {
+		panic(err)
+	}
 
 	v, err := os.Create(fmt.Sprintf("zahak%cversion.go", os.PathSeparator))
 	if err != nil {
