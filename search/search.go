@@ -393,7 +393,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// Prob cut
 		// The idea is basically cherry picked from multiple engines, Weiss, Ethereal and Berserk for example
 		probBeta := min16(beta+120, WIN_IN_MAX)
-		if depthLeft > 4 && abs16(beta) < WIN_IN_MAX && !(ttHit && nDepth >= depthLeft-3 && nEval < probBeta) {
+		if depthLeft > 4 && /* abs16(beta) < WIN_IN_MAX && */ !(ttHit && nDepth >= depthLeft-3 && nEval < probBeta) {
 
 			hashMove := EmptyMove
 			if hashMove.IsCapture() || hashMove.PromoType() != NoType {
@@ -497,7 +497,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				nDepth >= depthLeft-3 &&
 				nType != UpperBound &&
 				!position.IsInCheck() && // Check moves are automatically extended
-				abs16(nEval) < WIN_IN_MAX &&
+				// abs16(nEval) < WIN_IN_MAX &&
 				!isRootNode {
 
 				// ttMove has been made to check legality
@@ -624,16 +624,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		isKiller := movePicker.killer1 == move || movePicker.killer2 == move || movePicker.counterMove == move
 
-		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
+		if !isInCheck && e.doPruning && !isRootNode { //}&& bestscore > -WIN_IN_MAX {
 
-			if depthLeft < 8 && isQuiet && !isKiller && eval+p*int16(depthLeft) <= alpha && abs16(alpha) < WIN_IN_MAX {
+			if depthLeft < 8 && isQuiet && !isKiller && eval+p*int16(depthLeft) <= alpha { //}&& abs16(alpha) < WIN_IN_MAX {
 				e.info.efpCounter += 1
 				continue
 			}
 
 			// Late Move Pruning
 			if isQuiet && depthLeft <= 8 &&
-				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
+				legalMoves+1 > pruningThreashold && !isKiller { //}&& abs16(alpha) < WIN_IN_MAX {
 				e.info.lmpCounter += 1
 				// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
 				// to avoid returning quiets, after the first LMP cut
@@ -643,7 +643,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// SEE pruning
 			if isCaptureMove && seeScores[noisyMoves] < 0 &&
-				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+				depthLeft <= 2 && eval <= alpha { //}&& abs16(alpha) < WIN_IN_MAX {
 				e.info.seeCounter += 1
 				break
 			}
