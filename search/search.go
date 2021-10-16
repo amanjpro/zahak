@@ -595,7 +595,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
-	// seeScores := movePicker.captureMoveList.Scores
+	seeScores := movePicker.captureMoveList.Scores
 	// quietScores := movePicker.quietMoveList.Scores
 	// var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
@@ -642,11 +642,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// SEE pruning
-			// if isCaptureMove && seeScores[noisyMoves] < 0 &&
-			// 	depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
-			// 	e.info.seeCounter += 1
-			// 	break
-			// }
+			if isCaptureMove && seeScores[noisyMoves] < 0 &&
+				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+				e.info.seeCounter += 1
+				break
+			}
 			//
 			// // History pruning
 			// lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
