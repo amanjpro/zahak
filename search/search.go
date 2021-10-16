@@ -410,17 +410,17 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 				if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
 					var score int16
-					if depthLeft >= 8 {
-						e.innerLines[searchHeight+1].Recycle()
-						e.pred.Push(position.Hash())
-						e.positionMoves[searchHeight+1] = move
-						childEval := position.Evaluate()
-						e.staticEvals[searchHeight+1] = childEval
-						score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
-						e.pred.Pop()
-					}
+					// if depthLeft >= 8 {
+					e.innerLines[searchHeight+1].Recycle()
+					e.pred.Push(position.Hash())
+					e.positionMoves[searchHeight+1] = move
+					childEval := position.Evaluate()
+					e.staticEvals[searchHeight+1] = childEval
+					score = -e.quiescence(-probBeta, -probBeta+1, searchHeight+1)
+					e.pred.Pop()
+					// }
 
-					if depthLeft < 8 || score >= probBeta {
+					if /* depthLeft < 8 || */ score >= probBeta {
 						e.innerLines[searchHeight+1].Recycle()
 						e.pred.Push(position.Hash())
 						e.positionMoves[searchHeight+1] = move
