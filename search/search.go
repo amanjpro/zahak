@@ -595,6 +595,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
+	fpMargin := eval + 85*int16(depthLeft)
+
 	seeScores := movePicker.captureMoveList.Scores
 	// quietScores := movePicker.quietMoveList.Scores
 	// var historyThreashold int32 = int32(depthLeft) * -1024
@@ -626,7 +628,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
-			if depthLeft < 8 && isQuiet && !isKiller && eval+p*int16(depthLeft) <= alpha && abs16(alpha) < WIN_IN_MAX {
+			if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.efpCounter += 1
 				continue
 			}
