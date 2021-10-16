@@ -595,14 +595,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
-
-	fpMargin := eval + 85*int16(depthLeft)
-	if improving {
-		fpMargin += 85
-	}
-	seeScores := movePicker.captureMoveList.Scores
-	quietScores := movePicker.quietMoveList.Scores
-	var historyThreashold int32 = int32(depthLeft) * -1024
+	// seeScores := movePicker.captureMoveList.Scores
+	// quietScores := movePicker.quietMoveList.Scores
+	// var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
 	for true {
 
@@ -631,7 +626,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
-			if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
+			if depthLeft < 8 && isQuiet && !isKiller && eval+p*int16(depthLeft) <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.efpCounter += 1
 				continue
 			}
@@ -647,18 +642,18 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// SEE pruning
-			if isCaptureMove && seeScores[noisyMoves] < 0 &&
-				depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
-				e.info.seeCounter += 1
-				break
-			}
-
-			// History pruning
-			lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
-			if isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
-				e.info.historyPruningCounter += 1
-				continue
-			}
+			// if isCaptureMove && seeScores[noisyMoves] < 0 &&
+			// 	depthLeft <= 2 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+			// 	e.info.seeCounter += 1
+			// 	break
+			// }
+			//
+			// // History pruning
+			// lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
+			// if isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
+			// 	e.info.historyPruningCounter += 1
+			// 	continue
+			// }
 		}
 
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
