@@ -595,7 +595,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
-	fpMargin := eval + 85*int16(depthLeft)
+	fpMargin := eval + p*int16(depthLeft)
+	rangeReduction := 0
+	if eval-bestscore < 30 && depthLeft > 7 {
+		rangeReduction += 1
+	}
 
 	seeScores := movePicker.captureMoveList.Scores
 	// quietScores := movePicker.quietMoveList.Scores
@@ -692,6 +696,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
+				if rangeReduction > 2 {
+					LMR += 1
+				}
+
 				LMR -= int8(e.MoveHistoryScore(move.MovingPiece(), move.Destination(), depthLeft) / 24576)
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
@@ -730,6 +738,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 				bestscore = score
 				hashmove = move
+			}
+
+			if eval-score < 30 && depthLeft > 7 {
+				rangeReduction += 1
 			}
 		}
 
