@@ -696,7 +696,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				if rangeReduction > 2 {
+				if rangeReduction > 3 {
 					LMR += 1
 				}
 
