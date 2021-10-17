@@ -591,7 +591,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if !improving {
 		pruningThreashold /= 2
 	} else {
-		fpMargin += p
+		fpMargin += 85
 	}
 
 	lmrThreashold := 2
