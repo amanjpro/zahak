@@ -587,17 +587,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 	pruningThreashold := int(5 + depthLeft*depthLeft)
-	fpMargin := eval + p*int16(depthLeft)
 	if !improving {
 		pruningThreashold /= 2
-	} else {
-		fpMargin += p
 	}
 
 	lmrThreashold := 2
 	if isPvNode {
 		lmrThreashold += 1
 	}
+	fpMargin := eval + p*int16(depthLeft)
 	rangeReduction := 0
 	if eval-bestscore < 30 && depthLeft > 7 {
 		rangeReduction += 1
