@@ -46,7 +46,7 @@ func (n *NetworkState) QuickFeed() int16 {
 	for i := 0; i < len(n.OutputWeights); i++ {
 		sum += ReLu(hiddenOutputs[i]) * n.OutputWeights[i]
 	}
-	output := int32(sum) + n.OutputBias*int32(QPrecisionIn)
+	output := int32(sum) + n.OutputBias //*int32(QPrecisionIn)
 	return int16(output / int32(QPrecisionIn) / int32(QPrecisionOut))
 }
 
