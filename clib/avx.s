@@ -14,223 +14,299 @@ update_hidden:                          # @update_hidden
 	push	r12
 	push	rbx
 	and	rsp, -8
-	sub	rsp, 40
-	mov	qword ptr [rsp], r8             # 8-byte Spill
-	mov	qword ptr [rsp + 32], rdx       # 8-byte Spill
-	mov	eax, dword ptr [rbp + 16]
-	test	eax, eax
-	jle	.LBB0_33
+	sub	rsp, 88
+	mov	qword ptr [rsp + 80], rdx       # 8-byte Spill
+	cmp	dword ptr [rbp + 48], 0
+	jle	.LBB0_37
 # %bb.1:
-	mov	r11d, ecx
-	mov	r12d, eax
-	cmp	eax, 32
-	jb	.LBB0_2
-# %bb.3:
-	lea	rax, [rdi + 4*r12]
-	cmp	rax, r9
-	jbe	.LBB0_6
-# %bb.4:
-	lea	rax, [r9 + 4*r12]
-	cmp	rax, rdi
-	jbe	.LBB0_6
-.LBB0_2:
-	xor	eax, eax
-.LBB0_12:
-	mov	rbx, rax
-	not	rbx
-	add	rbx, r12
-	mov	rcx, r12
-	and	rcx, 3
-	je	.LBB0_14
+	mov	r13, rcx
+	mov	r11, qword ptr [rbp + 40]
+	mov	rax, qword ptr [rbp + 32]
+	mov	ecx, dword ptr [rbp + 48]
+	mov	ebx, ecx
+	cmp	ecx, 16
+	mov	qword ptr [rsp + 32], r9        # 8-byte Spill
+	mov	qword ptr [rsp + 24], r8        # 8-byte Spill
+	mov	qword ptr [rsp + 16], r13       # 8-byte Spill
+	jae	.LBB0_3
+# %bb.2:
+	xor	r14d, r14d
+.LBB0_17:
+	mov	rcx, r14
+	not	rcx
+	test	bl, 1
+	je	.LBB0_19
+# %bb.18:
+	vmovss	xmm0, dword ptr [rdi + 4*r14]   # xmm0 = mem[0],zero,zero,zero
+	vmovss	dword ptr [rax + 4*r14], xmm0
+	vmovss	xmm0, dword ptr [rsi + 4*r14]   # xmm0 = mem[0],zero,zero,zero
+	vmovss	dword ptr [r11 + 4*r14], xmm0
+	or	r14, 1
+.LBB0_19:
+	add	rcx, rbx
+	je	.LBB0_20
 	.p2align	4, 0x90
-.LBB0_13:                               # =>This Inner Loop Header: Depth=1
-	vmovss	xmm0, dword ptr [rdi + 4*rax]   # xmm0 = mem[0],zero,zero,zero
-	vmovss	dword ptr [r9 + 4*rax], xmm0
-	add	rax, 1
-	add	rcx, -1
-	jne	.LBB0_13
-.LBB0_14:
-	cmp	rbx, 3
-	mov	ecx, dword ptr [rbp + 16]
-	jb	.LBB0_16
-	.p2align	4, 0x90
-.LBB0_15:                               # =>This Inner Loop Header: Depth=1
-	vmovss	xmm0, dword ptr [rdi + 4*rax]   # xmm0 = mem[0],zero,zero,zero
-	vmovss	dword ptr [r9 + 4*rax], xmm0
-	vmovss	xmm0, dword ptr [rdi + 4*rax + 4] # xmm0 = mem[0],zero,zero,zero
-	vmovss	dword ptr [r9 + 4*rax + 4], xmm0
-	vmovss	xmm0, dword ptr [rdi + 4*rax + 8] # xmm0 = mem[0],zero,zero,zero
-	vmovss	dword ptr [r9 + 4*rax + 8], xmm0
-	vmovss	xmm0, dword ptr [rdi + 4*rax + 12] # xmm0 = mem[0],zero,zero,zero
-	vmovss	dword ptr [r9 + 4*rax + 12], xmm0
-	add	rax, 4
-	cmp	r12, rax
-	jne	.LBB0_15
-	jmp	.LBB0_16
-.LBB0_6:
-	mov	eax, r12d
-	and	eax, -32
-	lea	rcx, [rax - 32]
+.LBB0_38:                               # =>This Inner Loop Header: Depth=1
+	vmovss	xmm0, dword ptr [rdi + 4*r14]   # xmm0 = mem[0],zero,zero,zero
+	vmovss	dword ptr [rax + 4*r14], xmm0
+	vmovss	xmm0, dword ptr [rsi + 4*r14]   # xmm0 = mem[0],zero,zero,zero
+	vmovss	dword ptr [r11 + 4*r14], xmm0
+	vmovss	xmm0, dword ptr [rdi + 4*r14 + 4] # xmm0 = mem[0],zero,zero,zero
+	vmovss	dword ptr [rax + 4*r14 + 4], xmm0
+	vmovss	xmm0, dword ptr [rsi + 4*r14 + 4] # xmm0 = mem[0],zero,zero,zero
+	vmovss	dword ptr [r11 + 4*r14 + 4], xmm0
+	add	r14, 2
+	cmp	rbx, r14
+	jne	.LBB0_38
+	jmp	.LBB0_20
+.LBB0_3:
+	lea	r14, [r11 + 4*rbx]
+	cmp	r14, rax
+	seta	byte ptr [rsp + 40]             # 1-byte Folded Spill
+	lea	rcx, [rax + 4*rbx]
+	cmp	rcx, r11
+	seta	r15b
+	lea	rdx, [rdi + 4*rbx]
+	cmp	rdx, rax
+	seta	r12b
+	cmp	rcx, rdi
+	seta	r10b
+	lea	r9, [rsi + 4*rbx]
+	cmp	r9, rax
+	seta	r13b
+	cmp	rcx, rsi
+	seta	byte ptr [rsp + 14]             # 1-byte Folded Spill
+	cmp	rdx, r11
+	seta	r8b
+	cmp	r14, rdi
+	seta	byte ptr [rsp + 13]             # 1-byte Folded Spill
+	cmp	r9, r11
+	seta	dl
+	cmp	r14, rsi
+	seta	cl
+	xor	r14d, r14d
+	test	byte ptr [rsp + 40], r15b       # 1-byte Folded Reload
+	jne	.LBB0_4
+# %bb.5:
+	and	r12b, r10b
+	mov	r9, qword ptr [rsp + 32]        # 8-byte Reload
+	jne	.LBB0_6
+# %bb.7:
+	and	r13b, byte ptr [rsp + 14]       # 1-byte Folded Reload
+	jne	.LBB0_6
+# %bb.8:
+	and	r8b, byte ptr [rsp + 13]        # 1-byte Folded Reload
+	mov	r8, qword ptr [rsp + 24]        # 8-byte Reload
+	mov	r13, qword ptr [rsp + 16]       # 8-byte Reload
+	jne	.LBB0_17
+# %bb.9:
+	and	dl, cl
+	jne	.LBB0_17
+# %bb.10:
+	mov	r14d, ebx
+	and	r14d, -16
+	lea	rcx, [r14 - 16]
 	mov	r10, rcx
-	shr	r10, 5
+	shr	r10, 4
 	add	r10, 1
 	test	rcx, rcx
-	je	.LBB0_34
-# %bb.7:
-	mov	r14, r10
-	and	r14, -2
-	neg	r14
-	xor	ebx, ebx
-	mov	ecx, dword ptr [rbp + 16]
-	.p2align	4, 0x90
-.LBB0_8:                                # =>This Inner Loop Header: Depth=1
-	vmovups	ymm0, ymmword ptr [rdi + 4*rbx]
-	vmovups	ymm1, ymmword ptr [rdi + 4*rbx + 32]
-	vmovups	ymm2, ymmword ptr [rdi + 4*rbx + 64]
-	vmovups	ymm3, ymmword ptr [rdi + 4*rbx + 96]
-	vmovups	ymmword ptr [r9 + 4*rbx], ymm0
-	vmovups	ymmword ptr [r9 + 4*rbx + 32], ymm1
-	vmovups	ymmword ptr [r9 + 4*rbx + 64], ymm2
-	vmovups	ymmword ptr [r9 + 4*rbx + 96], ymm3
-	vmovups	ymm0, ymmword ptr [rdi + 4*rbx + 128]
-	vmovups	ymm1, ymmword ptr [rdi + 4*rbx + 160]
-	vmovups	ymm2, ymmword ptr [rdi + 4*rbx + 192]
-	vmovups	ymm3, ymmword ptr [rdi + 4*rbx + 224]
-	vmovups	ymmword ptr [r9 + 4*rbx + 128], ymm0
-	vmovups	ymmword ptr [r9 + 4*rbx + 160], ymm1
-	vmovups	ymmword ptr [r9 + 4*rbx + 192], ymm2
-	vmovups	ymmword ptr [r9 + 4*rbx + 224], ymm3
-	add	rbx, 64
-	add	r14, 2
-	jne	.LBB0_8
-# %bb.9:
-	test	r10b, 1
 	je	.LBB0_11
-.LBB0_10:
-	vmovups	ymm0, ymmword ptr [rdi + 4*rbx]
-	vmovups	ymm1, ymmword ptr [rdi + 4*rbx + 32]
-	vmovups	ymm2, ymmword ptr [rdi + 4*rbx + 64]
-	vmovups	ymm3, ymmword ptr [rdi + 4*rbx + 96]
-	vmovups	ymmword ptr [r9 + 4*rbx], ymm0
-	vmovups	ymmword ptr [r9 + 4*rbx + 32], ymm1
-	vmovups	ymmword ptr [r9 + 4*rbx + 64], ymm2
-	vmovups	ymmword ptr [r9 + 4*rbx + 96], ymm3
-.LBB0_11:
-	cmp	rax, r12
-	jne	.LBB0_12
+# %bb.12:
+	mov	rcx, r10
+	and	rcx, -2
+	neg	rcx
+	xor	edx, edx
+	.p2align	4, 0x90
+.LBB0_13:                               # =>This Inner Loop Header: Depth=1
+	vmovups	ymm0, ymmword ptr [rdi + 4*rdx]
+	vmovups	ymm1, ymmword ptr [rdi + 4*rdx + 32]
+	vmovups	ymmword ptr [rax + 4*rdx], ymm0
+	vmovups	ymmword ptr [rax + 4*rdx + 32], ymm1
+	vmovups	ymm0, ymmword ptr [rsi + 4*rdx]
+	vmovups	ymm1, ymmword ptr [rsi + 4*rdx + 32]
+	vmovups	ymmword ptr [r11 + 4*rdx], ymm0
+	vmovups	ymmword ptr [r11 + 4*rdx + 32], ymm1
+	vmovups	ymm0, ymmword ptr [rdi + 4*rdx + 64]
+	vmovups	ymm1, ymmword ptr [rdi + 4*rdx + 96]
+	vmovups	ymmword ptr [rax + 4*rdx + 64], ymm0
+	vmovups	ymmword ptr [rax + 4*rdx + 96], ymm1
+	vmovups	ymm0, ymmword ptr [rsi + 4*rdx + 64]
+	vmovups	ymm1, ymmword ptr [rsi + 4*rdx + 96]
+	vmovups	ymmword ptr [r11 + 4*rdx + 64], ymm0
+	vmovups	ymmword ptr [r11 + 4*rdx + 96], ymm1
+	add	rdx, 32
+	add	rcx, 2
+	jne	.LBB0_13
+# %bb.14:
+	test	r10b, 1
+	je	.LBB0_16
+.LBB0_15:
+	vmovups	ymm0, ymmword ptr [rdi + 4*rdx]
+	vmovups	ymm1, ymmword ptr [rdi + 4*rdx + 32]
+	vmovups	ymmword ptr [rax + 4*rdx], ymm0
+	vmovups	ymmword ptr [rax + 4*rdx + 32], ymm1
+	vmovups	ymm0, ymmword ptr [rsi + 4*rdx]
+	vmovups	ymm1, ymmword ptr [rsi + 4*rdx + 32]
+	vmovups	ymmword ptr [r11 + 4*rdx], ymm0
+	vmovups	ymmword ptr [r11 + 4*rdx + 32], ymm1
 .LBB0_16:
-	test	ecx, ecx
-	jle	.LBB0_33
-# %bb.17:
-	test	r11d, r11d
-	jle	.LBB0_33
-# %bb.18:
-	mov	r8d, r11d
-	lea	rax, [r9 + 4*r12]
-	mov	qword ptr [rsp + 16], rax       # 8-byte Spill
-	mov	rax, qword ptr [rsp]            # 8-byte Reload
-	lea	rdx, [rax + 4*r12]
-	mov	r11d, r12d
-	and	r11d, -32
-	mov	r13, r12
-	neg	r13
-	lea	rdi, [rax + 96]
-	mov	qword ptr [rsp + 8], rdi        # 8-byte Spill
-	add	rax, 4
-	mov	qword ptr [rsp + 24], rax       # 8-byte Spill
-	xor	edi, edi
-	movsxd	r15, ecx
-	jmp	.LBB0_20
-	.p2align	4, 0x90
-.LBB0_19:                               #   in Loop: Header=BB0_20 Depth=1
-	add	rdi, 1
-	cmp	rdi, r8
-	je	.LBB0_33
-.LBB0_20:                               # =>This Loop Header: Depth=1
-                                        #     Child Loop BB0_26 Depth 2
-                                        #     Child Loop BB0_32 Depth 2
-	movsx	r10, word ptr [rsi + 2*rdi]
-	imul	r10, r15
-	mov	rax, qword ptr [rsp + 32]       # 8-byte Reload
-	movsx	eax, byte ptr [rax + rdi]
-	vcvtsi2ss	xmm0, xmm6, eax
-	cmp	ecx, 32
-	jb	.LBB0_21
-# %bb.22:                               #   in Loop: Header=BB0_20 Depth=1
-	lea	rax, [rdx + 4*r10]
-	cmp	rax, r9
-	jbe	.LBB0_25
-# %bb.23:                               #   in Loop: Header=BB0_20 Depth=1
-	mov	rax, qword ptr [rsp]            # 8-byte Reload
-	lea	rax, [rax + 4*r10]
-	cmp	rax, qword ptr [rsp + 16]       # 8-byte Folded Reload
-	jae	.LBB0_25
-.LBB0_21:                               #   in Loop: Header=BB0_20 Depth=1
-	xor	ebx, ebx
-.LBB0_28:                               #   in Loop: Header=BB0_20 Depth=1
-	mov	r14, rbx
-	test	r12b, 1
-	je	.LBB0_30
-# %bb.29:                               #   in Loop: Header=BB0_20 Depth=1
-	lea	rax, [rbx + r10]
-	mov	rcx, qword ptr [rsp]            # 8-byte Reload
-	vmulss	xmm1, xmm0, dword ptr [rcx + 4*rax]
+	cmp	r14, rbx
+	jne	.LBB0_17
+.LBB0_20:
+	cmp	dword ptr [rbp + 48], 0
+	jle	.LBB0_37
+# %bb.21:
 	mov	ecx, dword ptr [rbp + 16]
-	vaddss	xmm1, xmm1, dword ptr [r9 + 4*rbx]
-	vmovss	dword ptr [r9 + 4*rbx], xmm1
-	mov	r14, rbx
-	or	r14, 1
-.LBB0_30:                               #   in Loop: Header=BB0_20 Depth=1
-	not	rbx
-	cmp	rbx, r13
-	je	.LBB0_19
-# %bb.31:                               #   in Loop: Header=BB0_20 Depth=1
-	mov	rax, qword ptr [rsp + 24]       # 8-byte Reload
-	lea	rax, [rax + 4*r10]
+	test	ecx, ecx
+	jle	.LBB0_37
+# %bb.22:
+	mov	r10, qword ptr [rbp + 24]
+	mov	ecx, ecx
+	mov	qword ptr [rsp + 40], rcx       # 8-byte Spill
+	lea	rsi, [rax + 4*rbx]
+	lea	rcx, [r11 + 4*rbx]
+	mov	qword ptr [rsp + 64], rcx       # 8-byte Spill
+	cmp	rcx, rax
+	seta	cl
+	lea	rdi, [r10 + 4*rbx]
+	mov	qword ptr [rsp + 56], rdi       # 8-byte Spill
+	mov	qword ptr [rsp + 72], rsi       # 8-byte Spill
+	cmp	rsi, r11
+	seta	dl
+	and	dl, cl
+	mov	byte ptr [rsp + 15], dl         # 1-byte Spill
+	mov	r15d, ebx
+	and	r15d, -16
+	lea	rcx, [r10 + 32]
+	mov	qword ptr [rsp + 48], rcx       # 8-byte Spill
+	xor	r14d, r14d
+	jmp	.LBB0_23
 	.p2align	4, 0x90
-.LBB0_32:                               #   Parent Loop BB0_20 Depth=1
+.LBB0_36:                               #   in Loop: Header=BB0_23 Depth=1
+	add	r14, 1
+	cmp	r14, qword ptr [rsp + 40]       # 8-byte Folded Reload
+	je	.LBB0_37
+.LBB0_23:                               # =>This Loop Header: Depth=1
+                                        #     Child Loop BB0_32 Depth 2
+                                        #     Child Loop BB0_35 Depth 2
+	mov	rcx, qword ptr [rsp + 80]       # 8-byte Reload
+	movsx	r12, word ptr [rcx + 2*r14]
+	movsx	rdx, word ptr [r8 + 2*r14]
+	mov	esi, dword ptr [rbp + 48]
+	movsxd	rcx, esi
+	imul	r12, rcx
+	imul	rdx, rcx
+	movsx	ecx, byte ptr [r13 + r14]
+	vcvtsi2ss	xmm0, xmm6, ecx
+	movsx	ecx, byte ptr [r9 + r14]
+	vcvtsi2ss	xmm1, xmm6, ecx
+	cmp	esi, 16
+	jae	.LBB0_25
+# %bb.24:                               #   in Loop: Header=BB0_23 Depth=1
+	xor	r10d, r10d
+.LBB0_34:                               #   in Loop: Header=BB0_23 Depth=1
+	mov	rsi, qword ptr [rbp + 24]
+	lea	rcx, [rsi + 4*rdx]
+	lea	rdx, [rsi + 4*r12]
+	.p2align	4, 0x90
+.LBB0_35:                               #   Parent Loop BB0_23 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	vmulss	xmm1, xmm0, dword ptr [rax + 4*r14 - 4]
-	vaddss	xmm1, xmm1, dword ptr [r9 + 4*r14]
-	vmovss	dword ptr [r9 + 4*r14], xmm1
-	vmulss	xmm1, xmm0, dword ptr [rax + 4*r14]
-	vaddss	xmm1, xmm1, dword ptr [r9 + 4*r14 + 4]
-	vmovss	dword ptr [r9 + 4*r14 + 4], xmm1
-	add	r14, 2
-	cmp	r12, r14
-	jne	.LBB0_32
-	jmp	.LBB0_19
+	vmulss	xmm2, xmm0, dword ptr [rdx + 4*r10]
+	vaddss	xmm2, xmm2, dword ptr [rax + 4*r10]
+	vmovss	dword ptr [rax + 4*r10], xmm2
+	vmulss	xmm2, xmm1, dword ptr [rcx + 4*r10]
+	vaddss	xmm2, xmm2, dword ptr [r11 + 4*r10]
+	vmovss	dword ptr [r11 + 4*r10], xmm2
+	add	r10, 1
+	cmp	rbx, r10
+	jne	.LBB0_35
+	jmp	.LBB0_36
 	.p2align	4, 0x90
-.LBB0_25:                               #   in Loop: Header=BB0_20 Depth=1
-	vpermilps	xmm1, xmm0, 0           # xmm1 = xmm0[0,0,0,0]
-	vinsertf128	ymm1, ymm1, xmm1, 1
-	mov	rax, qword ptr [rsp + 8]        # 8-byte Reload
-	lea	rbx, [rax + 4*r10]
-	xor	eax, eax
-	.p2align	4, 0x90
-.LBB0_26:                               #   Parent Loop BB0_20 Depth=1
-                                        # =>  This Inner Loop Header: Depth=2
-	vmulps	ymm2, ymm1, ymmword ptr [rbx + 4*rax - 96]
-	vmulps	ymm3, ymm1, ymmword ptr [rbx + 4*rax - 64]
-	vmulps	ymm4, ymm1, ymmword ptr [rbx + 4*rax - 32]
-	vmulps	ymm5, ymm1, ymmword ptr [rbx + 4*rax]
-	vaddps	ymm2, ymm2, ymmword ptr [r9 + 4*rax]
-	vaddps	ymm3, ymm3, ymmword ptr [r9 + 4*rax + 32]
-	vaddps	ymm4, ymm4, ymmword ptr [r9 + 4*rax + 64]
-	vaddps	ymm5, ymm5, ymmword ptr [r9 + 4*rax + 96]
-	vmovups	ymmword ptr [r9 + 4*rax], ymm2
-	vmovups	ymmword ptr [r9 + 4*rax + 32], ymm3
-	vmovups	ymmword ptr [r9 + 4*rax + 64], ymm4
-	vmovups	ymmword ptr [r9 + 4*rax + 96], ymm5
-	add	rax, 32
-	cmp	r11, rax
+.LBB0_25:                               #   in Loop: Header=BB0_23 Depth=1
+	mov	r8, qword ptr [rbp + 24]
+	lea	rsi, [r8 + 4*rdx]
+	mov	rcx, qword ptr [rsp + 56]       # 8-byte Reload
+	lea	rdi, [rcx + 4*rdx]
+	lea	r10, [r8 + 4*r12]
+	lea	r9, [rcx + 4*r12]
+	cmp	rdi, rax
+	seta	r8b
+	mov	rcx, qword ptr [rsp + 72]       # 8-byte Reload
+	cmp	rsi, rcx
+	setb	r13b
+	and	r13b, r8b
+	or	r13b, byte ptr [rsp + 15]       # 1-byte Folded Reload
+	cmp	r9, rax
+	seta	r8b
+	cmp	r10, rcx
+	setb	byte ptr [rsp + 14]             # 1-byte Folded Spill
+	cmp	rdi, r11
+	seta	dil
+	mov	rcx, qword ptr [rsp + 64]       # 8-byte Reload
+	cmp	rsi, rcx
+	setb	byte ptr [rsp + 13]             # 1-byte Folded Spill
+	cmp	r9, r11
+	seta	sil
+	cmp	r10, rcx
+	setb	cl
+	test	r13b, r13b
 	jne	.LBB0_26
-# %bb.27:                               #   in Loop: Header=BB0_20 Depth=1
-	mov	rbx, r11
-	cmp	r11, r12
-	je	.LBB0_19
-	jmp	.LBB0_28
-.LBB0_33:
+# %bb.27:                               #   in Loop: Header=BB0_23 Depth=1
+	and	r8b, byte ptr [rsp + 14]        # 1-byte Folded Reload
+	jne	.LBB0_26
+# %bb.28:                               #   in Loop: Header=BB0_23 Depth=1
+	and	dil, byte ptr [rsp + 13]        # 1-byte Folded Reload
+	mov	r8, qword ptr [rsp + 24]        # 8-byte Reload
+	mov	r13, qword ptr [rsp + 16]       # 8-byte Reload
+	jne	.LBB0_29
+# %bb.30:                               #   in Loop: Header=BB0_23 Depth=1
+	mov	r10d, 0
+	and	sil, cl
+	mov	r9, qword ptr [rsp + 32]        # 8-byte Reload
+	jne	.LBB0_34
+# %bb.31:                               #   in Loop: Header=BB0_23 Depth=1
+	vpermilps	xmm2, xmm0, 0           # xmm2 = xmm0[0,0,0,0]
+	vinsertf128	ymm2, ymm2, xmm2, 1
+	vpermilps	xmm3, xmm1, 0           # xmm3 = xmm1[0,0,0,0]
+	vinsertf128	ymm3, ymm3, xmm3, 1
+	mov	rcx, qword ptr [rsp + 48]       # 8-byte Reload
+	lea	rdi, [rcx + 4*r12]
+	lea	rsi, [rcx + 4*rdx]
+	xor	ecx, ecx
+	.p2align	4, 0x90
+.LBB0_32:                               #   Parent Loop BB0_23 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	vmulps	ymm4, ymm2, ymmword ptr [rdi + 4*rcx - 32]
+	vmulps	ymm5, ymm2, ymmword ptr [rdi + 4*rcx]
+	vaddps	ymm4, ymm4, ymmword ptr [rax + 4*rcx]
+	vaddps	ymm5, ymm5, ymmword ptr [rax + 4*rcx + 32]
+	vmovups	ymmword ptr [rax + 4*rcx], ymm4
+	vmovups	ymmword ptr [rax + 4*rcx + 32], ymm5
+	vmulps	ymm4, ymm3, ymmword ptr [rsi + 4*rcx - 32]
+	vmulps	ymm5, ymm3, ymmword ptr [rsi + 4*rcx]
+	vaddps	ymm4, ymm4, ymmword ptr [r11 + 4*rcx]
+	vaddps	ymm5, ymm5, ymmword ptr [r11 + 4*rcx + 32]
+	vmovups	ymmword ptr [r11 + 4*rcx], ymm4
+	vmovups	ymmword ptr [r11 + 4*rcx + 32], ymm5
+	add	rcx, 16
+	cmp	r15, rcx
+	jne	.LBB0_32
+# %bb.33:                               #   in Loop: Header=BB0_23 Depth=1
+	mov	r10, r15
+	cmp	r15, rbx
+	je	.LBB0_36
+	jmp	.LBB0_34
+.LBB0_26:                               #   in Loop: Header=BB0_23 Depth=1
+	xor	r10d, r10d
+	mov	r9, qword ptr [rsp + 32]        # 8-byte Reload
+	mov	r8, qword ptr [rsp + 24]        # 8-byte Reload
+	mov	r13, qword ptr [rsp + 16]       # 8-byte Reload
+	jmp	.LBB0_34
+.LBB0_29:                               #   in Loop: Header=BB0_23 Depth=1
+	xor	r10d, r10d
+	mov	r9, qword ptr [rsp + 32]        # 8-byte Reload
+	jmp	.LBB0_34
+.LBB0_37:
 	lea	rsp, [rbp - 40]
 	pop	rbx
 	pop	r12
@@ -240,12 +316,17 @@ update_hidden:                          # @update_hidden
 	pop	rbp
 	vzeroupper
 	ret
-.LBB0_34:
-	xor	ebx, ebx
-	mov	ecx, dword ptr [rbp + 16]
+.LBB0_11:
+	xor	edx, edx
 	test	r10b, 1
-	jne	.LBB0_10
-	jmp	.LBB0_11
+	jne	.LBB0_15
+	jmp	.LBB0_16
+.LBB0_4:
+	mov	r9, qword ptr [rsp + 32]        # 8-byte Reload
+.LBB0_6:
+	mov	r8, qword ptr [rsp + 24]        # 8-byte Reload
+	mov	r13, qword ptr [rsp + 16]       # 8-byte Reload
+	jmp	.LBB0_17
 .Lfunc_end0:
 	.size	update_hidden, .Lfunc_end0-update_hidden
                                         # -- End function
