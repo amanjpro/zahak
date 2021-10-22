@@ -6,7 +6,7 @@ package engine
 func (n *NetworkState) QuickFeed(turn Color) float32 {
 	// apply output layer
 	output := float32(0)
-	var hiddenOutputs [][]float32
+	var hiddenOutputs []float32
 	if turn == White {
 		hiddenOutputs = n.WhiteHiddenOutputs[n.CurrentHidden]
 	} else {
@@ -25,9 +25,9 @@ func (n *NetworkState) UpdateHidden(wUpdates *Updates, bUpdates *Updates) {
 	copy(wHiddenOutputs, n.WhiteHiddenOutputs[n.CurrentHidden-1])
 	copy(bHiddenOutputs, n.BlackHiddenOutputs[n.CurrentHidden-1])
 
-	for i := 0; i < updates.Size; i++ {
+	for i := 0; i < wUpdates.Size; i++ {
 		weights := n.HiddenWeights
-		for j := 0; j < len(hiddenOutputs); j++ {
+		for j := 0; j < len(wHiddenOutputs); j++ {
 			wHiddenOutputs[j] += float32(wUpdates.Coeffs[i]) * weights[int(wUpdates.Indices[i])*NetHiddenSize+j]
 			bHiddenOutputs[j] += float32(bUpdates.Coeffs[i]) * weights[int(bUpdates.Indices[i])*NetHiddenSize+j]
 		}

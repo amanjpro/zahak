@@ -96,7 +96,7 @@ func (n *NetworkState) recalculateHelper(hiddenOutputs *[]float32, input []int16
 	}
 }
 
-func (n *NetworkState) Recalculate(binput []int16, winput []int16) {
+func (n *NetworkState) Recalculate(winput []int16, binput []int16) {
 	n.CurrentHidden = 0
 
 	// Recalculate for white
