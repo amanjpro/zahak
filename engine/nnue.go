@@ -33,13 +33,14 @@ func (u *Updates) Add(index int16, coeff int8) {
 }
 
 type NetworkState struct {
-	HiddenOutputs     [][]float32
-	EmptyHiddenOutput []float32
-	CurrentHidden     int
-	HiddenWeights     []float32
-	HiddenBiases      []float32
-	OutputWeights     []float32
-	OutputBias        float32
+	WhiteHiddenOutputs [][]float32
+	BlackHiddenOutputs [][]float32
+	EmptyHiddenOutput  []float32
+	CurrentHidden      int
+	HiddenWeights      []float32
+	HiddenBiases       []float32
+	OutputWeights      []float32
+	OutputBias         float32
 }
 
 func NewNetworkState() *NetworkState {
@@ -51,9 +52,11 @@ func NewNetworkState() *NetworkState {
 	}
 
 	net.EmptyHiddenOutput = make([]float32, NetHiddenSize)
-	net.HiddenOutputs = make([][]float32, MaximumDepth)
+	net.WhiteHiddenOutputs = make([][]float32, MaximumDepth)
+	net.BlackHiddenOutputs = make([][]float32, MaximumDepth)
 	for i := 0; i < MaximumDepth; i++ {
-		net.HiddenOutputs[i] = make([]float32, NetHiddenSize)
+		net.WhiteHiddenOutputs[i] = make([]float32, NetHiddenSize)
+		net.BlackHiddenOutputs[i] = make([]float32, NetHiddenSize)
 	}
 	return &net
 }
@@ -61,30 +64,50 @@ func NewNetworkState() *NetworkState {
 const Remove int8 = -1
 const Add int8 = 1
 
-func calculateNetInputIndex(sq Square, piece Piece) int16 {
-	return int16(piece-1)*64 + int16(sq)
+func flip(p Piece) Piece {
+	if p < BlackPawn {
+		return p + WhiteKing
+	} else {
+		return p - WhiteKing
+	}
+}
+
+func calculateNetInputIndex(sq Square, piece Piece) (int16, int16) {
+	winput := int16(piece-1)*64 + int16(sq)
+	binput := int16(flip(piece)-1)*64 + int16(sq) ^ 56
+	return winput, binput
 }
 
 func (n *NetworkState) RevertHidden() {
 	n.CurrentHidden -= 1
 }
 
-func (n *NetworkState) Recalculate(input []int16) {
-	n.CurrentHidden = 0
+func (n *NetworkState) recalculateHelper(hiddenOutputs *[]float32, input []int16) {
 	// apply hidden layer
-	hiddenOutputs := n.HiddenOutputs[n.CurrentHidden]
-	copy(hiddenOutputs, n.EmptyHiddenOutput)
-
 	for index := 0; index < len(input); index++ {
 		i := int(input[index])
 		weights := n.HiddenWeights
-		for j := 0; j < len(hiddenOutputs); j++ {
-			hiddenOutputs[j] += weights[i*NetHiddenSize+j]
+		for j := 0; j < len(*hiddenOutputs); j++ {
+			(*hiddenOutputs)[j] += weights[i*NetHiddenSize+j]
 		}
 	}
-	for i := 0; i < len(hiddenOutputs); i++ {
-		hiddenOutputs[i] += n.HiddenBiases[i]
+	for i := 0; i < len(*hiddenOutputs); i++ {
+		(*hiddenOutputs)[i] += n.HiddenBiases[i]
 	}
+}
+
+func (n *NetworkState) Recalculate(binput []int16, winput []int16) {
+	n.CurrentHidden = 0
+
+	// Recalculate for white
+	hiddenOutputs := n.WhiteHiddenOutputs[n.CurrentHidden]
+	copy(hiddenOutputs, n.EmptyHiddenOutput)
+	n.recalculateHelper(&hiddenOutputs, winput)
+
+	// Recalculate for black
+	hiddenOutputs = n.BlackHiddenOutputs[n.CurrentHidden]
+	copy(hiddenOutputs, n.EmptyHiddenOutput)
+	n.recalculateHelper(&hiddenOutputs, binput)
 }
 
 // load a neural network from file

@@ -12,7 +12,8 @@ const CASTLING_FLAG = WhiteCanCastleQueenSide | WhiteCanCastleKingSide | BlackCa
 type Position struct {
 	Board         *Bitboard
 	Net           *NetworkState
-	Updates       *Updates
+	WhiteUpdates  *Updates
+	BlackUpdates  *Updates
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
@@ -136,18 +137,21 @@ func (p *Position) partialUnMakeMove(move Move) {
 	}
 }
 
-func (p *Position) NetInput() []int16 {
-	input := make([]int16, 0, 32)
+func (p *Position) NetInput() ([]int16, []int16) {
+	whiteInput := make([]int16, 0, 32)
+	blackInput := make([]int16, 0, 32)
 
 	for j := 0; j < 64; j++ {
 		sq := Square(j)
 
 		piece := p.Board.PieceAt(sq)
 		if piece != NoPiece {
-			input = append(input, calculateNetInputIndex(sq, piece))
+			winput, binput := calculateNetInputIndex(sq, piece)
+			whiteInput = append(whiteInput, winput)
+			blackInput = append(blackInput, binput)
 		}
 	}
-	return input
+	return whiteInput, blackInput
 }
 
 func (p *Position) GameMakeMove(move Move) (Square, PositionTag, uint8, bool) {
@@ -159,7 +163,8 @@ func (p *Position) MakeMove(move Move) (Square, PositionTag, uint8, bool) {
 }
 
 func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, PositionTag, uint8, bool) {
-	p.Updates.Size = 0
+	p.WhiteUpdates.Size = 0
+	p.BlackUpdates.Size = 0
 	hc := p.HalfMoveClock
 	ep := p.EnPassant
 	tag := p.Tag
@@ -171,7 +176,9 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	promoPiece := NoPiece
 
 	p.Board.Move(source, dest, movingPiece, NoPiece)
-	p.Updates.Add(calculateNetInputIndex(source, movingPiece), Remove)
+	winput, binput := calculateNetInputIndex(source, movingPiece)
+	p.WhiteUpdates.Add(winput, Remove)
+	p.BlackUpdates.Add(binput, Remove)
 
 	if movingPiece.Type() == Pawn || capturedPiece != NoPiece {
 		p.HalfMoveClock = 0
@@ -185,11 +192,15 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		ep := findEnPassantCaptureSquare(move)
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
-		p.Updates.Add(calculateNetInputIndex(captureSquare, capturedPiece), Remove)
+		winput, binput = calculateNetInputIndex(captureSquare, capturedPiece)
+		p.WhiteUpdates.Add(winput, Remove)
+		p.BlackUpdates.Add(binput, Remove)
 	} else if move.IsCapture() {
 		captureSquare = dest
 		p.Board.Clear(dest, capturedPiece)
-		p.Updates.Add(calculateNetInputIndex(captureSquare, capturedPiece), Remove)
+		winput, binput = calculateNetInputIndex(captureSquare, capturedPiece)
+		p.WhiteUpdates.Add(winput, Remove)
+		p.BlackUpdates.Add(binput, Remove)
 	}
 
 	if movingPiece == WhitePawn &&
@@ -208,26 +219,46 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	if promoType != NoType {
 		promoPiece = GetPiece(promoType, turn)
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
-		p.Updates.Add(calculateNetInputIndex(dest, promoPiece), Add)
+		winput, binput = calculateNetInputIndex(dest, promoPiece)
+		p.WhiteUpdates.Add(winput, Add)
+		p.BlackUpdates.Add(binput, Add)
 	} else {
-		p.Updates.Add(calculateNetInputIndex(dest, movingPiece), Add)
+		winput, binput = calculateNetInputIndex(dest, movingPiece)
+		p.WhiteUpdates.Add(winput, Add)
+		p.BlackUpdates.Add(binput, Add)
 	}
 
 	if move.IsQueenSideCastle() {
 		if turn == White {
-			p.Updates.Add(calculateNetInputIndex(A1, WhiteRook), Remove)
-			p.Updates.Add(calculateNetInputIndex(D1, WhiteRook), Add)
+			winput, binput = calculateNetInputIndex(A1, WhiteRook)
+			p.WhiteUpdates.Add(winput, Remove)
+			p.BlackUpdates.Add(binput, Remove)
+			winput, binput = calculateNetInputIndex(D1, WhiteRook)
+			p.WhiteUpdates.Add(winput, Add)
+			p.BlackUpdates.Add(binput, Add)
 		} else {
-			p.Updates.Add(calculateNetInputIndex(A8, BlackRook), Remove)
-			p.Updates.Add(calculateNetInputIndex(D8, BlackRook), Add)
+			winput, binput = calculateNetInputIndex(A8, BlackRook)
+			p.WhiteUpdates.Add(winput, Remove)
+			p.BlackUpdates.Add(binput, Remove)
+			winput, binput = calculateNetInputIndex(D8, BlackRook)
+			p.WhiteUpdates.Add(winput, Add)
+			p.BlackUpdates.Add(binput, Add)
 		}
 	} else if move.IsKingSideCastle() {
 		if turn == White {
-			p.Updates.Add(calculateNetInputIndex(H1, WhiteRook), Remove)
-			p.Updates.Add(calculateNetInputIndex(F1, WhiteRook), Add)
+			winput, binput = calculateNetInputIndex(H1, WhiteRook)
+			p.WhiteUpdates.Add(winput, Remove)
+			p.BlackUpdates.Add(binput, Remove)
+			winput, binput = calculateNetInputIndex(F1, WhiteRook)
+			p.WhiteUpdates.Add(winput, Add)
+			p.BlackUpdates.Add(binput, Add)
 		} else {
-			p.Updates.Add(calculateNetInputIndex(H8, BlackRook), Remove)
-			p.Updates.Add(calculateNetInputIndex(F8, BlackRook), Add)
+			winput, binput = calculateNetInputIndex(H8, BlackRook)
+			p.WhiteUpdates.Add(winput, Remove)
+			p.BlackUpdates.Add(binput, Remove)
+			winput, binput = calculateNetInputIndex(F8, BlackRook)
+			p.WhiteUpdates.Add(winput, Add)
+			p.BlackUpdates.Add(binput, Add)
 		}
 	}
 
@@ -274,7 +305,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	}
 
 	if updateHidden {
-		p.Net.UpdateHidden(p.Updates)
+		p.Net.UpdateHidden(p.WhiteUpdates, p.BlackUpdates)
 	}
 
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
@@ -450,7 +481,12 @@ func (p *Position) Copy() *Position {
 	for k, v := range p.Positions {
 		copyMap[k] = v
 	}
-	newUpdates := Updates{
+	newWhiteUpdates := Updates{
+		Indices: make([]int16, 4),
+		Coeffs:  make([]int8, 4),
+		Size:    0,
+	}
+	newBlackUpdates := Updates{
 		Indices: make([]int16, 4),
 		Coeffs:  make([]int8, 4),
 		Size:    0,
@@ -459,13 +495,15 @@ func (p *Position) Copy() *Position {
 	newPos := &Position{
 		p.Board.copy(),
 		NewNetworkState(),
-		&newUpdates,
+		&newWhiteUpdates,
+		&newBlackUpdates,
 		p.EnPassant,
 		p.Tag,
 		p.hash,
 		copyMap,
 		p.HalfMoveClock,
 	}
-	newPos.Net.Recalculate(newPos.NetInput())
+	winput, binput := newPos.NetInput()
+	newPos.Net.Recalculate(winput, binput)
 	return newPos
 }

@@ -1,15 +1,19 @@
 #include <stdint.h>
 
-void update_hidden(float* previous_outputs, int16_t* update_indices, int8_t* update_coeffs, int update_size, float* weights, float* outputs, int outputs_len) {
+void update_hidden(float* white_previous_outputs, float* black_previous_outputs, int16_t* white_update_indices, int8_t* white_update_coeffs, int16_t* black_update_indices, int8_t* black_update_coeffs, int update_size, float* weights, float* white_outputs,float* black_outputs, int outputs_len) {
 	for(int i = 0; i < outputs_len; i++){
-    outputs[i] = previous_outputs[i];
+    white_outputs[i] = white_previous_outputs[i];
+    black_outputs[i] = black_previous_outputs[i];
   }
 
 	for(int i = 0; i < update_size; i++){
-    int index = (int)update_indices[i];
-    float coeff = (float)update_coeffs[i];
+    int w_index = (int)white_update_indices[i];
+    float w_coeff = (float)white_update_coeffs[i];
+    int b_index = (int)black_update_indices[i];
+    float b_coeff = (float)black_update_coeffs[i];
 		for(int j = 0; j < outputs_len; j++){
-      outputs[j] += coeff * weights[index*outputs_len+j];
+      white_outputs[j] += w_coeff * weights[w_index*outputs_len+j];
+      black_outputs[j] += b_coeff * weights[b_index*outputs_len+j];
 		}
 	}
 }

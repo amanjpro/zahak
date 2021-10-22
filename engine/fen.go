@@ -115,7 +115,12 @@ func positionFromFen(fen string) Position {
 		fmt.Printf("string info invalid FEN notation %s, half move clock is not set correctly %s\n", fen, parts[4])
 	}
 	halfMoveClock = 0
-	newUpdates := Updates{
+	newWhiteUpdates := Updates{
+		Indices: make([]int16, 4),
+		Coeffs:  make([]int8, 4),
+		Size:    0,
+	}
+	newBlackUpdates := Updates{
 		Indices: make([]int16, 4),
 		Coeffs:  make([]int8, 4),
 		Size:    0,
@@ -123,7 +128,8 @@ func positionFromFen(fen string) Position {
 	p := Position{
 		bitboardFromFen(fen),
 		NewNetworkState(),
-		&newUpdates,
+		&newWhiteUpdates,
+		&newBlackUpdates,
 		NoSquare,
 		0,
 		0,
