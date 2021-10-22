@@ -318,10 +318,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// Internal iterative reduction based on Rebel's idea
-	if /* !isPvNode && */ !ttHit && depthLeft >= 3 {
-		e.info.internalIterativeReduction += 1
-		depthLeft -= 1
-	}
+	// if /* !isPvNode && */ !ttHit && depthLeft >= 3 {
+	// 	e.info.internalIterativeReduction += 1
+	// 	depthLeft -= 1
+	// }
 
 	if !isRootNode {
 		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
@@ -440,21 +440,21 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// Internal Iterative Deepening
-	// if isPvNode && depthLeft >= 8 && !ttHit {
-	// 	e.innerLines[searchHeight].Recycle()
-	// 	score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-	// 	if e.isMainThread && e.TimeManager().AbruptStop {
-	// 		return score
-	// 	} else if !e.isMainThread && e.parent.Stop {
-	// 		return score
-	// 	}
-	// 	line := e.innerLines[searchHeight]
-	// 	if line.moveCount != 0 {
-	// 		hashmove := e.innerLines[searchHeight].MoveAt(0)
-	// 		nHashMove = hashmove
-	// 	}
-	// 	e.innerLines[searchHeight].Recycle()
-	// }
+	if /* isPvNode && */ depthLeft >= 8 && !ttHit {
+		e.innerLines[searchHeight].Recycle()
+		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
+		if e.isMainThread && e.TimeManager().AbruptStop {
+			return score
+		} else if !e.isMainThread && e.parent.Stop {
+			return score
+		}
+		line := e.innerLines[searchHeight]
+		if line.moveCount != 0 {
+			hashmove := e.innerLines[searchHeight].MoveAt(0)
+			nHashMove = hashmove
+		}
+		e.innerLines[searchHeight].Recycle()
+	}
 
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, depthLeft, searchHeight, nHashMove, false)
