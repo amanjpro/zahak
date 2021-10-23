@@ -269,6 +269,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if !isPvNode && ttHit && nDepth >= depthLeft && !firstLayerOfSingularity {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
+			e.AddHistory(nHashMove, currentMove, nHashMove.MovingPiece(), nHashMove.Destination(), depthLeft, searchHeight, -1)
 			return nEval
 		}
 		if nEval <= alpha && nType == UpperBound {
