@@ -396,7 +396,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if improving {
 			tpMargin = 30
 		}
-		if depthLeft == 1 && eval > beta+tpMargin && !position.Board.HasThreats(position.Turn().Other()) {
+		if depthLeft == 1 && eval > beta+tpMargin && (position.Board.HasThreats(position.Turn()) || !position.Board.HasThreats(position.Turn().Other())) {
 			return beta
 		}
 
