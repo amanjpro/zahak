@@ -83,6 +83,50 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 	return gain[0]
 }
 
+func (b *Bitboard) HasThreats(color Color) bool {
+	var pawnAttacks, ownKnights, ownR, ownB, ownPieces, enemyMinors, enemyRooks, enemyQueens uint64
+	occupiedBB := b.whitePieces | b.blackPieces
+	if color == Black {
+		ownPieces = b.blackPieces
+		pawnAttacks = bPawnAnyAttacks(b.blackPawn)
+		ownKnights = b.blackKnight
+		ownR = b.blackRook
+		ownB = b.blackBishop
+		enemyMinors = b.whiteBishop | b.whiteKnight
+		enemyRooks = b.whiteRook
+		enemyQueens = b.whiteQueen
+	} else {
+		ownPieces = b.whitePieces
+		pawnAttacks = wPawnAnyAttacks(b.whitePawn)
+		ownKnights = b.whiteKnight
+		ownR = b.whiteRook
+		ownB = b.whiteBishop
+		enemyMinors = b.blackBishop | b.blackKnight
+		enemyRooks = b.blackRook
+		enemyQueens = b.blackQueen
+	}
+	if pawnAttacks&(enemyMinors|enemyRooks|enemyQueens) != 0 {
+		return true
+	}
+	minorAttacks := (knightAttacks(ownKnights))
+	for ownB != 0 {
+		sq := bitScanForward(ownB)
+		minorAttacks |= bishopAttacks(Square(sq), occupiedBB, ownPieces)
+		ownB ^= (1 << sq)
+	}
+	if minorAttacks&(enemyRooks|enemyQueens) != 0 {
+		return true
+	}
+
+	rAttacks := uint64(0)
+	for ownR != 0 {
+		sq := bitScanForward(ownR)
+		rAttacks |= rookAttacks(Square(sq), occupiedBB, ownPieces)
+		ownR ^= (1 << sq)
+	}
+	return rAttacks&enemyQueens != 0
+}
+
 func max(x int16, y int16) int16 {
 	if x > y {
 		return x
