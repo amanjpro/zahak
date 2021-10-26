@@ -5,10 +5,9 @@
 <img src="zahak_logo.svg" width="300"/>
 
 
-A UCI compatible chess AI written in Go. Still work in progress. Zahak is also
-compliant with [open-benchmark](https://github.com/AndyGrant/OpenBench).
+A UCI compatible chess AI written in Go. Still work in progress. 
 
-Courtesy to the open-bench community, Zahak is now part of the [official
+Courtesy to the OpenBench community, Zahak is now part of the [official
 OpenBench instance](http://chess.grantnet.us/index/)
 
 # The name
@@ -23,9 +22,7 @@ daily basis, you can read more about him
 # Play Zahak online
 
 Zahak is new to LiChess, you can play him and be impressed with him. His
-LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine). He is
-currently running on an old RaspberryPi device, so do not expect a truly
-amazing performance. But, hopefully he will be online 24/7.
+LiChess handle is [zahak_engine](https://lichess.org/@/zahak_engine).
 
 # Play Zahak on your Android Phone/Desktop
 
@@ -44,11 +41,11 @@ supports UCI protocol.
 
 # Tournaments
 
-Zahak is participating in [ZaTour tournament series](https://zatour.amanj.me) for open source and original chess engines
-that are rated lower than 2800 as per CCRL.
+Zahak recently got invitation to the [TCEC tournament](https://tcec-chess.com/)!
 
-He is also participating in the tournaments arranged by [Chess Engine
-Diaries](https://chessengines.blogspot.com/), and several others.
+Zahak is also participating in [ZaTour tournament
+series](https://zatour.amanj.me) for open source and original chess engines.
+And many other tournaments, like the ones arranged by the amazing Graham Banks.
 
 # Rating
 
@@ -120,18 +117,16 @@ The history of Zahak's rating is summerized here:
 - Late Move Reduction
 - Razoring
 - Check Extensions
-- Internal Iterative Deepening (for PV nodes only)
-- Internal Iterative Reduction (for non-PV nodes only)
+- Internal Iterative Deepening
 - SEE pruning both in QS and normal search
 - ProbCut
-- History Leaf Pruning
+- Threat Pruning
 - Singular Extension
 - Multi-Cut
 
 ## Evaluation
 
 - NNUE
-- Draw pattern recognition: RvN, RvB, RNvR, RBvR
 
 # Command line options
 

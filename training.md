@@ -1,6 +1,6 @@
 # Training for Zahak
 
-So you are thinking of trainig networks for Zahak? Great! You know what? If you
+So you are thinking of training networks for Zahak? Great! You know what? If you
 produce a net that beats the latest strongest at the time, your net will be
 promoted to the master net! Not only that, your name will also be listed under
 the authors list! The only condition here that needs to be respected is the
@@ -45,7 +45,7 @@ cutechess-cli -tournament gauntlet -concurrency 15 \
 ```
 
 If you are using the above command (or a version of it), it is at most
-important to use a book with millions of different openning positions, the
+important to use a book with millions of different opening positions, the
 easiest way to generate a wide range of them is by using Zahak itself:
 
 ```
@@ -64,7 +64,7 @@ Now I have millions of games! What next?
 You now need to convert all the games that you generated above into FENs to be
 able to feed it to the network trainer. Easiest way is to use the latest
 version of [fengen](https://github.com/amanjpro/fengen/releases), which expects
-games stored in PGN format, that has a the score in the very first section of a
+games stored in PGN format, that has the score in the very first section of a
 move's comment. Something like the following:
 
 ```
@@ -105,7 +105,7 @@ Bxd7 {-1.39/9 0.022s} 24. Re8+ {+1.50/9 0.011s} Kh7 {-1.63/9 0.034s}
 Notice that the score is stored as the first section, and is separated with the
 rest with `/`: `{-0.17/9 0.027s}`.
 
-You can use `fengen` in with many threads, and it can recieve multiple files at
+You can use `fengen` in with many threads, and it can receive multiple files at
 the same time:
 
 ```
@@ -144,7 +144,7 @@ used, `eval` and `qs` parts do not affect the training procedure. Both `eval`
 and `outcome` are reported in the eyes of white.
 
 `zahak-trainer` is somewhat flexible, you can tweak a some of the internal
-parametrs to give your net special characteristics:
+parameters to give your net special characteristics:
 
 ```
 $ ./zahak-trainer -help
@@ -190,14 +190,14 @@ the dataset, so best value for a dataset is not necessarily the best value for
 another.
 
 `lr` is the learning rate, the bigger it is the faster the training reaches a
-local minima (a good net basically), but it might not be the best. THe smaller
+local minima (a good net basically), but it might not be the best. The smaller
 it is, the slower the training session converges, but the higher the chance it
 finds the perfect weights for the net.
 
 How do you know a net is fully trained? You can never be 100% sure really, but
 there is a BIG clue for, the trainer after each epoch emits the validation and
 training cost, the goal is to make these two costs as low as possible. At
-somepoint the training cost goes down, while the validation cost goes up. This
+some point the training cost goes down, while the validation cost goes up. This
 is usually an undesired state, because it means that we are over-training the
 net. You always want to pick the epoch with the lowest validation cost:
 
