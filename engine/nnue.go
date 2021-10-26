@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const NetInputSize = 768
+const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
@@ -101,8 +101,12 @@ func LoadNetwork(path string) error {
 	if err != nil {
 		return err
 	}
-	if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
+	if buf[0] != 66 || buf[1] != 90 {
 		return fmt.Errorf("Magic word does not match expected, exiting")
+	}
+
+	if buf[2] != 2 || buf[3] != 0 {
+		return fmt.Errorf("Network binary format version is not supported")
 	}
 
 	_, err = io.ReadFull(f, buf)
