@@ -19,7 +19,7 @@ ifeq ($(OS), Windows_NT)
 	RM=del engine\nn.go
 	MKDIR=IF not exist bin (mkdir bin)
 	MV=move bin\zahak.exe $(EXE).exe
-	FLAGS=""
+	FLAGS=
 endif
 
 .PHONY: netgen
