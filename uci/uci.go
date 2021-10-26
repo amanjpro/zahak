@@ -75,7 +75,7 @@ func (uci *UCI) Start() {
 				fmt.Printf("id EvalFile %d\n", CurrentNetworkId)
 				fmt.Print("option name Ponder type check default false\n")
 				fmt.Printf("option name Hash type spin default %d min 1 max %d\n", DEFAULT_CACHE_SIZE, MAX_CACHE_SIZE)
-				fmt.Printf("option name Book type check default %t\n", uci.withBook)
+				fmt.Printf("option name OwnBook type check default %t\n", uci.withBook)
 				fmt.Printf("option name Threads type spin default %d min %d max %d\n", defaultCPU, minCPU, maxCPU)
 				fmt.Print("option name EvalFile type string default <empty>\n")
 				fmt.Print("option name BookFile type string default <empty>\n")
@@ -143,14 +143,16 @@ func (uci *UCI) Start() {
 					}
 				} else if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
-				} else if strings.HasPrefix(cmd, "setoption name Book value ") {
+				} else if strings.HasPrefix(cmd, "setoption name OwnBook value ") {
 					options := strings.Fields(cmd)
 					opt := options[len(options)-1]
 					if opt == "false" {
 						ResetBook()
 					} else if !IsBoookLoaded() && opt == "true" { // if it is loaded, no need to reload
 						uci.withBook = true
-						InitBook(uci.bookPath)
+						if uci.bookPath != "" && uci.bookPath != "<empty>" {
+							InitBook(uci.bookPath)
+						}
 					}
 				} else if strings.HasPrefix(cmd, "setoption name Threads value") {
 					options := strings.Fields(cmd)
