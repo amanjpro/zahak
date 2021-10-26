@@ -10,8 +10,9 @@ run a match between the two nets, in both STC and LTC to find out!
 
 ## Network Architecture
 
-Zahak's network architecture is a simple `768*128*1`. The features represent
-`(piece_type, piece_color, square number)`, notice that `6 * 2 * 64 = 768`.
+Zahak's network architecture is a simple `769*128*1`. The features represent
+`(piece_type, piece_color, square number) + white-to-move`, notice that `6 * 2
+* 64 = 768` and 1 feature for white-to-move, becomes 769.
 
 ## Training
 
@@ -30,8 +31,8 @@ per move, with this command:
 ```
 cutechess-cli -tournament gauntlet -concurrency 15 \
   -pgnout zahak_games/PGN_NAME.pgn "fi" \
-  -engine conf=zahak_latest tc="inf" depth=9 \
-  -engine conf=zahak_latest tc="inf" depth=9 \
+  -engine conf=zahak_latest tc="inf" depth=10 \
+  -engine conf=zahak_latest tc="inf" depth=10 \
   -ratinginterval 1 \
   -recover \
   -event SELF_PLAY_GAMES \
@@ -51,10 +52,10 @@ easiest way to generate a wide range of them is by using Zahak itself:
 bin/zahak -gen-epds
 ```
 
-The above command basically spits perfectly randomly generated starting
-positions that you can use it as an EPD book. All you need is to capture the
-output and store it in file, In Windows you can do this: `bin\zahak -gen-epds >
-FILE` while in Linux/Mac you can do this: `bin/zahak -gen-epds > FILE`.
+The above command basically spits randomly generated starting positions that
+you can use it as an EPD book. All you need is to capture the output and store
+it in file, In Windows you can do this: `bin\zahak -gen-epds > FILE` while in
+Linux/Mac you can do this: `bin/zahak -gen-epds > FILE`.
 
 Now I have millions of games! What next?
 
@@ -110,14 +111,16 @@ the same time:
 ```
 ./fengen -help
 Usage of ./fengen:
+  -ignore string
+    Ignore the moves of engines, you can list more than one separated by commas
   -input string
-    	Comma separated set of paths to PGN files
+    Comma separated set of paths to PGN files
   -limit int
-    	Maximum allowed difference between Quiescence Search result and Static Evaluation, the bigger it is the more tactical positions are included
+    Maximum allowed difference between Quiescence Search result and Static Evaluation, the bigger it is the more tactical positions are included
   -output string
-    	Directory to write produced FENs in
-  -threas int
-    	Number of parallelism (default 8)
+    Directory to write produced FENs in
+  -threads int
+    Number of threads (default 16)
 ```
 
 And example run will be: `./fengen -input self-play-1.pgn,self-play-2.pgn
@@ -147,27 +150,27 @@ parametrs to give your net special characteristics:
 $ ./zahak-trainer -help
 Usage of ./zahak-trainer:
   -epochs int
-      Number of epochs (default 100)
+    Number of epochs (default 100)
   -from-net string
-      Path to a network, to be used as a starting point
+    Path to a network, to be used as a starting point
   -hiddens string
-      Number of hidden neurons, for multi-layer you can send comma separated numbers (default "128")
+    Number of hidden neurons, for multi-layer you can send comma separated numbers (default "256")
   -input-path string
-      Path to input dataset (FENs)
+    Path to input dataset (FENs), for multiple files send a comma separated set of files
   -inputs int
-      Number of inputs (default 768)
+    Number of inputs (default 769)
   -lr float
-      Learning Rate (default 0.009999999776482582)
+    Learning Rate (default 0.009999999776482582)
   -network-id int
-      A unique id for the network (default 285061292)
+    A unique id for the network (default 1277010531)
   -output-path string
-      Final NNUE path directory
+    Final NNUE path directory
   -outputs int
-      Number of outputs (default 1)
+    Number of outputs (default 1)
   -profile
-      Profile the trainer
+    Profile the trainer
   -sigmoid-scale float
-      Sigmoid scale (default 0.00244140625)
+    Sigmoid scale (default 0.0068359375)
 ```
 
 Unfortunately, due to the limitations of the probing code in Zahak, `hiddens`,
