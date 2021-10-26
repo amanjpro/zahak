@@ -101,7 +101,7 @@ func LoadNetwork(path string) error {
 	if err != nil {
 		return err
 	}
-	if buf[0] != 66 || buf[1] != 90 || buf[2] != 1 || buf[3] != 0 {
+	if buf[0] != 66 || buf[1] != 90 || buf[2] != 2 || buf[3] != 0 {
 		return fmt.Errorf("Magic word does not match expected, exiting")
 	}
 
