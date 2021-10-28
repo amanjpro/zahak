@@ -756,15 +756,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 		}
 
-		if !isRootNode && e.startDepth > 6 {
-			e.parent.mu.RLock()
-			if e.startDepth <= e.parent.depth {
-				e.startDepth = 0
-				e.parent.mu.RUnlock()
-				return -MAX_INT
-			}
-			e.parent.mu.RUnlock()
-		}
+		// if !isRootNode && e.startDepth > 6 {
+		// 	e.parent.mu.RLock()
+		// 	if e.startDepth <= e.parent.depth {
+		// 		e.startDepth = 0
+		// 		e.parent.mu.RUnlock()
+		// 		return -MAX_INT
+		// 	}
+		// 	e.parent.mu.RUnlock()
+		// }
 	}
 	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
