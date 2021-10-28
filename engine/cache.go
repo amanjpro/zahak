@@ -27,7 +27,7 @@ type Cache struct {
 const OldAge = uint16(5)
 const CACHE_ENTRY_SIZE = 8 + 8
 const DEFAULT_CACHE_SIZE = 128
-const MAX_CACHE_SIZE = 24000
+const MAX_CACHE_SIZE = 120_000
 
 const MOVE_MASK uint64 = 0b1111111111111111111111111111 // move << 0, 28 bits
 const EVAL_MASK uint64 = 0b1111111111111111             // eval << 28, 16 bits
