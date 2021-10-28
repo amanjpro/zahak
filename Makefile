@@ -24,11 +24,11 @@ endif
 
 .PHONY: netgen
 netgen: clean
-	$(FLAGS) go run -gcflags "-B" -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
+	$(FLAGS) go run -gcflags "-B" -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(version)'" netgen/nn.go
 
 build: netgen
 	$(MKDIR)
-	$(FLAGS) go build -gcflags "-B" -o bin ./...
+	$(FLAGS) go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./...
 
 ifdef EXE
 	$(MV)
@@ -51,13 +51,13 @@ cross-build: clean
 	$(MKDIR)
 	echo "!!!! WARNING !!!! Cross build will not support Syzygy Probing"
 	$(FLAGS) go run -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(version)'" netgen/nn.go
-	$(FLAGS) GOOS=linux GOARCH=arm go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
-	$(FLAGS) GOOS=linux GOARCH=arm64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
-	$(FLAGS) GOOS=linux GOARCH=amd64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-linux-amd64
-	$(FLAGS) GOOS=darwin GOARCH=amd64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-darwin-amd64
-	$(FLAGS) GOOS=darwin GOARCH=arm64 go build -gcflags "-B" -o bin ./... && mv bin/zahak bin/zahak-darwin-m1-arm64
-	$(FLAGS) GOOS=windows GOARCH=amd64 go build -gcflags "-B" -o bin ./... && mv bin/zahak.exe bin/zahak-windows-amd64.exe
-	$(FLAGS) GOOS=windows GOARCH=386 go build -gcflags "-B" -o bin ./... && mv bin/zahak.exe bin/zahak-windows-386.exe
+	$(FLAGS) GOOS=linux GOARCH=arm go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak bin/zahak-linux-arm32
+	$(FLAGS) GOOS=linux GOARCH=arm64 go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak bin/zahak-linux-arm64
+	$(FLAGS) GOOS=linux GOARCH=amd64 go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak bin/zahak-linux-amd64
+	$(FLAGS) GOOS=darwin GOARCH=amd64 go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak bin/zahak-darwin-amd64
+	$(FLAGS) GOOS=darwin GOARCH=arm64 go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak bin/zahak-darwin-m1-arm64
+	$(FLAGS) GOOS=windows GOARCH=amd64 go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak.exe bin/zahak-windows-amd64.exe
+	$(FLAGS) GOOS=windows GOARCH=386 go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak.exe bin/zahak-windows-386.exe
 
 all: build
 
