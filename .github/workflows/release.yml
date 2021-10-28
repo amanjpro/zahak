@@ -33,7 +33,7 @@ jobs:
            if [ "$RUNNER_OS" == "Windows" ]; then
              mkdir bin
              go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
-             CC=gcc CGO_ENABLED="1" go build -gcflags -B --ldflags '-linkmode external -extldflags "-static"' -o bin ./...; mv bin/zahak.exe bin/zahak-windows-amd64-"$TAG_NAME"-avx.exe
+             CC=gcc CGO_ENABLED="1" go build -gcflags -B -o bin ./...; mv bin/zahak.exe bin/zahak-windows-amd64-"$TAG_NAME"-avx.exe
            else
              mkdir bin
              go run -ldflags "-X 'main.netPath=default.nn' -X 'main.Version=$TAG_NAME'" netgen/nn.go
@@ -42,7 +42,7 @@ jobs:
              if [[ ${{matrix.os}} == macos-latest ]]; then
                osName="darwin"
              fi
-             CGO_ENABLED="1" go build -gcflags -B --ldflags '-linkmode external -extldflags "-static"' -o bin ./... && mv bin/zahak bin/zahak-"$osName"-amd64-"$TAG_NAME"-avx
+             CGO_ENABLED="1" go build -gcflags -B -o bin ./... && mv bin/zahak bin/zahak-"$osName"-amd64-"$TAG_NAME"-avx
            fi
 
       - name: Create Release and Upload Assets
