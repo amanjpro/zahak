@@ -129,7 +129,7 @@ func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 }
 
 func NewCache(megabytes int) *Cache {
-	if megabytes > MAX_CACHE_SIZE || megabytes < 1 {
+	if megabytes < 1 {
 		return nil
 	}
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
