@@ -163,7 +163,7 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
-					newTT := NewCache(uint32(hashSize))
+					newTT := NewCache(hashSize)
 					for i := 0; i < len(uci.runner.Engines); i++ {
 						uci.runner.Engines[i].TranspositionTable = nil
 						runtime.GC()

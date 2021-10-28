@@ -19,15 +19,15 @@ const (
 
 type Cache struct {
 	items    []CachedEval
-	size     uint32
+	size     int
 	consumed int
 	length   uint64
 }
 
 const OldAge = uint16(5)
-const CACHE_ENTRY_SIZE = uint32(8 + 8)
-const DEFAULT_CACHE_SIZE = uint32(128)
-const MAX_CACHE_SIZE = uint32(24000)
+const CACHE_ENTRY_SIZE = 8 + 8
+const DEFAULT_CACHE_SIZE = 128
+const MAX_CACHE_SIZE = 24000
 
 const MOVE_MASK uint64 = 0b1111111111111111111111111111 // move << 0, 28 bits
 const EVAL_MASK uint64 = 0b1111111111111111             // eval << 28, 16 bits
@@ -61,8 +61,8 @@ func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-func (c *Cache) index(hash uint64) uint32 {
-	return uint32(hash>>32) % uint32(len(c.items))
+func (c *Cache) index(hash uint64) int {
+	return int(hash>>32) % len(c.items)
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
@@ -111,7 +111,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	}
 }
 
-func (c *Cache) Size() uint32 {
+func (c *Cache) Size() int {
 	return c.size
 }
 
@@ -128,7 +128,7 @@ func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 	return 0, 0, 0, 0, false
 }
 
-func NewCache(megabytes uint32) *Cache {
+func NewCache(megabytes int) *Cache {
 	if megabytes > MAX_CACHE_SIZE || megabytes < 1 {
 		return nil
 	}

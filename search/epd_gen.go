@@ -18,7 +18,7 @@ func init() {
 }
 
 func GenerateEpds() {
-	cacheSize := uint32(32)
+	cacheSize := 32
 	runner := NewRunner(NewCache(cacheSize), 1)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
 	engine := runner.Engines[0]
