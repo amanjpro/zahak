@@ -32,7 +32,7 @@ func (r *Runner) Search(depth int8) {
 		for i := 0; i < len(r.Engines); i++ {
 			wg.Add(1)
 			go func(e *Engine, depth int8, i int) {
-				e.ParallelSearch(depth, int8(1+i%2), 2)
+				e.ParallelSearch(depth, int8(1+i%2), 1)
 				wg.Done()
 			}(r.Engines[i], depth, i)
 		}
