@@ -61,8 +61,8 @@ func (c *Cache) Consumed() int {
 	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
-func (c *Cache) index(hash uint64) int {
-	return int(hash>>32) % len(c.items)
+func (c *Cache) index(hash uint64) uint {
+	return uint(hash>>32) % uint(len(c.items))
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
