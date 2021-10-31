@@ -1,13 +1,9 @@
 package engine
 
 import (
-	"fmt"
 	"unsafe"
+	// 	"fmt"
 )
-
-// import (
-// 	"fmt"
-// )
 
 type CachedEval struct {
 	Key  uint64 // 8
@@ -35,6 +31,7 @@ const DEFAULT_CACHE_SIZE = 128
 const MAX_CACHE_SIZE = 120_000
 
 var CACHE_ENTRY_SIZE = int(unsafe.Sizeof(CachedEval{}))
+var TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 
 const MOVE_MASK uint64 = 0b1111111111111111111111111111 // move << 0, 28 bits
 const EVAL_MASK uint64 = 0b1111111111111111             // eval << 28, 16 bits
@@ -92,6 +89,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	oldValue := c.items[index]
 	oldKey := oldValue.Key
 	oldData := oldValue.Data
+	oldHash := oldKey ^ oldData
 
 	// very good for debugging hash issues
 	// newHashmove, newEval, newDepth, newNodeType, newAge := Unpack(newData)
@@ -104,30 +102,46 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 
 	newKey := newData ^ hash
 
-	if oldData != 0 {
-		_, _, oldDepth, oldType, oldAge := Unpack(oldData)
-		if (hash ^ oldData) == oldKey {
-			c.items[index].Update(newKey, newData)
-			return
-		}
-		if age-oldAge >= OldAge {
-			c.items[index].Update(newKey, newData)
-			return
-		}
-		if oldDepth > depth {
-			return
-		}
-		if oldType == Exact || nodeType != Exact {
-			return
-		} else if nodeType == Exact {
-			c.items[index].Update(newKey, newData)
-			return
-		}
-		c.items[index].Update(newKey, newData)
-	} else {
-		// c.consumed += 1
-		c.items[index].Update(newKey, newData)
+	_, _, oldDepth, _, oldAge := Unpack(oldData)
+	// if nodeType == Exact || hash == oldHash || depth-DepthOffset > oldDepth-4 {
+	// }
+	// var replace bool
+	// if hash == oldHash {
+	// 	replace = depth >= oldDepth-3 || nodeType == Exact
+	// } else {
+	// 	replace = oldData == 0 || age-OldAge >= oldAge || depth >= oldDepth
+	// }
+	if nodeType != Exact && hash == oldHash && oldDepth /* +NoneDepth)/2 */ >= depth && oldData != 0 && age-OldAge >= oldAge {
+		return
 	}
+	// if replace {
+	c.items[index].Update(newKey, newData)
+	// }
+	// if oldData != 0 {
+	// 		}
+	//
+	// 	// if hash == (oldData ^ newKey) {
+	// 	// 	c.items[index].Update(newKey, newData)
+	// 	// 	return
+	// 	// }
+	// 	if age-oldAge >= OldAge {
+	// 		c.items[index].Update(newKey, newData)
+	// 		return
+	// 	}
+	// 	if oldDepth > depth {
+	// 		return
+	// 	}
+	// 	if oldType == Exact || nodeType != Exact {
+	// 		return
+	// 	} else if nodeType == Exact {
+	// 		c.items[index].Update(newKey, newData)
+	// 		return
+	// 	}
+	// 	c.items[index].Update(newKey, newData)
+	// } else {
+	// c.consumed += 1
+	// c.items[index].Update(newKey, newData)
+	// }
 }
 
 func (c *Cache) Size() int {
@@ -153,7 +167,6 @@ func NewCache(megabytes int) *Cache {
 	}
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
-	fmt.Println(CACHE_ENTRY_SIZE, length, size)
 
 	return &Cache{make([]CachedEval, length), megabytes, uint64(length), uint(length - 1)}
 }

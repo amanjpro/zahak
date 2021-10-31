@@ -33,7 +33,7 @@ type UCI struct {
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
-		NewRunner(NewCache(DEFAULT_CACHE_SIZE), 1),
+		NewRunner(1),
 		nil,
 		withBook,
 		bookPath,
@@ -89,12 +89,12 @@ func (uci *UCI) Start() {
 			case "draw":
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
-				size := uci.runner.Engines[0].TranspositionTable.Size()
+				size := TranspositionTable.Size()
 				newTT := NewCache(size)
 				for i := 0; i < len(uci.runner.Engines); i++ {
-					uci.runner.Engines[i].TranspositionTable = nil
+					TranspositionTable = nil
 					runtime.GC()
-					uci.runner.Engines[i].TranspositionTable = newTT
+					TranspositionTable = newTT
 				}
 				game = FromFen(startFen)
 			case "stop":
@@ -158,16 +158,16 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					cpu, _ := strconv.Atoi(v)
-					uci.runner = NewRunner(uci.runner.Engines[0].TranspositionTable, cpu)
+					uci.runner = NewRunner(cpu)
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
 					hashSize, _ := strconv.Atoi(mg)
 					newTT := NewCache(hashSize)
 					for i := 0; i < len(uci.runner.Engines); i++ {
-						uci.runner.Engines[i].TranspositionTable = nil
+						TranspositionTable = nil
 						runtime.GC()
-						uci.runner.Engines[i].TranspositionTable = newTT
+						TranspositionTable = newTT
 					}
 				} else if strings.HasPrefix(cmd, "go") {
 					uci.findMove(game, depth, game.MoveClock(), cmd)

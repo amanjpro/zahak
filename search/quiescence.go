@@ -50,7 +50,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	// hash := position.Hash()
-	// nHashMove, nEval, _, nType, ttHit := e.TranspositionTable.Get(hash)
+	// nHashMove, nEval, _, nType, ttHit := TranspositionTable.Get(hash)
 	// if ttHit {
 	// 	ttHit = position.IsPseudoLegal(nHashMove)
 	// 	nEval = evalFromTT(nEval, searchHeight)
@@ -161,7 +161,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	// } else if bestscore <= originalAlpha {
 	// 	flag = UpperBound
 	// }
-	// e.TranspositionTable.Set(hash, bestMove, bestscore, 0, flag, e.Ply)
+	// TranspositionTable.Set(hash, bestMove, bestscore, 0, flag, e.Ply)
 
 	return bestscore
 }

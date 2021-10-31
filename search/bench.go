@@ -64,16 +64,16 @@ func RunBenchmark() {
 
 	cacheSize := 32
 	depth := int8(12)
-	runner := NewRunner(NewCache(cacheSize), 1)
+	runner := NewRunner(1)
 	nodes := int64(0)
 	totalTime := float64(0)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
 	for _, fen := range fens {
-		runner.Engines[0].TranspositionTable = NewCache(cacheSize)
+		TranspositionTable = NewCache(cacheSize)
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
 		runner.Engines[0].Search(depth)
-		nodes += runner.nodesVisited
+		nodes += runner.Engines[0].nodesVisited
 		totalTime += runner.Engines[0].TotalTime
 	}
 

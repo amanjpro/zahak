@@ -123,23 +123,21 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 			lastDepth = iterationDepth
 			e.pred.Clear()
-			// e.ShareInfo()
 			e.score = newScore
 			if e.isMainThread {
 				pv.Clone(e.innerLines[0])
 				e.SendPv(pv, e.score, iterationDepth)
 			}
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
-				e.parent.globalInfo.Print()
+				e.info.Print()
 			}
 			// if isCheckmateEval(e.score) {
 			// 	break
 			// }
 		}
 	}
-
 	if e.isMainThread {
-		e.TimeManager().Pondering = false
+		// e.TimeManager().Pondering = false
 		e.parent.Stop = true
 		e.updatePv(pv, e.score, lastDepth, false)
 		e.SendPv(pv, e.score, lastDepth)
@@ -192,7 +190,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isPvNode := alpha != beta-1
 
 	position := e.Position
-	e.TranspositionTable.Prefetch(position.Hash())
+	TranspositionTable.Prefetch(position.Hash())
 
 	currentMove := e.positionMoves[searchHeight]
 	// Position is drawn
@@ -225,7 +223,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	firstLayerOfSingularity := e.skipHeight == searchHeight && e.skipMove != EmptyMove
 	hash := position.Hash()
-	nHashMove, nEval, nDepth, nType, ttHit := e.TranspositionTable.Get(hash)
+	nHashMove, nEval, nDepth, nType, ttHit := TranspositionTable.Get(hash)
 	if ttHit {
 		ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
@@ -273,7 +271,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// if the tablebase gives us what we want, then we accept it's score and return
 			if flag == Exact || (flag == LowerBound && score >= beta) || (flag == UpperBound && score <= alpha) {
-				e.TranspositionTable.Set(hash, EmptyMove, score, depthLeft, flag, e.Ply)
+				TranspositionTable.Set(hash, EmptyMove, score, depthLeft, flag, e.Ply)
 				return score
 			}
 
@@ -539,7 +537,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if bestscore >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							e.TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
+							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						e.AddHistory(hashmove, currentMove, hashmove.MovingPiece(), hashmove.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -706,7 +704,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if score >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							e.TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
+							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						e.AddHistory(move, currentMove, move.MovingPiece(), move.Destination(), depthLeft, searchHeight, legalQuiteMove)
 					}
@@ -736,9 +734,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
-			e.TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact, e.Ply)
+			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact, e.Ply)
 		} else {
-			e.TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
+			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
 		}
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 {
