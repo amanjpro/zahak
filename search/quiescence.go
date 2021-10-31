@@ -49,6 +49,30 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return 0
 	}
 
+	// hash := position.Hash()
+	// nHashMove, nEval, _, nType, ttHit := e.TranspositionTable.Get(hash)
+	// if ttHit {
+	// 	ttHit = position.IsPseudoLegal(nHashMove)
+	// 	nEval = evalFromTT(nEval, searchHeight)
+	// }
+	// if !ttHit {
+	// 	nHashMove = EmptyMove
+	// }
+	// if ttHit {
+	// 	if nEval >= beta && nType == LowerBound {
+	// 		e.CacheHit()
+	// 		return nEval
+	// 	}
+	// 	if nEval <= alpha && nType == UpperBound {
+	// 		e.CacheHit()
+	// 		return nEval
+	// 	}
+	// 	if nType == Exact {
+	// 		e.CacheHit()
+	// 		return nEval
+	// 	}
+	// }
+
 	standPat := e.staticEvals[searchHeight]
 	if standPat >= beta {
 		return beta // fail hard
@@ -82,6 +106,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
+	// bestMove := EmptyMove
+	// originalAlpha := alpha
 
 	for i := 0; ; i++ {
 		move := movePicker.Next()
@@ -117,6 +143,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			e.pred.Pop()
 			position.UnMakeMove(move, tg, ep, hc)
 			if score > bestscore {
+				// bestMove = move
 				bestscore = score
 				if score > alpha {
 					alpha = score
@@ -127,6 +154,15 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			}
 		}
 	}
+
+	// flag := Exact
+	// if bestscore >= beta {
+	// 	flag = LowerBound
+	// } else if bestscore <= originalAlpha {
+	// 	flag = UpperBound
+	// }
+	// e.TranspositionTable.Set(hash, bestMove, bestscore, 0, flag, e.Ply)
+
 	return bestscore
 }
 

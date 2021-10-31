@@ -10,17 +10,18 @@ var enPassantZC [16]uint64
 var whiteTurnZC uint64
 
 func init() {
-	whiteTurnZC = rand.Uint64()
+	var r = rand.New(rand.NewSource(0))
+	whiteTurnZC = r.Uint64()
 	for i := 0; i < 12; i++ {
 		for j := 0; j < 64; j++ {
-			piecesZC[i][j] = rand.Uint64()
+			piecesZC[i][j] = r.Uint64()
 		}
 	}
 	for i := 0; i < 4; i++ {
-		castleRightsZC[i] = rand.Uint64()
+		castleRightsZC[i] = r.Uint64()
 	}
 	for i := 0; i < 16; i++ {
-		enPassantZC[i] = rand.Uint64()
+		enPassantZC[i] = r.Uint64()
 	}
 }
 

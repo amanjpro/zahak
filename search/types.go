@@ -2,7 +2,6 @@ package search
 
 import (
 	"fmt"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -13,7 +12,6 @@ type Runner struct {
 	nodesVisited int64
 	cacheHits    int64
 	globalInfo   Info
-	mu           sync.RWMutex
 	Engines      []*Engine
 	Stop         bool
 	TimeManager  *TimeManager
@@ -75,14 +73,14 @@ func (e *Engine) ShareInfo() {
 		atomic.AddInt64(&e.parent.globalInfo.internalIterativeReduction, e.info.internalIterativeReduction)
 		atomic.AddInt64(&e.parent.globalInfo.singularExtensionCounter, e.info.singularExtensionCounter)
 		atomic.AddInt64(&e.parent.globalInfo.multiCutCounter, e.info.multiCutCounter)
-	}
 
-	atomic.AddInt64(&e.parent.globalInfo.tbHit, e.info.tbHit)
-	atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
-	atomic.AddInt64(&e.parent.cacheHits, e.cacheHits)
-	e.info = NoInfo
-	e.nodesVisited = 0
-	e.cacheHits = 0
+		atomic.AddInt64(&e.parent.globalInfo.tbHit, e.info.tbHit)
+		atomic.AddInt64(&e.parent.nodesVisited, e.nodesVisited)
+		atomic.AddInt64(&e.parent.cacheHits, e.cacheHits)
+		e.info = NoInfo
+		e.nodesVisited = 0
+		e.cacheHits = 0
+	}
 }
 
 func (i *Info) Print() {
@@ -399,10 +397,16 @@ func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
 		depth = pv.moveCount
 	}
 	thinkTime := time.Since(e.StartTime)
-	nodesVisited := e.parent.nodesVisited
+	nodesVisited := int64(0) //e.parent.nodesVisited
+	tbHits := int64(0)       //e.parent.nodesVisited
+	for i := 0; i < len(e.parent.Engines); i++ {
+		e := e.parent.Engines[i]
+		nodesVisited += e.nodesVisited
+		tbHits += e.info.tbHit
+	}
 	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
 	fmt.Printf("info depth %d seldepth %d hashfull %d tbhits %d nodes %d nps %d score %s time %d pv %s\n",
-		depth, pv.moveCount, e.TranspositionTable.Consumed(), e.parent.globalInfo.tbHit,
+		depth, pv.moveCount, e.TranspositionTable.Consumed(), tbHits,
 		nodesVisited, nps, ScoreToCp(score),
 		thinkTime.Milliseconds(), pv.ToString())
 	e.TotalTime = thinkTime.Seconds()
