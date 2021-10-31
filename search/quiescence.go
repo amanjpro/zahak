@@ -55,7 +55,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
 	}
-	if !ttHit {
+	if !ttHit || !nHashMove.IsCapture() || nHashMove.PromoType() == NoType {
 		nHashMove = EmptyMove
 	}
 	if ttHit {
@@ -98,7 +98,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	var isInCheck = e.Position.IsInCheck()
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, -1, searchHeight, EmptyMove, true)
+	movePicker.RecycleWith(position, e, -1, searchHeight, nHashMove, true)
 
 	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
 	if !isInCheck {
@@ -161,7 +161,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	} else if bestscore <= originalAlpha {
 		flag = UpperBound
 	}
-	TranspositionTable.Set(hash, bestMove, bestscore, 0, flag, e.Ply)
+	TranspositionTable.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag, e.Ply)
 
 	return bestscore
 }
