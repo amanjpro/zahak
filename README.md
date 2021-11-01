@@ -120,7 +120,6 @@ The history of Zahak's rating is summerized here:
 - Check Extensions
 - Internal Iterative Deepening
 - SEE pruning both in QS and normal search
-- ProbCut
 - Threat Pruning
 - Singular Extension
 - Multi-Cut
