@@ -1,8 +1,9 @@
 package engine
 
-// import (
-// 	"fmt"
-// )
+import (
+	"unsafe"
+	// 	"fmt"
+)
 
 type CachedEval struct {
 	Key  uint64 // 8
@@ -18,16 +19,19 @@ const (
 )
 
 type Cache struct {
-	items    []CachedEval
-	size     int
-	consumed int
-	length   uint64
+	items []CachedEval
+	size  int
+	// consumed int
+	length uint64
+	mask   uint
 }
 
 const OldAge = uint16(5)
-const CACHE_ENTRY_SIZE = 8 + 8
 const DEFAULT_CACHE_SIZE = 128
 const MAX_CACHE_SIZE = 120_000
+
+var CACHE_ENTRY_SIZE = int(unsafe.Sizeof(CachedEval{}))
+var TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 
 const MOVE_MASK uint64 = 0b1111111111111111111111111111 // move << 0, 28 bits
 const EVAL_MASK uint64 = 0b1111111111111111             // eval << 28, 16 bits
@@ -58,24 +62,30 @@ func (c *CachedEval) Update(key uint64, data uint64) {
 }
 
 func (c *Cache) Consumed() int {
-	return int((float64(c.consumed) / float64(len(c.items))) * 1000)
+	used := 0
+	samples := 1000
+
+	for i := 0; i < samples; i++ {
+		if c.items[i].Data != 0 {
+			used++
+		}
+	}
+
+	return used / (samples / 1000)
 }
 
 func (c *Cache) index(hash uint64) uint {
-	return uint(hash>>32) % uint(len(c.items))
+	return uint(hash) & c.mask
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
-	// if hashmove == EmptyMove {
-	// 	return
-	// }
 	index := c.index(hash)
 
 	oldValue := c.items[index]
 	oldKey := oldValue.Key
 	oldData := oldValue.Data
+	oldHash := oldKey ^ oldData
 
-	newData := Pack(hashmove, eval, depth, nodeType, age)
 	// very good for debugging hash issues
 	// newHashmove, newEval, newDepth, newNodeType, newAge := Unpack(newData)
 	// if hashmove != newHashmove || eval != newEval || depth != newDepth || nodeType != newNodeType || age != newAge {
@@ -83,32 +93,15 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	// 		"Culprits are: %d %d %d %d %d\nSomehow became: %d %d %d %d %d\n", hashmove, eval, depth, nodeType, age, newHashmove, newEval, newDepth, newNodeType, newAge))
 	// }
 
+	newData := Pack(hashmove, eval, depth, nodeType, age)
+
 	newKey := newData ^ hash
 
-	if oldData != 0 {
-		_, _, oldDepth, oldType, oldAge := Unpack(oldData)
-		if (hash ^ oldData) == oldKey {
-			c.items[index].Update(newKey, newData)
-			return
-		}
-		if age-oldAge >= OldAge {
-			c.items[index].Update(newKey, newData)
-			return
-		}
-		if oldDepth > depth {
-			return
-		}
-		if oldType == Exact || nodeType != Exact {
-			return
-		} else if nodeType == Exact {
-			c.items[index].Update(newKey, newData)
-			return
-		}
-		c.items[index].Update(newKey, newData)
-	} else {
-		c.consumed += 1
-		c.items[index].Update(newKey, newData)
+	_, _, oldDepth, _, oldAge := Unpack(oldData)
+	if nodeType != Exact && hash == oldHash && oldDepth /* +NoneDepth)/2 */ >= depth && oldData != 0 && age-OldAge >= oldAge {
+		return
 	}
+	c.items[index].Update(newKey, newData)
 }
 
 func (c *Cache) Size() int {
@@ -135,7 +128,7 @@ func NewCache(megabytes int) *Cache {
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
 
-	return &Cache{make([]CachedEval, length), megabytes, 0, uint64(length)}
+	return &Cache{make([]CachedEval, length), megabytes, uint64(length), uint(length - 1)}
 }
 
 func RoundPowerOfTwo(size int) int {

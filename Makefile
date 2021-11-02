@@ -26,6 +26,12 @@ endif
 netgen: clean
 	$(FLAGS) go run -gcflags "-B" -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(revision)'" netgen/nn.go
 
+tcec:
+	$(FLAGS) go run -gcflags "-B" -ldflags "-X 'main.netPath=$(netfile)' -X 'main.Version=$(TCEC_VERSION)'" netgen/nn.go
+	$(MKDIR)
+	$(FLAGS) go build -gcflags "-B" --ldflags '-linkmode external -extldflags "-static"' -o bin ./...
+	mv bin/zahak bin/zahak-linux-amd64-$(TCEC_VERSION)-avx
+
 build: netgen
 	$(MKDIR)
 	$(FLAGS) go build -gcflags "-B" -o bin ./...

@@ -19,7 +19,8 @@ func init() {
 
 func GenerateEpds() {
 	cacheSize := 32
-	runner := NewRunner(NewCache(cacheSize), 1)
+	TranspositionTable = NewCache(cacheSize)
+	runner := NewRunner(1)
 	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
 	engine := runner.Engines[0]
 
