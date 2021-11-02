@@ -97,7 +97,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	newKey := newData ^ hash
 
 	_, _, oldDepth, _, oldAge := Unpack(oldData)
-	if nodeType != Exact && hash == oldHash && oldDepth /* +NoneDepth)/2 */ >= depth && oldData != 0 && age-OldAge >= oldAge {
+	if nodeType != Exact && hash == oldHash && oldDepth /* +NoneDepth)/2 */ > depth && oldData != 0 && age-OldAge < oldAge {
 		return
 	}
 	c.items[index].Update(newKey, newData)
