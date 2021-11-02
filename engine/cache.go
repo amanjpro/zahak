@@ -19,9 +19,8 @@ const (
 )
 
 type Cache struct {
-	items []CachedEval
-	size  int
-	// consumed int
+	items  []CachedEval
+	size   int
 	length uint64
 	mask   uint
 }

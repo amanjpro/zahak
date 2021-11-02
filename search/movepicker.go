@@ -42,7 +42,6 @@ func EmptyMovePicker() *MovePicker {
 		counterMove:     EmptyMove,
 	}
 	return mp
-
 }
 
 func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, searchHeight int8, hashmove Move, isQuiescence bool) {
