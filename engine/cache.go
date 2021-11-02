@@ -72,18 +72,13 @@ func (c *Cache) Consumed() int {
 	}
 
 	return used / (samples / 1000)
-	// return int((float64(c.consumed) / float64(len(c.items))) * 1000)
 }
 
 func (c *Cache) index(hash uint64) uint {
-	// return int(hash>>32) % len(c.items)
 	return uint(hash) & c.mask
 }
 
 func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
-	// if hashmove == EmptyMove {
-	// 	return
-	// }
 	index := c.index(hash)
 
 	oldValue := c.items[index]
@@ -103,45 +98,10 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	newKey := newData ^ hash
 
 	_, _, oldDepth, _, oldAge := Unpack(oldData)
-	// if nodeType == Exact || hash == oldHash || depth-DepthOffset > oldDepth-4 {
-	// }
-	// var replace bool
-	// if hash == oldHash {
-	// 	replace = depth >= oldDepth-3 || nodeType == Exact
-	// } else {
-	// 	replace = oldData == 0 || age-OldAge >= oldAge || depth >= oldDepth
-	// }
 	if nodeType != Exact && hash == oldHash && oldDepth /* +NoneDepth)/2 */ >= depth && oldData != 0 && age-OldAge >= oldAge {
 		return
 	}
-	// if replace {
 	c.items[index].Update(newKey, newData)
-	// }
-	// if oldData != 0 {
-	// 		}
-	//
-	// 	// if hash == (oldData ^ newKey) {
-	// 	// 	c.items[index].Update(newKey, newData)
-	// 	// 	return
-	// 	// }
-	// 	if age-oldAge >= OldAge {
-	// 		c.items[index].Update(newKey, newData)
-	// 		return
-	// 	}
-	// 	if oldDepth > depth {
-	// 		return
-	// 	}
-	// 	if oldType == Exact || nodeType != Exact {
-	// 		return
-	// 	} else if nodeType == Exact {
-	// 		c.items[index].Update(newKey, newData)
-	// 		return
-	// 	}
-	// 	c.items[index].Update(newKey, newData)
-	// } else {
-	// c.consumed += 1
-	// c.items[index].Update(newKey, newData)
-	// }
 }
 
 func (c *Cache) Size() int {
