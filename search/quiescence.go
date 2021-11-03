@@ -155,13 +155,15 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		}
 	}
 
-	flag := Exact
-	if bestscore >= beta {
-		flag = LowerBound
-	} else if bestscore <= originalAlpha {
-		flag = UpperBound
+	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
+		flag := Exact
+		if bestscore >= beta {
+			flag = LowerBound
+		} else if bestscore <= originalAlpha {
+			flag = UpperBound
+		}
+		TranspositionTable.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag, e.Ply)
 	}
-	TranspositionTable.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag, e.Ply)
 
 	return bestscore
 }

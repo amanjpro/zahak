@@ -110,11 +110,9 @@ func NewRunner(numberOfThreads int) *Runner {
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
+		engine = NewEngine(t)
 		if i == 0 {
-			engine = NewEngine(t)
 			engine.isMainThread = true
-		} else {
-			engine = NewEngine(t)
 		}
 		engines[i] = engine
 	}
@@ -146,7 +144,7 @@ func NewEngine(parent *Runner) *Engine {
 		countermoves:    make([][]Move, 12),  // We have 12 pieces only
 		MovePickers:     movePickers,
 		triedQuietMoves: make([][]Move, 250),
-		info:            NoInfo,
+		info:            NewInfo(),
 		pred:            NewPredecessors(),
 		innerLines:      innerLines,
 		staticEvals:     make([]int16, MAX_DEPTH),
@@ -175,7 +173,9 @@ func (r *Runner) Ponderhit() {
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
-var NoInfo = Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+func NewInfo() Info {
+	return Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+}
 
 func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
@@ -235,7 +235,7 @@ func (e *Engine) ClearForSearch() {
 	e.nodesVisited = 0
 	e.cacheHits = 0
 
-	e.info = NoInfo
+	e.info = NewInfo()
 	e.StartTime = time.Now()
 
 	e.pred.Clear()
