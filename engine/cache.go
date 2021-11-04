@@ -92,14 +92,12 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	// 		"Culprits are: %d %d %d %d %d\nSomehow became: %d %d %d %d %d\n", hashmove, eval, depth, nodeType, age, newHashmove, newEval, newDepth, newNodeType, newAge))
 	// }
 
-	newData := Pack(hashmove, eval, depth, nodeType, age)
-
-	newKey := newData ^ hash
-
 	_, _, oldDepth, _, oldAge := Unpack(oldData)
 	if nodeType != Exact && /* hash == oldHash && */ (oldDepth-6)/2 >= depth && oldData != 0 && age-OldAge < oldAge {
 		return
 	}
+	newData := Pack(hashmove, eval, depth, nodeType, age)
+	newKey := newData ^ hash
 	c.items[index].Update(newKey, newData)
 }
 
