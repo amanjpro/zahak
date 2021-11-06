@@ -33,7 +33,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e := r.Engines[0]
 	e.Position = game.Position()
 	e.Ply = 1
-	e.Search(7)
+	e.Search(15)
 	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -170,7 +170,7 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(35)
+	e.Search(20)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
