@@ -325,12 +325,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			return newEval
 		}
 
-		opponentHasThreats := position.Board.HasThreats(position.Turn().Other())
-
 		// Reverse Futility Pruning
 		reverseFutilityMargin := int16(depthLeft) * 85 //(b - p)
-		if improving && !opponentHasThreats {
-			reverseFutilityMargin -= 95 // int16(depthLeft) * p
+		if improving {
+			reverseFutilityMargin -= 85 // int16(depthLeft) * p
 		}
 		if depthLeft < 8 && eval-reverseFutilityMargin >= beta {
 			e.info.rfpCounter += 1
@@ -366,7 +364,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if improving {
 			tpMargin = 30
 		}
-		if depthLeft == 1 && eval > beta+tpMargin && (!opponentHasThreats || position.Board.HasThreats(position.Turn())) {
+		if depthLeft == 1 && eval > beta+tpMargin && (!position.Board.HasThreats(position.Turn().Other()) || position.Board.HasThreats(position.Turn())) {
 			return beta
 		}
 
