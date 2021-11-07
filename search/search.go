@@ -327,9 +327,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// Reverse Futility Pruning
 		reverseFutilityMargin := int16(depthLeft) * 85 //(b - p)
-		// if improving {
-		// 	reverseFutilityMargin += 110 // int16(depthLeft) * p
-		// }
+		if improving {
+			reverseFutilityMargin += 50 // int16(depthLeft) * p
+		}
 		if depthLeft < 8 && eval-reverseFutilityMargin >= beta {
 			e.info.rfpCounter += 1
 			return eval - reverseFutilityMargin /* fail soft */
