@@ -318,11 +318,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if pruningAllowed {
 		// Razoring
-		if depthLeft < 3 && eval+625 < beta {
-			newEval := e.quiescence(alpha, beta, searchHeight)
-			e.info.razoringCounter += 1
-			return newEval
-		}
+		// if depthLeft < 3 && eval+625 < beta {
+		// 	newEval := e.quiescence(alpha, beta, searchHeight)
+		// 	e.info.razoringCounter += 1
+		// 	return newEval
+		// }
 
 		// Reverse Futility Pruning
 		reverseFutilityMargin := int16(depthLeft) * 85 //(b - p)
