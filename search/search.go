@@ -319,7 +319,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if pruningAllowed {
 		// Razoring
 		razoringMargin := r // int16(depthLeft)*p + p
-		if depthLeft < 2 && eval+razoringMargin > alpha {
+		if depthLeft < 3 && eval+razoringMargin < beta {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			e.info.razoringCounter += 1
 			return newEval
