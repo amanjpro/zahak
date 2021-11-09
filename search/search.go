@@ -607,7 +607,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		isKiller := movePicker.killer1 == move || movePicker.killer2 == move || movePicker.counterMove == move
 
-		if !isInCheck && e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
+		if e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
 			if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
 				e.info.efpCounter += 1
