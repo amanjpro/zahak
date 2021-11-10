@@ -55,7 +55,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
 	}
-	if !ttHit || (!nHashMove.IsCapture() && nHashMove.PromoType() == NoType) {
+	isNoisy := nHashMove.IsCapture() || nHashMove.PromoType() != NoType
+	if !ttHit || !isNoisy {
 		nHashMove = EmptyMove
 	}
 	if ttHit {
@@ -82,6 +83,9 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return 0
 	}
 
+	bestMove := EmptyMove
+	originalAlpha := alpha
+
 	var isInCheck = e.Position.IsInCheck()
 	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
 	if !isInCheck {
@@ -107,8 +111,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
-	bestMove := EmptyMove
-	originalAlpha := alpha
 
 	for i := 0; ; i++ {
 		move := movePicker.Next()
