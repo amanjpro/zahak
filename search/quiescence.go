@@ -83,9 +83,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return 0
 	}
 
-	bestMove := EmptyMove
-	originalAlpha := alpha
-
 	var isInCheck = e.Position.IsInCheck()
 	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
 	if !isInCheck {
@@ -105,6 +102,9 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	if alpha < standPat {
 		alpha = standPat
 	}
+
+	bestMove := EmptyMove
+	originalAlpha := alpha
 
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, -1, searchHeight, nHashMove, true)
