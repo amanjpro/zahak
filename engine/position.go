@@ -375,7 +375,7 @@ func (p *Position) IsInCheck() bool {
 }
 
 func (p *Position) IsDraw() bool {
-	if p.HalfMoveClock > 99 {
+	if p.HalfMoveClock > 100 {
 		return true
 	} else {
 		if p.Board.blackPawn != 0 || p.Board.whitePawn != 0 ||
