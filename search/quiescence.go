@@ -89,21 +89,21 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	var isInCheck = e.Position.IsInCheck()
 	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
 	if !isInCheck {
-		// Delta Pruning
-		if standPat+dynamicMargin(position) < alpha {
-			e.info.deltaPruningCounter += 1
-			return alpha
-		}
-
-		if standPat >= beta {
-			return beta // fail hard
-		}
-
-		if alpha < standPat {
-			alpha = standPat
-		}
-
 		bestscore = standPat
+	}
+
+	// Delta Pruning
+	if standPat+dynamicMargin(position) < alpha {
+		e.info.deltaPruningCounter += 1
+		return alpha
+	}
+
+	if standPat >= beta {
+		return beta // fail hard
+	}
+
+	if alpha < standPat {
+		alpha = standPat
 	}
 
 	movePicker := e.MovePickers[searchHeight]
