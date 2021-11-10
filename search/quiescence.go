@@ -75,6 +75,10 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	standPat := e.staticEvals[searchHeight]
+	if standPat >= beta {
+		return beta // fail hard
+	}
+
 	if searchHeight >= MAX_DEPTH-1 {
 		return standPat
 	}
@@ -93,10 +97,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	if standPat+dynamicMargin(position) < alpha {
 		e.info.deltaPruningCounter += 1
 		return alpha
-	}
-
-	if standPat >= beta {
-		return beta // fail hard
 	}
 
 	if alpha < standPat {
