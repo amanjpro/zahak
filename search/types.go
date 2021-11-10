@@ -197,9 +197,9 @@ func (e *Engine) ClearForSearch() {
 		if e.killerMoves[i] == nil {
 			e.killerMoves[i] = make([]Move, 2)
 		}
-		for j := 0; j < len(e.killerMoves[i]); j++ {
-			e.killerMoves[i][j] = EmptyMove
-		}
+		// for j := 0; j < len(e.killerMoves[i]); j++ {
+		// 	e.killerMoves[i][j] = EmptyMove
+		// }
 	}
 
 	e.skipMove = EmptyMove
@@ -209,18 +209,18 @@ func (e *Engine) ClearForSearch() {
 		if e.searchHistory[i] == nil {
 			e.searchHistory[i] = make([]int32, 64) // Number of Squares
 		}
-		for j := 0; j < len(e.searchHistory[i]); j++ {
-			e.searchHistory[i][j] = 0
-		}
+		// for j := 0; j < len(e.searchHistory[i]); j++ {
+		// 	e.searchHistory[i][j] = 0
+		// }
 	}
 
 	for i := 0; i < len(e.countermoves); i++ {
 		if e.countermoves[i] == nil {
 			e.countermoves[i] = make([]Move, 64) // Number of Squares
 		}
-		for j := 0; j < len(e.countermoves[i]); j++ {
-			e.countermoves[i][j] = EmptyMove
-		}
+		// for j := 0; j < len(e.countermoves[i]); j++ {
+		// 	e.countermoves[i][j] = EmptyMove
+		// }
 	}
 
 	for i := 0; i < len(e.triedQuietMoves); i++ {
