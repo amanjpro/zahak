@@ -50,15 +50,15 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	hash := position.Hash()
-	nHashMove, nEval, _, nType, ttHit := TranspositionTable.Get(hash)
+	_, nEval, _, nType, ttHit := TranspositionTable.Get(hash)
 	if ttHit {
-		ttHit = position.IsPseudoLegal(nHashMove)
+		// 	ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
 	}
-	isNoisy := nHashMove.IsCapture() || nHashMove.PromoType() != NoType
-	if !ttHit || !isNoisy {
-		nHashMove = EmptyMove
-	}
+	// isNoisy := nHashMove.IsCapture() || nHashMove.PromoType() != NoType
+	// if !ttHit || !isNoisy {
+	// 	nHashMove = EmptyMove
+	// }
 	if ttHit {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
@@ -107,7 +107,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, -1, searchHeight, nHashMove, true)
+	movePicker.RecycleWith(position, e, -1, searchHeight, EmptyMove, true)
 
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
