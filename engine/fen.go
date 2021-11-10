@@ -114,7 +114,6 @@ func positionFromFen(fen string) Position {
 	if err != nil {
 		fmt.Printf("string info invalid FEN notation %s, half move clock is not set correctly %s\n", fen, parts[4])
 	}
-	halfMoveClock = 0
 	newUpdates := Updates{
 		Indices: make([]int16, 5),
 		Coeffs:  make([]int8, 5),
