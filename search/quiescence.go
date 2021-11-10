@@ -55,7 +55,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
 	}
-	if !ttHit || !nHashMove.IsCapture() || nHashMove.PromoType() == NoType {
+	if !ttHit || (!nHashMove.IsCapture() && nHashMove.PromoType() == NoType) {
 		nHashMove = EmptyMove
 	}
 	if ttHit {
