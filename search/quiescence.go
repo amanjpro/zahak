@@ -74,10 +74,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	standPat := e.staticEvals[searchHeight]
-	if standPat >= beta {
-		return beta // fail hard
-	}
-
 	if searchHeight >= MAX_DEPTH-1 {
 		return standPat
 	}
@@ -86,24 +82,29 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return 0
 	}
 
-	// Delta Pruning
-	if standPat+dynamicMargin(position) < alpha {
-		e.info.deltaPruningCounter += 1
-		return alpha
-	}
-
-	if alpha < standPat {
-		alpha = standPat
-	}
-
 	var isInCheck = e.Position.IsInCheck()
+	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
+	if !isInCheck {
+		// Delta Pruning
+		if standPat+dynamicMargin(position) < alpha {
+			e.info.deltaPruningCounter += 1
+			return alpha
+		}
+
+		if standPat >= beta {
+			return beta // fail hard
+		}
+
+		if alpha < standPat {
+			alpha = standPat
+		}
+
+		bestscore = standPat
+	}
+
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, -1, searchHeight, nHashMove, true)
 
-	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
-	if !isInCheck {
-		bestscore = standPat
-	}
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
 	bestMove := EmptyMove
