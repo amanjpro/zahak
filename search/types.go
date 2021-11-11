@@ -183,8 +183,7 @@ func (r *Runner) ClearForSearch() {
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
-	r.pv.Pop() // pop our move
-	r.pv.Pop() // pop our opponent's move
+	r.pv.Recycle()
 	r.Stop = false
 }
 
