@@ -55,9 +55,10 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
 	}
-	if !ttHit || !nHashMove.IsCapture() || nHashMove.PromoType() == NoType {
-		nHashMove = EmptyMove
-	}
+	// isNoisy := nHashMove.IsCapture() || nHashMove.PromoType() != NoType
+	// if !ttHit || !isNoisy {
+	// nHashMove = EmptyMove
+	// }
 	if ttHit {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
@@ -86,6 +87,12 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return 0
 	}
 
+	var isInCheck = e.Position.IsInCheck()
+	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
+	if !isInCheck {
+		bestscore = standPat
+	}
+
 	// Delta Pruning
 	if standPat+dynamicMargin(position) < alpha {
 		e.info.deltaPruningCounter += 1
@@ -96,18 +103,14 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		alpha = standPat
 	}
 
-	var isInCheck = e.Position.IsInCheck()
-	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, -1, searchHeight, nHashMove, true)
-
-	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
-	if !isInCheck {
-		bestscore = standPat
-	}
-	noisyMoves := -1
-	seeScores := movePicker.captureMoveList.Scores
 	bestMove := EmptyMove
 	originalAlpha := alpha
+
+	movePicker := e.MovePickers[searchHeight]
+	movePicker.RecycleWith(position, e, -1, searchHeight, EmptyMove, true)
+
+	noisyMoves := -1
+	seeScores := movePicker.captureMoveList.Scores
 
 	for i := 0; ; i++ {
 		move := movePicker.Next()
