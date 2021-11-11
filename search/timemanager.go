@@ -61,8 +61,8 @@ func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
 	}
 	tm.NodesSinceLastCheck = 0
 	if isRoot && canCutNow {
-		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
-		return tm.AbruptStop
+		stop := tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
+		return stop
 	} else {
 		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
 		return tm.AbruptStop
