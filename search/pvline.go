@@ -44,6 +44,10 @@ func (thisLine *PVLine) MoveAt(index int8) Move {
 	return thisLine.line[index]
 }
 
+func (thisLine *PVLine) IsEmpty() bool {
+	return thisLine.moveCount == 0
+}
+
 func (thisLine *PVLine) Recycle() {
 	thisLine.moveCount = 0
 }

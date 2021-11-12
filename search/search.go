@@ -124,7 +124,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			lastDepth = iterationDepth
 			e.pred.Clear()
 			e.score = newScore
-			if e.isMainThread {
+			if e.isMainThread && !e.innerLines[0].IsEmpty() {
 				pv.Clone(e.innerLines[0])
 				e.SendPv(pv, e.score, iterationDepth)
 			}
