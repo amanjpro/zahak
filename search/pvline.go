@@ -9,28 +9,22 @@ import (
 type PVLine struct {
 	moveCount int8   // Number of moves in the line.
 	line      []Move // The line.
-	hasFirst  bool
 }
 
 func NewPVLine(initialSize int8) PVLine {
 	return PVLine{
 		0,
 		make([]Move, initialSize),
-		false,
 	}
 }
 
-func (thisLine *PVLine) ReplaceLine(otherLine PVLine) {
+func (thisLine *PVLine) ReplaceLine(firstMove Move, otherLine PVLine) {
 	otherLineLen := int(otherLine.moveCount)
-	if thisLine.hasFirst {
-		thisLine.moveCount = 1
-	} else {
-		thisLine.moveCount = 0
-	}
+	thisLine.line[0] = firstMove
 	for i := 0; i < otherLineLen; i++ {
-		thisLine.moveCount += 1
 		thisLine.line[i+1] = otherLine.line[i]
 	}
+	thisLine.moveCount = otherLine.moveCount + 1
 }
 
 func (thisLine *PVLine) Clone(otherLine PVLine) {
@@ -39,15 +33,11 @@ func (thisLine *PVLine) Clone(otherLine PVLine) {
 		thisLine.line[i] = otherLine.line[i]
 	}
 	thisLine.moveCount = otherLine.moveCount
-	thisLine.hasFirst = otherLine.hasFirst
 }
 
 func (thisLine *PVLine) AddFirst(move Move) {
-	if !thisLine.hasFirst {
-		thisLine.moveCount += 1
-		thisLine.hasFirst = true
-	}
 	thisLine.line[0] = move
+	thisLine.moveCount += 1
 }
 
 func (thisLine *PVLine) MoveAt(index int8) Move {
@@ -55,7 +45,6 @@ func (thisLine *PVLine) MoveAt(index int8) Move {
 }
 
 func (thisLine *PVLine) Recycle() {
-	thisLine.hasFirst = false
 	thisLine.moveCount = 0
 }
 

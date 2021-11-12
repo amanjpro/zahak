@@ -41,6 +41,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	e.VisitNode()
 
 	position := e.Position
+	TranspositionTable.Prefetch(position.Hash())
 	// pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]

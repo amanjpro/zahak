@@ -545,8 +545,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					return bestscore
 				}
 				// Potential PV move, lets copy it to the current pv-line
-				e.innerLines[searchHeight].AddFirst(hashmove)
-				e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
+				e.innerLines[searchHeight].ReplaceLine(hashmove, e.innerLines[searchHeight+1])
 				alpha = bestscore
 			}
 			break
@@ -712,8 +711,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					return score
 				}
 				// Potential PV move, lets copy it to the current pv-line
-				e.innerLines[searchHeight].AddFirst(move)
-				e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
+				e.innerLines[searchHeight].ReplaceLine(move, e.innerLines[searchHeight+1])
 				bestscore = score
 				hashmove = move
 			}
