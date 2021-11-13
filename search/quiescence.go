@@ -77,7 +77,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	standPat := e.staticEvals[searchHeight]
 	if standPat >= beta {
-		return beta // fail hard
+		return standPat // fail soft
 	}
 
 	if searchHeight >= MAX_DEPTH-1 {
