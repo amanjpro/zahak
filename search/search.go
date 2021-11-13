@@ -441,7 +441,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var hashmove Move
 	legalMoves := 0
 	quietMoves := -1
-	legalQuietMove := 0
+	legalQuietMove := -1
 	noisyMoves := -1
 	for true {
 		hashmove = movePicker.Next()
@@ -529,7 +529,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
 			e.positionMoves[searchHeight+1] = hashmove
-			e.NoteMove(hashmove, legalQuietMove-1, searchHeight)
+			e.NoteMove(hashmove, legalQuietMove, searchHeight)
 			bestscore = -e.alphaBeta(depthLeft-1+extension, searchHeight+1, -beta, -alpha)
 			e.pred.Pop()
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
@@ -539,7 +539,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						if !firstLayerOfSingularity {
 							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
+						var quietMoves []Move
+						if legalQuietMove > -1 {
+							quietMoves = e.triedQuietMoves[searchHeight][:legalQuietMove+1]
+						}
 						e.searchHistory.AddHistory(hashmove, currentMove, depthLeft, searchHeight, position.Turn(), quietMoves)
 					}
 					return bestscore
@@ -648,7 +651,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
-			e.NoteMove(move, legalQuietMove-1, searchHeight)
+			e.NoteMove(move, legalQuietMove, searchHeight)
 			LMR := int8(0)
 
 			// Late Move Reduction
@@ -706,7 +709,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						if !firstLayerOfSingularity {
 							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
+						var quietMoves []Move
+						if legalQuietMove > -1 {
+							quietMoves = e.triedQuietMoves[searchHeight][:legalQuietMove+1]
+						}
 						e.searchHistory.AddHistory(move, currentMove, depthLeft, searchHeight, position.Turn(), quietMoves)
 					}
 					return score
