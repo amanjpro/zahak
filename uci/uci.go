@@ -97,6 +97,8 @@ func (uci *UCI) Start() {
 					TranspositionTable = newTT
 				}
 				game = FromFen(startFen)
+			case "fen":
+				fmt.Println(game.Position().Fen())
 			case "stop":
 				if uci.runner.TimeManager != nil {
 					if uci.runner.TimeManager.Pondering {

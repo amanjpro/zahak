@@ -171,7 +171,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 			} else if score >= beta {
 				beta = min16(beta+delta, MAX_INT)
 				if abs16(score) < WIN_IN_MAX {
-					iterationDepth -= 1
+					iterationDepth = max8(1, iterationDepth-1)
 				}
 			} else {
 				return score
@@ -427,8 +427,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		line := e.innerLines[searchHeight]
 		if line.moveCount != 0 {
-			hashmove := e.innerLines[searchHeight].MoveAt(0)
-			nHashMove = hashmove
+			nHashMove = e.innerLines[searchHeight].MoveAt(0)
 		}
 		e.innerLines[searchHeight].Recycle()
 	}
