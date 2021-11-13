@@ -13,7 +13,6 @@ type MovePicker struct {
 	quietMoveList   *MoveList
 	captureMoveList *MoveList
 	searchHeight    int8
-	depthLeft       int8
 	currentMove     Move
 	canUseHashMove  bool
 	isQuiescence    bool
@@ -33,7 +32,6 @@ func EmptyMovePicker() *MovePicker {
 		quietMoveList:   qml,
 		captureMoveList: cml,
 		searchHeight:    0,
-		depthLeft:       0,
 		canUseHashMove:  false,
 		isQuiescence:    false,
 		killer1:         EmptyMove,
@@ -44,11 +42,10 @@ func EmptyMovePicker() *MovePicker {
 	return mp
 }
 
-func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, searchHeight int8, hashmove Move, isQuiescence bool) {
+func (mp *MovePicker) RecycleWith(p *Position, e *Engine, searchHeight int8, hashmove Move, isQuiescence bool) {
 	mp.engine = e
 	mp.position = p
 	mp.searchHeight = searchHeight
-	mp.depthLeft = depthLeft
 	mp.hashmove = hashmove
 	mp.isQuiescence = isQuiescence
 	mp.canUseHashMove = hashmove != EmptyMove
@@ -76,7 +73,7 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 	mp.captureMoveList.IsScored = false
 
 	if !isQuiescence {
-		mp.killer1, mp.killer2 = mp.engine.KillerMoveAt(searchHeight)
+		mp.killer1, mp.killer2 = mp.engine.searchHistory.KillerMoveAt(searchHeight)
 		if mp.killer1 == hashmove {
 			mp.killer1 = EmptyMove
 		}
@@ -85,7 +82,7 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, depthLeft int8, search
 		}
 		mp.killerIndex = 1
 		if mp.currentMove != EmptyMove {
-			counterMove := mp.engine.countermoves[mp.currentMove.MovingPiece()-1][mp.currentMove.Destination()]
+			counterMove := mp.engine.searchHistory.CounterMoveAt(p.Turn(), mp.currentMove)
 			if counterMove != mp.killer1 && counterMove != mp.killer2 && counterMove != hashmove {
 				mp.counterMove = counterMove
 			} else {
@@ -210,7 +207,6 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	var highestNonSpecialIndex int = -1
 	var highestNonSpecialScore int32 = math.MinInt32
 	engine := mp.engine
-	depthLeft := mp.depthLeft
 	scores := mp.quietMoveList.Scores
 	moves := mp.quietMoveList.Moves
 	size := mp.quietMoveList.Size
@@ -248,9 +244,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			}
 			nextSpecialIndex += 1
 		} else {
-			dest := move.Destination()
-			piece := move.MovingPiece()
-			history := engine.MoveHistoryScore(piece, dest, depthLeft)
+			history := engine.searchHistory.History(engine.Position.Turn(), mp.currentMove, move)
 			scores[i] = history
 
 			if highestNonSpecialScore < scores[i] {
