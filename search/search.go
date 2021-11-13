@@ -124,7 +124,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			lastDepth = iterationDepth
 			e.pred.Clear()
 			e.score = newScore
-			if e.isMainThread {
+			if e.isMainThread && !e.innerLines[0].IsEmpty() {
 				pv.Clone(e.innerLines[0])
 				e.SendPv(pv, e.score, iterationDepth)
 			}
@@ -171,7 +171,7 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 			} else if score >= beta {
 				beta = min16(beta+delta, MAX_INT)
 				if abs16(score) < WIN_IN_MAX {
-					iterationDepth -= 1
+					iterationDepth = max8(1, iterationDepth-1)
 				}
 			} else {
 				return score
@@ -427,8 +427,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 		line := e.innerLines[searchHeight]
 		if line.moveCount != 0 {
-			hashmove := e.innerLines[searchHeight].MoveAt(0)
-			nHashMove = hashmove
+			nHashMove = e.innerLines[searchHeight].MoveAt(0)
 		}
 		e.innerLines[searchHeight].Recycle()
 	}
@@ -535,9 +534,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.pred.Pop()
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
-				// Potential PV move, lets copy it to the current pv-line
-				e.innerLines[searchHeight].AddFirst(hashmove)
-				e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 				if bestscore >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
@@ -547,6 +543,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					}
 					return bestscore
 				}
+				// Potential PV move, lets copy it to the current pv-line
+				e.innerLines[searchHeight].ReplaceLine(hashmove, e.innerLines[searchHeight+1])
 				alpha = bestscore
 			}
 			break
@@ -702,9 +700,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 
 			if score > bestscore {
-				// Potential PV move, lets copy it to the current pv-line
-				e.innerLines[searchHeight].AddFirst(move)
-				e.innerLines[searchHeight].ReplaceLine(e.innerLines[searchHeight+1])
 				if score >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
@@ -714,6 +709,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					}
 					return score
 				}
+				// Potential PV move, lets copy it to the current pv-line
+				e.innerLines[searchHeight].ReplaceLine(move, e.innerLines[searchHeight+1])
 				bestscore = score
 				hashmove = move
 			}
