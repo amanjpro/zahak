@@ -5,8 +5,8 @@ import (
 )
 
 const HistoryMax int32 = 397
-const HistoryMultiplier = 47
-const HistoryDivisor = 482
+const HistoryMultiplier = 32
+const HistoryDivisor = 512
 
 type MoveHistory struct {
 	killers        [MAX_DEPTH][2]Move
