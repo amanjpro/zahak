@@ -189,7 +189,7 @@ func (e *Engine) ClearForSearch() {
 		e.staticEvals[i] = 0
 	}
 
-	e.searchHistory.Reset()
+	// e.searchHistory.Reset()
 
 	e.skipMove = EmptyMove
 	e.skipHeight = MAX_DEPTH
