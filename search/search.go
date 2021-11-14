@@ -193,6 +193,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	TranspositionTable.Prefetch(position.Hash())
 
 	currentMove := e.positionMoves[searchHeight]
+	var gpMove Move
+	if searchHeight >= 1 {
+		gpMove = e.positionMoves[searchHeight-1]
+	}
 	if !isRootNode {
 		// Position is drawn
 		if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
@@ -238,7 +242,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
 			e.NoteMove(nHashMove, 0, searchHeight)
-			e.searchHistory.AddHistory(nHashMove, currentMove, depthLeft, searchHeight, position.Turn(), e.triedQuietMoves[searchHeight][:1])
+			e.searchHistory.AddHistory(nHashMove, currentMove, gpMove, depthLeft, searchHeight, position.Turn(), e.triedQuietMoves[searchHeight][:1])
 			return nEval
 		}
 		if nEval <= alpha && nType == UpperBound {
@@ -541,7 +545,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(hashmove, currentMove, depthLeft, searchHeight, position.Turn(), quietMoves)
+						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, depthLeft, searchHeight, position.Turn(), quietMoves)
 					}
 					return bestscore
 				}
@@ -678,7 +682,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR += 1
 				}
 
-				LMR -= int8(e.searchHistory.History(position.Turn(), currentMove, move) / 24576)
+				LMR -= int8(e.searchHistory.History(position.Turn(), gpMove, currentMove, move) / 24576)
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}
@@ -708,7 +712,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(move, currentMove, depthLeft, searchHeight, position.Turn(), quietMoves)
+						e.searchHistory.AddHistory(move, currentMove, gpMove, depthLeft, searchHeight, position.Turn(), quietMoves)
 					}
 					return score
 				}
