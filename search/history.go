@@ -4,9 +4,9 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-const HistoryMax int32 = 397
-const HistoryMultiplier = 32
-const HistoryDivisor = 512
+const HistoryMax int32 = 576
+const HistoryMultiplier = 64
+const HistoryDivisor = 1024
 
 type MoveHistory struct {
 	killers        [MAX_DEPTH][2]Move
