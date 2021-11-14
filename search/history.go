@@ -9,36 +9,33 @@ const HistoryMultiplier = 32
 const HistoryDivisor = 512
 
 type MoveHistory struct {
-	killers         [][]Move
-	history         [][]int32
-	counters        [][]Move
-	counterHistory  [][]int32
-	followupHistory [][]int32
+	killers         [MAX_DEPTH][2]Move
+	history         [2 * 64][64]int32
+	counters        [2 * 64][64]Move
+	counterHistory  [12 * 64][12 * 64]int32
+	followupHistory [12 * 64][12 * 64]int32
 }
 
-func NewMoveHistory() MoveHistory {
-	mh := MoveHistory{}
+func (mh *MoveHistory) Reset() {
 
-	mh.killers = make([][]Move, MAX_DEPTH)
 	for i := 0; i < len(mh.killers); i++ {
-		mh.killers[i] = make([]Move, 2)
+		for j := 0; j < len(mh.killers[i]); j++ {
+			mh.killers[i][j] = EmptyMove
+		}
 	}
 
-	mh.history = make([][]int32, 2*64)
-	mh.counters = make([][]Move, 2*64)
 	for i := 0; i < len(mh.counters); i++ {
-		mh.history[i] = make([]int32, 2*64)
-		mh.counters[i] = make([]Move, 2*64)
+		for j := 0; j < len(mh.counters[i]); j++ {
+			mh.counters[i][j] = EmptyMove
+		}
 	}
 
-	mh.counterHistory = make([][]int32, 12*64)
-	mh.followupHistory = make([][]int32, 12*64)
 	for i := 0; i < len(mh.counterHistory); i++ {
-		mh.counterHistory[i] = make([]int32, 12*64)
-		mh.followupHistory[i] = make([]int32, 12*64)
+		for j := 0; j < len(mh.counterHistory[i]); j++ {
+			mh.counterHistory[i][j] = 0
+			mh.followupHistory[i][j] = 0
+		}
 	}
-
-	return mh
 }
 
 func (m *MoveHistory) History(stm Color, gpMove Move, pMove Move, move Move) int32 {

@@ -137,7 +137,7 @@ func NewEngine(parent *Runner) *Engine {
 		cacheHits:       0,
 		score:           0,
 		positionMoves:   make([]Move, MAX_DEPTH),
-		searchHistory:   NewMoveHistory(),
+		searchHistory:   MoveHistory{},
 		MovePickers:     movePickers,
 		triedQuietMoves: make([][]Move, 250),
 		info:            NewInfo(),
@@ -188,6 +188,8 @@ func (e *Engine) ClearForSearch() {
 		e.innerLines[i].Recycle()
 		e.staticEvals[i] = 0
 	}
+
+	e.searchHistory.Reset()
 
 	e.skipMove = EmptyMove
 	e.skipHeight = MAX_DEPTH
