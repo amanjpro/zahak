@@ -4,15 +4,47 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-const HistoryMax int32 = 397
+const HistoryMax int32 = 612
 const HistoryMultiplier = 32
 const HistoryDivisor = 512
 
 type MoveHistory struct {
-	killers        [MAX_DEPTH][2]Move
-	history        [2][64][64]int32
-	counters       [2][64][64]Move
-	counterHistory [12][64][12][64]int32
+	killers        [][]Move
+	history        [][][]int32
+	counters       [][][]Move
+	counterHistory [][][][]int32
+}
+
+func NewMoveHistory() MoveHistory {
+	mh := MoveHistory{}
+
+	mh.killers = make([][]Move, MAX_DEPTH)
+	for i := 0; i < len(mh.killers); i++ {
+		mh.killers[i] = make([]Move, 2)
+	}
+
+	mh.history = make([][][]int32, 2)
+	mh.counters = make([][][]Move, 2)
+	for i := 0; i < len(mh.history); i++ {
+		mh.history[i] = make([][]int32, 64)
+		mh.counters[i] = make([][]Move, 64)
+		for j := 0; j < len(mh.history[i]); j++ {
+			mh.history[i][j] = make([]int32, 64)
+			mh.counters[i][j] = make([]Move, 64)
+		}
+	}
+
+	mh.counterHistory = make([][][][]int32, 12)
+	for i := 0; i < len(mh.counterHistory); i++ {
+		mh.counterHistory[i] = make([][][]int32, 64)
+		for j := 0; j < len(mh.counterHistory[i]); j++ {
+			mh.counterHistory[i][j] = make([][]int32, 12)
+			for k := 0; k < len(mh.counterHistory[i][j]); k++ {
+				mh.counterHistory[i][j][k] = make([]int32, 64)
+			}
+		}
+	}
+	return mh
 }
 
 func (m *MoveHistory) History(stm Color, previousMove Move, move Move) int32 {
