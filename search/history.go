@@ -11,7 +11,7 @@ const HistoryDivisor = 512
 type MoveHistory struct {
 	killers        [MAX_DEPTH][2]Move
 	history        [2][64][64]int32
-	counters       [12][64]Move
+	counters       [2][64][64]Move
 	counterHistory [12][64][12][64]int32
 }
 
@@ -35,11 +35,11 @@ func (m *MoveHistory) KillerMoveAt(searchHeight int8) (Move, Move) {
 	return m.killers[searchHeight][0], m.killers[searchHeight][1]
 }
 
-func (m *MoveHistory) CounterMoveAt(previousMove Move) Move {
+func (m *MoveHistory) CounterMoveAt(stm Color, previousMove Move) Move {
 	if previousMove == EmptyMove {
 		return EmptyMove
 	}
-	return m.counters[previousMove.MovingPiece()-1][previousMove.Destination()]
+	return m.counters[stm][previousMove.Source()][previousMove.Destination()]
 }
 
 func (m *MoveHistory) AddHistory(move Move, previousMove Move, depthLeft int8, searchHeight int8, stm Color, moves []Move) {
@@ -55,10 +55,10 @@ func (m *MoveHistory) AddHistory(move Move, previousMove Move, depthLeft int8, s
 
 		unsignedBonus := min32(int32(depthLeft)*int32(depthLeft), HistoryMax)
 
+		psrc := previousMove.Source()
 		pdest := previousMove.Destination()
 		ppiece := previousMove.MovingPiece() - 1
-		for i := 0; i < len(moves); i++ {
-			mv := moves[i]
+		for _, mv := range moves {
 			src := mv.Source()
 			dest := mv.Destination()
 			mpiece := mv.MovingPiece() - 1
@@ -81,7 +81,7 @@ func (m *MoveHistory) AddHistory(move Move, previousMove Move, depthLeft int8, s
 		}
 
 		if previousMove != EmptyMove {
-			m.counters[ppiece][pdest] = move
+			m.counters[stm][psrc][pdest] = move
 		}
 	}
 }
