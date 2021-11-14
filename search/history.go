@@ -4,7 +4,7 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-const HistoryMax int16 = 397
+const HistoryMax int32 = 397
 const HistoryMultiplier = 47
 const HistoryDivisor = 482
 
@@ -45,27 +45,26 @@ func (m *MoveHistory) CounterMoveAt(stm Color, previousMove Move) Move {
 func (m *MoveHistory) AddHistory(move Move, previousMove Move, depthLeft int8, searchHeight int8, stm Color, moves []Move) {
 	if depthLeft >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 
-		if m.killers[searchHeight][0] != move {
-			m.killers[searchHeight][1] = m.killers[searchHeight][0]
-			m.killers[searchHeight][0] = move
+		if m.killers[searchHeight][0] != move && move != EmptyMove {
+			m.killers[searchHeight][1], m.killers[searchHeight][0] = m.killers[searchHeight][0], move
 		}
 
 		if depthLeft <= 1 {
 			return
 		}
 
-		unsignedBonus := int32(min16(int16(depthLeft)*int16(depthLeft), HistoryMax))
+		unsignedBonus := min32(int32(depthLeft)*int32(depthLeft), HistoryMax)
 
-		src := move.Source()
-		dest := move.Destination()
 		psrc := previousMove.Source()
 		pdest := previousMove.Destination()
-		mpiece := move.MovingPiece() - 1
 		ppiece := previousMove.MovingPiece() - 1
+		for _, mv := range moves {
+			src := mv.Source()
+			dest := mv.Destination()
+			mpiece := mv.MovingPiece() - 1
 
-		for _, move := range moves {
 			var signedBonus int32
-			if move == move {
+			if move == mv {
 				signedBonus = unsignedBonus
 			} else {
 				signedBonus = -unsignedBonus
@@ -85,4 +84,11 @@ func (m *MoveHistory) AddHistory(move Move, previousMove Move, depthLeft int8, s
 			m.counters[stm][psrc][pdest] = move
 		}
 	}
+}
+
+func min32(x int32, y int32) int32 {
+	if x < y {
+		return x
+	}
+	return y
 }

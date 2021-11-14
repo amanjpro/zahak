@@ -247,9 +247,9 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			history := engine.searchHistory.History(engine.Position.Turn(), mp.currentMove, move)
 			scores[i] = history
 
-			if highestNonSpecialScore < scores[i] {
+			if highestNonSpecialScore < history {
 				highestNonSpecialIndex = i
-				highestNonSpecialScore = scores[i]
+				highestNonSpecialScore = history
 			}
 		}
 	}
