@@ -10,8 +10,8 @@ const HistoryDivisor = 512
 
 type MoveHistory struct {
 	killers         [MAX_DEPTH][2]Move
-	counters        [12][64]Move
 	history         [2][64][64]int32
+	counters        [2][64][64]Move
 	counterHistory  [12][64][12][64]int32
 	followupHistory [12][64][12][64]int32
 }
@@ -19,11 +19,11 @@ type MoveHistory struct {
 func (m *MoveHistory) History(stm Color, gpMove Move, pMove Move, move Move) int32 {
 	msrc := move.Source()
 	mdest := move.Destination()
+	pdest := move.Destination()
 	mpiece := move.MovingPiece() - 1
+	ppiece := pMove.MovingPiece() - 1
 	value := m.history[stm][msrc][mdest]
 	if pMove != EmptyMove {
-		pdest := move.Destination()
-		ppiece := pMove.MovingPiece() - 1
 		value += m.counterHistory[ppiece][pdest][mpiece][mdest]
 	}
 	if gpMove != EmptyMove {
@@ -41,11 +41,11 @@ func (m *MoveHistory) KillerMoveAt(searchHeight int8) (Move, Move) {
 	return m.killers[searchHeight][0], m.killers[searchHeight][1]
 }
 
-func (m *MoveHistory) CounterMoveAt(previousMove Move) Move {
+func (m *MoveHistory) CounterMoveAt(stm Color, previousMove Move) Move {
 	if previousMove == EmptyMove {
 		return EmptyMove
 	}
-	return m.counters[previousMove.MovingPiece()-1][previousMove.Destination()]
+	return m.counters[stm][previousMove.Source()][previousMove.Destination()]
 }
 
 func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft int8, searchHeight int8, stm Color, moves []Move) {
@@ -61,6 +61,7 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 
 		unsignedBonus := min32(int32(depthLeft)*int32(depthLeft), HistoryMax)
 
+		psrc := pMove.Source()
 		pdest := pMove.Destination()
 		ppiece := pMove.MovingPiece() - 1
 		for _, mv := range moves {
@@ -94,7 +95,7 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 		}
 
 		if pMove != EmptyMove {
-			m.counters[ppiece][pdest] = move
+			m.counters[stm][psrc][pdest] = move
 		}
 	}
 }
