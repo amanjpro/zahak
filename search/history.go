@@ -4,10 +4,6 @@ import (
 	. "github.com/amanjpro/zahak/engine"
 )
 
-// const HistoryMax int32 = 397
-const HistoryMultiplier = 32
-const HistoryDivisor = 512
-
 type MoveHistory struct {
 	killers  [MAX_DEPTH][2]Move
 	history  [12][64]int32
@@ -85,7 +81,7 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 		}
 
 		// unsignedBonus := /* min32( */ int32(depthLeft) * int32(depthLeft) //, HistoryMax)
-		bonus := /* min32( */ int32(depthLeft * depthLeft) //, HistoryMax)
+		bonus := /* min32( */ int32(depthLeft) * int32(depthLeft) //, HistoryMax)
 
 		// psrc := int(pMove.Source())
 		pdest := int(pMove.Destination())
