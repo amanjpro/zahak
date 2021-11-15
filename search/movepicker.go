@@ -211,10 +211,10 @@ func (mp *MovePicker) scoreQuietMoves() int {
 	moves := mp.quietMoveList.Moves
 	size := mp.quietMoveList.Size
 
-	// var gpMove Move
-	// if mp.searchHeight > 1 {
-	// 	gpMove = engine.positionMoves[mp.searchHeight-1]
-	// }
+	var gpMove Move
+	if mp.searchHeight > 1 {
+		gpMove = engine.positionMoves[mp.searchHeight-1]
+	}
 
 	nextSpecialIndex := 0
 	_ = scores[size-1]
@@ -249,7 +249,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			}
 			nextSpecialIndex += 1
 		} else {
-			history := engine.searchHistory.History(mp.currentMove, move)
+			history := engine.searchHistory.History(gpMove, mp.currentMove, move)
 			scores[i] = history
 
 			if highestNonSpecialScore < history {
