@@ -34,7 +34,7 @@ type MoveHistory struct {
 // 	}
 // }
 
-func (m *MoveHistory) History(gpMove Move, pMove Move, move Move) int32 {
+func (m *MoveHistory) History( /* gpMove Move, */ pMove Move, move Move) int32 {
 	mdest := int(move.Destination())
 	mpiece := int(move.MovingPiece() - 1)
 	value := m.history[mpiece][mdest]
@@ -69,7 +69,7 @@ func historyBonus(current int32, bonus int32) int32 {
 	return current + 32*bonus - current*abs32(bonus)/512
 }
 
-func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft int8, searchHeight int8, moves []Move) {
+func (m *MoveHistory) AddHistory(move Move, pMove Move /* gpMove Move, */, depthLeft int8, searchHeight int8, moves []Move) {
 	if move != EmptyMove && depthLeft >= 0 && move.PromoType() == NoType && !move.IsCapture() {
 
 		if m.killers[searchHeight][0] != move {
