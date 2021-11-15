@@ -82,7 +82,7 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, searchHeight int8, has
 		}
 		mp.killerIndex = 1
 		if mp.currentMove != EmptyMove {
-			counterMove := mp.engine.searchHistory.CounterMoveAt(p.Turn(), mp.currentMove)
+			counterMove := mp.engine.searchHistory.CounterMoveAt(mp.currentMove)
 			if counterMove != mp.killer1 && counterMove != mp.killer2 && counterMove != hashmove {
 				mp.counterMove = counterMove
 			} else {
@@ -249,7 +249,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			}
 			nextSpecialIndex += 1
 		} else {
-			history := engine.searchHistory.History(engine.Position.Turn(), gpMove, mp.currentMove, move)
+			history := engine.searchHistory.History(gpMove, mp.currentMove, move)
 			scores[i] = history
 
 			if highestNonSpecialScore < history {
