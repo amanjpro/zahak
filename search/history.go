@@ -76,32 +76,32 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 			m.killers[searchHeight][1], m.killers[searchHeight][0] = m.killers[searchHeight][0], move
 		}
 
-		bonus := int32(depthLeft) * int32(depthLeft)
+		if depthLeft > 1 {
+			bonus := int32(depthLeft) * int32(depthLeft)
 
-		pdest := int(pMove.Destination())
-		ppiece := int(pMove.MovingPiece() - 1)
-		gdest := int(gpMove.Destination())
-		gpiece := int(gpMove.MovingPiece() - 1)
-		for i := 0; i < len(moves); i++ {
-			mv := moves[i]
-			// src := int(mv.Source())
+			pdest := int(pMove.Destination())
+			ppiece := int(pMove.MovingPiece() - 1)
+			gdest := int(gpMove.Destination())
+			gpiece := int(gpMove.MovingPiece() - 1)
+			for i := 0; i < len(moves); i++ {
+				mv := moves[i]
+				// src := int(mv.Source())
 
-			if move != mv {
-				mdest := int(mv.Destination())
-				mpiece := int(mv.MovingPiece() - 1)
-				m.history[mpiece][mdest] = historyBonus(m.history[mpiece][mdest], -bonus)
+				if move != mv {
+					mdest := int(mv.Destination())
+					mpiece := int(mv.MovingPiece() - 1)
+					m.history[mpiece][mdest] = historyBonus(m.history[mpiece][mdest], -bonus)
 
-				if pMove != EmptyMove {
-					m.counterHistory[ppiece*64+pdest][mpiece*64+mdest] = historyBonus(m.counterHistory[ppiece*64+pdest][mpiece*64+mdest], -bonus)
-				}
+					if pMove != EmptyMove {
+						m.counterHistory[ppiece*64+pdest][mpiece*64+mdest] = historyBonus(m.counterHistory[ppiece*64+pdest][mpiece*64+mdest], -bonus)
+					}
 
-				if gpMove != EmptyMove {
-					m.followupHistory[gpiece*64+gdest][mpiece*64+mdest] = historyBonus(m.followupHistory[gpiece*64+gdest][mpiece*64+mdest], -bonus)
+					if gpMove != EmptyMove {
+						m.followupHistory[gpiece*64+gdest][mpiece*64+mdest] = historyBonus(m.followupHistory[gpiece*64+gdest][mpiece*64+mdest], -bonus)
+					}
 				}
 			}
-		}
 
-		if depthLeft > 1 {
 			piece := int(move.MovingPiece() - 1)
 			dest := int(move.Destination())
 			m.history[piece][dest] = historyBonus(m.history[piece][dest], bonus)
