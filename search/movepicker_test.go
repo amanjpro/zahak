@@ -29,7 +29,6 @@ func TestMovepickerNextWithQuietHashmove(t *testing.T) {
 			Next:     0,
 		},
 		1,
-		0,
 		EmptyMove,
 		true,
 		false,
@@ -71,7 +70,6 @@ func TestMovepickerNextWithCaptureHashmove(t *testing.T) {
 			Next:     1,
 		},
 		1,
-		0,
 		EmptyMove,
 		true,
 		false,
@@ -119,7 +117,6 @@ func TestMovepickerNextWithNoHashmove(t *testing.T) {
 			Next:     0,
 		},
 		1,
-		0,
 		EmptyMove,
 		false,
 		false,
@@ -156,11 +153,11 @@ func TestMovePickerNormalSearch(t *testing.T) {
 	engine.Position = game.Position()
 	engine.ClearForSearch()
 
-	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
-	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1) // this is no-op
-	mp.RecycleWith(game.Position(), engine, 0, 1, NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0), false)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1) // this is no-op
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0), false)
 
 	moves := []Move{
 		NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0),
@@ -227,12 +224,12 @@ func TestUpgradeMoveToHashmoveQuiet(t *testing.T) {
 	engine.Position = game.Position()
 	engine.ClearForSearch()
 
-	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
-	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1) // this is no-op
+	engine.searchHistory.addKillerForTest(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1) // this is no-op
 
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 
 	moves := []Move{
 		NewMove(A1, B1, WhiteRook, NoPiece, NoType, 0),
@@ -301,11 +298,11 @@ func TestMovePickerNormalSearchNoHashmove(t *testing.T) {
 	engine.Position = game.Position()
 	engine.ClearForSearch()
 
-	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
-	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1) // this is no-op
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, false)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1) // this is no-op
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 
 	moves := []Move{
 		NewMove(E4, D5, WhitePawn, BlackPawn, NoType, Capture),
@@ -372,11 +369,11 @@ func TestMovePickerNormalSearchCaptureHashmove(t *testing.T) {
 	engine.Position = game.Position()
 	engine.ClearForSearch()
 
-	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
-	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1) // this is no-op
-	mp.RecycleWith(game.Position(), engine, 0, 1, NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture), false)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1) // this is no-op
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture), false)
 
 	moves := []Move{
 		NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture),
@@ -444,11 +441,11 @@ func TestMovePickerNormalSearchUpgradeToHashmoveCapture(t *testing.T) {
 	engine.Position = game.Position()
 	engine.ClearForSearch()
 
-	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
-	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1) // this is no-op
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, false)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1) // this is no-op
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 	mp.UpgradeToPvMove(NewMove(C3, D5, WhiteKnight, BlackPawn, NoType, Capture))
 
 	moves := []Move{
@@ -518,11 +515,11 @@ func TestMovePickerQuiescenceSearch(t *testing.T) {
 	engine.ClearForSearch()
 
 	// all these are no-op
-	engine.AddKillerMove(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddKillerMove(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
-	engine.AddMoveHistory(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), WhiteBishop, C4, 1)
-	engine.AddMoveHistory(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), WhitePawn, B4, 1)
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, true)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B3, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addKillerForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(F1, C4, WhiteBishop, NoPiece, NoType, 0), 1)
+	engine.searchHistory.addHistoryForTest(NewMove(B2, B4, WhitePawn, NoPiece, NoType, 0), 1)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, true)
 
 	moves := []Move{
 		NewMove(E4, D5, WhitePawn, BlackPawn, NoType, Capture),
@@ -554,7 +551,7 @@ func TestMovePickerNormalSearchWithPromotionNoHashmove(t *testing.T) {
 	engine := NewEngine(nil)
 	engine.Position = game.Position()
 	engine.ClearForSearch()
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 
 	moves := []Move{
 		NewMove(H7, G8, WhitePawn, BlackKnight, Queen, Capture),
@@ -600,7 +597,7 @@ func TestMovePickerNormalSearchWithPromotionPromotionQuietHashmove(t *testing.T)
 	engine := NewEngine(nil)
 	engine.Position = game.Position()
 	engine.ClearForSearch()
-	mp.RecycleWith(game.Position(), engine, 0, 1, NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0), false)
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0), false)
 
 	moves := []Move{
 		NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0),
@@ -646,7 +643,7 @@ func TestMovePickerNormalSearchWithPromotionPromotionCaptureHashmove(t *testing.
 	engine := NewEngine(nil)
 	engine.Position = game.Position()
 	engine.ClearForSearch()
-	mp.RecycleWith(game.Position(), engine, 0, 1, NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture), false)
+	mp.RecycleWith(game.Position(), engine, 1, NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture), false)
 
 	moves := []Move{
 		NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture),
@@ -692,7 +689,7 @@ func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionQuietHashmove(t *t
 	engine := NewEngine(nil)
 	engine.Position = game.Position()
 	engine.ClearForSearch()
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 	mp.UpgradeToPvMove(NewMove(H7, H8, WhitePawn, NoPiece, Knight, 0))
 
 	moves := []Move{
@@ -739,7 +736,7 @@ func TestMovePickerNormalSearchWithPromotionUpgradeToPromotionCaptureHashmove(t 
 	engine := NewEngine(nil)
 	engine.Position = game.Position()
 	engine.ClearForSearch()
-	mp.RecycleWith(game.Position(), engine, 0, 1, EmptyMove, false)
+	mp.RecycleWith(game.Position(), engine, 1, EmptyMove, false)
 	mp.UpgradeToPvMove(NewMove(H7, G8, WhitePawn, BlackKnight, Knight, Capture))
 
 	moves := []Move{
@@ -796,4 +793,12 @@ func (mp *MovePicker) getScore(m Move) int32 {
 		}
 	}
 	return -900_000_000
+}
+
+func (m *MoveHistory) addKillerForTest(move Move, h int8) {
+	m.killers[h][0], m.killers[h][1] = move, m.killers[h][0]
+}
+
+func (m *MoveHistory) addHistoryForTest(move Move, depthLeft int8) {
+	m.history[move.MovingPiece()-1][move.Destination()] = int32(depthLeft) * int32(depthLeft)
 }
