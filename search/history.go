@@ -101,7 +101,7 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 			}
 		}
 
-		if depthLeft > 2 {
+		if depthLeft > 1 {
 			piece := int(move.MovingPiece() - 1)
 			dest := int(move.Destination())
 			m.history[piece][dest] = historyBonus(m.history[piece][dest], bonus)
