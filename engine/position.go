@@ -457,9 +457,7 @@ func (p *Position) Hash() uint64 {
 }
 
 func findEnPassantCaptureSquare(move Move) Square {
-	rank := move.Source().Rank()
-	file := move.Destination().File()
-	return SquareOf(file, rank)
+	return move.Destination() ^ 8
 }
 
 func (p *Position) Copy() *Position {
