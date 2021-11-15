@@ -5,10 +5,10 @@ import (
 )
 
 type MoveHistory struct {
-	killers  [MAX_DEPTH][2]Move
-	history  [12][64]int32
-	counters [12][64]Move
-	// counterHistory  [12 * 64][12 * 64]int32
+	killers        [MAX_DEPTH][2]Move
+	history        [12][64]int32
+	counters       [12][64]Move
+	counterHistory [12 * 64][12 * 64]int32
 	// followupHistory [12 * 64][12 * 64]int32
 }
 
@@ -38,11 +38,11 @@ func (m *MoveHistory) History(gpMove Move, pMove Move, move Move) int32 {
 	mdest := int(move.Destination())
 	mpiece := int(move.MovingPiece() - 1)
 	value := m.history[mpiece][mdest]
-	// if pMove != EmptyMove {
-	// 	pdest := int(move.Destination())
-	// 	ppiece := int(pMove.MovingPiece() - 1)
-	// 	value += m.counterHistory[ppiece*64+pdest][mpiece*64+mdest]
-	// }
+	if pMove != EmptyMove {
+		pdest := int(pMove.Destination())
+		ppiece := int(pMove.MovingPiece() - 1)
+		value += m.counterHistory[ppiece*64+pdest][mpiece*64+mdest]
+	}
 	// if gpMove != EmptyMove {
 	// 	gpiece := int(gpMove.MovingPiece() - 1)
 	// 	gdest := int(gpMove.Destination())
@@ -80,8 +80,7 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 			return
 		}
 
-		// unsignedBonus := /* min32( */ int32(depthLeft) * int32(depthLeft) //, HistoryMax)
-		bonus := /* min32( */ int32(depthLeft) * int32(depthLeft) //, HistoryMax)
+		bonus := int32(depthLeft) * int32(depthLeft)
 
 		// psrc := int(pMove.Source())
 		pdest := int(pMove.Destination())
@@ -97,11 +96,9 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 				mpiece := int(mv.MovingPiece() - 1)
 				m.history[mpiece][mdest] = historyBonus(m.history[mpiece][mdest], -bonus)
 
-				// if pMove != EmptyMove {
-				// 	entry = m.counterHistory[ppiece*64+pdest][mpiece*64+dest]
-				// 	entry += HistoryMultiplier*signedBonus - entry*unsignedBonus/HistoryDivisor
-				// 	m.counterHistory[ppiece*64+pdest][mpiece*64+dest] = entry
-				// }
+				if pMove != EmptyMove {
+					m.counterHistory[ppiece*64+pdest][mpiece*64+mdest] = historyBonus(m.counterHistory[ppiece*64+pdest][mpiece*64+mdest], -bonus)
+				}
 				//
 				// if gpMove != EmptyMove {
 				// 	entry = m.followupHistory[gpiece*64+gdest][mpiece*64+dest]
@@ -111,11 +108,12 @@ func (m *MoveHistory) AddHistory(move Move, pMove Move, gpMove Move, depthLeft i
 			}
 		}
 
-		piece := move.MovingPiece() - 1
-		dest := move.Destination()
+		piece := int(move.MovingPiece() - 1)
+		dest := int(move.Destination())
 		m.history[piece][dest] = historyBonus(m.history[piece][dest], bonus)
 
 		if pMove != EmptyMove {
+			m.counterHistory[ppiece*64+pdest][piece*64+dest] = historyBonus(m.counterHistory[ppiece*64+pdest][piece*64+dest], bonus)
 			m.counters[ppiece][pdest] = move
 		}
 	}
