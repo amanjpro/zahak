@@ -542,9 +542,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
 							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
+							quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
+							e.searchHistory.AddHistory(hashmove, currentMove, gpMove, depthLeft, searchHeight, quietMoves)
 						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, depthLeft, searchHeight, quietMoves)
 					}
 					return bestscore
 				}
@@ -709,9 +709,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
 							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
+							quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
+							e.searchHistory.AddHistory(move, currentMove, gpMove, depthLeft, searchHeight, quietMoves)
 						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(move, currentMove, gpMove, depthLeft, searchHeight, quietMoves)
 					}
 					return score
 				}
