@@ -681,7 +681,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR += 1
 				}
 
-				LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 8192)
+				LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}

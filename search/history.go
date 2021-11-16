@@ -12,28 +12,6 @@ type MoveHistory struct {
 	followupHistory [12 * 64][12 * 64]int32
 }
 
-func (mh *MoveHistory) Reset() {
-
-	// for i := 0; i < len(mh.killers); i++ {
-	// 	for j := 0; j < len(mh.killers[i]); j++ {
-	// 		mh.killers[i][j] = EmptyMove
-	// 	}
-	// }
-	//
-	// for i := 0; i < len(mh.counters); i++ {
-	// 	for j := 0; j < len(mh.counters[i]); j++ {
-	// 		mh.counters[i][j] = EmptyMove
-	// 	}
-	// }
-
-	for i := 0; i < len(mh.followupHistory); i++ {
-		for j := 0; j < len(mh.followupHistory[i]); j++ {
-			// mh.counterHistory[i][j] = 0
-			mh.followupHistory[i][j] = 0
-		}
-	}
-}
-
 func (m *MoveHistory) History(gpMove Move, pMove Move, move Move) int32 {
 	mdest := int(move.Destination())
 	mpiece := int(move.MovingPiece() - 1)
