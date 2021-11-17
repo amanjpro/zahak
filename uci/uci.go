@@ -89,13 +89,6 @@ func (uci *UCI) Start() {
 			case "draw":
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
-				size := TranspositionTable.Size()
-				newTT := NewCache(size)
-				for i := 0; i < len(uci.runner.Engines); i++ {
-					TranspositionTable = nil
-					runtime.GC()
-					TranspositionTable = newTT
-				}
 				game = FromFen(startFen)
 			case "fen":
 				fmt.Println(game.Position().Fen())
