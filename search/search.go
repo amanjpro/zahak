@@ -320,6 +320,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Pruning
 	pruningAllowed := !isPvNode && !isInCheck && e.doPruning && !firstLayerOfSingularity
 
+	// Idea taken from Berserk
+	histDepth := depthLeft
+	if eval+p > beta {
+		histDepth += 1
+	}
+
 	if pruningAllowed {
 		// Razoring
 		if depthLeft < 2 && eval+350 <= alpha {
@@ -544,7 +550,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, depthLeft, searchHeight, quietMoves)
+						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves)
 					}
 					return bestscore
 				}
@@ -711,7 +717,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(move, currentMove, gpMove, depthLeft, searchHeight, quietMoves)
+						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves)
 					}
 					return score
 				}
