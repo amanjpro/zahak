@@ -197,9 +197,9 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 				gain := int32(engine.Position.SeeG(move, 0))
 				if gain < 0 {
 					scores[i] = -90_000_000 + gain
-				} else if gain == 0 {
-					scores[i] = 100_000_000 + int32(cpiece.Weight()-mpiece.Weight())
-				} else {
+				} else if gain >= 0 {
+					// 	scores[i] = 100_000_000 + int32(cpiece.Weight()-mpiece.Weight())
+					// } else {
 					scores[i] = 100_100_000 + gain
 				}
 			} else {
