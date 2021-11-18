@@ -93,7 +93,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	// }
 
 	_, _, oldDepth, _, oldAge := Unpack(oldData)
-	if nodeType != Exact && /* hash == oldHash && */ (oldDepth-6)/2 >= depth && oldData != 0 && age-OldAge < oldAge {
+	if age >= oldAge && nodeType != Exact && /* hash == oldHash && */ (oldDepth-6)/2 >= depth && oldData != 0 && age-OldAge < oldAge {
 		return
 	}
 	newData := Pack(hashmove, eval, depth, nodeType, age)
