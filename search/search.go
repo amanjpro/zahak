@@ -320,6 +320,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Pruning
 	pruningAllowed := !isPvNode && !isInCheck && e.doPruning && !firstLayerOfSingularity
 
+	// Idea taken from Berserk
 	histDepth := depthLeft
 	if eval+p > beta {
 		histDepth += 1
