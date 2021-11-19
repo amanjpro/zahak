@@ -209,6 +209,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if IsRepetition(position, e.pred, currentMove) || position.IsDraw() {
 			return 0
 		}
+
+		// Mate distance pruning
+		alpha = max16(alpha, -CHECKMATE_EVAL+int16(searchHeight))
+		beta = min16(beta, CHECKMATE_EVAL-int16(searchHeight)-1)
+		if alpha >= beta {
+			return alpha
+		}
 	}
 
 	if searchHeight >= MAX_DEPTH-1 {
