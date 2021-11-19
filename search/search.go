@@ -469,6 +469,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			legalMoves += 1
 			continue
 		}
+		if isRootNode && e.mustSkip(hashmove) {
+			continue
+		}
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(hashmove); ok {
 			legalMoves += 1
 			if isQuiet {
@@ -614,6 +617,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			isQuiet = true
 			quietMoves += 1
 		}
+		if isRootNode && e.mustSkip(move) {
+			continue
+		}
 		isKiller := movePicker.killer1 == move || movePicker.killer2 == move || movePicker.counterMove == move
 
 		if e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
@@ -749,7 +755,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 {
+	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) != 1 {
 		e.TimeManager().StopSearchNow = true
 	}
 	return bestscore

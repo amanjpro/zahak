@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-func (p *Position) ParseMoves(moveStr []string) []Move {
+func (p *Position) ParseMoves(moveStr []string, strict bool) []Move {
 	if len(moveStr) == 0 {
 		return []Move{}
 	}
 	currentMove := moveStr[0]
 	if len(strings.TrimSpace(currentMove)) == 0 {
-		return p.ParseMoves(moveStr[1:])
+		return p.ParseMoves(moveStr[1:], strict)
 	} else {
 		var parsed Move
 		validMoves := p.PseudoLegalMoves()
@@ -21,11 +21,13 @@ func (p *Position) ParseMoves(moveStr []string) []Move {
 				break
 			}
 		}
-		if parsed == 0 {
+		if parsed == 0 && strict {
 			panic(fmt.Sprintf("Expected a valid move, %s is not valid", currentMove))
+		} else if parsed == 0 {
+			return []Move{}
 		}
 		ep, tg, hc, _ := p.GameMakeMove(parsed)
-		otherMoves := p.ParseMoves(moveStr[1:])
+		otherMoves := p.ParseMoves(moveStr[1:], strict)
 		p.GameUnMakeMove(parsed, tg, ep, hc)
 		return append(append([]Move{}, parsed), otherMoves...)
 	}

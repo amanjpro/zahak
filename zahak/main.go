@@ -61,7 +61,7 @@ func main() {
 			game := FromFen(fen)
 			moves := []Move{}
 			if len(flag.Args()) > 2 {
-				game.Position().ParseMoves(strings.Fields(flag.Args()[2]))
+				game.Position().ParseMoves(strings.Fields(flag.Args()[2]), true)
 			}
 			PerftTree(game, depth, moves)
 		} else {

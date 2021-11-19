@@ -10,20 +10,10 @@ type Game struct {
 	numberOfMoves uint16
 }
 
-func (g *Game) IsLegalMove(m Move) bool {
-	// Very inefficient, but doesn't really matter
-	for _, move := range g.position.PseudoLegalMoves() {
-		if move == m {
-			return true
-		}
-	}
-	return false
-}
-
 func (g *Game) Move(m Move) {
 	pos := g.position
 
-	if g.IsLegalMove(m) {
+	if pos.IsPseudoLegal(m) {
 		g.moves = append(g.moves, m)
 		pos.GameMakeMove(m)
 		if pos.Turn() == White {
