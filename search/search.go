@@ -361,7 +361,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// NullMove pruning
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
-			var R = 5 + max8(depthLeft/6, 3)
+			var R = 5 + min8(depthLeft/6, 3)
 			if eval >= beta+100 {
 				R += 1
 			}
