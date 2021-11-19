@@ -94,6 +94,7 @@ type Engine struct {
 	startDepth      int8
 	skipMove        Move
 	skipHeight      int8
+	MovesToSearch   []Move
 	TempMovePicker  *MovePicker
 }
 
@@ -425,4 +426,14 @@ func evalFromTT(value int16, searchHeight int8) int16 {
 	}
 
 	return value
+}
+
+func (e *Engine) mustSkip(move Move) bool {
+	mts := e.MovesToSearch
+	for i := 0; i < len(mts); i++ {
+		if mts[i] == move {
+			return false
+		}
+	}
+	return len(mts) != 0
 }
