@@ -38,7 +38,7 @@ func dynamicMargin(pos *Position) int16 {
 func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	e.info.quiesceCounter += 1
-	e.VisitNode()
+	e.VisitNode(searchHeight)
 
 	position := e.Position
 	TranspositionTable.Prefetch(position.Hash())

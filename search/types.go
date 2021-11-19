@@ -84,6 +84,7 @@ type Engine struct {
 	info            Info
 	pred            Predecessors
 	score           int16
+	seldepth        int8
 	innerLines      []PVLine
 	staticEvals     []int16
 	TotalTime       float64
@@ -190,6 +191,8 @@ func (e *Engine) ClearForSearch() {
 		e.staticEvals[i] = 0
 	}
 
+	e.seldepth = 0
+
 	// e.searchHistory.Reset()
 
 	e.skipMove = EmptyMove
@@ -253,14 +256,18 @@ func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
 	thinkTime := time.Since(e.StartTime)
 	nodesVisited := int64(0) //e.parent.nodesVisited
 	tbHits := int64(0)       //e.parent.nodesVisited
+	seldepth := int8(0)
 	for i := 0; i < len(e.parent.Engines); i++ {
 		e := e.parent.Engines[i]
 		nodesVisited += e.nodesVisited
 		tbHits += e.info.tbHit
+		if e.seldepth > seldepth {
+			seldepth = e.seldepth
+		}
 	}
 	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
 	fmt.Printf("info depth %d seldepth %d hashfull %d tbhits %d nodes %d nps %d score %s time %d pv %s\n",
-		depth, pv.moveCount, TranspositionTable.Consumed(), tbHits,
+		depth, seldepth, TranspositionTable.Consumed(), tbHits,
 		nodesVisited, nps, ScoreToCp(score),
 		thinkTime.Milliseconds(), pv.ToString())
 	e.TotalTime = thinkTime.Seconds()
@@ -277,8 +284,11 @@ func ScoreToCp(score int16) string {
 	return fmt.Sprintf("cp %d", score)
 }
 
-func (e *Engine) VisitNode() {
+func (e *Engine) VisitNode(searchHeight int8) {
 	e.nodesVisited += 1
+	if searchHeight > e.seldepth {
+		e.seldepth = searchHeight
+	}
 }
 
 func (e *Engine) CacheHit() {
