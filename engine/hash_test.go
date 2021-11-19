@@ -248,3 +248,22 @@ func TestUpdateZobristHash(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateZobristHashNullMove(t *testing.T) {
+	for _, pos := range positions {
+		pos.hash = 0 // Reset the positions
+		originalHash := pos.Hash()
+		sq := pos.MakeNullMove()
+		incrementHash := pos.Hash()
+		pos.hash = 0
+		freshHash := pos.Hash()
+		pos.UnMakeNullMove(sq)
+		unmadeHash := pos.Hash()
+		if incrementHash != freshHash {
+			t.Errorf("Updated hash != Fresh hash -> Pos:\n%v\n", pos.Board.Draw())
+		}
+		if unmadeHash != originalHash {
+			t.Errorf("Undone hash (reverse from unmake) != original hash -> Pos:\n%v\n", pos.Board.Draw())
+		}
+	}
+}
