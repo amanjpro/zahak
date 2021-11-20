@@ -169,7 +169,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8) {
 
 	for i := 0; i < e.MultiPV; i++ {
 		e.CurrentPV = i
-		firstIteration := false
+		firstIteration := true
 		for true {
 			e.innerLines[0].Recycle()
 			if firstIteration {
@@ -209,8 +209,8 @@ func (e *Engine) aspirationWindow(iterationDepth int8) {
 			}
 			delta += delta * 2 / 3
 			maxSeldepth = max8(e.seldepth, maxSeldepth)
+			firstIteration = false
 		}
-		firstIteration = false
 	}
 
 sortPVs:
