@@ -65,15 +65,20 @@ var b = WhiteBishop.Weight()
 var q = WhiteQueen.Weight()
 var WIN_IN_MAX = CHECKMATE_EVAL - int16(MAX_DEPTH)
 
-var lmrReductions [32][32]int = initLMR()
+var quietLmrReductions [32][32]int = initLMR(true)
+var noisyLmrReductions [32][32]int = initLMR(false)
 
 // This idea is taken from Weiss, which I believe in turn is taken from many open source
 // engines.
-func initLMR() [32][32]int {
+func initLMR(isQuiet bool) [32][32]int {
 	var reductions [32][32]int
 	for depth := 1; depth < 32; depth++ {
 		for moves := 1; moves < 32; moves++ {
-			reductions[depth][moves] = int(0.8 + math.Log(float64(depth))*math.Log(1.2*float64(moves))/2.5)
+			if isQuiet {
+				reductions[depth][moves] = int(0.8 + math.Log(float64(depth))*math.Log(1.2*float64(moves))/2.5)
+			} else {
+				reductions[depth][moves] = int(math.Log(float64(depth)) * math.Log(1.2*float64(moves)) / 3.5)
+			}
 		}
 	}
 	return reductions
@@ -686,7 +691,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// Late Move Reduction
 			if e.doPruning && (isQuiet || isCaptureMove && seeScores[noisyMoves] < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
 				e.info.lmrCounter += 1
-				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
+				if isQuiet {
+					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
+				} else {
+					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
+				}
 
 				if isInCheck {
 					LMR -= 1
@@ -711,8 +720,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if isQuiet {
 					LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
-				} else {
-					LMR -= 1
+					// } else {
+					// 	LMR -= 1
 				}
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
