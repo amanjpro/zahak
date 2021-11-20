@@ -28,6 +28,7 @@ type UCI struct {
 	timeManager *TimeManager
 	withBook    bool
 	bookPath    string
+	multiPV     int
 }
 
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
@@ -37,6 +38,7 @@ func NewUCI(version string, withBook bool, bookPath string) *UCI {
 		nil,
 		withBook,
 		bookPath,
+		1,
 	}
 }
 
@@ -81,6 +83,7 @@ func (uci *UCI) Start() {
 				fmt.Print("option name BookFile type string default <empty>\n")
 				fmt.Print("option name SyzygyPath type string default <empty>\n")
 				fmt.Printf("option name SyzygyProbeDepth type spin default %d min 0 max 128\n", DefaultProbeDepth)
+				fmt.Printf("option name MultiPV type spin default 1 min 1 max %d\n", MaxMultiPV)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -138,6 +141,14 @@ func (uci *UCI) Start() {
 					}
 				} else if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
+				} else if strings.HasPrefix(cmd, "setoption name MultiPV value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					multiPV, _ := strconv.Atoi(v)
+					for _, e := range uci.runner.Engines {
+						e.MultiPV = multiPV
+					}
+					uci.multiPV = multiPV
 				} else if strings.HasPrefix(cmd, "setoption name OwnBook value ") {
 					options := strings.Fields(cmd)
 					opt := options[len(options)-1]
@@ -153,6 +164,9 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					cpu, _ := strconv.Atoi(v)
+					for _, e := range uci.runner.Engines {
+						e.MultiPV = uci.multiPV
+					}
 					uci.runner = NewRunner(cpu)
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)

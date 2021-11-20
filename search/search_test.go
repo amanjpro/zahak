@@ -194,11 +194,11 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 		NewMove(A3, B3, BlackQueen, NoPiece, NoType, 0),
 		NewMove(B1, A1, WhiteKing, NoPiece, NoType, 0),
 		NewMove(B3, A3, BlackQueen, NoPiece, NoType, 0)}
-	actual := r.pv.line
+	actual := r.MultiPVs[0].line
 	if equalMoves(expected, actual) {
-		actualString := r.pv.ToString()
-		r.pv.line = expected
-		expectedString := r.pv.ToString()
+		actualString := r.MultiPVs[0].ToString()
+		r.MultiPVs[0].line = expected
+		expectedString := r.MultiPVs[0].ToString()
 		t.Errorf("Unexpected move was played:%s\n", fmt.Sprintf("Expected: %s\nGot: %s\n", expectedString, actualString))
 	}
 }

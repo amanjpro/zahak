@@ -14,7 +14,7 @@ type Runner struct {
 	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
-	pv           PVLine
+	MultiPVs     []PVLine
 	isBookmove   bool
 	depth        int8
 	move         Move
@@ -97,8 +97,11 @@ type Engine struct {
 	skipHeight      int8
 	MovesToSearch   []Move
 	TempMovePicker  *MovePicker
+	MultiPV         int
+	CurrentPV       int
 }
 
+const MaxMultiPV = 120
 const MAX_DEPTH int8 = int8(100)
 
 func (e *Engine) TimeManager() *TimeManager {
@@ -107,6 +110,12 @@ func (e *Engine) TimeManager() *TimeManager {
 
 func NewRunner(numberOfThreads int) *Runner {
 	t := &Runner{}
+	multiPVs := make([]PVLine, MAX_DEPTH)
+	for i := int8(0); i < MAX_DEPTH; i++ {
+		line := NewPVLine(MAX_DEPTH)
+		multiPVs[i] = line
+	}
+
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
@@ -116,7 +125,7 @@ func NewRunner(numberOfThreads int) *Runner {
 		}
 		engines[i] = engine
 	}
-	t.pv = NewPVLine(MAX_DEPTH)
+	t.MultiPVs = multiPVs
 	t.Engines = engines
 	return t
 }
@@ -154,6 +163,7 @@ func NewEngine(parent *Runner) *Engine {
 		TempMovePicker:  EmptyMovePicker(),
 		skipMove:        EmptyMove,
 		skipHeight:      MAX_DEPTH,
+		MultiPV:         1,
 	}
 }
 
@@ -181,7 +191,9 @@ func (r *Runner) ClearForSearch() {
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
-	r.pv.Recycle()
+	for i := 0; i < len(r.MultiPVs); i++ {
+		r.MultiPVs[i].Recycle()
+	}
 	r.Stop = false
 }
 
@@ -233,7 +245,7 @@ func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square
 
 func (r *Runner) SendBestMove() {
 	mv := r.Move()
-	pv := r.pv
+	pv := r.MultiPVs[0]
 	if pv.moveCount >= 2 {
 		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), pv.MoveAt(1).ToString())
 	} else {

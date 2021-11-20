@@ -86,8 +86,8 @@ func initLMR(isQuiet bool) [32][32]int {
 
 func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) {
 	parent := e.parent
-	parent.pv.Clone(pvLine)
-	parent.move = parent.pv.MoveAt(0)
+	parent.MultiPVs[0].Clone(pvLine)
+	parent.move = parent.MultiPVs[0].MoveAt(0)
 	parent.score = score
 	parent.depth = depth
 	parent.isBookmove = isBookmove
