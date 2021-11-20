@@ -162,35 +162,37 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 	e.seldepth = 0
 
 	for true {
-		beta = min16(beta, MAX_INT)
-		alpha = max16(alpha, -MAX_INT)
+		for i := 0; i < e.MultiPV; i++ {
+			beta = min16(beta, MAX_INT)
+			alpha = max16(alpha, -MAX_INT)
 
-		if originalDepth <= 6 {
-			beta = MAX_INT
-			alpha = -MAX_INT
-			delta = beta
-		}
-
-		score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-		if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
-			e.seldepth = max8(e.seldepth, maxSeldepth)
-			return -MAX_INT
-		}
-		if score <= alpha {
-			alpha = max16(alpha-delta, -MAX_INT)
-			beta = (alpha + 3*beta) / 4
-			iterationDepth = originalDepth
-		} else if score >= beta {
-			beta = min16(beta+delta, MAX_INT)
-			if abs16(score) < WIN_IN_MAX {
-				iterationDepth = max8(1, iterationDepth-1)
+			if originalDepth <= 6 {
+				beta = MAX_INT
+				alpha = -MAX_INT
+				delta = beta
 			}
-		} else {
-			e.seldepth = max8(e.seldepth, maxSeldepth)
-			return score
+
+			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
+			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
+				e.seldepth = max8(e.seldepth, maxSeldepth)
+				return -MAX_INT
+			}
+			if score <= alpha {
+				alpha = max16(alpha-delta, -MAX_INT)
+				beta = (alpha + 3*beta) / 4
+				iterationDepth = originalDepth
+			} else if score >= beta {
+				beta = min16(beta+delta, MAX_INT)
+				if abs16(score) < WIN_IN_MAX {
+					iterationDepth = max8(1, iterationDepth-1)
+				}
+			} else {
+				e.seldepth = max8(e.seldepth, maxSeldepth)
+				return score
+			}
+			delta += delta * 2 / 3
+			maxSeldepth = max8(e.seldepth, maxSeldepth)
 		}
-		delta += delta * 2 / 3
-		maxSeldepth = max8(e.seldepth, maxSeldepth)
 	}
 	e.seldepth = max8(e.seldepth, maxSeldepth)
 	// We should never get here
