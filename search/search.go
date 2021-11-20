@@ -151,46 +151,48 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 
 func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 	e.doPruning = iterationDepth > 3
-	if iterationDepth <= 6 {
-		e.seldepth = 0
-		return e.alphaBeta(iterationDepth, 0, -MAX_INT, MAX_INT)
-	} else {
-		var initialWindow int16 = 12
-		var delta int16 = 16
 
-		alpha := max16(score-initialWindow, -MAX_INT)
-		beta := min16(score+initialWindow, MAX_INT)
-		originalDepth := iterationDepth
-		maxSeldepth := int8(0)
-		e.seldepth = 0
+	var initialWindow int16 = 12
+	var delta int16 = 16
 
-		for true {
-			beta = min16(beta, MAX_INT)
-			alpha = max16(alpha, -MAX_INT)
+	alpha := max16(score-initialWindow, -MAX_INT)
+	beta := min16(score+initialWindow, MAX_INT)
+	originalDepth := iterationDepth
+	maxSeldepth := int8(0)
+	e.seldepth = 0
 
-			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
-				e.seldepth = max8(e.seldepth, maxSeldepth)
-				return -MAX_INT
-			}
-			if score <= alpha {
-				alpha = max16(alpha-delta, -MAX_INT)
-				beta = (alpha + 3*beta) / 4
-				iterationDepth = originalDepth
-			} else if score >= beta {
-				beta = min16(beta+delta, MAX_INT)
-				if abs16(score) < WIN_IN_MAX {
-					iterationDepth = max8(1, iterationDepth-1)
-				}
-			} else {
-				e.seldepth = max8(e.seldepth, maxSeldepth)
-				return score
-			}
-			delta += delta * 2 / 3
-			maxSeldepth = max8(e.seldepth, maxSeldepth)
+	for true {
+		beta = min16(beta, MAX_INT)
+		alpha = max16(alpha, -MAX_INT)
+
+		if originalDepth <= 6 {
+			beta = MAX_INT
+			alpha = -MAX_INT
+			delta = beta
 		}
-		e.seldepth = max8(e.seldepth, maxSeldepth)
+
+		score = e.alphaBeta(iterationDepth, 0, alpha, beta)
+		if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
+			e.seldepth = max8(e.seldepth, maxSeldepth)
+			return -MAX_INT
+		}
+		if score <= alpha {
+			alpha = max16(alpha-delta, -MAX_INT)
+			beta = (alpha + 3*beta) / 4
+			iterationDepth = originalDepth
+		} else if score >= beta {
+			beta = min16(beta+delta, MAX_INT)
+			if abs16(score) < WIN_IN_MAX {
+				iterationDepth = max8(1, iterationDepth-1)
+			}
+		} else {
+			e.seldepth = max8(e.seldepth, maxSeldepth)
+			return score
+		}
+		delta += delta * 2 / 3
+		maxSeldepth = max8(e.seldepth, maxSeldepth)
 	}
+	e.seldepth = max8(e.seldepth, maxSeldepth)
 	// We should never get here
 	return -MAX_INT
 }
