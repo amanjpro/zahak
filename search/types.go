@@ -502,6 +502,7 @@ func (e *Engine) mustSkip(move Move) bool {
 	for i := 0; i < len(mts); i++ {
 		if mts[i] == move {
 			notInSearchMoves = false
+			break
 		}
 	}
 	return notInSearchMoves || e.multiPVSkipRootMove(move)
