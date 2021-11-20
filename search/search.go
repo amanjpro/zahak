@@ -86,8 +86,8 @@ func initLMR(isQuiet bool) [32][32]int {
 
 func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) {
 	parent := e.parent
-	parent.MultiPVs[0].Clone(pvLine)
-	parent.move = parent.MultiPVs[0].MoveAt(0)
+	parent.pv.Clone(pvLine)
+	parent.move = parent.pv.MoveAt(0)
 	parent.score = score
 	parent.depth = depth
 	parent.isBookmove = isBookmove
@@ -114,9 +114,9 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 				break
 			}
 
-			e.innerLines[0].Recycle()
 			e.startDepth = iterationDepth
-			newScore := e.aspirationWindow(e.score, iterationDepth)
+			e.aspirationWindow(iterationDepth)
+			newScore := e.Scores[0]
 
 			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
 				break
@@ -129,9 +129,13 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			lastDepth = iterationDepth
 			e.pred.Clear()
 			e.score = newScore
-			if e.isMainThread && !e.innerLines[0].IsEmpty() {
-				pv.Clone(e.innerLines[0])
-				e.SendPv(pv, e.score, iterationDepth)
+			if e.isMainThread && !e.MultiPVs[0].IsEmpty() {
+				pv.Clone(e.MultiPVs[0])
+				if e.MultiPV > 1 {
+					e.SendMultiPv(pv, e.score, lastDepth)
+				} else {
+					e.SendPv(pv, e.score, iterationDepth)
+				}
 			}
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.info.Print()
@@ -145,24 +149,34 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 		// e.TimeManager().Pondering = false
 		e.parent.Stop = true
 		e.updatePv(pv, e.score, lastDepth, false)
-		e.SendPv(pv, e.score, lastDepth)
+		if e.MultiPV > 1 {
+			e.SendMultiPv(pv, e.score, lastDepth)
+		} else {
+			e.SendPv(pv, e.score, lastDepth)
+		}
 	}
 }
 
-func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
+func (e *Engine) aspirationWindow(iterationDepth int8) {
 	e.doPruning = iterationDepth > 3
 
 	var initialWindow int16 = 12
 	var delta int16 = 16
-
-	alpha := max16(score-initialWindow, -MAX_INT)
-	beta := min16(score+initialWindow, MAX_INT)
+	var alpha, beta, score int16
 	originalDepth := iterationDepth
 	maxSeldepth := int8(0)
 	e.seldepth = 0
 
-	for true {
-		for i := 0; i < e.MultiPV; i++ {
+	for i := 0; i < e.MultiPV; i++ {
+		e.CurrentPV = i
+		firstIteration := false
+		for true {
+			e.innerLines[0].Recycle()
+			if firstIteration {
+				score = e.Scores[i]
+				alpha = max16(score-initialWindow, -MAX_INT)
+				beta = min16(score+initialWindow, MAX_INT)
+			}
 			beta = min16(beta, MAX_INT)
 			alpha = max16(alpha, -MAX_INT)
 
@@ -175,7 +189,8 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
 			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
 				e.seldepth = max8(e.seldepth, maxSeldepth)
-				return -MAX_INT
+				e.Scores[i] = -MAX_INT
+				goto sortPVs
 			}
 			if score <= alpha {
 				alpha = max16(alpha-delta, -MAX_INT)
@@ -188,15 +203,27 @@ func (e *Engine) aspirationWindow(score int16, iterationDepth int8) int16 {
 				}
 			} else {
 				e.seldepth = max8(e.seldepth, maxSeldepth)
-				return score
+				e.Scores[i] = score
+				e.MultiPVs[i].Clone(e.innerLines[0])
+				break
 			}
 			delta += delta * 2 / 3
 			maxSeldepth = max8(e.seldepth, maxSeldepth)
 		}
+		firstIteration = false
+	}
+
+sortPVs:
+	for i := 0; i < e.MultiPV; i++ {
+		for j := i + 1; j < e.MultiPV; j++ {
+			if e.Scores[i] < e.Scores[j] {
+				e.Scores[i], e.Scores[j] = e.Scores[j], e.Scores[i]
+				e.MultiPVs[i], e.MultiPVs[j] = e.MultiPVs[j], e.MultiPVs[i]
+			}
+		}
 	}
 	e.seldepth = max8(e.seldepth, maxSeldepth)
 	// We should never get here
-	return -MAX_INT
 }
 
 func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16) int16 {

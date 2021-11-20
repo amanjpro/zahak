@@ -14,7 +14,7 @@ type Runner struct {
 	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
-	MultiPVs     []PVLine
+	pv           PVLine
 	isBookmove   bool
 	depth        int8
 	move         Move
@@ -83,7 +83,6 @@ type Engine struct {
 	triedQuietMoves [][]Move
 	info            Info
 	pred            Predecessors
-	score           int16
 	seldepth        int8
 	innerLines      []PVLine
 	staticEvals     []int16
@@ -92,6 +91,7 @@ type Engine struct {
 	isMainThread    bool
 	StartTime       time.Time
 	parent          *Runner
+	score           int16
 	startDepth      int8
 	skipMove        Move
 	skipHeight      int8
@@ -99,6 +99,8 @@ type Engine struct {
 	TempMovePicker  *MovePicker
 	MultiPV         int
 	CurrentPV       int
+	MultiPVs        []PVLine
+	Scores          []int16
 }
 
 const MaxMultiPV = 120
@@ -110,12 +112,6 @@ func (e *Engine) TimeManager() *TimeManager {
 
 func NewRunner(numberOfThreads int) *Runner {
 	t := &Runner{}
-	multiPVs := make([]PVLine, MAX_DEPTH)
-	for i := int8(0); i < MAX_DEPTH; i++ {
-		line := NewPVLine(MAX_DEPTH)
-		multiPVs[i] = line
-	}
-
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
@@ -125,8 +121,8 @@ func NewRunner(numberOfThreads int) *Runner {
 		}
 		engines[i] = engine
 	}
-	t.MultiPVs = multiPVs
 	t.Engines = engines
+	t.pv = NewPVLine(MAX_DEPTH)
 	return t
 }
 
@@ -141,12 +137,17 @@ func NewEngine(parent *Runner) *Engine {
 		movePickers[i] = EmptyMovePicker()
 	}
 
+	multiPVs := make([]PVLine, MaxMultiPV)
+	for i := int8(0); i < MAX_DEPTH; i++ {
+		line := NewPVLine(MAX_DEPTH)
+		multiPVs[i] = line
+	}
+
 	return &Engine{
 		Position:        nil,
 		Ply:             0,
 		nodesVisited:    0,
 		cacheHits:       0,
-		score:           0,
 		positionMoves:   make([]Move, MAX_DEPTH),
 		searchHistory:   MoveHistory{},
 		MovePickers:     movePickers,
@@ -160,10 +161,13 @@ func NewEngine(parent *Runner) *Engine {
 		doPruning:       false,
 		isMainThread:    false,
 		parent:          parent,
+		score:           0,
 		TempMovePicker:  EmptyMovePicker(),
 		skipMove:        EmptyMove,
 		skipHeight:      MAX_DEPTH,
 		MultiPV:         1,
+		MultiPVs:        multiPVs,
+		Scores:          make([]int16, MaxMultiPV),
 	}
 }
 
@@ -191,19 +195,22 @@ func (r *Runner) ClearForSearch() {
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
-	for i := 0; i < len(r.MultiPVs); i++ {
-		r.MultiPVs[i].Recycle()
-	}
 	r.Stop = false
 }
 
 func (e *Engine) ClearForSearch() {
+
+	for i := 0; i < len(e.MultiPVs); i++ {
+		e.MultiPVs[i].Recycle()
+		e.Scores[i] = 0
+	}
 	for i := 0; i < len(e.innerLines); i++ {
 		e.innerLines[i].Recycle()
 		e.staticEvals[i] = 0
 	}
 
 	e.seldepth = 0
+	e.score = 0
 
 	// e.searchHistory.Reset()
 
@@ -230,6 +237,17 @@ func (e *Engine) ClearForSearch() {
 	e.Position.Net.Recalculate(e.Position.NetInput())
 }
 
+func (e *Engine) multiPVSkipRootMove(move Move) bool {
+	found := false
+	for i := 0; i < e.CurrentPV; i++ {
+		if e.MultiPVs[i].moveCount >= 1 && e.MultiPVs[i].line[0] == move {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
 func (e *Engine) NoteMove(move Move, quietMovesCounter int, height int8) {
 	if quietMovesCounter < 0 || height < 0 || move.PromoType() != NoType || move.IsCapture() {
 		return
@@ -237,15 +255,9 @@ func (e *Engine) NoteMove(move Move, quietMovesCounter int, height int8) {
 	e.triedQuietMoves[height][quietMovesCounter] = move
 }
 
-func (e *Engine) AddKillerMove(move Move, searchHeight int8) {
-}
-
-func (e *Engine) AddMoveHistory(move Move, movingPiece Piece, destination Square, depthLeft int8) {
-}
-
 func (r *Runner) SendBestMove() {
 	mv := r.Move()
-	pv := r.MultiPVs[0]
+	pv := r.pv
 	if pv.moveCount >= 2 {
 		fmt.Printf("bestmove %s ponder %s\n", mv.ToString(), pv.MoveAt(1).ToString())
 	} else {
@@ -259,6 +271,40 @@ func (r *Runner) Move() Move {
 
 func (r *Runner) Score() int16 {
 	return r.score
+}
+
+func (e *Engine) SendMultiPv(pv PVLine, score int16, depth int8) {
+	if depth == -1 {
+		depth = pv.moveCount
+	}
+	thinkTime := time.Since(e.StartTime)
+	nodesVisited := int64(0) //e.parent.nodesVisited
+	tbHits := int64(0)       //e.parent.nodesVisited
+	seldepth := int8(0)
+	for i := 0; i < len(e.parent.Engines); i++ {
+		e := e.parent.Engines[i]
+		nodesVisited += e.nodesVisited
+		tbHits += e.info.tbHit
+		if e.seldepth > seldepth {
+			seldepth = e.seldepth
+		}
+	}
+	nps := int64(float64(nodesVisited) / thinkTime.Seconds())
+	fmt.Printf("info depth %d seldepth %d hashfull %d tbhits %d nodes %d nps %d score %s time %d multipv 1 pv %s\n",
+		depth, seldepth, TranspositionTable.Consumed(), tbHits,
+		nodesVisited, nps, ScoreToCp(score),
+		thinkTime.Milliseconds(), pv.ToString())
+
+	for i := 1; i < e.MultiPV; i++ {
+		if e.MultiPVs[i].moveCount >= 1 {
+			fmt.Printf("info depth %d seldepth %d hashfull %d tbhits %d nodes %d nps %d score %s time %d multipv %d pv %s\n",
+				depth, seldepth, TranspositionTable.Consumed(), tbHits,
+				nodesVisited, nps, ScoreToCp(score),
+				thinkTime.Milliseconds(), i+1, e.MultiPVs[i].ToString())
+		}
+	}
+
+	e.TotalTime = thinkTime.Seconds()
 }
 
 func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
@@ -452,10 +498,11 @@ func evalFromTT(value int16, searchHeight int8) int16 {
 
 func (e *Engine) mustSkip(move Move) bool {
 	mts := e.MovesToSearch
+	notInSearchMoves := len(mts) != 0
 	for i := 0; i < len(mts); i++ {
 		if mts[i] == move {
-			return false
+			notInSearchMoves = false
 		}
 	}
-	return len(mts) != 0
+	return notInSearchMoves || e.multiPVSkipRootMove(move)
 }

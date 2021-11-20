@@ -162,8 +162,8 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					cpu, _ := strconv.Atoi(v)
-					uci.runner.Engines[0].MultiPV = uci.multiPV
 					uci.runner = NewRunner(cpu)
+					uci.runner.Engines[0].MultiPV = uci.multiPV
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
 					mg := options[len(options)-1]
