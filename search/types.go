@@ -299,7 +299,7 @@ func (e *Engine) SendMultiPv(pv PVLine, score int16, depth int8) {
 		if e.MultiPVs[i].moveCount >= 1 {
 			fmt.Printf("info depth %d seldepth %d hashfull %d tbhits %d nodes %d nps %d score %s time %d multipv %d pv %s\n",
 				depth, seldepth, TranspositionTable.Consumed(), tbHits,
-				nodesVisited, nps, ScoreToCp(score),
+				nodesVisited, nps, ScoreToCp(e.Scores[i]),
 				thinkTime.Milliseconds(), i+1, e.MultiPVs[i].ToString())
 		}
 	}
