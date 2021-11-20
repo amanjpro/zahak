@@ -145,9 +145,7 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					multiPV, _ := strconv.Atoi(v)
-					for _, e := range uci.runner.Engines {
-						e.MultiPV = multiPV
-					}
+					uci.runner.Engines[0].MultiPV = multiPV
 					uci.multiPV = multiPV
 				} else if strings.HasPrefix(cmd, "setoption name OwnBook value ") {
 					options := strings.Fields(cmd)
@@ -164,9 +162,7 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					cpu, _ := strconv.Atoi(v)
-					for _, e := range uci.runner.Engines {
-						e.MultiPV = uci.multiPV
-					}
+					uci.runner.Engines[0].MultiPV = uci.multiPV
 					uci.runner = NewRunner(cpu)
 				} else if strings.HasPrefix(cmd, "setoption name Hash value") {
 					options := strings.Fields(cmd)
