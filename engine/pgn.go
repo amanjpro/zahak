@@ -5,13 +5,26 @@ import (
 	"strings"
 )
 
-func (p *Position) ParseMoves(moveStr []string, strict bool) []Move {
+func (p *Position) ParseSearchMoves(moveStr []string) []Move {
+	parsed := make([]Move, 0, len(moveStr))
+	validMoves := p.PseudoLegalMoves()
+	for _, move := range validMoves {
+		for _, cm := range moveStr {
+			if move.ToString() == cm {
+				parsed = append(parsed, move)
+			}
+		}
+	}
+	return parsed
+}
+
+func (p *Position) ParseGameMoves(moveStr []string) []Move {
 	if len(moveStr) == 0 {
 		return []Move{}
 	}
 	currentMove := moveStr[0]
 	if len(strings.TrimSpace(currentMove)) == 0 {
-		return p.ParseMoves(moveStr[1:], strict)
+		return p.ParseGameMoves(moveStr[1:])
 	} else {
 		var parsed Move
 		validMoves := p.PseudoLegalMoves()
@@ -21,13 +34,11 @@ func (p *Position) ParseMoves(moveStr []string, strict bool) []Move {
 				break
 			}
 		}
-		if parsed == 0 && strict {
+		if parsed == 0 {
 			panic(fmt.Sprintf("Expected a valid move, %s is not valid", currentMove))
-		} else if parsed == 0 {
-			return []Move{}
 		}
 		ep, tg, hc, _ := p.GameMakeMove(parsed)
-		otherMoves := p.ParseMoves(moveStr[1:], strict)
+		otherMoves := p.ParseGameMoves(moveStr[1:])
 		p.GameUnMakeMove(parsed, tg, ep, hc)
 		return append(append([]Move{}, parsed), otherMoves...)
 	}

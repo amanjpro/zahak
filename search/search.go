@@ -784,7 +784,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) != 1 {
+	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 {
 		e.TimeManager().StopSearchNow = true
 	}
 	return bestscore

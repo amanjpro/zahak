@@ -170,7 +170,7 @@ func (uci *UCI) Start() {
 					uci.stopPondering()
 					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen)
-					for _, move := range game.Position().ParseMoves(moves, true) {
+					for _, move := range game.Position().ParseGameMoves(moves) {
 						game.Move(move)
 					}
 				} else if strings.HasPrefix(cmd, "position fen") {
@@ -189,7 +189,7 @@ func (uci *UCI) Start() {
 					} else {
 						game = FromFen(fen)
 					}
-					for _, move := range game.Position().ParseMoves(moves, true) {
+					for _, move := range game.Position().ParseGameMoves(moves) {
 						game.Move(move)
 					}
 				} else {
@@ -215,7 +215,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	for i := 0; i < len(fields); i++ {
 		switch fields[i] {
 		case "searchmoves":
-			movesToSearch = pos.ParseMoves(fields[i+1:], false)
+			movesToSearch = pos.ParseSearchMoves(fields[i+1:])
 			i += len(movesToSearch)
 		case "ponder":
 			pondering = true
