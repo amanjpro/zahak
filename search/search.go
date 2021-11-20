@@ -684,7 +684,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			// Late Move Reduction
-			if e.doPruning && isQuiet && depthLeft > 2 && legalMoves > lmrThreashold {
+			if e.doPruning && (isQuiet || isCaptureMove && seeScores[noisyMoves] < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
 				e.info.lmrCounter += 1
 				LMR = int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 
@@ -709,7 +709,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR += 1
 				}
 
-				LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
+				if isQuiet {
+					LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
+				} else {
+					LMR -= 1
+				}
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
 			}
