@@ -160,62 +160,45 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 
 		// source := move.Source()
 		// dest := move.Destination()
-		mpiece := move.MovingPiece()
-		cpiece := move.CapturedPiece()
+		// mpiece := move.MovingPiece()
+		// cpiece := move.CapturedPiece()
 		promoType := move.PromoType()
 
 		history := engine.searchHistory.TacticalHistory(move)
-		// var see int16
-		// if promoType != 0 {
-		// 	see = promoType * 100
-		// // } else {
-		// see := engine.Position.SeeG(move, 0)
-		// // }
-		// score := int32(see) + history + promoType
-		// if see > 0 {
-		// 	score += 100_000_000
-		// } else {
-		// 	score -= 100_000_000
-		// }
-		// if history > 8000 ||
-		// 	mpiece.Type() < cpiece.Type() ||
-		// 	promoType != NoType ||
-		// 	 >= 0 {
-		// 	score += 900_000_000
-		// }
-
-		// scores[i] = score
-
+		// SEE for ordering
+		gain := int32(engine.Position.SeeG(move, 0))
 		// capture ordering
-		if move.IsCapture() {
-			capPiece := move.CapturedPiece()
-			if promoType != NoType {
-				p := GetPiece(promoType, White)
-				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
-			} else if !move.IsEnPassant() {
-				// SEE for ordering
-				gain := int32(engine.Position.SeeG(move, 0))
-				if gain < 0 {
-					scores[i] = -90_000_000 + gain
-				} else if gain >= 0 {
-					// 	scores[i] = 100_000_000 + int32(cpiece.Weight()-mpiece.Weight())
-					// } else {
-					scores[i] = 100_100_000 + gain
-				}
-			} else {
-				scores[i] = 100_100_000 + int32(cpiece.Weight()-mpiece.Weight())
-			}
-			goto end
+		// if move.IsCapture() {
+		// 	capPiece := move.CapturedPiece()
+		// 	if promoType != NoType {
+		// 		p := GetPiece(promoType, White)
+		// 		scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+		// 	} else if !move.IsEnPassant() {
+		// 		if gain < 0 {
+		// 			scores[i] = -90_000_000 + gain
+		// 		} else {
+		// 			scores[i] = 100_100_000 + gain
+		// 		}
+		// 	} else {
+		// 		scores[i] = 100_100_000 + int32(cpiece.Weight()-mpiece.Weight())
+		// 	}
+		// 	goto end
+		// }
+
+		if gain < 0 {
+			gain -= 100_000_000
+		} else {
+			gain += 100_000_000
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			scores[i] = 150_000_000 + int32(p.Weight())
-			goto end
+			gain += 10_000 + int32(p.Weight())
+			// goto end
 		}
 
-	end:
-		scores[i] += history
+		// end:
+		scores[i] = gain + history
 		if highestNonHashScore < scores[i] {
 			highestNonHashIndex = i
 			highestNonHashScore = scores[i]
