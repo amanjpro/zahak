@@ -87,6 +87,7 @@ The history of Zahak's rating is summerized here:
 - PolyGlot opening book
 - Compliant with OpenBench
 - Syzygy Support
+- MultiPV
 
 ## Search
 
@@ -108,6 +109,8 @@ The history of Zahak's rating is summerized here:
 - Killer Moves Heuristics
 - Countermove Heuristics
 - Move History Heuristics
+- Countermove History Heuristics
+- FollowUp History Heuristics
 
 ### Selectivity
 - Late Move Pruning
