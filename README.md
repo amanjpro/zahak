@@ -88,6 +88,7 @@ The history of Zahak's rating is summerized here:
 - Compliant with OpenBench
 - Syzygy Support
 - MultiPV
+- Skill Levels, 1 to 7 (strongest)
 
 ## Search
 
@@ -178,9 +179,10 @@ You can also run it in perfttree mode with `./zahak -preft-tree`.
 
 # Contributors
 
-Thanks to the following names, for generating data for training Zahak's network:
+Thanks to the following for their valuable contributions:
 
-- Basti Dangca.
+- Basti Dangca: for generating data for training Zahak's network
+- Alan Cooper (Scally): for generating weaker networks for different skill levels.
 
 # Acknowledgement
 
