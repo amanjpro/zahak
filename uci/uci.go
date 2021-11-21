@@ -213,6 +213,8 @@ func (uci *UCI) Start() {
 func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	uci.timeManager = nil
 	fields := strings.Fields(cmd)
+	nodes := -1
+	mateIn := -1
 
 	pos := game.Position()
 	noTC := false
@@ -234,6 +236,12 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 				timeToThink, _ = strconv.Atoi(fields[i+1])
 				i++
 			}
+		case "nodes":
+			nodes, _ = strconv.Atoi(fields[i+1])
+			i++
+		case "mate":
+			mateIn, _ = strconv.Atoi(fields[i+1])
+			i++
 		case "btime":
 			if pos.Turn() == Black {
 				timeToThink, _ = strconv.Atoi(fields[i+1])
@@ -283,12 +291,12 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.runner.AddTimeManager(tm)
 		}
-		go uci.runner.Search(depth)
+		go uci.runner.Search(depth, int16(mateIn), int64(nodes))
 	} else {
 		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
 		uci.runner.AddTimeManager(tm)
 		uci.timeManager = tm
-		go uci.runner.Search(depth)
+		go uci.runner.Search(depth, 2*int16(mateIn), int64(nodes))
 	}
 }
 

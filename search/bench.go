@@ -72,7 +72,7 @@ func RunBenchmark() {
 		TranspositionTable = NewCache(cacheSize)
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
-		runner.Engines[0].Search(depth)
+		runner.Engines[0].Search(depth, -1, -1)
 		nodes += runner.Engines[0].nodesVisited
 		totalTime += runner.Engines[0].TotalTime
 	}

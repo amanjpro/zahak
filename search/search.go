@@ -13,7 +13,7 @@ import (
 const TB_WIN_BOUND int16 = 27000
 const TB_LOSS_BOUND int16 = -27000
 
-func (r *Runner) Search(depth int8) {
+func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	e := r.Engines[0]
 	if bestmove := ProbeDTZ(e.Position); bestmove != EmptyMove {
 		for e.TimeManager().Pondering {
@@ -25,14 +25,14 @@ func (r *Runner) Search(depth int8) {
 
 	if len(r.Engines) == 1 {
 		e := r.Engines[0]
-		e.Search(depth)
+		e.Search(depth, mateIn, nodes)
 	} else {
 		r.ClearForSearch()
 		var wg sync.WaitGroup
 		for i := 0; i < len(r.Engines); i++ {
 			wg.Add(1)
 			go func(e *Engine, depth int8, i int) {
-				e.ParallelSearch(depth, 1, 1)
+				e.ParallelSearch(depth, mateIn, nodes)
 				wg.Done()
 			}(r.Engines[i], depth, i)
 		}
@@ -44,15 +44,15 @@ func (r *Runner) Search(depth int8) {
 	}
 }
 
-func (e *Engine) ParallelSearch(depth int8, start int8, inc int8) {
+func (e *Engine) ParallelSearch(depth int8, mateIn int16, nodes int64) {
 	e.ClearForSearch()
-	e.rootSearch(depth, start, inc)
+	e.rootSearch(depth, mateIn, nodes)
 }
 
-func (e *Engine) Search(depth int8) {
+func (e *Engine) Search(depth int8, mateIn int16, nodes int64) {
 	e.parent.ClearForSearch()
 	e.ClearForSearch()
-	e.rootSearch(depth, 1, 1)
+	e.rootSearch(depth, mateIn, nodes)
 	for e.TimeManager().Pondering {
 		// busy waiting
 	}
@@ -93,7 +93,7 @@ func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove boo
 	parent.isBookmove = isBookmove
 }
 
-func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
+func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 	pv := NewPVLine(MAX_DEPTH)
 
 	lastDepth := int8(1)
@@ -104,7 +104,11 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 		pv.AddFirst(bookmove)
 		e.updatePv(pv, 0, 1, true)
 	} else {
-		for iterationDepth := startDepth; iterationDepth <= depth; iterationDepth += depthIncrement {
+		fmt.Println(nodes)
+		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
+			if e.isMainThread && nodes > 0 && nodes <= e.nodesVisited {
+				break
+			}
 
 			if e.isMainThread {
 				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
@@ -115,7 +119,7 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			}
 
 			e.startDepth = iterationDepth
-			e.aspirationWindow(iterationDepth)
+			e.aspirationWindow(iterationDepth, mateIn != -1)
 			newScore := e.Scores[0]
 
 			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
@@ -140,6 +144,11 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
 				e.info.Print()
 			}
+
+			if e.isMainThread && mateIn != -1 && (newScore == -CHECKMATE_EVAL+mateIn || newScore == CHECKMATE_EVAL-mateIn ||
+				newScore == -CHECKMATE_EVAL+mateIn-1 || newScore == CHECKMATE_EVAL-mateIn+1) {
+				break
+			}
 			// if isCheckmateEval(e.score) {
 			// 	break
 			// }
@@ -157,8 +166,8 @@ func (e *Engine) rootSearch(depth int8, startDepth int8, depthIncrement int8) {
 	}
 }
 
-func (e *Engine) aspirationWindow(iterationDepth int8) {
-	e.doPruning = iterationDepth > 3
+func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
+	e.doPruning = iterationDepth > 3 && !mateFinderMode
 
 	var initialWindow int16 = 12
 	var delta int16 = 16
