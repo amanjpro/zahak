@@ -104,7 +104,6 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 		pv.AddFirst(bookmove)
 		e.updatePv(pv, 0, 1, true)
 	} else {
-		fmt.Println(nodes)
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
 			if e.isMainThread && nodes > 0 && nodes <= e.nodesVisited {
 				break
@@ -119,7 +118,7 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 			}
 
 			e.startDepth = iterationDepth
-			e.aspirationWindow(iterationDepth, mateIn != -1)
+			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
 
 			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
