@@ -12,13 +12,13 @@ func (p *Position) Evaluate() int16 {
 
 }
 
-func toEval(eval float32) int16 {
+func toEval(eval int16) int16 {
 	if eval >= MAX_NON_CHECKMATE {
-		return int16(MAX_NON_CHECKMATE)
+		return MAX_NON_CHECKMATE
 	} else if eval <= MIN_NON_CHECKMATE {
-		return int16(MIN_NON_CHECKMATE)
+		return MIN_NON_CHECKMATE
 	}
-	return int16(eval)
+	return eval
 }
 
 func abs16(x int16) int16 {

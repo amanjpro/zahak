@@ -12,12 +12,14 @@ const NetInputSize = 769
 const NetOutputSize = 1
 const NetLayers = 1
 const MaximumDepth = 128
+const QPrecisionIn int16 = 16
+const QPrecisionOut int16 = 64
 
 var NetHiddenSize = 128
-var CurrentHiddenWeights []float32
-var CurrentHiddenBiases []float32
-var CurrentOutputWeights []float32
-var CurrentOutputBias float32
+var CurrentHiddenWeights []int16
+var CurrentHiddenBiases []int16
+var CurrentOutputWeights []int16
+var CurrentOutputBias int32
 var CurrentNetworkId uint32
 
 type Updates struct {
@@ -33,13 +35,13 @@ func (u *Updates) Add(index int16, coeff int8) {
 }
 
 type NetworkState struct {
-	HiddenOutputs     [][]float32
-	EmptyHiddenOutput []float32
+	HiddenOutputs     [][]int16
+	EmptyHiddenOutput []int16
 	CurrentHidden     int
-	HiddenWeights     []float32
-	HiddenBiases      []float32
-	OutputWeights     []float32
-	OutputBias        float32
+	HiddenWeights     []int16
+	HiddenBiases      []int16
+	OutputWeights     []int16
+	OutputBias        int32
 }
 
 func NewNetworkState() *NetworkState {
@@ -50,10 +52,10 @@ func NewNetworkState() *NetworkState {
 		OutputBias:    CurrentOutputBias,
 	}
 
-	net.EmptyHiddenOutput = make([]float32, NetHiddenSize)
-	net.HiddenOutputs = make([][]float32, MaximumDepth)
+	net.EmptyHiddenOutput = make([]int16, NetHiddenSize)
+	net.HiddenOutputs = make([][]int16, MaximumDepth)
 	for i := 0; i < MaximumDepth; i++ {
-		net.HiddenOutputs[i] = make([]float32, NetHiddenSize)
+		net.HiddenOutputs[i] = make([]int16, NetHiddenSize)
 	}
 	return &net
 }
@@ -139,44 +141,53 @@ func LoadNetwork(path string) error {
 
 	CurrentNetworkId = id
 
-	CurrentHiddenWeights = make([]float32, NetHiddenSize*NetInputSize)
+	CurrentHiddenWeights = make([]int16, NetHiddenSize*NetInputSize)
 	for i := 0; i < NetHiddenSize*NetInputSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
 		}
-		CurrentHiddenWeights[i] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+		CurrentHiddenWeights[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), false)
 	}
 
-	CurrentHiddenBiases = make([]float32, NetHiddenSize)
+	CurrentHiddenBiases = make([]int16, NetHiddenSize)
 	for i := 0; i < NetHiddenSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
 		}
-		CurrentHiddenBiases[i] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+		CurrentHiddenBiases[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), false)
 	}
 
-	CurrentOutputWeights = make([]float32, NetHiddenSize)
+	CurrentOutputWeights = make([]int16, NetHiddenSize)
 	for i := 0; i < NetOutputSize*NetHiddenSize; i++ {
 		_, err := io.ReadFull(f, buf)
 		if err != nil {
 			panic(err)
 		}
-		CurrentOutputWeights[i] = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+		CurrentOutputWeights[i] = quantize(math.Float32frombits(binary.LittleEndian.Uint32(buf)), true)
 	}
 
 	_, err = io.ReadFull(f, buf)
 	if err != nil {
 		panic(err)
 	}
-	CurrentOutputBias = math.Float32frombits(binary.LittleEndian.Uint32(buf))
+	ob := math.Float32frombits(binary.LittleEndian.Uint32(buf))
+	CurrentOutputBias = int32(math.Round(float64(ob) * float64(QPrecisionOut)))
 	return nil
 }
 
-func ReLu(x float32) float32 {
+func ReLu(x int16) int16 {
 	if x < 0 {
 		return 0
 	}
 	return x
+}
+
+func quantize(x float32, outputLayer bool) int16 {
+	q := float64(QPrecisionIn)
+	if outputLayer {
+		q = float64(QPrecisionOut)
+	}
+	return int16(math.Round(float64(x) * q))
 }

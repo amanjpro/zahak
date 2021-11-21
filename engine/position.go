@@ -5,8 +5,8 @@ import (
 )
 
 const CHECKMATE_EVAL int16 = 30000
-const MAX_NON_CHECKMATE float32 = 25000
-const MIN_NON_CHECKMATE float32 = -MAX_NON_CHECKMATE
+const MAX_NON_CHECKMATE int16 = 25000
+const MIN_NON_CHECKMATE int16 = -MAX_NON_CHECKMATE
 const CASTLING_FLAG = WhiteCanCastleQueenSide | WhiteCanCastleKingSide | BlackCanCastleQueenSide | BlackCanCastleKingSide
 
 type Position struct {
