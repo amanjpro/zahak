@@ -86,7 +86,7 @@ func (uci *UCI) Start() {
 				fmt.Print("option name SyzygyPath type string default <empty>\n")
 				fmt.Printf("option name SyzygyProbeDepth type spin default %d min 0 max 128\n", DefaultProbeDepth)
 				fmt.Printf("option name MultiPV type spin default 1 min 1 max %d\n", MaxMultiPV)
-				fmt.Printf("option name Skill Level type spin default %d min 1 max %d", MaxSkillLevels, MaxSkillLevels)
+				fmt.Printf("option name Skill Level type spin default %d min 1 max %d\n", MaxSkillLevels, MaxSkillLevels)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
