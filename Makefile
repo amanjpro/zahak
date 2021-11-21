@@ -11,12 +11,13 @@ ifdef EVALFILE
 	netfile := $(EVALFILE)
 endif
 
-RM=rm -f engine/nn.go
+RM=rm -f engine/nn.go engine/nn_*.go
+
 MKDIR=mkdir -p bin
 MV=mv bin/zahak $(EXE)
 FLAGS=CC=cc CGO_ENABLED="1"
 ifeq ($(OS), Windows_NT)
-	RM=del engine\nn.go
+	RM=del engine\nn.go engine\nn_*.go
 	MKDIR=IF not exist bin (mkdir bin)
 	MV=move bin\zahak.exe $(EXE).exe
 	FLAGS=

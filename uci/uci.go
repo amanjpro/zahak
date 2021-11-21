@@ -22,6 +22,8 @@ var defaultCPU = 1
 var minCPU = 1
 var maxCPU = runtime.NumCPU()
 
+const MaxSkillLevels = 7
+
 type UCI struct {
 	version     string
 	runner      *Runner
@@ -84,6 +86,7 @@ func (uci *UCI) Start() {
 				fmt.Print("option name SyzygyPath type string default <empty>\n")
 				fmt.Printf("option name SyzygyProbeDepth type spin default %d min 0 max 128\n", DefaultProbeDepth)
 				fmt.Printf("option name MultiPV type spin default 1 min 1 max %d\n", MaxMultiPV)
+				fmt.Printf("option name Skill Level type spin default %d min 1 max %d", MaxSkillLevels, MaxSkillLevels)
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -158,6 +161,11 @@ func (uci *UCI) Start() {
 							InitBook(uci.bookPath)
 						}
 					}
+				} else if strings.HasPrefix(cmd, "setoption name Skill Level value") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					level, _ := strconv.Atoi(v)
+					switchToLevel(level)
 				} else if strings.HasPrefix(cmd, "setoption name Threads value") {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
@@ -306,5 +314,61 @@ func (uci *UCI) stopPondering() {
 		uci.runner.TimeManager.StopSearchNow = true
 		for uci.runner.TimeManager.Pondering {
 		} // wait until stopped
+	}
+}
+
+func switchToLevel(level int) {
+	switch level {
+	case 1:
+		NetHiddenSize = Skills1NetHiddenSize
+		CurrentHiddenWeights = Skills1HiddenWeights
+		CurrentHiddenBiases = Skills1HiddenBiases
+		CurrentOutputWeights = Skills1OutputWeights
+		CurrentOutputBias = Skills1OutputBias
+		CurrentNetworkId = Skills1NetworkId
+	case 2:
+		NetHiddenSize = Skills2NetHiddenSize
+		CurrentHiddenWeights = Skills2HiddenWeights
+		CurrentHiddenBiases = Skills2HiddenBiases
+		CurrentOutputWeights = Skills2OutputWeights
+		CurrentOutputBias = Skills2OutputBias
+		CurrentNetworkId = Skills2NetworkId
+	case 3:
+		NetHiddenSize = Skills3NetHiddenSize
+		CurrentHiddenWeights = Skills3HiddenWeights
+		CurrentHiddenBiases = Skills3HiddenBiases
+		CurrentOutputWeights = Skills3OutputWeights
+		CurrentOutputBias = Skills3OutputBias
+		CurrentNetworkId = Skills3NetworkId
+	case 4:
+		NetHiddenSize = Skills4NetHiddenSize
+		CurrentHiddenWeights = Skills4HiddenWeights
+		CurrentHiddenBiases = Skills4HiddenBiases
+		CurrentOutputWeights = Skills4OutputWeights
+		CurrentOutputBias = Skills4OutputBias
+		CurrentNetworkId = Skills4NetworkId
+	case 5:
+		NetHiddenSize = Skills5NetHiddenSize
+		CurrentHiddenWeights = Skills5HiddenWeights
+		CurrentHiddenBiases = Skills5HiddenBiases
+		CurrentOutputWeights = Skills5OutputWeights
+		CurrentOutputBias = Skills5OutputBias
+		CurrentNetworkId = Skills5NetworkId
+	case 6:
+		NetHiddenSize = Skills6NetHiddenSize
+		CurrentHiddenWeights = Skills6HiddenWeights
+		CurrentHiddenBiases = Skills6HiddenBiases
+		CurrentOutputWeights = Skills6OutputWeights
+		CurrentOutputBias = Skills6OutputBias
+		CurrentNetworkId = Skills6NetworkId
+	case MaxSkillLevels:
+		NetHiddenSize = DefaultNetHiddenSize
+		CurrentHiddenWeights = DefaultHiddenWeights
+		CurrentHiddenBiases = DefaultHiddenBiases
+		CurrentOutputWeights = DefaultOutputWeights
+		CurrentOutputBias = DefaultOutputBias
+		CurrentNetworkId = DefaultNetworkId
+	default:
+		fmt.Printf("info string unsupported skills level, only values between 1 and %d is supported\n", MaxSkillLevels)
 	}
 }

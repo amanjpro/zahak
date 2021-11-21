@@ -20,6 +20,55 @@ var CurrentOutputWeights []float32
 var CurrentOutputBias float32
 var CurrentNetworkId uint32
 
+var Skills1HiddenWeights []float32
+var Skills1HiddenBiases []float32
+var Skills1OutputWeights []float32
+var Skills1OutputBias float32
+var Skills1NetworkId uint32
+var Skills1NetHiddenSize int
+
+var Skills2HiddenWeights []float32
+var Skills2HiddenBiases []float32
+var Skills2OutputWeights []float32
+var Skills2OutputBias float32
+var Skills2NetworkId uint32
+var Skills2NetHiddenSize int
+
+var Skills3HiddenWeights []float32
+var Skills3HiddenBiases []float32
+var Skills3OutputWeights []float32
+var Skills3OutputBias float32
+var Skills3NetworkId uint32
+var Skills3NetHiddenSize int
+
+var Skills4HiddenWeights []float32
+var Skills4HiddenBiases []float32
+var Skills4OutputWeights []float32
+var Skills4OutputBias float32
+var Skills4NetworkId uint32
+var Skills4NetHiddenSize int
+
+var Skills5HiddenWeights []float32
+var Skills5HiddenBiases []float32
+var Skills5OutputWeights []float32
+var Skills5OutputBias float32
+var Skills5NetworkId uint32
+var Skills5NetHiddenSize int
+
+var Skills6HiddenWeights []float32
+var Skills6HiddenBiases []float32
+var Skills6OutputWeights []float32
+var Skills6OutputBias float32
+var Skills6NetworkId uint32
+var Skills6NetHiddenSize int
+
+var DefaultHiddenWeights []float32
+var DefaultHiddenBiases []float32
+var DefaultOutputWeights []float32
+var DefaultOutputBias float32
+var DefaultNetworkId uint32
+var DefaultNetHiddenSize int
+
 type Updates struct {
 	Indices []int16
 	Coeffs  []int8
