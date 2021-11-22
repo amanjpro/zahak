@@ -320,6 +320,7 @@ func (uci *UCI) stopPondering() {
 func switchToLevel(level int) {
 	switch level {
 	case 1:
+		Skills1Init()
 		NetHiddenSize = Skills1NetHiddenSize
 		CurrentHiddenWeights = Skills1HiddenWeights
 		CurrentHiddenBiases = Skills1HiddenBiases
@@ -327,6 +328,7 @@ func switchToLevel(level int) {
 		CurrentOutputBias = Skills1OutputBias
 		CurrentNetworkId = Skills1NetworkId
 	case 2:
+		Skills2Init()
 		NetHiddenSize = Skills2NetHiddenSize
 		CurrentHiddenWeights = Skills2HiddenWeights
 		CurrentHiddenBiases = Skills2HiddenBiases
@@ -334,6 +336,7 @@ func switchToLevel(level int) {
 		CurrentOutputBias = Skills2OutputBias
 		CurrentNetworkId = Skills2NetworkId
 	case 3:
+		Skills3Init()
 		NetHiddenSize = Skills3NetHiddenSize
 		CurrentHiddenWeights = Skills3HiddenWeights
 		CurrentHiddenBiases = Skills3HiddenBiases
@@ -341,6 +344,7 @@ func switchToLevel(level int) {
 		CurrentOutputBias = Skills3OutputBias
 		CurrentNetworkId = Skills3NetworkId
 	case 4:
+		Skills4Init()
 		NetHiddenSize = Skills4NetHiddenSize
 		CurrentHiddenWeights = Skills4HiddenWeights
 		CurrentHiddenBiases = Skills4HiddenBiases
@@ -348,6 +352,7 @@ func switchToLevel(level int) {
 		CurrentOutputBias = Skills4OutputBias
 		CurrentNetworkId = Skills4NetworkId
 	case 5:
+		Skills5Init()
 		NetHiddenSize = Skills5NetHiddenSize
 		CurrentHiddenWeights = Skills5HiddenWeights
 		CurrentHiddenBiases = Skills5HiddenBiases
@@ -355,6 +360,7 @@ func switchToLevel(level int) {
 		CurrentOutputBias = Skills5OutputBias
 		CurrentNetworkId = Skills5NetworkId
 	case 6:
+		Skills6Init()
 		NetHiddenSize = Skills6NetHiddenSize
 		CurrentHiddenWeights = Skills6HiddenWeights
 		CurrentHiddenBiases = Skills6HiddenBiases
