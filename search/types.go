@@ -101,6 +101,7 @@ type Engine struct {
 	CurrentPV       int
 	MultiPVs        []PVLine
 	Scores          []int16
+	NoMoves         bool
 }
 
 const MaxMultiPV = 120
@@ -211,6 +212,7 @@ func (e *Engine) ClearForSearch() {
 
 	e.seldepth = 0
 	e.score = 0
+	e.NoMoves = false
 
 	// e.searchHistory.Reset()
 

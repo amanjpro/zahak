@@ -174,11 +174,13 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 	originalDepth := iterationDepth
 	maxSeldepth := int8(0)
 	e.seldepth = 0
+	lsm := len(e.MovesToSearch)
 
-	for i := 0; i < e.MultiPV; i++ {
+	for i := 0; i < e.MultiPV && (lsm == 0 || i < lsm); i++ {
 		e.CurrentPV = i
 		firstIteration := true
-		for true {
+		e.NoMoves = false
+		for !e.NoMoves {
 			e.innerLines[0].Recycle()
 			if firstIteration {
 				score = e.Scores[i]
@@ -513,6 +515,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	quietMoves := -1
 	legalQuietMove := 0
 	noisyMoves := -1
+	searchedAMove := false
 	for true {
 		hashmove = movePicker.Next()
 		if hashmove == EmptyMove {
@@ -532,6 +535,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if isRootNode && e.mustSkip(hashmove) {
 			continue
 		}
+		searchedAMove = true
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(hashmove); ok {
 			legalMoves += 1
 			if isQuiet {
@@ -825,6 +829,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 {
 		e.TimeManager().StopSearchNow = true
+	} else if e.isMainThread && isRootNode && !searchedAMove {
+		e.NoMoves = true
 	}
 	return bestscore
 }
