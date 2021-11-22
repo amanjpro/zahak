@@ -299,7 +299,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.runner.AddTimeManager(tm)
 		}
-		go uci.runner.Search(depth, int16(mateIn), int64(nodes))
+		go uci.runner.Search(depth, 2*int16(mateIn), int64(nodes))
 	} else {
 		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
 		uci.runner.AddTimeManager(tm)
