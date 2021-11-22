@@ -159,6 +159,18 @@ Usage of bin/zahak:
         Path to EPD positions, used to test the strength of the engine
 ```
 
+# Skill Levels
+
+Anchored around Rustic Alpha 3, I found that, based on CCRL the ratings will
+probably translate to the following:
+
+- Skill Level 1: 1270
+- Skill Level 2: 1440
+- Skill Level 3: 1630
+- Skill Level 4: 1856
+- Skill Level 5: 2004
+- Skill Level 6: 2074
+
 # Opening Books
 
 Currently only PolyGlot is supported. Then engine doesn't come with any books,
