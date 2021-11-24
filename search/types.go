@@ -190,6 +190,12 @@ func NewInfo() Info {
 	return Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 }
 
+func (r *Runner) ResetHistory() {
+	for i := 0; i < len(r.Engines); i++ {
+		r.Engines[i].searchHistory = MoveHistory{}
+	}
+}
+
 func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
 	r.score = -MAX_INT
