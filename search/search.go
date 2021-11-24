@@ -639,9 +639,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			return 0
 		}
 	}
-	pruningThreashold := int(5 + depthLeft*depthLeft)
+	latePruningThreashold := 2 * int(5+depthLeft*depthLeft)
+	// if !improving {
+	// 	latePruningThreashold /= 2
+	// }
+
+	lateQuietPruningThreashold := int(5 + depthLeft*depthLeft)
 	if !improving && !isPvNode {
-		pruningThreashold = pruningThreashold/2 - 1
+		lateQuietPruningThreashold = lateQuietPruningThreashold/2 - 1
 	}
 
 	lmrThreashold := 2
@@ -693,9 +698,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				continue
 			}
 
-			// Late Move Pruning
+			// Late Move pruning
+			if depthLeft < 8 &&
+				legalMoves+1 > latePruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
+				e.info.lmpCounter += 1
+				break
+			}
+
+			// Late Quet Move Pruning
 			if isQuiet && depthLeft < 8 &&
-				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
+				legalMoves+1 > lateQuietPruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
 				e.info.lmpCounter += 1
 				// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
 				// to avoid returning quiets, after the first LMP cut
