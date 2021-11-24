@@ -736,8 +736,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				e.info.lmrCounter += 1
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
+					LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
 				} else {
 					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
+					if eval+move.CapturedPiece().Weight()+p < beta {
+						LMR += 1
+					}
 				}
 
 				if isInCheck {
@@ -759,12 +763,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				// Credit to Ofek Shochat
 				if rangeReduction > 3 {
 					LMR += 1
-				}
-
-				if isQuiet {
-					LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
-					// } else {
-					// 	LMR -= 1
 				}
 
 				LMR = min8(depthLeft-2, max8(LMR, 1))
