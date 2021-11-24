@@ -96,6 +96,7 @@ func (uci *UCI) Start() {
 				fmt.Print(game.Position().Board.Draw(), "\n")
 			case "ucinewgame", "position startpos":
 				game = FromFen(startFen)
+				uci.runner.ResetHistory()
 			case "fen":
 				fmt.Println(game.Position().Fen())
 			case "stop":
