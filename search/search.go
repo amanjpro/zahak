@@ -639,11 +639,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			return 0
 		}
 	}
-	latePruningThreashold := int(7 + 2*depthLeft*depthLeft)
+	latePruningThreashold := int(5 + 3*depthLeft*depthLeft)
 	lateQuietPruningThreashold := int(5 + depthLeft*depthLeft)
 	if !improving && !isPvNode {
 		lateQuietPruningThreashold = lateQuietPruningThreashold/2 - 1
-		latePruningThreashold /= 2 - 1
+		latePruningThreashold /= 2
 	}
 
 	lmrThreashold := 2
