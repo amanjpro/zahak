@@ -168,19 +168,12 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 			capPiece := move.CapturedPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+				scores[i] = int32(p.Weight() + capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
-				if gain < 0 {
-					scores[i] = -90_000_000 + gain
-				} else if gain == 0 {
-					scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
-				} else {
-					scores[i] = 100_100_000 + gain
-				}
+				scores[i] = int32(board.StaticExchangeEval(dest, capPiece, source, piece))
 			} else {
-				scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				scores[i] = 0
 			}
 			goto end
 		}
