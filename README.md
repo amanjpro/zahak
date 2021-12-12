@@ -49,32 +49,48 @@ And many other tournaments, like the ones arranged by the amazing Graham Banks.
 
 # Rating
 
-Zahak is in the [CCRL Blitz ratings](https://ccrl.chessdom.com/ccrl/404/) as
-well as the [4040
-rating](https://ccrl.chessdom.com/ccrl/4040/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents).
-He is also listed in [Rebel's Gambit rating (i.e.
-GRL)](http://rebel13.nl/grl-40-2.html), in time control 40 moves in 2 minutes.
-__Please Note__ Up until including Zahak 5.0, GRL tests are done with the engine's
-default hash size, which means it doesn't really represent the actual 
-strength/weakness of the engines in the list.  As of version 4.0, Zahak is also
-listed on [CEGT 40/4 Rating List](http://www.cegt.net/blitz.htm). Also, starting
-from version 5.0, Zahak is listed on [Fast GM rating list 60+06 too](http://www.fastgm.de/60-0.60.html).
+Zahak is in almost all major rating lists, here are the details:
 
-The history of Zahak's rating is summerized here:
 
-| **version** |    **CCRL Blitz Rating**     |   **GRL 40/2 Rating**   |   **CEGT 40/4 Rating**    |   **CCRL 40/40 Rating**   |  **Fast GM 60+06** | **Fast GM 10m+6s** |
-|-------------|------------------------------|-------------------------|---------------------------|---------------------------|--------------------|--------------------|
-| 9.x         | N/A                          | 3244                    | N/A                       | N/A                       | N/A                | N/A                |
-| 8.x         | 3133                         | 3140                    | 3046                      | 3098                      | N/A                | 3057               |
-| 7.x         | 2964 (32 bit: 2897)          | 2929                    | 2840                      | 2938 (4 CPU: 3006)        | 2749               | N/A                |
-| 6.x         | 2833                         | 2785                    | 2664                      | 2800 (unstable rating)    | 2584               | 2720               |
-| 5.0         | 2730                         | 2686                    | 2553                      | 2676                      | 2505               | N/A                |
-| 4.0         | 2570                         | 2522                    | 2417                      | 2568 (unstable rating)    | N/A                | N/A                |
-| 3.0         | 2407                         | 2378                    | N/A                       | N/A                       | N/A                | N/A                |
-| 2.0.0       | 2105 (unstable rating)       | N/A                     | N/A                       | N/A                       | N/A                | N/A                |
-| 1.0.0       | 2011                         | N/A                     | N/A                       | N/A                       | N/A                | N/A                |
-| 0.3.0       | 1922                         | N/A                     | N/A                       | N/A                       | N/A                | N/A                |
-| 0.2.1       | 1824                         | N/A                     | N/A                       | N/A                       | N/A                | N/A                |
+- [CCRL rating list](https://ccrl.chessdom.com/ccrl)
+
+| **version** | [**CCRL Blitz Rating**](https://ccrl.chessdom.com/ccrl/404/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)    |   [**CCRL 40/4040 Rating**](https://ccrl.chessdom.com/ccrl/4040/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents) |    [**CCRL 40/4040 (4CPU) Rating**](https://ccrl.chessdom.com/ccrl/4040/cgi/compare_engines.cgi?family=Zahak&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents) |
+|-------------|------------------------------|---------------------------|--------------------|
+| 9.x         | 3278                         | 3213                      | 3282               |
+| 8.x         | 3133                         | 3098                      | N/A                |
+| 7.x         | 2964 (32 bit: 2897)          | 2938                      | 3006               |
+| 6.x         | 2833                         | 2800 (unstable rating)    | N/A                |
+| 5.0         | 2730                         | 2676                      | N/A                |
+| 4.0         | 2570                         | 2568 (unstable rating)    | N/A                |
+| 3.0         | 2407                         | N/A                       | N/A                |
+| 2.0.0       | 2105 (unstable rating)       | N/A                       | N/A                |
+| 1.0.0       | 2011                         | N/A                       | N/A                |
+| 0.3.0       | 1922                         | N/A                       | N/A                |
+| 0.2.1       | 1824                         | N/A                       | N/A                |
+
+- [CEGT rating list](http://www.cegt.net)
+
+| **version** |   [**CEGT 40/4 Rating**](http://www.cegt.net/40_4_Ratinglist/40_4_AllVersion/rangliste.html)    |   [**CEGT 40/20 Rating**](http://www.cegt.net/40_40%20Rating%20List/40_40%20All%20Versions/rangliste.html)    |   [**CEGT 5"+3' Rating (Ponder On)**](http://www.cegt.net/5Plus3Rating/5Plus3AllVersion/rangliste.html)    |
+|-------------|---------------------------|---------------------------|---------------------------|
+| 9.x         | 3182                      | 3162                      | N/A                       |
+| 8.x         | 3046                      | 3022                      | 3051                      |
+| 7.x         | 2840                      | N/A                       | 2858                      |
+| 6.x         | 2664                      | N/A                       | 2676                      |
+| 5.0         | 2553                      | N/A                       | N/A                       |
+| 4.0         | 2417                      | N/A                       | N/A                       |
+
+
+- Other well-known rating lists
+
+| **version** |   [**GRL 40/2 Rating**](http://rebel13.nl/history.html#57)   |     [**SPCC Rating**](https://www.sp-cc.de/index.htm)       |     [**BRUCE Rating**](https://e4e6.com/)      |  [**Fast GM 60+06**](http://fastgm.de/60-0.60.html) | [**Fast GM 10m+6s**](http://fastgm.de/10min.html) |
+|-------------|-------------------------|---------------------------|---------------------------|--------------------|--------------------|
+| 9.x         | 3244                    | 3273                      | 3283                      | N/A                | N/A                |
+| 8.x         | 3140                    | N/A                       | 3169                      | N/A                | 3057               |
+| 7.x         | 2929                    | N/A                       | 2981                      | 2749               | N/A                |
+| 6.x         | 2785                    | N/A                       | 2841                      | 2584               | 2720               |
+| 5.0         | 2686                    | N/A                       | 2683                      | 2505               | N/A                |
+| 4.0         | 2522                    | N/A                       | N/A                       | N/A                | N/A                |
+| 3.0         | 2378                    | N/A                       | N/A                       | N/A                | N/A                |
 
 # Implemented Features:
 
