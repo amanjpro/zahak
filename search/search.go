@@ -825,7 +825,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 {
+	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
 		e.TimeManager().StopSearchNow = true
 	} else if e.isMainThread && isRootNode && !searchedAMove {
 		e.NoMoves = true
