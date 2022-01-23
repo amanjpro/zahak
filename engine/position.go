@@ -201,7 +201,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
 		p.Updates.Add(calculateNetInputIndex(captureSquare, capturedPiece), Remove)
-		p.phase -= phaseValues[capturedPiece-1]
+		// p.phase -= phaseValues[capturedPiece-1]
 	} else if move.IsCapture() {
 		captureSquare = dest
 		p.Board.Clear(dest, capturedPiece)
@@ -227,7 +227,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
 		p.Updates.Add(calculateNetInputIndex(dest, promoPiece), Add)
 		p.phase += phaseValues[promoPiece-1]
-		p.phase -= phaseValues[movingPiece-1]
+		// p.phase -= phaseValues[movingPiece-1]
 	} else {
 		p.Updates.Add(calculateNetInputIndex(dest, movingPiece), Add)
 	}
@@ -332,7 +332,7 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 		promoPiece = GetPiece(promoType, p.Turn())
 		p.Board.UpdateSquare(dest, movingPiece, promoPiece)
 		p.phase -= phaseValues[promoPiece-1]
-		p.phase += phaseValues[movingPiece-1]
+		// p.phase += phaseValues[movingPiece-1]
 	}
 	p.Board.Move(dest, source, movingPiece, NoPiece)
 
@@ -342,7 +342,7 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 		cp := findEnPassantCaptureSquare(move)
 		captureSquare = cp
 		p.Board.UpdateSquare(cp, capturedPiece, NoPiece)
-		p.phase += phaseValues[capturedPiece-1]
+		// p.phase += phaseValues[capturedPiece-1]
 	} else if move.IsCapture() { // Undo capture
 		captureSquare = dest
 		p.Board.UpdateSquare(dest, capturedPiece, NoPiece)

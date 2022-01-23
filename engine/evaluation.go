@@ -5,22 +5,22 @@ const Rank7Fill = uint64(1<<A7 | 1<<B7 | 1<<C7 | 1<<D7 | 1<<E7 | 1<<F7 | 1<<G7 |
 
 func (p *Position) Evaluate() int16 {
 	output := p.Net.QuickFeed()
-	var eval int16
+	var eval int
 	if p.Turn() == Black {
 		eval = -toEval(output)
 	} else {
 		eval = toEval(output)
 	}
-	return int16(int(eval) * p.phase / maxPhase)
+	return int16(eval * (128 + p.phase) / (128 + maxPhase))
 }
 
-func toEval(eval float32) int16 {
+func toEval(eval float32) int {
 	if eval >= MAX_NON_CHECKMATE {
-		return int16(MAX_NON_CHECKMATE)
+		return int(MAX_NON_CHECKMATE)
 	} else if eval <= MIN_NON_CHECKMATE {
-		return int16(MIN_NON_CHECKMATE)
+		return int(MIN_NON_CHECKMATE)
 	}
-	return int16(eval)
+	return int(eval)
 }
 
 func abs16(x int16) int16 {
