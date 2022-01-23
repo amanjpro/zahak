@@ -9,6 +9,9 @@ const MAX_NON_CHECKMATE float32 = 25000
 const MIN_NON_CHECKMATE float32 = -MAX_NON_CHECKMATE
 const CASTLING_FLAG = WhiteCanCastleQueenSide | WhiteCanCastleKingSide | BlackCanCastleQueenSide | BlackCanCastleKingSide
 
+var phaseValues = []int{0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}
+var maxPhase int = 24
+
 type Position struct {
 	Board         *Bitboard
 	Net           *NetworkState
@@ -18,6 +21,7 @@ type Position struct {
 	hash          uint64
 	Positions     map[uint64]int
 	HalfMoveClock uint8
+	phase         int
 }
 
 type PositionTag uint8
@@ -197,10 +201,12 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		captureSquare = ep
 		p.Board.Clear(ep, capturedPiece)
 		p.Updates.Add(calculateNetInputIndex(captureSquare, capturedPiece), Remove)
+		// p.phase -= phaseValues[capturedPiece-1]
 	} else if move.IsCapture() {
 		captureSquare = dest
 		p.Board.Clear(dest, capturedPiece)
 		p.Updates.Add(calculateNetInputIndex(captureSquare, capturedPiece), Remove)
+		p.phase -= phaseValues[capturedPiece-1]
 	}
 
 	if movingPiece == WhitePawn &&
@@ -220,6 +226,8 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		promoPiece = GetPiece(promoType, turn)
 		p.Board.UpdateSquare(dest, promoPiece, movingPiece)
 		p.Updates.Add(calculateNetInputIndex(dest, promoPiece), Add)
+		p.phase += phaseValues[promoPiece-1]
+		// p.phase -= phaseValues[movingPiece-1]
 	} else {
 		p.Updates.Add(calculateNetInputIndex(dest, movingPiece), Add)
 	}
@@ -323,6 +331,8 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	if promoType != NoType {
 		promoPiece = GetPiece(promoType, p.Turn())
 		p.Board.UpdateSquare(dest, movingPiece, promoPiece)
+		p.phase -= phaseValues[promoPiece-1]
+		// p.phase += phaseValues[movingPiece-1]
 	}
 	p.Board.Move(dest, source, movingPiece, NoPiece)
 
@@ -332,9 +342,11 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 		cp := findEnPassantCaptureSquare(move)
 		captureSquare = cp
 		p.Board.UpdateSquare(cp, capturedPiece, NoPiece)
+		// p.phase += phaseValues[capturedPiece-1]
 	} else if move.IsCapture() { // Undo capture
 		captureSquare = dest
 		p.Board.UpdateSquare(dest, capturedPiece, NoPiece)
+		p.phase += phaseValues[capturedPiece-1]
 	}
 
 	if move.IsQueenSideCastle() {
@@ -460,6 +472,21 @@ func findEnPassantCaptureSquare(move Move) Square {
 	return move.Destination() ^ 8
 }
 
+func (p *Position) recalculatePhase() {
+	p.phase = int(bits.OnesCount64(p.Board.whitePawn))*phaseValues[WhitePawn-1] +
+		int(bits.OnesCount64(p.Board.whiteKnight))*phaseValues[WhiteKnight-1] +
+		int(bits.OnesCount64(p.Board.whiteBishop))*phaseValues[WhiteBishop-1] +
+		int(bits.OnesCount64(p.Board.whiteRook))*phaseValues[WhiteRook-1] +
+		int(bits.OnesCount64(p.Board.whiteQueen))*phaseValues[WhiteQueen-1] +
+		int(bits.OnesCount64(p.Board.whiteKing))*phaseValues[WhiteKing-1] +
+		int(bits.OnesCount64(p.Board.blackPawn))*phaseValues[BlackPawn-1] +
+		int(bits.OnesCount64(p.Board.blackKnight))*phaseValues[BlackKnight-1] +
+		int(bits.OnesCount64(p.Board.blackBishop))*phaseValues[BlackBishop-1] +
+		int(bits.OnesCount64(p.Board.blackRook))*phaseValues[BlackRook-1] +
+		int(bits.OnesCount64(p.Board.blackQueen))*phaseValues[BlackQueen-1] +
+		int(bits.OnesCount64(p.Board.blackKing))*phaseValues[BlackKing-1]
+}
+
 func (p *Position) Copy() *Position {
 	copyMap := make(map[uint64]int, len(p.Positions))
 	for k, v := range p.Positions {
@@ -480,6 +507,7 @@ func (p *Position) Copy() *Position {
 		p.hash,
 		copyMap,
 		p.HalfMoveClock,
+		p.phase,
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos
