@@ -5,11 +5,13 @@ const Rank7Fill = uint64(1<<A7 | 1<<B7 | 1<<C7 | 1<<D7 | 1<<E7 | 1<<F7 | 1<<G7 |
 
 func (p *Position) Evaluate() int16 {
 	output := p.Net.QuickFeed()
+	var eval int16
 	if p.Turn() == Black {
-		return -toEval(output)
+		eval = -toEval(output)
+	} else {
+		eval = toEval(output)
 	}
-	return toEval(output)
-
+	return eval * p.phase / maxPhase
 }
 
 func toEval(eval float32) int16 {

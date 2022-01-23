@@ -128,6 +128,7 @@ func positionFromFen(fen string) Position {
 		0,
 		make(map[uint64]int, 100),
 		uint8(halfMoveClock),
+		0,
 	}
 
 	if parts[1] == "b" {
@@ -172,6 +173,7 @@ func positionFromFen(fen string) Position {
 
 	p.Positions[p.Hash()] = 1
 	p.Net.Recalculate(p.NetInput())
+	p.recalculatePhase()
 	return p
 }
 
