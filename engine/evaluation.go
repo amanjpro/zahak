@@ -11,7 +11,7 @@ func (p *Position) Evaluate() int16 {
 	} else {
 		eval = toEval(output)
 	}
-	return int16(eval * (128 + p.phase) / (128 + maxPhase))
+	return int16(eval * (128 + p.phase) / 128)
 }
 
 func toEval(eval float32) int {
