@@ -9,8 +9,8 @@ const MAX_NON_CHECKMATE float32 = 25000
 const MIN_NON_CHECKMATE float32 = -MAX_NON_CHECKMATE
 const CASTLING_FLAG = WhiteCanCastleQueenSide | WhiteCanCastleKingSide | BlackCanCastleQueenSide | BlackCanCastleKingSide
 
-var phaseValues = []int16{0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}
-var maxPhase int16 = 24
+var phaseValues = []int{0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}
+var maxPhase int = 24
 
 type Position struct {
 	Board         *Bitboard
@@ -21,7 +21,7 @@ type Position struct {
 	hash          uint64
 	Positions     map[uint64]int
 	HalfMoveClock uint8
-	phase         int16
+	phase         int
 }
 
 type PositionTag uint8
@@ -473,18 +473,18 @@ func findEnPassantCaptureSquare(move Move) Square {
 }
 
 func (p *Position) recalculatePhase() {
-	p.phase = int16(bits.OnesCount64(p.Board.whitePawn))*phaseValues[WhitePawn-1] +
-		int16(bits.OnesCount64(p.Board.whiteKnight))*phaseValues[WhiteKnight-1] +
-		int16(bits.OnesCount64(p.Board.whiteBishop))*phaseValues[WhiteBishop-1] +
-		int16(bits.OnesCount64(p.Board.whiteRook))*phaseValues[WhiteRook-1] +
-		int16(bits.OnesCount64(p.Board.whiteQueen))*phaseValues[WhiteQueen-1] +
-		int16(bits.OnesCount64(p.Board.whiteKing))*phaseValues[WhiteKing-1] +
-		int16(bits.OnesCount64(p.Board.blackPawn))*phaseValues[BlackPawn-1] +
-		int16(bits.OnesCount64(p.Board.blackKnight))*phaseValues[BlackKnight-1] +
-		int16(bits.OnesCount64(p.Board.blackBishop))*phaseValues[BlackBishop-1] +
-		int16(bits.OnesCount64(p.Board.blackRook))*phaseValues[BlackRook-1] +
-		int16(bits.OnesCount64(p.Board.blackQueen))*phaseValues[BlackQueen-1] +
-		int16(bits.OnesCount64(p.Board.blackKing))*phaseValues[BlackKing-1]
+	p.phase = int(bits.OnesCount64(p.Board.whitePawn))*phaseValues[WhitePawn-1] +
+		int(bits.OnesCount64(p.Board.whiteKnight))*phaseValues[WhiteKnight-1] +
+		int(bits.OnesCount64(p.Board.whiteBishop))*phaseValues[WhiteBishop-1] +
+		int(bits.OnesCount64(p.Board.whiteRook))*phaseValues[WhiteRook-1] +
+		int(bits.OnesCount64(p.Board.whiteQueen))*phaseValues[WhiteQueen-1] +
+		int(bits.OnesCount64(p.Board.whiteKing))*phaseValues[WhiteKing-1] +
+		int(bits.OnesCount64(p.Board.blackPawn))*phaseValues[BlackPawn-1] +
+		int(bits.OnesCount64(p.Board.blackKnight))*phaseValues[BlackKnight-1] +
+		int(bits.OnesCount64(p.Board.blackBishop))*phaseValues[BlackBishop-1] +
+		int(bits.OnesCount64(p.Board.blackRook))*phaseValues[BlackRook-1] +
+		int(bits.OnesCount64(p.Board.blackQueen))*phaseValues[BlackQueen-1] +
+		int(bits.OnesCount64(p.Board.blackKing))*phaseValues[BlackKing-1]
 }
 
 func (p *Position) Copy() *Position {
