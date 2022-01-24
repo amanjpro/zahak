@@ -11,7 +11,6 @@ type Runner struct {
 	nodesVisited int64
 	cacheHits    int64
 	Engines      []*Engine
-	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
 	pv           PVLine
@@ -53,6 +52,7 @@ type Engine struct {
 	Scores          []int16
 	NoMoves         bool
 	tbHit           int64
+	stopChannel     chan struct{}
 }
 
 const MaxMultiPV = 120
@@ -120,6 +120,7 @@ func NewEngine(parent *Runner) *Engine {
 		MultiPV:         1,
 		MultiPVs:        multiPVs,
 		Scores:          make([]int16, MaxMultiPV),
+		stopChannel:     make(chan struct{}),
 	}
 }
 
@@ -149,11 +150,11 @@ func (r *Runner) ClearForSearch() {
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
-	r.Stop = false
 }
 
 func (e *Engine) ClearForSearch() {
 
+	e.stopChannel = make(chan struct{})
 	for i := 0; i < len(e.MultiPVs); i++ {
 		e.MultiPVs[i].Recycle()
 		e.Scores[i] = 0

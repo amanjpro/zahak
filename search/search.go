@@ -13,6 +13,21 @@ import (
 const TB_WIN_BOUND int16 = 27000
 const TB_LOSS_BOUND int16 = -27000
 
+func (r *Runner) Stop() {
+	for _, e := range r.Engines {
+		close(e.stopChannel)
+	}
+}
+
+func (e *Engine) ShouldStop() bool {
+	select {
+	case <-e.stopChannel:
+		return true
+	default:
+		return false
+	}
+}
+
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	e := r.Engines[0]
 	if bestmove := ProbeDTZ(e.Position); bestmove != EmptyMove {
@@ -114,7 +129,7 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
 					break
 				}
-			} else if iterationDepth > 1 && e.parent.Stop {
+			} else if iterationDepth > 1 && e.ShouldStop() {
 				break
 			}
 
@@ -122,7 +137,7 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
 
-			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
+			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.ShouldStop()) {
 				break
 			}
 
@@ -154,13 +169,13 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 	}
 	if e.isMainThread {
 		// e.TimeManager().Pondering = false
-		e.parent.Stop = true
 		e.updatePv(pv, e.score, lastDepth, false)
 		if e.MultiPV > 1 {
 			e.SendMultiPv(pv, e.score, lastDepth)
 		} else {
 			e.SendPv(pv, e.score, lastDepth)
 		}
+		e.parent.Stop()
 	}
 }
 
@@ -196,7 +211,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			}
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
+			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.ShouldStop() {
 				e.seldepth = max8(e.seldepth, maxSeldepth)
 				e.Scores[i] = -MAX_INT
 				goto sortPVs
@@ -357,7 +372,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 
-	if !e.isMainThread && e.parent.Stop {
+	if !e.isMainThread && e.ShouldStop() {
 		return -MAX_INT
 	}
 
@@ -485,7 +500,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
 		if e.isMainThread && e.TimeManager().AbruptStop {
 			return score
-		} else if !e.isMainThread && e.parent.Stop {
+		} else if !e.isMainThread && e.ShouldStop() {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -600,7 +615,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop()) {
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 						}
@@ -770,7 +785,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop()) {
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 						}
@@ -800,7 +815,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// 	e.parent.mu.RUnlock()
 		// }
 	}
-	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
+	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop())) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {
