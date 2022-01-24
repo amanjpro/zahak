@@ -24,7 +24,7 @@ func (e *Engine) ShouldStop() bool {
 	case <-e.stopChannel:
 		return true
 	default:
-		return false
+		return e.isMainThread && e.TimeManager().StopSearchNow
 	}
 }
 
