@@ -53,6 +53,7 @@ type Engine struct {
 	NoMoves         bool
 	tbHit           int64
 	stopChannel     chan struct{}
+	stopped         bool
 }
 
 const MaxMultiPV = 120
@@ -121,6 +122,7 @@ func NewEngine(parent *Runner) *Engine {
 		MultiPVs:        multiPVs,
 		Scores:          make([]int16, MaxMultiPV),
 		stopChannel:     make(chan struct{}),
+		stopped:         false,
 	}
 }
 
@@ -169,6 +171,7 @@ func (e *Engine) ClearForSearch() {
 	e.score = 0
 	e.NoMoves = false
 	e.rootMove = EmptyMove
+	e.stopped = false
 
 	// e.searchHistory.Reset()
 

@@ -15,6 +15,7 @@ const TB_LOSS_BOUND int16 = -27000
 
 func (r *Runner) Stop() {
 	for _, e := range r.Engines {
+		e.stopped = true
 		close(e.stopChannel)
 	}
 }
@@ -24,7 +25,7 @@ func (e *Engine) ShouldStop() bool {
 	case <-e.stopChannel:
 		return true
 	default:
-		return e.isMainThread && e.TimeManager().StopSearchNow
+		return false
 	}
 }
 
@@ -125,11 +126,8 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 				break
 			}
 
-			if e.isMainThread {
-				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
-					break
-				}
-			} else if iterationDepth > 1 && e.ShouldStop() {
+			if (e.isMainThread && iterationDepth > 1 && !e.TimeManager().CanStartNewIteration()) ||
+				(iterationDepth > 1 && e.ShouldStop()) {
 				break
 			}
 
@@ -137,7 +135,7 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
 
-			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.ShouldStop()) {
+			if (e.isMainThread && e.TimeManager().AbruptStop) || ((iterationDepth > 1 || !e.isMainThread) && e.ShouldStop()) {
 				break
 			}
 
@@ -175,7 +173,9 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 		} else {
 			e.SendPv(pv, e.score, lastDepth)
 		}
-		e.parent.Stop()
+		if !e.stopped {
+			e.parent.Stop()
+		}
 	}
 }
 
@@ -211,7 +211,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			}
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.ShouldStop() {
+			if /* e.startDepth == 0 || */ (e.isMainThread && e.TimeManager().AbruptStop) || ((iterationDepth > 1 || !e.isMainThread) && e.ShouldStop()) {
 				e.seldepth = max8(e.seldepth, maxSeldepth)
 				e.Scores[i] = -MAX_INT
 				goto sortPVs
@@ -498,9 +498,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if /* isPvNode && */ depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.isMainThread && e.TimeManager().AbruptStop {
-			return score
-		} else if !e.isMainThread && e.ShouldStop() {
+		if e.isMainThread && e.TimeManager().AbruptStop || e.ShouldStop() {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -615,7 +613,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop()) {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || !e.ShouldStop() {
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 						}
@@ -785,7 +783,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop()) {
+					if (e.isMainThread && !e.TimeManager().AbruptStop) || !e.ShouldStop() {
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 						}
@@ -815,15 +813,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// 	e.parent.mu.RUnlock()
 		// }
 	}
-	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop())) && !firstLayerOfSingularity {
+	if ((e.isMainThread && !e.TimeManager().AbruptStop) || !e.ShouldStop()) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
-		e.TimeManager().StopSearchNow = true
+	if !e.stopped && e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
+		e.parent.Stop()
 	} else if e.isMainThread && isRootNode && !searchedAMove {
 		e.NoMoves = true
 	}

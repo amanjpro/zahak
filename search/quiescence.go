@@ -83,7 +83,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return standPat
 	}
 
-	if (e.isMainThread && e.TimeManager().ShouldStop(false, false)) || (!e.isMainThread && e.ShouldStop()) {
+	if (e.isMainThread && e.TimeManager().ShouldStop(false, false)) || e.ShouldStop() {
 		return 0
 	}
 
@@ -155,7 +155,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		}
 	}
 
-	if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.ShouldStop()) {
+	if (e.isMainThread && !e.TimeManager().AbruptStop) || !e.ShouldStop() {
 		flag := Exact
 		if bestscore >= beta {
 			flag = LowerBound
