@@ -22,6 +22,7 @@ type Position struct {
 	Positions     map[uint64]int
 	HalfMoveClock uint8
 	phase         int
+	hashAcc       []uint64
 }
 
 type PositionTag uint8
@@ -298,11 +299,13 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		p.Updates.Add(768, Remove)
 	}
 
+	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
+
 	if updateHidden {
 		p.Net.UpdateHidden(p.Updates)
+		p.hashAcc[p.Net.CurrentHidden] = p.hash
 	}
 
-	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
 	return ep, tag, hc, true
 }
 
@@ -313,11 +316,10 @@ func (p *Position) GameUnMakeMove(move Move, tag PositionTag, enPassant Square, 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
 	p.Net.RevertHidden()
+	p.hash = p.hashAcc[p.Net.CurrentHidden]
 }
 
 func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square, halfClock uint8, isLegal bool) {
-	oldTag := p.Tag
-	oldEnPassant := p.EnPassant
 	movingPiece := move.MovingPiece()
 	capturedPiece := move.CapturedPiece()
 	promoPiece := NoPiece
@@ -336,15 +338,15 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	}
 	p.Board.Move(dest, source, movingPiece, NoPiece)
 
-	captureSquare := NoSquare
+	// captureSquare := NoSquare
 	// Undo enpassant
 	if move.IsEnPassant() {
 		cp := findEnPassantCaptureSquare(move)
-		captureSquare = cp
+		// captureSquare = cp
 		p.Board.UpdateSquare(cp, capturedPiece, NoPiece)
 		// p.phase += phaseValues[capturedPiece-1]
 	} else if move.IsCapture() { // Undo capture
-		captureSquare = dest
+		// captureSquare = dest
 		p.Board.UpdateSquare(dest, capturedPiece, NoPiece)
 		p.phase += phaseValues[capturedPiece-1]
 	}
@@ -365,9 +367,9 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 		}
 	}
 
-	if isLegal {
-		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
-	}
+	// if isLegal {
+	// 	updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
+	// }
 }
 
 type Status uint8
@@ -508,6 +510,7 @@ func (p *Position) Copy() *Position {
 		copyMap,
 		p.HalfMoveClock,
 		p.phase,
+		make([]uint64, MaximumDepth),
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos
