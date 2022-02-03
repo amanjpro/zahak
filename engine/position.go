@@ -22,6 +22,8 @@ type Position struct {
 	Positions     map[uint64]int
 	HalfMoveClock uint8
 	phase         int
+	hashAcc       []uint64
+	hashHeight    int
 }
 
 type PositionTag uint8
@@ -299,7 +301,9 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	}
 
 	if updateHidden {
+		p.hashAcc[p.hashHeight] = p.hash
 		p.Net.UpdateHidden(p.Updates)
+		p.hashHeight += 1
 	}
 
 	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
@@ -313,11 +317,11 @@ func (p *Position) GameUnMakeMove(move Move, tag PositionTag, enPassant Square, 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
 	p.Net.RevertHidden()
+	p.hashHeight -= 1
+	p.hash = p.hashAcc[p.hashHeight]
 }
 
 func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square, halfClock uint8, isLegal bool) {
-	oldTag := p.Tag
-	oldEnPassant := p.EnPassant
 	movingPiece := move.MovingPiece()
 	capturedPiece := move.CapturedPiece()
 	promoPiece := NoPiece
@@ -336,15 +340,15 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	}
 	p.Board.Move(dest, source, movingPiece, NoPiece)
 
-	captureSquare := NoSquare
+	// captureSquare := NoSquare
 	// Undo enpassant
 	if move.IsEnPassant() {
 		cp := findEnPassantCaptureSquare(move)
-		captureSquare = cp
+		// captureSquare = cp
 		p.Board.UpdateSquare(cp, capturedPiece, NoPiece)
 		// p.phase += phaseValues[capturedPiece-1]
 	} else if move.IsCapture() { // Undo capture
-		captureSquare = dest
+		// captureSquare = dest
 		p.Board.UpdateSquare(dest, capturedPiece, NoPiece)
 		p.phase += phaseValues[capturedPiece-1]
 	}
@@ -365,9 +369,8 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 		}
 	}
 
-	if isLegal {
-		updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
-	}
+	// if isLegal {
+	// }
 }
 
 type Status uint8
@@ -508,6 +511,8 @@ func (p *Position) Copy() *Position {
 		copyMap,
 		p.HalfMoveClock,
 		p.phase,
+		make([]uint64, MaximumDepth),
+		0,
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos

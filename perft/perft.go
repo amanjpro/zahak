@@ -18,18 +18,16 @@ type PerftNodes struct {
 	checkmates int64
 }
 
-func PerftTree(game Game, depth int, moves []Move) {
+func PerftTree(game Game, depth int, strMoves []string) {
 	sum := int64(0)
-	for _, move := range moves {
-		game.Position().MakeMove(move)
-	}
+	game.ParseGameMoves(strMoves)
 	if depth > 0 {
 		depth -= 1
 		cache = make([]map[uint64]int64, depth)
 		for i := 0; i < depth; i++ {
 			cache[i] = make(map[uint64]int64, 1000_000)
 		}
-		moves = game.Position().PseudoLegalMoves()
+		moves := game.Position().PseudoLegalMoves()
 		for _, move := range moves {
 			if ep, tg, hc, ok := game.Position().MakeMove(move); ok {
 				nodes := bulkyPerft(game.Position(), depth)

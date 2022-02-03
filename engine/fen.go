@@ -129,6 +129,8 @@ func positionFromFen(fen string) Position {
 		make(map[uint64]int, 100),
 		uint8(halfMoveClock),
 		0,
+		make([]uint64, MaximumDepth),
+		0,
 	}
 
 	if parts[1] == "b" {

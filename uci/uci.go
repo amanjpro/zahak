@@ -186,9 +186,7 @@ func (uci *UCI) Start() {
 					uci.stopPondering()
 					moves := strings.Fields(cmd)[3:]
 					game = FromFen(startFen)
-					for _, move := range game.Position().ParseGameMoves(moves) {
-						game.Move(move)
-					}
+					game.ParseGameMoves(moves)
 				} else if strings.HasPrefix(cmd, "position fen") {
 					uci.stopPondering()
 					cmd := strings.Fields(cmd)
@@ -205,9 +203,7 @@ func (uci *UCI) Start() {
 					} else {
 						game = FromFen(fen)
 					}
-					for _, move := range game.Position().ParseGameMoves(moves) {
-						game.Move(move)
-					}
+					game.ParseGameMoves(moves)
 				} else {
 					fmt.Println("Didn't understand", cmd)
 				}

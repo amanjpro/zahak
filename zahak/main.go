@@ -59,9 +59,9 @@ func main() {
 			depth, _ := strconv.Atoi(flag.Arg(0))
 			fen := flag.Arg(1)
 			game := FromFen(fen)
-			moves := []Move{}
+			var moves []string
 			if len(flag.Args()) > 2 {
-				game.Position().ParseGameMoves(strings.Fields(flag.Args()[2]))
+				moves = strings.Fields(flag.Args()[2])
 			}
 			PerftTree(game, depth, moves)
 		} else {
