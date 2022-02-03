@@ -116,29 +116,6 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 		newKey := newData ^ hash
 		c.items[index].Update(newKey, newData)
 	}
-
-	// if oldHash == hash && oldDepth > depth*2 && nodeType != Exact {
-	// 	return
-	// }
-	// if //nodeType == Exact ||
-	// hash == oldHash ||
-	// 	oldData == 0 ||
-	// 	(uint16(oldDepth)-(256+age-oldAge)*4 < uint16(oldDepth)-(256+age-oldAge)*4) {
-	// }
-
-	// if (entry->hash == shortHash) {
-	//   if (entry->depth > depth * 2 && !(flag & TT_EXACT)) return;
-	//
-	//   toReplace = entry;
-	//   break;
-	// }
-	//
-	// if (entry->depth - (256 + TT.age - entry->age) * 4 < toReplace->depth - (256 + TT.age - toReplace->age) * 4)
-	//   toReplace = entry;
-
-	// if nodeType != Exact && ((hash == oldHash && depth < oldDepth) || (oldDepth-6)/2 >= depth) && oldData != 0 && age-OldAge < oldAge {
-	// 	return
-	// }
 }
 
 func (c *Cache) Size() int {
