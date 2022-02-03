@@ -42,6 +42,7 @@ func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 		}
 		r.SendBestMove()
 	}
+	TranspositionTable.AdvanceAge()
 }
 
 func (e *Engine) ParallelSearch(depth int8, mateIn int16, nodes int64) {
@@ -337,7 +338,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// if the tablebase gives us what we want, then we accept it's score and return
 			if flag == Exact || (flag == LowerBound && score >= beta) || (flag == UpperBound && score <= alpha) {
-				TranspositionTable.Set(hash, EmptyMove, score, depthLeft, flag, e.Ply)
+				TranspositionTable.Set(hash, EmptyMove, score, depthLeft, flag)
 				return score
 			}
 
@@ -614,7 +615,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if bestscore >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound, e.Ply)
+							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
 						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves)
@@ -790,7 +791,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if score >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound, e.Ply)
+							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
 						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves)
@@ -820,9 +821,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
-			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact, e.Ply)
+			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {
-			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound, e.Ply)
+			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
 		}
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {

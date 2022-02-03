@@ -23,6 +23,7 @@ type Cache struct {
 	size   int
 	length uint64
 	mask   uint
+	age    uint16
 }
 
 const OldAge = uint16(5)
@@ -60,6 +61,13 @@ func (c *CachedEval) Update(key uint64, data uint64) {
 	c.Data = data
 }
 
+func (c *Cache) AdvanceAge() {
+	c.age += 1
+	if c.age > uint16(0b1111111111) {
+		c.age = 0
+	}
+}
+
 func (c *Cache) Consumed() int {
 	used := 0
 	samples := 1000
@@ -77,8 +85,9 @@ func (c *Cache) index(hash uint64) uint {
 	return uint(hash) & c.mask
 }
 
-func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType, age uint16) {
+func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType NodeType) {
 	index := c.index(hash)
+	age := c.age
 
 	oldValue := c.items[index]
 	oldKey := oldValue.Key
@@ -93,12 +102,43 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	// }
 
 	_, _, oldDepth, _, oldAge := Unpack(oldData)
-	if age >= oldAge && nodeType != Exact && ((hash == oldHash && depth < oldDepth) || (oldDepth-6)/2 >= depth) && oldData != 0 && age-OldAge < oldAge {
-		return
+	var replace bool
+	if oldData == 0 {
+		replace = true
+	} else if oldHash == hash {
+		replace = depth >= oldDepth-3 || nodeType == Exact
+	} else {
+		replace = oldAge != age || depth >= oldDepth
 	}
-	newData := Pack(hashmove, eval, depth, nodeType, age)
-	newKey := newData ^ hash
-	c.items[index].Update(newKey, newData)
+	if replace {
+
+		newData := Pack(hashmove, eval, depth, nodeType, age)
+		newKey := newData ^ hash
+		c.items[index].Update(newKey, newData)
+	}
+
+	// if oldHash == hash && oldDepth > depth*2 && nodeType != Exact {
+	// 	return
+	// }
+	// if //nodeType == Exact ||
+	// hash == oldHash ||
+	// 	oldData == 0 ||
+	// 	(uint16(oldDepth)-(256+age-oldAge)*4 < uint16(oldDepth)-(256+age-oldAge)*4) {
+	// }
+
+	// if (entry->hash == shortHash) {
+	//   if (entry->depth > depth * 2 && !(flag & TT_EXACT)) return;
+	//
+	//   toReplace = entry;
+	//   break;
+	// }
+	//
+	// if (entry->depth - (256 + TT.age - entry->age) * 4 < toReplace->depth - (256 + TT.age - toReplace->age) * 4)
+	//   toReplace = entry;
+
+	// if nodeType != Exact && ((hash == oldHash && depth < oldDepth) || (oldDepth-6)/2 >= depth) && oldData != 0 && age-OldAge < oldAge {
+	// 	return
+	// }
 }
 
 func (c *Cache) Size() int {
@@ -125,7 +165,7 @@ func NewCache(megabytes int) *Cache {
 	size := int((megabytes * 1024 * 1024) / CACHE_ENTRY_SIZE)
 	length := RoundPowerOfTwo(size)
 
-	return &Cache{make([]CachedEval, length), megabytes, uint64(length), uint(length - 1)}
+	return &Cache{make([]CachedEval, length), megabytes, uint64(length), uint(length - 1), 0}
 }
 
 func RoundPowerOfTwo(size int) int {
