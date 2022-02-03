@@ -166,7 +166,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		} else if bestscore <= originalAlpha {
 			flag = UpperBound
 		}
-		TranspositionTable.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag, e.Ply)
+		TranspositionTable.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag)
 	}
 
 	return bestscore
