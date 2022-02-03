@@ -23,6 +23,7 @@ type Position struct {
 	HalfMoveClock uint8
 	phase         int
 	hashAcc       []uint64
+	hashHeight    int
 }
 
 type PositionTag uint8
@@ -299,24 +300,26 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		p.Updates.Add(768, Remove)
 	}
 
-	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
-
 	if updateHidden {
+		p.hashAcc[p.hashHeight] = p.hash
 		p.Net.UpdateHidden(p.Updates)
-		p.hashAcc[p.Net.CurrentHidden] = p.hash
+		p.hashHeight += 1
 	}
 
+	updateHash(p, move, captureSquare, p.EnPassant, ep, promoPiece, tag)
 	return ep, tag, hc, true
 }
 
 func (p *Position) GameUnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
+	generateZobristHash(p)
 }
 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
 	p.Net.RevertHidden()
-	p.hash = p.hashAcc[p.Net.CurrentHidden]
+	p.hashHeight -= 1
+	p.hash = p.hashAcc[p.hashHeight]
 }
 
 func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square, halfClock uint8, isLegal bool) {
@@ -368,7 +371,6 @@ func (p *Position) unMakeMoveHelper(move Move, tag PositionTag, enPassant Square
 	}
 
 	// if isLegal {
-	// 	updateHash(p, move, captureSquare, p.EnPassant, oldEnPassant, promoPiece, oldTag)
 	// }
 }
 
@@ -511,6 +513,7 @@ func (p *Position) Copy() *Position {
 		p.HalfMoveClock,
 		p.phase,
 		make([]uint64, MaximumDepth),
+		0,
 	}
 	newPos.Net.Recalculate(newPos.NetInput())
 	return newPos
