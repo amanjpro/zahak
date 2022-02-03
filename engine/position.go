@@ -312,7 +312,6 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 
 func (p *Position) GameUnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {
 	p.unMakeMoveHelper(move, tag, enPassant, halfClock, true)
-	generateZobristHash(p)
 }
 
 func (p *Position) UnMakeMove(move Move, tag PositionTag, enPassant Square, halfClock uint8) {

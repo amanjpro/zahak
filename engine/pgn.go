@@ -18,29 +18,28 @@ func (p *Position) ParseSearchMoves(moveStr []string) []Move {
 	return parsed
 }
 
-func (p *Position) ParseGameMoves(moveStr []string) []Move {
-	if len(moveStr) == 0 {
-		return []Move{}
-	}
-	currentMove := moveStr[0]
-	if len(strings.TrimSpace(currentMove)) == 0 {
-		return p.ParseGameMoves(moveStr[1:])
-	} else {
-		var parsed Move
+func (g *Game) ParseGameMoves(moveStr []string) {
+	p := g.Position()
+	for _, currentMove := range moveStr {
+		currentMove := strings.TrimSpace(currentMove)
 		validMoves := p.PseudoLegalMoves()
 		for _, move := range validMoves {
 			if move.ToString() == currentMove {
-				parsed = move
-				break
+				_, _, _, _ = p.GameMakeMove(move)
+				if p.Turn() == White {
+					g.numberOfMoves += 1
+				}
+				v, ok := p.Positions[p.Hash()]
+				if ok {
+					p.Positions[p.Hash()] = v + 1
+				} else {
+					p.Positions[p.Hash()] = 1
+				}
+				goto end
 			}
 		}
-		if parsed == 0 {
-			panic(fmt.Sprintf("Expected a valid move, %s is not valid", currentMove))
-		}
-		ep, tg, hc, _ := p.GameMakeMove(parsed)
-		otherMoves := p.ParseGameMoves(moveStr[1:])
-		p.GameUnMakeMove(parsed, tg, ep, hc)
-		return append(append([]Move{}, parsed), otherMoves...)
+		panic(fmt.Sprintf("Illegal moves are in the path: %s", currentMove))
+	end:
 	}
 }
 
