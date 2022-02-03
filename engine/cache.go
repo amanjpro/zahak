@@ -81,9 +81,9 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	index := c.index(hash)
 
 	oldValue := c.items[index]
-	// oldKey := oldValue.Key
+	oldKey := oldValue.Key
 	oldData := oldValue.Data
-	// oldHash := oldKey ^ oldData
+	oldHash := oldKey ^ oldData
 
 	// very good for debugging hash issues
 	// newHashmove, newEval, newDepth, newNodeType, newAge := Unpack(newData)
@@ -93,7 +93,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	// }
 
 	_, _, oldDepth, _, oldAge := Unpack(oldData)
-	if age >= oldAge && nodeType != Exact && /* hash == oldHash && */ (oldDepth-6)/2 >= depth && oldData != 0 && age-OldAge < oldAge {
+	if age >= oldAge && nodeType != Exact && ((hash == oldHash && depth < oldDepth) || (oldDepth-6)/2 >= depth) && oldData != 0 && age-OldAge < oldAge {
 		return
 	}
 	newData := Pack(hashmove, eval, depth, nodeType, age)
