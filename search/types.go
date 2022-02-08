@@ -94,6 +94,7 @@ type Engine struct {
 	score           int16
 	startDepth      int8
 	skipMove        Move
+	rootMove        Move
 	skipHeight      int8
 	MovesToSearch   []Move
 	TempMovePicker  *MovePicker
@@ -165,6 +166,7 @@ func NewEngine(parent *Runner) *Engine {
 		score:           0,
 		TempMovePicker:  EmptyMovePicker(),
 		skipMove:        EmptyMove,
+		rootMove:        EmptyMove,
 		skipHeight:      MAX_DEPTH,
 		MultiPV:         1,
 		MultiPVs:        multiPVs,
@@ -219,6 +221,7 @@ func (e *Engine) ClearForSearch() {
 	e.seldepth = 0
 	e.score = 0
 	e.NoMoves = false
+	e.rootMove = EmptyMove
 
 	// e.searchHistory.Reset()
 
