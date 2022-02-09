@@ -37,11 +37,10 @@ func dynamicMargin(pos *Position) int16 {
 
 func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
-	e.info.quiesceCounter += 1
 	e.VisitNode(searchHeight)
 
 	position := e.Position
-	TranspositionTable.Prefetch(position.Hash())
+	e.tt.Prefetch(position.Hash())
 	// pawnhash := e.Pawnhash
 
 	currentMove := e.positionMoves[searchHeight]
@@ -51,7 +50,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	hash := position.Hash()
-	_, nEval, _, nType, ttHit := TranspositionTable.Get(hash)
+	_, nEval, _, nType, ttHit := e.tt.Get(hash)
 	// if ttHit {
 	// 	// ttHit = position.IsPseudoLegal(nHashMove)
 	// }
@@ -96,7 +95,6 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	// Delta Pruning
 	if standPat+dynamicMargin(position) < alpha {
-		e.info.deltaPruningCounter += 1
 		return alpha
 	}
 
@@ -113,7 +111,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
 
-	for i := 0; ; i++ {
+	for true {
 		move := movePicker.Next()
 		if move == EmptyMove {
 			break
@@ -126,14 +124,12 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 		if isCaptureMove && seeScores[noisyMoves] < 0 {
 			// SEE pruning
-			e.info.seeQuiescenceCounter += 1
 			break
 		}
 
 		// if !IsPromoting(move) {
 		// 	margin := p + move.CapturedPiece().Weight()
 		// 	if standPat+margin <= alpha {
-		// 		e.info.fpCounter += 1
 		// 		continue
 		// 	}
 		// }
@@ -166,7 +162,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		} else if bestscore <= originalAlpha {
 			flag = UpperBound
 		}
-		TranspositionTable.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag)
+		e.tt.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag)
 	}
 
 	return bestscore

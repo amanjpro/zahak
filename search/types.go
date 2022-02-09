@@ -21,57 +21,6 @@ type Runner struct {
 	score        int16
 }
 
-type Info struct {
-	fpCounter                  int64
-	efpCounter                 int64
-	rfpCounter                 int64
-	razoringCounter            int64
-	checkExtentionCounter      int64
-	nullMoveCounter            int64
-	lmrCounter                 int64
-	lmpCounter                 int64
-	deltaPruningCounter        int64
-	seeQuiescenceCounter       int64
-	seeCounter                 int64
-	mainSearchCounter          int64
-	zwCounter                  int64
-	researchCounter            int64
-	quiesceCounter             int64
-	killerCounter              int64
-	historyCounter             int64
-	probCutCounter             int64
-	singularExtensionCounter   int64
-	historyPruningCounter      int64
-	multiCutCounter            int64
-	internalIterativeReduction int64
-	tbHit                      int64
-}
-
-func (i *Info) Print() {
-	fmt.Printf("info string LMP: %d\n", i.lmpCounter)
-	fmt.Printf("info string FP: %d\n", i.fpCounter)
-	fmt.Printf("info string EFP: %d\n", i.efpCounter)
-	fmt.Printf("info string RFP: %d\n", i.rfpCounter)
-	fmt.Printf("info string Razoring: %d\n", i.razoringCounter)
-	fmt.Printf("info string Check Extension: %d\n", i.checkExtentionCounter)
-	fmt.Printf("info string Null-Move: %d\n", i.nullMoveCounter)
-	fmt.Printf("info string LMR: %d\n", i.lmrCounter)
-	fmt.Printf("info string ProbCut: %d\n", i.probCutCounter)
-	fmt.Printf("info string Delta Pruning: %d\n", i.deltaPruningCounter)
-	fmt.Printf("info string SEE Quiescence: %d\n", i.seeQuiescenceCounter)
-	fmt.Printf("info string SEE: %d\n", i.seeCounter)
-	fmt.Printf("info string PV Nodes: %d\n", i.mainSearchCounter)
-	fmt.Printf("info string ZW Nodes: %d\n", i.zwCounter)
-	fmt.Printf("info string Research: %d\n", i.researchCounter)
-	fmt.Printf("info string Quiescence Nodes: %d\n", i.quiesceCounter)
-	fmt.Printf("info string Killer Moves: %d\n", i.killerCounter)
-	fmt.Printf("info string History Moves: %d\n", i.historyCounter)
-	fmt.Printf("info string History Pruning: %d\n", i.historyPruningCounter)
-	fmt.Printf("info string Singular Extension: %d\n", i.singularExtensionCounter)
-	fmt.Printf("info string Multi-Cut: %d\n", i.multiCutCounter)
-	fmt.Printf("info string Internal Iterative Reduction: %d\n", i.internalIterativeReduction)
-}
-
 type Engine struct {
 	Position        *Position
 	Ply             uint16
@@ -81,7 +30,6 @@ type Engine struct {
 	searchHistory   MoveHistory
 	MovePickers     []*MovePicker
 	triedQuietMoves [][]Move
-	info            Info
 	pred            Predecessors
 	seldepth        int8
 	innerLines      []PVLine
@@ -94,6 +42,7 @@ type Engine struct {
 	score           int16
 	startDepth      int8
 	skipMove        Move
+	tt              *Cache
 	rootMove        Move
 	skipHeight      int8
 	MovesToSearch   []Move
@@ -103,6 +52,7 @@ type Engine struct {
 	MultiPVs        []PVLine
 	Scores          []int16
 	NoMoves         bool
+	tbHit           int64
 }
 
 const MaxMultiPV = 120
@@ -154,7 +104,6 @@ func NewEngine(parent *Runner) *Engine {
 		searchHistory:   MoveHistory{},
 		MovePickers:     movePickers,
 		triedQuietMoves: make([][]Move, 250),
-		info:            NewInfo(),
 		pred:            NewPredecessors(),
 		innerLines:      innerLines,
 		staticEvals:     make([]int16, MAX_DEPTH),
@@ -188,10 +137,6 @@ func (r *Runner) Ponderhit() {
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
 
-func NewInfo() Info {
-	return Info{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-}
-
 func (r *Runner) ResetHistory() {
 	for i := 0; i < len(r.Engines); i++ {
 		r.Engines[i].searchHistory = MoveHistory{}
@@ -219,6 +164,7 @@ func (e *Engine) ClearForSearch() {
 	}
 
 	e.seldepth = 0
+	e.tbHit = 0
 	e.score = 0
 	e.NoMoves = false
 	e.rootMove = EmptyMove
@@ -236,11 +182,11 @@ func (e *Engine) ClearForSearch() {
 			e.triedQuietMoves[i][j] = EmptyMove
 		}
 	}
+	e.tt = TranspositionTable
 
 	e.nodesVisited = 0
 	e.cacheHits = 0
 
-	e.info = NewInfo()
 	e.StartTime = time.Now()
 
 	e.pred.Clear()
@@ -295,7 +241,7 @@ func (e *Engine) SendMultiPv(pv PVLine, score int16, depth int8) {
 	for i := 0; i < len(e.parent.Engines); i++ {
 		e := e.parent.Engines[i]
 		nodesVisited += e.nodesVisited
-		tbHits += e.info.tbHit
+		tbHits += e.tbHit
 		if e.seldepth > seldepth {
 			seldepth = e.seldepth
 		}
@@ -329,7 +275,7 @@ func (e *Engine) SendPv(pv PVLine, score int16, depth int8) {
 	for i := 0; i < len(e.parent.Engines); i++ {
 		e := e.parent.Engines[i]
 		nodesVisited += e.nodesVisited
-		tbHits += e.info.tbHit
+		tbHits += e.tbHit
 		if e.seldepth > seldepth {
 			seldepth = e.seldepth
 		}
