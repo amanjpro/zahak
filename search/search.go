@@ -142,9 +142,6 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 					e.SendPv(pv, e.score, iterationDepth)
 				}
 			}
-			if e.isMainThread && !e.TimeManager().Pondering && e.parent.DebugMode {
-				e.info.Print()
-			}
 
 			if e.isMainThread && mateIn != -1 && (newScore == -CHECKMATE_EVAL+mateIn || newScore == CHECKMATE_EVAL-mateIn ||
 				newScore == -CHECKMATE_EVAL+mateIn-1 || newScore == CHECKMATE_EVAL-mateIn+1) {
@@ -245,7 +242,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isPvNode := alpha != beta-1
 
 	position := e.Position
-	TranspositionTable.Prefetch(position.Hash())
+	e.tt.Prefetch(position.Hash())
 
 	currentMove := e.positionMoves[searchHeight]
 	var gpMove Move
@@ -274,7 +271,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	var isInCheck = position.IsInCheck()
 	if isInCheck {
-		e.info.checkExtentionCounter += 1
 		depthLeft += 1 // Check Extension
 	}
 
@@ -283,15 +279,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		return e.quiescence(alpha, beta, searchHeight)
 	}
 
-	if isPvNode {
-		e.info.mainSearchCounter += 1
-	} else {
-		e.info.zwCounter += 1
-	}
-
 	firstLayerOfSingularity := e.skipHeight == searchHeight && e.skipMove != EmptyMove
 	hash := position.Hash()
-	nHashMove, nEval, nDepth, nType, ttHit := TranspositionTable.Get(hash)
+	nHashMove, nEval, nDepth, nType, ttHit := e.tt.Get(hash)
 	if ttHit {
 		ttHit = position.IsPseudoLegal(nHashMove)
 		nEval = evalFromTT(nEval, searchHeight)
@@ -325,7 +315,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		tbResult := ProbeWDL(position, depthLeft)
 
 		if tbResult != TB_RESULT_FAILED {
-			e.info.tbHit += 1
+			e.tbHit += 1
 
 			var flag NodeType
 			var score int16
@@ -343,7 +333,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// if the tablebase gives us what we want, then we accept it's score and return
 			if flag == Exact || (flag == LowerBound && score >= beta) || (flag == UpperBound && score <= alpha) {
-				TranspositionTable.Set(hash, EmptyMove, score, depthLeft, flag)
+				e.tt.Set(hash, EmptyMove, score, depthLeft, flag)
 				return score
 			}
 
@@ -358,7 +348,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	// Internal iterative reduction based on Rebel's idea
 	// if /* !isPvNode && */ !ttHit && depthLeft >= 3 {
-	// 	e.info.internalIterativeReduction += 1
 	// 	depthLeft -= 1
 	// }
 
@@ -396,7 +385,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// Razoring
 		if depthLeft < 2 && eval+350 <= alpha {
 			newEval := e.quiescence(alpha, beta, searchHeight)
-			e.info.razoringCounter += 1
 			return newEval
 		}
 
@@ -406,7 +394,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			reverseFutilityMargin -= 75 // int16(depthLeft) * p
 		}
 		if depthLeft < 9 && eval-reverseFutilityMargin >= beta {
-			e.info.rfpCounter += 1
 			return eval - reverseFutilityMargin /* fail soft */
 		}
 
@@ -430,7 +417,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.pred.Pop()
 			position.UnMakeNullMove(ep)
 			if score >= beta {
-				e.info.nullMoveCounter += 1
 				return score
 			}
 			// }
@@ -485,7 +471,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// 			position.UnMakeMove(move, oldTag, oldEnPassant, hc)
 		//
 		// 			if score >= probBeta {
-		// 				e.info.probCutCounter += 1
 		// 				return score
 		// 			}
 		// 		}
@@ -577,14 +562,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// Extend as this move seems forced
 				if score < threshold {
-					e.info.singularExtensionCounter += 1
 					extension += 1
 				} else {
 
 					// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
 					if pruningAllowed {
 						if threshold >= beta {
-							e.info.multiCutCounter += 1
 							return beta
 						} else if score >= beta {
 							e.skipHeight = searchHeight
@@ -596,7 +579,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							e.innerLines[searchHeight].Recycle()
 							e.skipMove = EmptyMove
 							e.skipHeight = MAX_DEPTH
-							e.info.multiCutCounter += 1
 
 							if score >= beta {
 								return beta
@@ -620,7 +602,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if bestscore >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
+							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
 						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves)
@@ -695,14 +677,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
 			if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
-				e.info.efpCounter += 1
 				continue
 			}
 
 			// Late Move Pruning
 			if isQuiet && depthLeft < 8 &&
 				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
-				e.info.lmpCounter += 1
 				// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
 				// to avoid returning quiets, after the first LMP cut
 				movePicker.isQuiescence = true
@@ -712,14 +692,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// SEE pruning
 			if isCaptureMove && seeScores[noisyMoves] < 0 &&
 				depthLeft <= 4 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
-				e.info.seeCounter += 1
 				break
 			}
 			//
 			// // History pruning
 			// lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
 			// if isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
-			// 	e.info.historyPruningCounter += 1
 			// 	continue
 			// }
 		}
@@ -739,7 +717,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// Late Move Reduction
 			if e.doPruning && (isQuiet || isCaptureMove && seeScores[noisyMoves] < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
-				e.info.lmrCounter += 1
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
@@ -780,7 +757,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			score := -e.alphaBeta(depthLeft-1-LMR, searchHeight+1, -alpha-1, -alpha)
 			e.pred.Pop()
 			if score > alpha && score < beta {
-				e.info.researchCounter += 1
 				// research with window [alpha;beta]
 				e.pred.Push(position.Hash())
 				e.innerLines[searchHeight+1].Recycle()
@@ -796,7 +772,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if score >= beta {
 					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
 						if !firstLayerOfSingularity {
-							TranspositionTable.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
+							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 						}
 						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
 						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves)
@@ -826,9 +802,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
-			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
+			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {
-			TranspositionTable.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
+			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
 		}
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
