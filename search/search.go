@@ -133,6 +133,7 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 			lastDepth = iterationDepth
 			e.pred.Clear()
 			e.score = newScore
+			e.rootMove = e.MultiPVs[0].MoveAt(0)
 			if e.isMainThread && !e.MultiPVs[0].IsEmpty() {
 				pv.Clone(e.MultiPVs[0])
 				if e.MultiPV > 1 {
@@ -296,7 +297,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		nEval = evalFromTT(nEval, searchHeight)
 	}
 	if !ttHit {
-		nHashMove = EmptyMove
+		if isRootNode {
+			nHashMove = e.rootMove
+		} else {
+			nHashMove = EmptyMove
+		}
 	}
 
 	if !isPvNode && ttHit && nDepth >= depthLeft && !firstLayerOfSingularity {
