@@ -135,7 +135,7 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
 
-			if (e.isMainThread && e.timeManager.AbruptStop) || (!e.isMainThread && e.ShouldStop()) {
+			if e.onlyMove || ((e.isMainThread && e.timeManager.AbruptStop) || (!e.isMainThread && e.ShouldStop())) {
 				break
 			}
 
