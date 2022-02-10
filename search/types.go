@@ -46,6 +46,7 @@ type Engine struct {
 	skipHeight      int8
 	MovesToSearch   []Move
 	TempMovePicker  *MovePicker
+	timeManager     *TimeManager
 	MultiPV         int
 	CurrentPV       int
 	MultiPVs        []PVLine
@@ -54,14 +55,11 @@ type Engine struct {
 	tbHit           int64
 	stopChannel     chan struct{}
 	stopped         bool
+	onlyMove        bool
 }
 
 const MaxMultiPV = 120
 const MAX_DEPTH int8 = int8(100)
-
-func (e *Engine) TimeManager() *TimeManager {
-	return e.parent.TimeManager
-}
 
 func NewRunner(numberOfThreads int) *Runner {
 	t := &Runner{}
@@ -123,6 +121,8 @@ func NewEngine(parent *Runner) *Engine {
 		Scores:          make([]int16, MaxMultiPV),
 		stopChannel:     make(chan struct{}),
 		stopped:         false,
+		onlyMove:        false,
+		timeManager:     parent.TimeManager,
 	}
 }
 
@@ -132,6 +132,9 @@ func (e *Engine) SetStaticEvals(height int, eval int16) {
 
 func (t *Runner) AddTimeManager(tm *TimeManager) {
 	t.TimeManager = tm
+	for i := 0; i < len(t.Engines); i++ {
+		t.Engines[i].timeManager = tm
+	}
 }
 
 func (r *Runner) Ponderhit() {
@@ -172,6 +175,7 @@ func (e *Engine) ClearForSearch() {
 	e.NoMoves = false
 	e.rootMove = EmptyMove
 	e.stopped = false
+	e.onlyMove = false
 
 	// e.searchHistory.Reset()
 
