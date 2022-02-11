@@ -25,19 +25,20 @@ func (r *Runner) Stop() {
 func (e *Engine) ShouldStop() bool {
 	if e.stopped {
 		return true
-	} else if e.nodesSinceCheckup > 500 {
-		e.nodesSinceCheckup = 0
-		select {
-		case <-e.stopChannel:
-			e.stopped = true
-			return true
-		default:
-			return false
-		}
-	} else {
-		e.nodesSinceCheckup += 1
+	}
+	// } else if e.nodesSinceCheckup > 500 {
+	// 	e.nodesSinceCheckup = 0
+	select {
+	case <-e.stopChannel:
+		e.stopped = true
+		return true
+	default:
 		return false
 	}
+	// } else {
+	// 	e.nodesSinceCheckup += 1
+	// 	return false
+	// }
 }
 
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
