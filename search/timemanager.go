@@ -13,7 +13,7 @@ type TimeManager struct {
 	HardLimit           int64
 	SoftLimit           int64
 	NodesSinceLastCheck int64
-	AbruptStop          bool
+	Stop                bool
 	IsPerMove           bool
 	ExtensionCounter    int
 	Pondering           bool
@@ -41,7 +41,7 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		SoftLimit:           softLimit,
 		StartTime:           startTime,
 		NodesSinceLastCheck: 0,
-		AbruptStop:          false,
+		Stop:                false,
 		IsPerMove:           isPerMove,
 		ExtensionCounter:    0,
 		Pondering:           pondering,
@@ -54,15 +54,15 @@ func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
 	}
 	if tm.NodesSinceLastCheck < 2000 {
 		tm.NodesSinceLastCheck += 1
-		return tm.AbruptStop
+		return tm.Stop
 	}
 	tm.NodesSinceLastCheck = 0
 	if isRoot && canCutNow {
-		stop := tm.AbruptStop || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
+		stop := tm.Stop || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 		return stop
 	} else {
-		tm.AbruptStop = tm.AbruptStop || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
-		return tm.AbruptStop
+		tm.Stop = tm.Stop || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
+		return tm.Stop
 	}
 }
 
@@ -70,7 +70,7 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 	if tm.Pondering {
 		return true
 	}
-	if tm.AbruptStop {
+	if tm.Stop {
 		return false
 	}
 

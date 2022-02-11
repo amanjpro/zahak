@@ -15,16 +15,27 @@ const TB_LOSS_BOUND int16 = -27000
 
 func (r *Runner) Stop() {
 	for _, e := range r.Engines {
-		e.stopped = true
-		close(e.stopChannel)
+		if !e.stopped {
+			e.stopped = true
+			close(e.stopChannel)
+		}
 	}
 }
 
 func (e *Engine) ShouldStop() bool {
-	select {
-	case <-e.stopChannel:
+	if e.stopped {
 		return true
-	default:
+	} else if e.nodesSinceCheckup > 500 {
+		e.nodesSinceCheckup = 0
+		select {
+		case <-e.stopChannel:
+			e.stopped = true
+			return true
+		default:
+			return false
+		}
+	} else {
+		e.nodesSinceCheckup += 1
 		return false
 	}
 }
@@ -128,6 +139,10 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 
 			if (e.isMainThread && iterationDepth > 1 && !e.timeManager.CanStartNewIteration()) ||
 				(iterationDepth > 1 && e.ShouldStop()) {
+
+				if e.isMainThread {
+					e.parent.Stop()
+				}
 				break
 			}
 
@@ -135,7 +150,10 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
 
-			if e.onlyMove || ((e.isMainThread && e.timeManager.AbruptStop) || (!e.isMainThread && e.ShouldStop())) {
+			if e.onlyMove || e.ShouldStop() {
+				if e.onlyMove {
+					pv.Clone(e.MultiPVs[0])
+				}
 				break
 			}
 
@@ -217,7 +235,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 				e.MultiPVs[i].Clone(e.innerLines[0])
 				break
 			}
-			if (e.isMainThread && e.timeManager.AbruptStop) || (!e.isMainThread && e.ShouldStop()) {
+			if e.ShouldStop() {
 				e.seldepth = max8(e.seldepth, maxSeldepth)
 				e.Scores[i] = -MAX_INT
 				goto sortPVs
@@ -373,6 +391,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if !isRootNode {
 		if e.isMainThread && e.timeManager.ShouldStop(false, false) {
+			e.parent.Stop()
 			return -MAX_INT
 		}
 	}
@@ -503,7 +522,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if /* isPvNode && */ depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
 		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.isMainThread && e.timeManager.AbruptStop || e.ShouldStop() {
+		if e.ShouldStop() {
 			return score
 		}
 		line := e.innerLines[searchHeight]
@@ -618,7 +637,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if (e.isMainThread && !e.timeManager.AbruptStop) || !e.ShouldStop() {
+					if !e.ShouldStop() {
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 						}
@@ -668,6 +687,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if isRootNode {
 			if e.isMainThread && e.timeManager.ShouldStop(true, bestscore-e.score >= -20) {
+				e.parent.Stop()
 				break
 			}
 		}
@@ -726,7 +746,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				legalQuietMove += 1
 			}
 
-			if e.isMainThread && e.parent.DebugMode && isRootNode {
+			if /* e.isMainThread && */ e.parent.DebugMode && isRootNode {
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
@@ -788,7 +808,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if (e.isMainThread && !e.timeManager.AbruptStop) || !e.ShouldStop() {
+					if !e.ShouldStop() {
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 						}
@@ -809,7 +829,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 	}
-	if ((e.isMainThread && !e.timeManager.AbruptStop) || !e.ShouldStop()) && !firstLayerOfSingularity {
+	if !e.ShouldStop() && !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {

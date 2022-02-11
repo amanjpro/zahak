@@ -21,41 +21,42 @@ type Runner struct {
 }
 
 type Engine struct {
-	Position        *Position
-	Ply             uint16
-	nodesVisited    int64
-	cacheHits       int64
-	positionMoves   []Move
-	searchHistory   MoveHistory
-	MovePickers     []*MovePicker
-	triedQuietMoves [][]Move
-	pred            Predecessors
-	seldepth        int8
-	innerLines      []PVLine
-	staticEvals     []int16
-	TotalTime       float64
-	doPruning       bool
-	isMainThread    bool
-	StartTime       time.Time
-	parent          *Runner
-	score           int16
-	startDepth      int8
-	skipMove        Move
-	tt              *Cache
-	rootMove        Move
-	skipHeight      int8
-	MovesToSearch   []Move
-	TempMovePicker  *MovePicker
-	timeManager     *TimeManager
-	MultiPV         int
-	CurrentPV       int
-	MultiPVs        []PVLine
-	Scores          []int16
-	NoMoves         bool
-	tbHit           int64
-	stopChannel     chan struct{}
-	stopped         bool
-	onlyMove        bool
+	Position          *Position
+	Ply               uint16
+	nodesVisited      int64
+	cacheHits         int64
+	positionMoves     []Move
+	searchHistory     MoveHistory
+	MovePickers       []*MovePicker
+	triedQuietMoves   [][]Move
+	pred              Predecessors
+	seldepth          int8
+	innerLines        []PVLine
+	staticEvals       []int16
+	TotalTime         float64
+	doPruning         bool
+	isMainThread      bool
+	StartTime         time.Time
+	parent            *Runner
+	score             int16
+	startDepth        int8
+	skipMove          Move
+	tt                *Cache
+	rootMove          Move
+	skipHeight        int8
+	MovesToSearch     []Move
+	TempMovePicker    *MovePicker
+	timeManager       *TimeManager
+	MultiPV           int
+	CurrentPV         int
+	MultiPVs          []PVLine
+	Scores            []int16
+	NoMoves           bool
+	tbHit             int64
+	stopChannel       chan struct{}
+	stopped           bool
+	onlyMove          bool
+	nodesSinceCheckup int
 }
 
 const MaxMultiPV = 120
@@ -95,34 +96,35 @@ func NewEngine(parent *Runner) *Engine {
 	}
 
 	return &Engine{
-		Position:        nil,
-		Ply:             0,
-		nodesVisited:    0,
-		cacheHits:       0,
-		positionMoves:   make([]Move, MAX_DEPTH),
-		searchHistory:   MoveHistory{},
-		MovePickers:     movePickers,
-		triedQuietMoves: make([][]Move, 250),
-		pred:            NewPredecessors(),
-		innerLines:      innerLines,
-		staticEvals:     make([]int16, MAX_DEPTH),
-		StartTime:       time.Now(),
-		TotalTime:       0,
-		doPruning:       false,
-		isMainThread:    false,
-		parent:          parent,
-		score:           0,
-		TempMovePicker:  EmptyMovePicker(),
-		skipMove:        EmptyMove,
-		rootMove:        EmptyMove,
-		skipHeight:      MAX_DEPTH,
-		MultiPV:         1,
-		MultiPVs:        multiPVs,
-		Scores:          make([]int16, MaxMultiPV),
-		stopChannel:     make(chan struct{}),
-		stopped:         false,
-		onlyMove:        false,
-		timeManager:     parent.TimeManager,
+		Position:          nil,
+		Ply:               0,
+		nodesVisited:      0,
+		cacheHits:         0,
+		positionMoves:     make([]Move, MAX_DEPTH),
+		searchHistory:     MoveHistory{},
+		MovePickers:       movePickers,
+		triedQuietMoves:   make([][]Move, 250),
+		pred:              NewPredecessors(),
+		innerLines:        innerLines,
+		staticEvals:       make([]int16, MAX_DEPTH),
+		StartTime:         time.Now(),
+		TotalTime:         0,
+		doPruning:         false,
+		isMainThread:      false,
+		parent:            parent,
+		score:             0,
+		TempMovePicker:    EmptyMovePicker(),
+		skipMove:          EmptyMove,
+		rootMove:          EmptyMove,
+		skipHeight:        MAX_DEPTH,
+		MultiPV:           1,
+		MultiPVs:          multiPVs,
+		Scores:            make([]int16, MaxMultiPV),
+		stopChannel:       make(chan struct{}),
+		stopped:           false,
+		onlyMove:          false,
+		timeManager:       parent.TimeManager,
+		nodesSinceCheckup: 0,
 	}
 }
 
@@ -176,6 +178,7 @@ func (e *Engine) ClearForSearch() {
 	e.rootMove = EmptyMove
 	e.stopped = false
 	e.onlyMove = false
+	e.nodesSinceCheckup = 0
 
 	// e.searchHistory.Reset()
 
