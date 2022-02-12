@@ -1,6 +1,7 @@
 package search
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sync"
@@ -13,32 +14,31 @@ import (
 const TB_WIN_BOUND int16 = 27000
 const TB_LOSS_BOUND int16 = -27000
 
+var errSearchTimeout = errors.New("search timeout")
+
 func (r *Runner) Stop() {
+	close(r.stopChannel)
 	for _, e := range r.Engines {
-		if !e.stopped {
-			e.stopped = true
-			close(e.stopChannel)
-		}
+		e.stopped = true
 	}
 }
 
 func (e *Engine) ShouldStop() bool {
 	if e.stopped {
 		return true
-	}
-	// } else if e.nodesSinceCheckup > 500 {
-	// 	e.nodesSinceCheckup = 0
-	select {
-	case <-e.stopChannel:
-		e.stopped = true
-		return true
-	default:
+	} else if e.nodesSinceCheckup > 500 {
+		e.nodesSinceCheckup = 0
+		select {
+		case <-e.parent.stopChannel:
+			e.stopped = true
+			return true
+		default:
+			return false
+		}
+	} else {
+		e.nodesSinceCheckup += 1
 		return false
 	}
-	// } else {
-	// 	e.nodesSinceCheckup += 1
-	// 	return false
-	// }
 }
 
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
@@ -123,8 +123,16 @@ func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove boo
 }
 
 func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
-	pv := NewPVLine(MAX_DEPTH)
+	defer func() {
+		if r := recover(); r != nil {
+			if r == errSearchTimeout {
+				return
+			}
+			panic(r)
+		}
+	}()
 
+	pv := NewPVLine(MAX_DEPTH)
 	lastDepth := int8(1)
 
 	bookmove := GetBookMove(e.Position)
@@ -138,12 +146,8 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 				break
 			}
 
-			if (e.isMainThread && iterationDepth > 1 && !e.timeManager.CanStartNewIteration()) ||
-				(iterationDepth > 1 && e.ShouldStop()) {
-
-				if e.isMainThread {
-					e.parent.Stop()
-				}
+			if e.isMainThread && iterationDepth > 1 && !e.timeManager.CanStartNewIteration() {
+				e.parent.Stop()
 				break
 			}
 
@@ -192,13 +196,19 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 		} else {
 			e.SendPv(pv, e.score, lastDepth)
 		}
-		if !e.stopped {
-			e.parent.Stop()
-		}
 	}
 }
 
 func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			if r == errSearchTimeout {
+				return
+			}
+			panic(r)
+		}
+	}()
+
 	e.doPruning = iterationDepth > 3 && !mateFinderMode
 
 	var initialWindow int16 = 12
@@ -392,13 +402,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if !isRootNode {
 		if e.isMainThread && e.timeManager.ShouldStop(false, false) {
-			e.parent.Stop()
-			return -MAX_INT
+			// e.parent.Stop()
+			panic(errSearchTimeout)
 		}
-	}
-
-	if !e.isMainThread && e.ShouldStop() {
-		return -MAX_INT
 	}
 
 	var eval int16 = position.Evaluate() //-MAX_INT
@@ -522,10 +528,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Internal Iterative Deepening
 	if /* isPvNode && */ depthLeft >= 8 && !ttHit {
 		e.innerLines[searchHeight].Recycle()
-		score := e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
-		if e.ShouldStop() {
-			return score
-		}
+		_ = e.alphaBeta(depthLeft-7, searchHeight, alpha, beta)
 		line := e.innerLines[searchHeight]
 		if line.moveCount != 0 {
 			nHashMove = e.innerLines[searchHeight].MoveAt(0)
@@ -536,7 +539,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	movePicker := e.MovePickers[searchHeight]
 	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
 	oldAlpha := alpha
-
 	// using fail soft with negamax:
 	var bestscore int16
 	var hashmove Move
@@ -550,6 +552,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if hashmove == EmptyMove {
 			break
 		}
+
 		isQuiet := false
 		if hashmove.IsCapture() || hashmove.PromoType() != NoType {
 			noisyMoves += 1
@@ -638,13 +641,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if !e.ShouldStop() {
-						if !firstLayerOfSingularity {
-							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
-						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves)
+					if !firstLayerOfSingularity {
+						e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 					}
+					quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
+					e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves)
 					return bestscore
 				}
 				// Potential PV move, lets copy it to the current pv-line
@@ -688,8 +689,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if isRootNode {
 			if e.isMainThread && e.timeManager.ShouldStop(true, bestscore-e.score >= -20) {
-				e.parent.Stop()
-				break
+				// e.parent.Stop()
+				panic(errSearchTimeout)
 			}
 		}
 
@@ -809,13 +810,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if !e.ShouldStop() {
-						if !firstLayerOfSingularity {
-							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
-						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves)
+					if !firstLayerOfSingularity {
+						e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 					}
+					quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
+					e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves)
 					return score
 				}
 				// Potential PV move, lets copy it to the current pv-line
@@ -830,7 +829,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 	}
-	if !e.ShouldStop() && !firstLayerOfSingularity {
+	if !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {

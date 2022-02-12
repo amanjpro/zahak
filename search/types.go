@@ -18,6 +18,7 @@ type Runner struct {
 	depth        int8
 	move         Move
 	score        int16
+	stopChannel  chan struct{}
 }
 
 type Engine struct {
@@ -53,7 +54,6 @@ type Engine struct {
 	Scores            []int16
 	NoMoves           bool
 	tbHit             int64
-	stopChannel       chan struct{}
 	stopped           bool
 	onlyMove          bool
 	nodesSinceCheckup int
@@ -63,7 +63,9 @@ const MaxMultiPV = 120
 const MAX_DEPTH int8 = int8(100)
 
 func NewRunner(numberOfThreads int) *Runner {
-	t := &Runner{}
+	t := &Runner{
+		stopChannel: make(chan struct{}),
+	}
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
@@ -120,7 +122,6 @@ func NewEngine(parent *Runner) *Engine {
 		MultiPV:           1,
 		MultiPVs:          multiPVs,
 		Scores:            make([]int16, MaxMultiPV),
-		stopChannel:       make(chan struct{}),
 		stopped:           false,
 		onlyMove:          false,
 		timeManager:       parent.TimeManager,
@@ -152,6 +153,7 @@ func (r *Runner) ResetHistory() {
 }
 
 func (r *Runner) ClearForSearch() {
+	r.stopChannel = make(chan struct{})
 	r.nodesVisited = 0
 	r.score = -MAX_INT
 	r.depth = 0
@@ -161,7 +163,6 @@ func (r *Runner) ClearForSearch() {
 
 func (e *Engine) ClearForSearch() {
 
-	e.stopChannel = make(chan struct{})
 	for i := 0; i < len(e.MultiPVs); i++ {
 		e.MultiPVs[i].Recycle()
 		e.Scores[i] = 0

@@ -83,11 +83,9 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		return standPat
 	}
 
-	if (e.isMainThread && e.timeManager.ShouldStop(false, false)) || e.ShouldStop() {
-		if e.isMainThread {
-			e.parent.Stop()
-		}
-		return 0
+	if e.isMainThread && e.timeManager.ShouldStop(false, false) {
+		// e.parent.Stop()
+		panic(errSearchTimeout)
 	}
 
 	var isInCheck = e.Position.IsInCheck()
@@ -158,15 +156,13 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		}
 	}
 
-	if !e.ShouldStop() {
-		flag := Exact
-		if bestscore >= beta {
-			flag = LowerBound
-		} else if bestscore <= originalAlpha {
-			flag = UpperBound
-		}
-		e.tt.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag)
+	flag := Exact
+	if bestscore >= beta {
+		flag = LowerBound
+	} else if bestscore <= originalAlpha {
+		flag = UpperBound
 	}
+	e.tt.Set(hash, bestMove, evalToTT(bestscore, searchHeight), 0, flag)
 
 	return bestscore
 }
