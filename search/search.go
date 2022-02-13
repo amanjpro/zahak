@@ -382,6 +382,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	if pruningAllowed {
+		if ttHit && ((nEval > eval && nType == LowerBound) ||
+			(nEval < eval && nType == UpperBound)) {
+			eval = nEval
+		}
+
 		// Razoring
 		if depthLeft < 2 && eval+350 <= alpha {
 			newEval := e.quiescence(alpha, beta, searchHeight)
