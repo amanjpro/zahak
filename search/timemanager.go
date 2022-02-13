@@ -4,7 +4,8 @@ import (
 	"time"
 )
 
-const COMMUNICATION_TIME_BUFFER = 50
+var COMMUNICATION_TIME_BUFFER int64 = 50
+
 const MAX_TIME int64 = 922_337_203_685_477_580
 
 // Implements this: http://talkchess.com/forum3/viewtopic.php?f=7&t=77396&p=894325&hilit=cold+turkey#p894294
