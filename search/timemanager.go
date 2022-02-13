@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var COMMUNICATION_TIME_BUFFER int64 = 100
+var COMMUNICATION_TIME_BUFFER int64 = 50
 
 const MAX_TIME int64 = 922_337_203_685_477_580
 

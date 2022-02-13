@@ -87,7 +87,7 @@ func (uci *UCI) Start() {
 				fmt.Printf("option name SyzygyProbeDepth type spin default %d min 0 max 128\n", DefaultProbeDepth)
 				fmt.Printf("option name MultiPV type spin default 1 min 1 max %d\n", MaxMultiPV)
 				fmt.Printf("option name Skill Level type spin default %d min 1 max %d\n", MaxSkillLevels, MaxSkillLevels)
-				fmt.Printf("option name MoveOverhead type spin default 100 min 100 max 10000\n")
+				fmt.Printf("option name MoveOverhead type spin default 50 min 50 max 10000\n")
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -150,8 +150,8 @@ func (uci *UCI) Start() {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
 					moveOverhead, _ := strconv.Atoi(v)
-					if moveOverhead < 100 {
-						moveOverhead = 100
+					if moveOverhead < 50 {
+						moveOverhead = 50
 					} else if moveOverhead > 10000 {
 						moveOverhead = 10000
 					}
