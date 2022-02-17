@@ -428,10 +428,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Threat pruning, idea from Koivisto
-		tpMargin := int16(0)
-		if improving {
-			tpMargin = 30
-		}
+		tpMargin := int16(30)
+		// if improving {
+		// 	tpMargin += 30
+		// }
 		if depthLeft == 1 && eval > beta+tpMargin && (!position.Board.HasThreats(position.Turn().Other()) || position.Board.HasThreats(position.Turn())) {
 			return beta
 		}
