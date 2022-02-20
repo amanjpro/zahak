@@ -173,7 +173,7 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := int32(board.SeeGe(dest, capPiece, source, piece, 50*int16(mp.currentDepth)))
+				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
 				if gain < 0 {
 					scores[i] = -90_000_000 + gain
 				} else if gain == 0 {
