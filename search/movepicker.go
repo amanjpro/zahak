@@ -175,14 +175,14 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 				// SEE for ordering
 				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
 				if gain < 0 {
-					scores[i] = -90_000_000 + gain
+					scores[i] = /* -90_000_000 + */ gain
 				} else if gain == 0 {
-					scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
+					scores[i] = /* 100_000_000 + */ int32(capPiece.Weight() - piece.Weight())
 				} else {
-					scores[i] = 100_100_000 + gain
+					scores[i] = /* 100_100_000 + */ gain
 				}
 			} else {
-				scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				scores[i] = /* 100_100_000 + */ int32(capPiece.Weight() - piece.Weight())
 			}
 			goto end
 		}

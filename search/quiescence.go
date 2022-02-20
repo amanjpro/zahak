@@ -106,7 +106,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	originalAlpha := alpha
 
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, 1, true)
+	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, 0, true)
 
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
@@ -122,7 +122,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		noisyMoves += 1
 		// }
 
-		if /* isCaptureMove && */ seeScores[noisyMoves] < -50 {
+		if /* isCaptureMove && */ seeScores[noisyMoves] < 0 {
 			// SEE pruning
 			break
 		}
