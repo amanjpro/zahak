@@ -122,7 +122,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		noisyMoves += 1
 		// }
 
-		if /* isCaptureMove && */ seeScores[noisyMoves] < 0 {
+		if /* isCaptureMove && */ seeScores[noisyMoves] < -50 {
 			// SEE pruning
 			break
 		}
