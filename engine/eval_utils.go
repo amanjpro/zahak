@@ -41,6 +41,10 @@ func (b *Bitboard) getLeastValuablePiece(attacks uint64, color Color) (uint64, P
 }
 
 func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aPiece Piece) int16 {
+	return b.SeeGe(toSq, target, frSq, aPiece, 0)
+}
+
+func (b *Bitboard) SeeGe(toSq Square, target Piece, frSq Square, aPiece Piece, bound int16) int16 {
 
 	gain := make([]int16, 32)
 	d := 0
@@ -64,7 +68,7 @@ func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aP
 		d++ // next depth and side
 		color := aPiece.Color()
 		gain[d] = aPiece.seeWeight() - gain[d-1] // speculative store, if defended
-		if max(-gain[d-1], gain[d]) < 0 {
+		if max(-gain[d-1], gain[d]) < bound {
 			break // pruning does not influence the result
 		}
 		attacks ^= fromSet  // reset bit in set to traverse
