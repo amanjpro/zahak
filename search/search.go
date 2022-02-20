@@ -695,7 +695,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// SEE pruning
-			if isCaptureMove && seeScores[noisyMoves] < -50*int32(depthLeft) &&
+			if isCaptureMove && seeScores[noisyMoves] < -20*int32(depthLeft) &&
 				depthLeft < 7 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 				break
 			}
