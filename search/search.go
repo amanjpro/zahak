@@ -501,7 +501,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, searchHeight, nHashMove, false)
+	movePicker.RecycleWith(position, e, searchHeight, nHashMove, depthLeft, false)
 	oldAlpha := alpha
 
 	// using fail soft with negamax:

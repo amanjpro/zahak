@@ -106,7 +106,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	originalAlpha := alpha
 
 	movePicker := e.MovePickers[searchHeight]
-	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, true)
+	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, 1, true)
 
 	noisyMoves := -1
 	seeScores := movePicker.captureMoveList.Scores
