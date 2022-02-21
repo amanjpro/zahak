@@ -122,8 +122,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		noisyMoves += 1
 		// }
 
-		seeScore := position.Board.SeeGe(move.Destination(), move.CapturedPiece(), move.Source(), move.MovingPiece(), 0)
-		if /* isCaptureMove && */ seeScore < 0 {
+		if /* isCaptureMove && */ movePicker.captureSees[noisyMoves] < 0 {
 			// SEE pruning
 			break
 		}

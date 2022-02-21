@@ -12,6 +12,7 @@ type MovePicker struct {
 	hashmove        Move
 	quietMoveList   *MoveList
 	captureMoveList *MoveList
+	captureSees     []int32
 	searchHeight    int8
 	currentMove     Move
 	canUseHashMove  bool
@@ -32,6 +33,7 @@ func EmptyMovePicker() *MovePicker {
 		hashmove:        EmptyMove,
 		quietMoveList:   qml,
 		captureMoveList: cml,
+		captureSees:     make([]int32, 250),
 		searchHeight:    0,
 		canUseHashMove:  false,
 		isQuiescence:    false,
@@ -151,10 +153,12 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 
 	for i := 0; i < size; i++ {
 		move := moves[i]
+		mp.captureSees[i] = 0
 
 		if move == mp.hashmove {
 			scores[i] = 900_000_000
 			mp.captureMoveList.Swap(0, i)
+			mp.captureSees[0], mp.captureSees[i] = mp.captureSees[i], mp.captureSees[0]
 			if highestNonHashIndex == 0 {
 				highestNonHashIndex = i
 			}
@@ -179,7 +183,8 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 				scores[i] = history + 150_000_000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
+				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
+				mp.captureSees[i] = gain
 				if gain < 0 {
 					scores[i] = /* -90_000_000 + */ gain
 				} else if gain == 0 {
@@ -316,6 +321,7 @@ func (mp *MovePicker) getNextCapture() Move {
 	}
 	best := mp.captureMoveList.Moves[bestIndex]
 	mp.captureMoveList.Swap(next, bestIndex)
+	mp.captureSees[next], mp.captureSees[bestIndex] = mp.captureSees[bestIndex], mp.captureSees[next]
 	mp.captureMoveList.IncNext()
 	return best
 }
