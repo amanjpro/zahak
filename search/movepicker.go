@@ -136,8 +136,8 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 }
 
 func (mp *MovePicker) scoreCaptureMoves() int {
-	position := mp.position
-	board := position.Board
+	// position := mp.position
+	// board := position.Board
 	var highestNonHashIndex int = -1
 	var highestNonHashScore int32 = math.MinInt32
 	engine := mp.engine
@@ -161,8 +161,8 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 			continue
 		}
 
-		source := move.Source()
-		dest := move.Destination()
+		// source := move.Source()
+		// dest := move.Destination()
 		piece := move.MovingPiece()
 		promoType := move.PromoType()
 		history := engine.searchHistory.TacticalHistory(move)
@@ -170,31 +170,17 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
+			scores[i] = /* 100_000_000 + */ history + int32(capPiece.Weight()-piece.Weight())
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				scores[i] = 150_000_000 + history + int32(p.Weight()+capPiece.Weight())
-			} else if !move.IsEnPassant() {
-				// SEE for ordering
-				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
-				if gain < 0 {
-					if history > 0 {
-						gain += history
-					}
-					scores[i] = /* -90_000_000 + */ gain
-				} else if gain == 0 {
-					scores[i] = /* 100_000_000 + */ history + int32(capPiece.Weight()-piece.Weight())
-				} else {
-					scores[i] = /* 100_100_000 + */ history + gain
-				}
-			} else {
-				scores[i] = /* 100_100_000 + */ history + int32(capPiece.Weight()-piece.Weight())
+				scores[i] += /* 150_000_000 + */ int32(capPiece.Weight() - p.Weight())
 			}
 			goto end
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			scores[i] = 150_000_000 + history + int32(p.Weight())
+			scores[i] = /* 150_000_000 + */ history + int32(p.Weight())
 			goto end
 		}
 

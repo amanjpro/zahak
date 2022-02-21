@@ -109,7 +109,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	movePicker.RecycleWith(position, e, searchHeight, EmptyMove, 0, true)
 
 	noisyMoves := -1
-	seeScores := movePicker.captureMoveList.Scores
+	// seeScores := movePicker.captureMoveList.Scores
 
 	for true {
 		move := movePicker.Next()
@@ -122,7 +122,8 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		noisyMoves += 1
 		// }
 
-		if /* isCaptureMove && */ seeScores[noisyMoves] < 0 {
+		seeScore := position.Board.SeeGe(move.Destination(), move.CapturedPiece(), move.Source(), move.MovingPiece(), 0)
+		if /* isCaptureMove && */ seeScore < 0 {
 			// SEE pruning
 			break
 		}

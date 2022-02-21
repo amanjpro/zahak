@@ -651,10 +651,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		rangeReduction += 1
 	}
 
-	seeScores := movePicker.captureMoveList.Scores
+	// seeScores := movePicker.captureMoveList.Scores
 	// quietScores := movePicker.quietMoveList.Scores
 	// var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
+	var seeScore int16
 	for true {
 
 		if isRootNode {
@@ -699,14 +700,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// SEE pruning
-			if isCaptureMove && seeScores[noisyMoves] < -50*int32(depthLeft) &&
-				depthLeft < 7 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+			seeBound := -50 * int16(depthLeft)
+			seeScore = position.Board.SeeGe(move.Destination(), move.CapturedPiece(), move.Source(), move.MovingPiece(), seeBound)
+			if isCaptureMove && seeScore < seeBound && depthLeft < 7 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 				break
 			}
 
 			if isQuiet && depthLeft < 7 && !isKiller {
-				seeBound := -50 * int16(depthLeft)
-				if position.Board.SeeGe(move.Destination(), move.CapturedPiece(), move.Source(), move.MovingPiece(), seeBound) < seeBound {
+				if seeScore < seeBound {
 					continue // Quiet SEE
 				}
 
@@ -735,7 +736,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			LMR := int8(0)
 
 			// Late Move Reduction
-			if e.doPruning && (isQuiet || isCaptureMove && seeScores[noisyMoves] < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
+			if e.doPruning && (isQuiet || isCaptureMove && seeScore < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
