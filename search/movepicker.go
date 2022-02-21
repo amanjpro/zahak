@@ -140,6 +140,7 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 	board := position.Board
 	var highestNonHashIndex int = -1
 	var highestNonHashScore int32 = math.MinInt32
+	engine := mp.engine
 
 	scores := mp.captureMoveList.Scores
 	moves := mp.captureMoveList.Moves
@@ -164,32 +165,36 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 		dest := move.Destination()
 		piece := move.MovingPiece()
 		promoType := move.PromoType()
+		history := engine.searchHistory.TacticalHistory(move)
 
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+				scores[i] = 150_000_000 + history + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
 				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
 				if gain < 0 {
+					if history > 0 {
+						gain += history
+					}
 					scores[i] = /* -90_000_000 + */ gain
 				} else if gain == 0 {
-					scores[i] = /* 100_000_000 + */ int32(capPiece.Weight() - piece.Weight())
+					scores[i] = /* 100_000_000 + */ history + int32(capPiece.Weight()-piece.Weight())
 				} else {
-					scores[i] = /* 100_100_000 + */ gain
+					scores[i] = /* 100_100_000 + */ history + gain
 				}
 			} else {
-				scores[i] = /* 100_100_000 + */ int32(capPiece.Weight() - piece.Weight())
+				scores[i] = /* 100_100_000 + */ history + int32(capPiece.Weight()-piece.Weight())
 			}
 			goto end
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			scores[i] = 150_000_000 + int32(p.Weight())
+			scores[i] = 150_000_000 + history + int32(p.Weight())
 			goto end
 		}
 
@@ -251,7 +256,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			}
 			nextSpecialIndex += 1
 		} else {
-			history := engine.searchHistory.History(gpMove, mp.currentMove, move)
+			history := engine.searchHistory.QuietHistory(gpMove, mp.currentMove, move)
 			scores[i] = history
 
 			if highestNonSpecialScore < history {

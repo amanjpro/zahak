@@ -297,7 +297,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if !isPvNode && ttHit && nDepth >= depthLeft && !firstLayerOfSingularity {
 		if nEval >= beta && nType == LowerBound {
 			e.CacheHit()
-			e.searchHistory.AddHistory(nHashMove, currentMove, gpMove, depthLeft, searchHeight, nil)
+			e.searchHistory.AddHistory(nHashMove, currentMove, gpMove, depthLeft, searchHeight, nil, nil)
 			return nEval
 		}
 		if nEval <= alpha && nType == UpperBound {
@@ -509,7 +509,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var hashmove Move
 	legalMoves := 0
 	quietMoves := -1
-	legalQuietMove := 0
+	legalQuietMoves := 0
+	legalNoisyMoves := 0
 	noisyMoves := -1
 	searchedAMove := false
 	for true {
@@ -535,7 +536,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(hashmove); ok {
 			legalMoves += 1
 			if isQuiet {
-				legalQuietMove += 1
+				legalQuietMoves += 1
+			} else {
+				legalNoisyMoves += 1
 			}
 			// Singular Extension
 			var extension int8
@@ -599,7 +602,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
 			e.positionMoves[searchHeight+1] = hashmove
-			e.NoteMove(hashmove, legalQuietMove-1, searchHeight)
+			e.NoteMove(hashmove, legalQuietMoves-1, legalNoisyMoves-1, searchHeight)
 			bestscore = -e.alphaBeta(depthLeft-1+extension, searchHeight+1, -beta, -alpha)
 			e.pred.Pop()
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
@@ -609,8 +612,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves)
+						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
+						noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
+						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
 					}
 					return bestscore
 				}
@@ -718,21 +722,23 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
 			legalMoves += 1
 			if isQuiet {
-				legalQuietMove += 1
+				legalQuietMoves += 1
+			} else {
+				legalNoisyMoves += 1
 			}
 
 			if e.isMainThread && e.parent.DebugMode && isRootNode {
 				fmt.Printf("info depth %d currmove %s currmovenumber %d\n", depthLeft, move.ToString(), legalMoves)
 			}
 
-			e.NoteMove(move, legalQuietMove-1, searchHeight)
+			e.NoteMove(move, legalQuietMoves-1, legalNoisyMoves-1, searchHeight)
 			LMR := int8(0)
 
 			// Late Move Reduction
 			if e.doPruning && (isQuiet || isCaptureMove && seeScores[noisyMoves] < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-					LMR -= int8(e.searchHistory.History(gpMove, currentMove, move) / 10649) //12288)
+					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
 				} else {
 					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					if eval+move.CapturedPiece().Weight()+p < beta {
@@ -787,8 +793,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 						if !firstLayerOfSingularity {
 							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMove]
-						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves)
+						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
+						noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
+						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
 					}
 					return score
 				}
