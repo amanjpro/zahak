@@ -163,24 +163,39 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 
 		// source := move.Source()
 		// dest := move.Destination()
-		piece := move.MovingPiece()
-		promoType := move.PromoType()
+		board := mp.position.Board
 		history := engine.searchHistory.TacticalHistory(move)
+		promoType := move.PromoType()
 
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
-			scores[i] = /* 100_000_000 + */ history + int32(capPiece.Weight()-piece.Weight())
+			promoType := move.PromoType()
+			source := move.Source()
+			dest := move.Destination()
+			piece := move.MovingPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				scores[i] += /* 150_000_000 + */ int32(capPiece.Weight() - p.Weight())
+				scores[i] = history + 150_000_000 + int32(p.Weight()+capPiece.Weight())
+			} else if !move.IsEnPassant() {
+				// SEE for ordering
+				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
+				if gain < 0 {
+					scores[i] = /* -90_000_000 + */ gain
+				} else if gain == 0 {
+					scores[i] = history + /* 100_000_000 + */ int32(capPiece.Weight()-piece.Weight())
+				} else {
+					scores[i] = history + /* 100_100_000 + */ gain
+				}
+			} else {
+				scores[i] = history + /* 100_100_000 + */ int32(capPiece.Weight()-piece.Weight())
 			}
 			goto end
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			scores[i] = /* 150_000_000 + */ history + int32(p.Weight())
+			scores[i] = history + 150_000_000 + int32(p.Weight())
 			goto end
 		}
 
