@@ -641,6 +641,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if !improving && !isPvNode {
 		pruningThreashold = pruningThreashold/2 - 1
 	}
+	clmpThreashold := int(3 + 2*depthLeft*depthLeft)
+	if !improving {
+		clmpThreashold = clmpThreashold / 2
+	}
 
 	lmrThreashold := 2
 	if isPvNode {
@@ -689,6 +693,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
 				continue
+			}
+
+			if depthLeft < 8 && legalMoves+1 > clmpThreashold {
+				break // Capture LMP
 			}
 
 			// Late Move Pruning
