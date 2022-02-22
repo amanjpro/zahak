@@ -20,6 +20,7 @@ type MovePicker struct {
 	killer2         Move
 	killerIndex     int
 	counterMove     Move
+	currentDepth    int8
 }
 
 func EmptyMovePicker() *MovePicker {
@@ -42,7 +43,7 @@ func EmptyMovePicker() *MovePicker {
 	return mp
 }
 
-func (mp *MovePicker) RecycleWith(p *Position, e *Engine, searchHeight int8, hashmove Move, isQuiescence bool) {
+func (mp *MovePicker) RecycleWith(p *Position, e *Engine, searchHeight int8, hashmove Move, currentDepth int8, isQuiescence bool) {
 	mp.engine = e
 	mp.position = p
 	mp.searchHeight = searchHeight
@@ -71,6 +72,7 @@ func (mp *MovePicker) RecycleWith(p *Position, e *Engine, searchHeight int8, has
 	mp.captureMoveList.Size = 0
 	mp.captureMoveList.Next = nextCapture
 	mp.captureMoveList.IsScored = false
+	mp.currentDepth = currentDepth
 
 	if !isQuiescence {
 		mp.killer1, mp.killer2 = mp.engine.searchHistory.KillerMoveAt(searchHeight)
@@ -171,16 +173,16 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := int32(board.StaticExchangeEval(dest, capPiece, source, piece))
+				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
 				if gain < 0 {
-					scores[i] = -90_000_000 + gain
+					scores[i] = /* -90_000_000 + */ gain
 				} else if gain == 0 {
-					scores[i] = 100_000_000 + int32(capPiece.Weight()-piece.Weight())
+					scores[i] = /* 100_000_000 + */ int32(capPiece.Weight() - piece.Weight())
 				} else {
-					scores[i] = 100_100_000 + gain
+					scores[i] = /* 100_100_000 + */ gain
 				}
 			} else {
-				scores[i] = 100_100_000 + int32(capPiece.Weight()-piece.Weight())
+				scores[i] = /* 100_100_000 + */ int32(capPiece.Weight() - piece.Weight())
 			}
 			goto end
 		}
