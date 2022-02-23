@@ -168,7 +168,7 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 		// source := move.Source()
 		// dest := move.Destination()
 		board := mp.position.Board
-		history := engine.searchHistory.TacticalHistory(move)
+		history := engine.searchHistory.TacticalHistory(move) / 128
 		promoType := move.PromoType()
 
 		// capture ordering
