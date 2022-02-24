@@ -33,7 +33,7 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e := r.Engines[0]
 	e.Position = game.Position()
 	e.Ply = 1
-	e.Search(11, -2, -1)
+	e.Search(20, -2, -1)
 	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
