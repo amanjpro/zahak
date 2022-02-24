@@ -12,6 +12,7 @@ type MovePicker struct {
 	hashmove        Move
 	quietMoveList   *MoveList
 	captureMoveList *MoveList
+	captureSees     []int32
 	searchHeight    int8
 	currentMove     Move
 	canUseHashMove  bool
@@ -32,6 +33,7 @@ func EmptyMovePicker() *MovePicker {
 		hashmove:        EmptyMove,
 		quietMoveList:   qml,
 		captureMoveList: cml,
+		captureSees:     make([]int32, 250),
 		searchHeight:    0,
 		canUseHashMove:  false,
 		isQuiescence:    false,
@@ -136,10 +138,11 @@ func (mp *MovePicker) UpgradeToPvMove(pvMove Move) {
 }
 
 func (mp *MovePicker) scoreCaptureMoves() int {
-	position := mp.position
-	board := position.Board
+	// position := mp.position
+	// board := position.Board
 	var highestNonHashIndex int = -1
 	var highestNonHashScore int32 = math.MinInt32
+	engine := mp.engine
 
 	scores := mp.captureMoveList.Scores
 	moves := mp.captureMoveList.Moves
@@ -150,46 +153,54 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 
 	for i := 0; i < size; i++ {
 		move := moves[i]
+		mp.captureSees[i] = 0
 
 		if move == mp.hashmove {
 			scores[i] = 900_000_000
 			mp.captureMoveList.Swap(0, i)
+			mp.captureSees[0], mp.captureSees[i] = mp.captureSees[i], mp.captureSees[0]
 			if highestNonHashIndex == 0 {
 				highestNonHashIndex = i
 			}
 			continue
 		}
 
-		source := move.Source()
-		dest := move.Destination()
-		piece := move.MovingPiece()
+		// source := move.Source()
+		// dest := move.Destination()
+		board := mp.position.Board
+		history := engine.searchHistory.TacticalHistory(move) / 128
 		promoType := move.PromoType()
 
 		// capture ordering
 		if move.IsCapture() {
 			capPiece := move.CapturedPiece()
+			promoType := move.PromoType()
+			source := move.Source()
+			dest := move.Destination()
+			piece := move.MovingPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				scores[i] = 150_000_000 + int32(p.Weight()+capPiece.Weight())
+				scores[i] = history + 150_000_000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
 				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
+				mp.captureSees[i] = gain
 				if gain < 0 {
 					scores[i] = /* -90_000_000 + */ gain
 				} else if gain == 0 {
-					scores[i] = /* 100_000_000 + */ int32(capPiece.Weight() - piece.Weight())
+					scores[i] = history + /* 100_000_000 + */ int32(capPiece.Weight()-piece.Weight())
 				} else {
-					scores[i] = /* 100_100_000 + */ gain
+					scores[i] = history + /* 100_100_000 + */ gain
 				}
 			} else {
-				scores[i] = /* 100_100_000 + */ int32(capPiece.Weight() - piece.Weight())
+				scores[i] = history + /* 100_100_000 + */ int32(capPiece.Weight()-piece.Weight())
 			}
 			goto end
 		}
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			scores[i] = 150_000_000 + int32(p.Weight())
+			scores[i] = history + 150_000_000 + int32(p.Weight())
 			goto end
 		}
 
@@ -251,7 +262,7 @@ func (mp *MovePicker) scoreQuietMoves() int {
 			}
 			nextSpecialIndex += 1
 		} else {
-			history := engine.searchHistory.History(gpMove, mp.currentMove, move)
+			history := engine.searchHistory.QuietHistory(gpMove, mp.currentMove, move)
 			scores[i] = history
 
 			if highestNonSpecialScore < history {
@@ -310,6 +321,7 @@ func (mp *MovePicker) getNextCapture() Move {
 	}
 	best := mp.captureMoveList.Moves[bestIndex]
 	mp.captureMoveList.Swap(next, bestIndex)
+	mp.captureSees[next], mp.captureSees[bestIndex] = mp.captureSees[bestIndex], mp.captureSees[next]
 	mp.captureMoveList.IncNext()
 	return best
 }

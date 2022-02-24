@@ -30,6 +30,7 @@ type Engine struct {
 	searchHistory   MoveHistory
 	MovePickers     []*MovePicker
 	triedQuietMoves [][]Move
+	triedNoisyMoves [][]Move
 	pred            Predecessors
 	seldepth        int8
 	innerLines      []PVLine
@@ -104,6 +105,7 @@ func NewEngine(parent *Runner) *Engine {
 		searchHistory:   MoveHistory{},
 		MovePickers:     movePickers,
 		triedQuietMoves: make([][]Move, 250),
+		triedNoisyMoves: make([][]Move, 250),
 		pred:            NewPredecessors(),
 		innerLines:      innerLines,
 		staticEvals:     make([]int16, MAX_DEPTH),
@@ -178,8 +180,12 @@ func (e *Engine) ClearForSearch() {
 		if e.triedQuietMoves[i] == nil {
 			e.triedQuietMoves[i] = make([]Move, 250) // Number of potential legal moves per position
 		}
+		if e.triedNoisyMoves[i] == nil {
+			e.triedNoisyMoves[i] = make([]Move, 250) // Number of potential legal moves per position
+		}
 		for j := 0; j < len(e.triedQuietMoves[i]); j++ {
 			e.triedQuietMoves[i][j] = EmptyMove
+			e.triedNoisyMoves[i][j] = EmptyMove
 		}
 	}
 	e.tt = TranspositionTable
@@ -205,11 +211,15 @@ func (e *Engine) multiPVSkipRootMove(move Move) bool {
 	return found
 }
 
-func (e *Engine) NoteMove(move Move, quietMovesCounter int, height int8) {
-	if quietMovesCounter < 0 || height < 0 || move.PromoType() != NoType || move.IsCapture() {
+func (e *Engine) NoteMove(move Move, quietMovesCounter int, noisyMovesCounter int, height int8) {
+	if height < 0 {
 		return
 	}
-	e.triedQuietMoves[height][quietMovesCounter] = move
+	if noisyMovesCounter >= 0 && move.PromoType() != NoType || move.IsCapture() {
+		e.triedNoisyMoves[height][noisyMovesCounter] = move
+	} else if quietMovesCounter >= 0 {
+		e.triedQuietMoves[height][quietMovesCounter] = move
+	}
 }
 
 func (r *Runner) SendBestMove() {
