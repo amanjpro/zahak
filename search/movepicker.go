@@ -180,13 +180,13 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 			piece := move.MovingPiece()
 			if promoType != NoType {
 				p := GetPiece(promoType, White)
-				scores[i] = history + 150_000_000 + int32(p.Weight()+capPiece.Weight())
+				scores[i] = history + 2000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
 				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
 				mp.captureSees[i] = gain
 				if gain < 0 {
-					scores[i] = /* -90_000_000 + */ gain
+					scores[i] = history + /* -90_000_000 + */ gain
 				} else if gain == 0 {
 					scores[i] = history + /* 100_000_000 + */ int32(capPiece.Weight()-piece.Weight())
 				} else {
@@ -200,7 +200,7 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 
 		if promoType != NoType {
 			p := GetPiece(promoType, White)
-			scores[i] = history + 150_000_000 + int32(p.Weight())
+			scores[i] = history + 2000 + int32(p.Weight())
 			goto end
 		}
 
