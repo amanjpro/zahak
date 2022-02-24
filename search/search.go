@@ -636,7 +636,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			return 0
 		}
 	}
-	pruningThreashold := int(5 + depthLeft*depthLeft)
+	d := int(depthLeft)
+	pruningThreashold := 5 + d*d
 	if !improving && !isPvNode {
 		pruningThreashold = pruningThreashold/2 - 1
 	}
