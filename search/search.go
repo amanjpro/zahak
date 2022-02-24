@@ -637,11 +637,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 	d := int(depthLeft)
-	pruningThreashold := 5 + d*d
+	pruningThreashold := 2 + d*d
 	clmpThreashold := 4 + 3*d*d
 	if !improving && !isPvNode {
 		pruningThreashold = pruningThreashold/2 - 1
-		clmpThreashold = clmpThreashold/2 - 1
+		clmpThreashold = clmpThreashold / 2
 	}
 
 	lmrThreashold := 2
@@ -693,17 +693,16 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				continue
 			}
 
-			if depthLeft < 8 && legalMoves+1 > clmpThreashold {
-				break // Capture LMP
-			}
-
-			// Late Move Pruning
-			if isQuiet && depthLeft < 8 &&
-				legalMoves+1 > pruningThreashold && !isKiller && abs16(alpha) < WIN_IN_MAX {
-				// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
-				// to avoid returning quiets, after the first LMP cut
-				movePicker.isQuiescence = true
-				continue // LMP
+			if depthLeft < 8 && !isKiller && abs16(alpha) < WIN_IN_MAX {
+				if legalMoves+1 > clmpThreashold {
+					break // Capture LMP
+				} else if isQuiet && legalMoves+1 > pruningThreashold {
+					// Late Move Pruning
+					// This is a hack really, mp.Next() won't return any quiets, and I am hacking this
+					// to avoid returning quiets, after the first LMP cut
+					movePicker.isQuiescence = true
+					continue // LMP
+				}
 			}
 
 			// SEE pruning
