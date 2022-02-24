@@ -636,14 +636,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			return 0
 		}
 	}
-	d := int(depthLeft)
-	pruningThreashold := 5 + d*d
+	pruningThreashold := int(5 + depthLeft*depthLeft)
+	clmpThreashold := int(4 + 2*depthLeft*depthLeft)
 	if !improving && !isPvNode {
 		pruningThreashold = pruningThreashold/2 - 1
-	}
-	clmpThreashold := int(4 + 2*depthLeft*depthLeft)
-	if !improving {
-		clmpThreashold = clmpThreashold / 2
+		clmpThreashold = clmpThreashold/2 - 1
 	}
 
 	lmrThreashold := 2
