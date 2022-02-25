@@ -749,6 +749,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					if eval+move.CapturedPiece().Weight()+p < beta {
 						LMR += 1
 					}
+
+					if e.searchHistory.TacticalHistory(move) < -1000 {
+						LMR += 1
+					}
 				}
 
 				if isInCheck {
