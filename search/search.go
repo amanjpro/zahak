@@ -746,11 +746,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
 				} else {
 					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-					if eval+move.CapturedPiece().Weight()+p < beta {
-						LMR += 1
-					}
-
-					if e.searchHistory.TacticalHistory(move) < -1000 {
+					if eval+move.CapturedPiece().Weight()+p < beta || e.searchHistory.TacticalHistory(move) < -1000 {
 						LMR += 1
 					}
 				}
