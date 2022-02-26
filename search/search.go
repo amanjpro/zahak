@@ -388,15 +388,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Razoring
-		if depthLeft < 2 && eval+350 <= alpha {
+		if depthLeft < 2 && eval+366 <= alpha {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			return newEval
 		}
 
 		// Reverse Futility Pruning
-		reverseFutilityMargin := int16(depthLeft) * 75 //(b - p)
+		reverseFutilityMargin := int16(depthLeft) * 52 //(b - p)
 		if improving {
-			reverseFutilityMargin -= 75 // int16(depthLeft) * p
+			reverseFutilityMargin -= 52 // int16(depthLeft) * p
 		}
 		if depthLeft < 9 && eval-reverseFutilityMargin >= beta {
 			return eval - reverseFutilityMargin /* fail soft */
@@ -428,7 +428,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Threat pruning, idea from Koivisto
-		tpMargin := int16(30)
+		tpMargin := int16(166)
 		// if improving {
 		// 	tpMargin += 30
 		// }
@@ -646,9 +646,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
-	fpMargin := eval + p*int16(depthLeft)
+	fpMargin := eval + 109*int16(depthLeft)
 	rangeReduction := 0
-	if eval-bestscore < 30 && depthLeft > 7 {
+	if eval-bestscore < 14 && depthLeft > 7 {
 		rangeReduction += 1
 	}
 
