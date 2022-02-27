@@ -13,6 +13,12 @@ import (
 const TB_WIN_BOUND int16 = 27000
 const TB_LOSS_BOUND int16 = -27000
 
+var RazoringMargin int16 = 350
+var TPMargin int16 = 30
+var RFPMargin int16 = 75
+var FPMargin int16 = p
+var RangeReductionMargin int16 = 30
+
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	e := r.Engines[0]
 	if bestmove := ProbeDTZ(e.Position); bestmove != EmptyMove {
@@ -388,15 +394,15 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Razoring
-		if depthLeft < 2 && eval+350 <= alpha {
+		if depthLeft < 2 && eval+RazoringMargin <= alpha {
 			newEval := e.quiescence(alpha, beta, searchHeight)
 			return newEval
 		}
 
 		// Reverse Futility Pruning
-		reverseFutilityMargin := int16(depthLeft) * 75 //(b - p)
+		reverseFutilityMargin := int16(depthLeft) * RFPMargin //(b - p)
 		if improving {
-			reverseFutilityMargin -= 75 // int16(depthLeft) * p
+			reverseFutilityMargin -= RFPMargin // int16(depthLeft) * p
 		}
 		if depthLeft < 9 && eval-reverseFutilityMargin >= beta {
 			return eval - reverseFutilityMargin /* fail soft */
@@ -428,11 +434,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 
 		// Threat pruning, idea from Koivisto
-		tpMargin := int16(30)
 		// if improving {
 		// 	tpMargin += 30
 		// }
-		if depthLeft == 1 && eval > beta+tpMargin && (!position.Board.HasThreats(position.Turn().Other()) || position.Board.HasThreats(position.Turn())) {
+		if depthLeft == 1 && eval > beta+TPMargin && (!position.Board.HasThreats(position.Turn().Other()) || position.Board.HasThreats(position.Turn())) {
 			return beta
 		}
 
@@ -646,9 +651,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
-	fpMargin := eval + p*int16(depthLeft)
+	fpMargin := eval + FPMargin*int16(depthLeft)
 	rangeReduction := 0
-	if eval-bestscore < 30 && depthLeft > 7 {
+	if eval-bestscore < RangeReductionMargin && depthLeft > 7 {
 		rangeReduction += 1
 	}
 

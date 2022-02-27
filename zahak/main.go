@@ -30,6 +30,7 @@ func main() {
 		var profileFlag = flag.Bool("profile", false, "Run the engine in profiling mode")
 		var bookPath = flag.String("book", "", "Path to opening book in PolyGlot (bin) format")
 		var epdPath = flag.String("test-positions", "", "Path to EPD positions, used to test the strength of the engine")
+		var tuning = flag.Bool("tuning", false, "Enable search tuning options")
 		flag.Parse()
 		if *profileFlag {
 			cpu, err := os.Create("zahak-engine-cpu-profile")
@@ -48,6 +49,9 @@ func main() {
 			defer cpu.Close()
 			defer pprof.StopCPUProfile()
 			defer mem.Close() // error handling omitted for example
+		}
+		if *tuning {
+			EnableTuning = true
 		}
 		if *genEpdFlag {
 			GenerateEpds()
