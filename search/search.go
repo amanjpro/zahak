@@ -660,8 +660,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// seeScores := movePicker.captureMoveList.Scores
-	// quietScores := movePicker.quietMoveList.Scores
-	// var historyThreashold int32 = int32(depthLeft) * -1024
+	quietScores := movePicker.quietMoveList.Scores
+	var historyThreashold int32 = int32(depthLeft) * -2048
 	var move Move
 	var seeScore int16
 	for true {
@@ -723,12 +723,11 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 
 			}
-			//
-			// // History pruning
-			// lmrDepth := depthLeft - int8(lmrReductions[min8(31, depthLeft)][min(31, legalMoves+1)])
-			// if isQuiet && quietScores[quietMoves] < historyThreashold && lmrDepth < 3 && legalMoves+1 > lmrThreashold {
-			// 	continue
-			// }
+
+			// History pruning
+			if isQuiet && quietScores[quietMoves] < historyThreashold && depthLeft < 3 && legalMoves+1 > lmrThreashold {
+				continue
+			}
 		}
 
 		if oldEnPassant, oldTag, hc, ok := position.MakeMove(move); ok {
