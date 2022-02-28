@@ -21,6 +21,7 @@ const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 var defaultCPU = 1
 var minCPU = 1
 var maxCPU = runtime.NumCPU()
+var EnableTuning = false
 
 const MaxSkillLevels = 7
 
@@ -88,6 +89,13 @@ func (uci *UCI) Start() {
 				fmt.Printf("option name MultiPV type spin default 1 min 1 max %d\n", MaxMultiPV)
 				fmt.Printf("option name Skill Level type spin default %d min 1 max %d\n", MaxSkillLevels, MaxSkillLevels)
 				fmt.Printf("option name MoveOverhead type spin default 50 min 50 max 10000\n")
+				if EnableTuning {
+					fmt.Printf("option name RazoringMargin type spin default %d min 0 max 400\n", RazoringMargin)
+					fmt.Printf("option name TPMargin type spin default %d min 0 max 200\n", TPMargin)
+					fmt.Printf("option name RFPMargin type spin default %d min 0 max 200\n", RFPMargin)
+					fmt.Printf("option name FPMargin type spin default %d min 0 max 200\n", FPMargin)
+					fmt.Printf("option name RangeReductionMargin type spin default %d min 0 max 100\n", RangeReductionMargin)
+				}
 				fmt.Print("uciok\n")
 			case "isready":
 				fmt.Print("readyok\n")
@@ -146,6 +154,31 @@ func (uci *UCI) Start() {
 					}
 				} else if strings.HasPrefix(cmd, "setoption name Ponder value") {
 					continue
+				} else if strings.HasPrefix(cmd, "setoption name RazoringMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					RazoringMargin = int16(converted)
+				} else if strings.HasPrefix(cmd, "setoption name TPMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					TPMargin = int16(converted)
+				} else if strings.HasPrefix(cmd, "setoption name RFPMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					RFPMargin = int16(converted)
+				} else if strings.HasPrefix(cmd, "setoption name FPMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					FPMargin = int16(converted)
+				} else if strings.HasPrefix(cmd, "setoption name RangeReductionMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					RangeReductionMargin = int16(converted)
 				} else if strings.HasPrefix(cmd, "setoption name MoveOverhead value ") {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
