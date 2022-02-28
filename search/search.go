@@ -13,11 +13,13 @@ import (
 const TB_WIN_BOUND int16 = 27000
 const TB_LOSS_BOUND int16 = -27000
 
-var RazoringMargin int16 = 375
-var TPMargin int16 = 163
-var RFPMargin int16 = 50
-var FPMargin int16 = 113
-var RangeReductionMargin int16 = 15
+var RazoringMargin int16 = 191
+var TPMargin int16 = 162
+var RFPMargin int16 = 73
+var FPMargin int16 = 168
+var RangeReductionMargin int16 = 68
+var DeltaMargin int16 = 291
+var LMRCaptureMargin int16 = 202
 
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	e := r.Engines[0]
@@ -751,7 +753,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
 				} else {
 					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-					if eval+move.CapturedPiece().Weight()+p < beta {
+					if eval+move.CapturedPiece().Weight()+LMRCaptureMargin < beta {
 						LMR += 1
 					}
 				}

@@ -7,7 +7,7 @@ import (
 func dynamicMargin(pos *Position) int16 {
 
 	color := pos.Turn()
-	delta := p
+	delta := DeltaMargin
 
 	if color == White {
 		if pos.Board.GetBitboardOf(WhitePawn)&Rank7Fill != 0 {
