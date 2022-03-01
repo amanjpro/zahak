@@ -660,8 +660,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// seeScores := movePicker.captureMoveList.Scores
-	// quietScores := movePicker.quietMoveList.Scores
-	var historyThreashold int32 = int32(depthLeft) * -1024
+	quietScores := movePicker.quietMoveList.Scores
+	var historyThreashold int32 = int32(depthLeft) * -4048
 	var move Move
 	var seeScore int16
 	for true {
@@ -725,7 +725,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			// History pruning
-			if isQuiet && e.searchHistory.CounterHistory(currentMove, move) < historyThreashold && depthLeft < 3 && legalMoves+1 > lmrThreashold {
+			if isQuiet && quietScores[quietMoves] < historyThreashold && depthLeft < 3 && legalMoves+1 > lmrThreashold {
 				continue
 			}
 		}
