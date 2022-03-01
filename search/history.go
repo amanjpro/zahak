@@ -24,6 +24,17 @@ func (m *MoveHistory) TacticalHistory(move Move) int32 {
 	return m.tacticalHistory[tpe*6+dest][captured]
 }
 
+func (m *MoveHistory) CounterHistory(pMove Move, move Move) int32 {
+	if pMove != EmptyMove {
+		mdest := int(move.Destination())
+		mpiece := int(move.MovingPiece() - 1)
+		pdest := int(pMove.Destination())
+		ppiece := int(pMove.MovingPiece() - 1)
+		return m.counterHistory[ppiece*64+pdest][mpiece*64+mdest]
+	}
+	return 0
+}
+
 func (m *MoveHistory) QuietHistory(gpMove Move, pMove Move, move Move) int32 {
 	mdest := int(move.Destination())
 	mpiece := int(move.MovingPiece() - 1)
