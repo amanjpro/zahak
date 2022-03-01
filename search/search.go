@@ -13,13 +13,13 @@ import (
 const TB_WIN_BOUND int16 = 27000
 const TB_LOSS_BOUND int16 = -27000
 
-var RazoringMargin int16 = 339
-var TPMargin int16 = 35
-var RFPMargin int16 = 64
-var FPMargin int16 = 97
-var RangeReductionMargin int16 = 74
-var DeltaMargin int16 = 345
-var LMRCaptureMargin int16 = 84
+var RazoringMargin int16 = 220
+var TPMargin int16 = 150
+var RFPMargin int16 = 53
+var FPMargin int16 = 143
+var RangeReductionMargin int16 = 38
+var DeltaMargin int16 = 296
+var LMRCaptureMargin int16 = 189
 
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	e := r.Engines[0]
