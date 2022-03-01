@@ -95,6 +95,8 @@ func (uci *UCI) Start() {
 					fmt.Printf("option name RFPMargin type spin default %d min 0 max 200\n", RFPMargin)
 					fmt.Printf("option name FPMargin type spin default %d min 0 max 200\n", FPMargin)
 					fmt.Printf("option name RangeReductionMargin type spin default %d min 0 max 100\n", RangeReductionMargin)
+					fmt.Printf("option name DeltaMargin type spin default %d min 0 max 400\n", DeltaMargin)
+					fmt.Printf("option name LMRCaptureMargin type spin default %d min 0 max 400\n", LMRCaptureMargin)
 				}
 				fmt.Print("uciok\n")
 			case "isready":
@@ -179,6 +181,16 @@ func (uci *UCI) Start() {
 					v := options[len(options)-1]
 					converted, _ := strconv.Atoi(v)
 					RangeReductionMargin = int16(converted)
+				} else if strings.HasPrefix(cmd, "setoption name DeltaMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					DeltaMargin = int16(converted)
+				} else if strings.HasPrefix(cmd, "setoption name LMRCaptureMargin value ") {
+					options := strings.Fields(cmd)
+					v := options[len(options)-1]
+					converted, _ := strconv.Atoi(v)
+					LMRCaptureMargin = int16(converted)
 				} else if strings.HasPrefix(cmd, "setoption name MoveOverhead value ") {
 					options := strings.Fields(cmd)
 					v := options[len(options)-1]
