@@ -380,6 +380,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	improving := currentMove == EmptyMove ||
 		(searchHeight > 2 && e.staticEvals[searchHeight] > e.staticEvals[searchHeight-2])
 
+	e.searchHistory.ResetKillers(searchHeight + 1)
 	// Pruning
 	pruningAllowed := !isPvNode && !isInCheck && e.doPruning && !firstLayerOfSingularity
 

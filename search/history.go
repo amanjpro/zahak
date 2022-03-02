@@ -41,6 +41,10 @@ func (m *MoveHistory) QuietHistory(gpMove Move, pMove Move, move Move) int32 {
 	return value
 }
 
+func (m *MoveHistory) ResetKillers(searchHeight int8) {
+	m.killers[searchHeight][0], m.killers[searchHeight][1] = EmptyMove, EmptyMove
+}
+
 func (m *MoveHistory) KillerMoveAt(searchHeight int8) (Move, Move) {
 	if searchHeight < 0 {
 		return EmptyMove, EmptyMove
