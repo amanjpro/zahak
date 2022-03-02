@@ -89,7 +89,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	index := c.index(hash)
 	age := c.age
 
-	oldValue := c.items[index]
+	oldValue := &c.items[index]
 	oldKey := oldValue.Key
 	oldData := oldValue.Data
 	oldHash := oldKey ^ oldData
@@ -114,7 +114,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 
 		newData := Pack(hashmove, eval, depth, nodeType, age)
 		newKey := newData ^ hash
-		c.items[index].Update(newKey, newData)
+		oldValue.Update(newKey, newData)
 	}
 }
 
