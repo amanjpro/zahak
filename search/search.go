@@ -31,17 +31,20 @@ func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 		return
 	}
 
+	var wg sync.WaitGroup
 	if len(r.Engines) == 1 {
 		e := r.Engines[0]
-		e.Search(depth, mateIn, nodes)
+		func() {
+			wg.Add(1)
+			e.Search(&wg, depth, mateIn, nodes)
+		}()
+		wg.Wait()
 	} else {
 		r.ClearForSearch()
-		var wg sync.WaitGroup
 		for i := 0; i < len(r.Engines); i++ {
 			wg.Add(1)
 			go func(e *Engine, depth int8, i int) {
-				e.ParallelSearch(depth, mateIn, nodes)
-				wg.Done()
+				e.ParallelSearch(&wg, depth, mateIn, nodes)
 			}(r.Engines[i], depth, i)
 		}
 		wg.Wait()
@@ -53,15 +56,15 @@ func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	TranspositionTable.AdvanceAge()
 }
 
-func (e *Engine) ParallelSearch(depth int8, mateIn int16, nodes int64) {
+func (e *Engine) ParallelSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
 	e.ClearForSearch()
-	e.rootSearch(depth, mateIn, nodes)
+	e.rootSearch(wg, depth, mateIn, nodes)
 }
 
-func (e *Engine) Search(depth int8, mateIn int16, nodes int64) {
+func (e *Engine) Search(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
 	e.parent.ClearForSearch()
 	e.ClearForSearch()
-	e.rootSearch(depth, mateIn, nodes)
+	e.rootSearch(wg, depth, mateIn, nodes)
 	for e.TimeManager().Pondering {
 		// busy waiting
 	}
@@ -102,10 +105,33 @@ func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove boo
 	parent.isBookmove = isBookmove
 }
 
-func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
+func recoverFromTimeout(wg *sync.WaitGroup) {
+	wg.Done()
+	err := recover()
+	if err != nil && err != errTimeout {
+		panic(err)
+	}
+}
+
+func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
 	pv := NewPVLine(MAX_DEPTH)
 
 	lastDepth := int8(1)
+
+	defer recoverFromTimeout(wg)
+	if e.isMainThread {
+		defer func(lastDepth *int8, pv *PVLine) {
+			e.updatePv(*pv, e.score, *lastDepth, false)
+			if e.MultiPV > 1 {
+				e.SendMultiPv(*pv, e.score, *lastDepth)
+			} else {
+				e.SendPv(*pv, e.score, *lastDepth)
+			}
+			if e.Stop {
+				e.parent.CancelFunc()
+			}
+		}(&lastDepth, &pv)
+	}
 
 	bookmove := GetBookMove(e.Position)
 	if e.isMainThread && bookmove != EmptyMove {
@@ -113,26 +139,15 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 		pv.AddFirst(bookmove)
 		e.updatePv(pv, 0, 1, true)
 	} else {
-		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
-			if e.isMainThread && nodes > 0 && nodes <= e.nodesVisited {
-				break
-			}
+		for iterationDepth := int8(1); iterationDepth <= depth && !e.Stop; iterationDepth += 1 {
 
-			if e.isMainThread {
-				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
-					break
-				}
-			} else if iterationDepth > 1 && e.parent.Stop {
+			if e.isMainThread && iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
 				break
 			}
 
 			e.startDepth = iterationDepth
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
-
-			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
-				break
-			}
 
 			if e.isMainThread && iterationDepth >= 8 && e.score-newScore >= 30 { // Position degrading
 				e.TimeManager().ExtraTime()
@@ -151,25 +166,14 @@ func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
 				}
 			}
 
-			if e.isMainThread && mateIn != -1 && (newScore == -CHECKMATE_EVAL+mateIn || newScore == CHECKMATE_EVAL-mateIn ||
-				newScore == -CHECKMATE_EVAL+mateIn-1 || newScore == CHECKMATE_EVAL-mateIn+1) {
-				break
-			}
-			// if isCheckmateEval(e.score) {
-			// 	break
-			// }
+			e.Stop = e.Stop || (e.isMainThread && (foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)))
 		}
 	}
-	if e.isMainThread {
-		// e.TimeManager().Pondering = false
-		e.parent.Stop = true
-		e.updatePv(pv, e.score, lastDepth, false)
-		if e.MultiPV > 1 {
-			e.SendMultiPv(pv, e.score, lastDepth)
-		} else {
-			e.SendPv(pv, e.score, lastDepth)
-		}
-	}
+}
+
+func foundMate(newScore int16, mateIn int16) bool {
+	return mateIn != -1 && (newScore == -CHECKMATE_EVAL+mateIn || newScore == CHECKMATE_EVAL-mateIn ||
+		newScore == -CHECKMATE_EVAL+mateIn-1 || newScore == CHECKMATE_EVAL-mateIn+1)
 }
 
 func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
@@ -204,9 +208,10 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			}
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
+			if e.isMainThread && e.Stop {
 				e.seldepth = max8(e.seldepth, maxSeldepth)
-				e.Scores[i] = -MAX_INT
+				e.Scores[i] = score
+				e.MultiPVs[i].Clone(e.innerLines[0])
 				goto sortPVs
 			}
 			if score <= alpha {
@@ -361,12 +366,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	if !isRootNode {
 		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-			return -MAX_INT
+			panic(errTimeout)
 		}
-	}
-
-	if !e.isMainThread && e.parent.Stop {
-		return -MAX_INT
 	}
 
 	var eval int16 = position.Evaluate() //-MAX_INT
@@ -616,14 +617,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
-						if !firstLayerOfSingularity {
-							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
-						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
-						noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
-						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
+					if !firstLayerOfSingularity {
+						e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 					}
+					quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
+					noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
+					e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
 					return bestscore
 				}
 				// Potential PV move, lets copy it to the current pv-line
@@ -669,6 +668,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if isRootNode {
 			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
+				e.Stop = true
 				break
 			}
 		}
@@ -802,14 +802,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
-						if !firstLayerOfSingularity {
-							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
-						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
-						noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
-						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
+					if !firstLayerOfSingularity {
+						e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 					}
+					quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
+					noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
+					e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
 					return score
 				}
 				// Potential PV move, lets copy it to the current pv-line
@@ -833,7 +831,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// 	e.parent.mu.RUnlock()
 		// }
 	}
-	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
+	if !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {
@@ -841,7 +839,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
-		e.TimeManager().StopSearchNow = true
+		e.Stop = true
 	} else if e.isMainThread && isRootNode && !searchedAMove {
 		e.NoMoves = true
 	}

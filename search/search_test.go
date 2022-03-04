@@ -2,6 +2,7 @@ package search
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,7 +17,9 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	e := r.Engines[0]
 	e.Position = game.Position()
 	e.Ply = 27
-	e.Search(7, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 7, -2, -1)
 	expected := NewMove(D7, D6, BlackKing, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -33,7 +36,9 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	e := r.Engines[0]
 	e.Position = game.Position()
 	e.Ply = 1
-	e.Search(20, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 20, -2, -1)
 	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -49,7 +54,9 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(7, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 7, -2, -1)
 	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -65,7 +72,9 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(7, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 7, -2, -1)
 	expected := NewMove(D1, C1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -81,7 +90,9 @@ func TestSearchOnlyMove(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(7, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 7, -2, -1)
 	expected := NewMove(G7, G6, BlackPawn, NoPiece, NoType, 0)
 	mv := r.Move()
 	score := r.Score()
@@ -101,7 +112,9 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(7, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 7, -2, -1)
 	expected := NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -170,7 +183,9 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(25, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 25, -2, -1)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
 	mvStr := mv.ToString()
@@ -187,7 +202,9 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
 	e := r.Engines[0]
 	e.Position = game.Position()
-	e.Search(13, -2, -1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	e.Search(&wg, 13, -2, -1)
 	expected := []Move{
 		NewMove(B3, A3, BlackQueen, NoPiece, NoType, 0),
 		NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0),

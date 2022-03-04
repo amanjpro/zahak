@@ -1,6 +1,8 @@
 package search
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,7 +13,6 @@ type Runner struct {
 	nodesVisited int64
 	cacheHits    int64
 	Engines      []*Engine
-	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
 	pv           PVLine
@@ -19,6 +20,8 @@ type Runner struct {
 	depth        int8
 	move         Move
 	score        int16
+	done         context.Context
+	CancelFunc   context.CancelFunc
 }
 
 type Engine struct {
@@ -54,10 +57,13 @@ type Engine struct {
 	Scores          []int16
 	NoMoves         bool
 	tbHit           int64
+	Stop            bool
 }
 
 const MaxMultiPV = 120
 const MAX_DEPTH int8 = int8(100)
+
+var errTimeout = errors.New("Search timeout")
 
 func (e *Engine) TimeManager() *TimeManager {
 	return e.parent.TimeManager
@@ -122,6 +128,7 @@ func NewEngine(parent *Runner) *Engine {
 		MultiPV:         1,
 		MultiPVs:        multiPVs,
 		Scores:          make([]int16, MaxMultiPV),
+		Stop:            false,
 	}
 }
 
@@ -151,7 +158,7 @@ func (r *Runner) ClearForSearch() {
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
-	r.Stop = false
+	r.done, r.CancelFunc = context.WithCancel(context.Background())
 }
 
 func (e *Engine) ClearForSearch() {
@@ -165,6 +172,7 @@ func (e *Engine) ClearForSearch() {
 		e.staticEvals[i] = 0
 	}
 
+	e.Stop = false
 	e.seldepth = 0
 	e.tbHit = 0
 	e.score = 0
@@ -313,6 +321,13 @@ func (e *Engine) VisitNode(searchHeight int8) {
 	e.nodesVisited += 1
 	if searchHeight > e.seldepth {
 		e.seldepth = searchHeight
+	}
+	if (e.nodesVisited % 511) == 0 {
+		select {
+		case <-e.parent.done.Done():
+			panic(errTimeout)
+		default:
+		}
 	}
 }
 
