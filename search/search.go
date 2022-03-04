@@ -139,9 +139,9 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 		pv.AddFirst(bookmove)
 		e.updatePv(pv, 0, 1, true)
 	} else {
-		for iterationDepth := int8(1); iterationDepth <= depth && !e.Stop; iterationDepth += 1 {
+		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
 
-			if e.isMainThread && iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
+			if e.isMainThread && iterationDepth > 1 && (!e.TimeManager().CanStartNewIteration() || e.Stop) {
 				break
 			}
 
@@ -208,12 +208,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			}
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if e.isMainThread && e.Stop {
-				e.seldepth = max8(e.seldepth, maxSeldepth)
-				e.Scores[i] = score
-				e.MultiPVs[i].Clone(e.innerLines[0])
-				goto sortPVs
-			}
+
 			if score <= alpha {
 				alpha = max16(alpha-delta, -MAX_INT)
 				beta = (alpha + 3*beta) / 4
@@ -235,7 +230,6 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 		}
 	}
 
-sortPVs:
 	for i := 0; i < e.MultiPV; i++ {
 		for j := i + 1; j < e.MultiPV; j++ {
 			if e.Scores[i] < e.Scores[j] {
