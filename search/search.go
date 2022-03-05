@@ -32,43 +32,24 @@ func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	}
 
 	var wg sync.WaitGroup
-	if len(r.Engines) == 1 {
-		e := r.Engines[0]
-		func() {
-			wg.Add(1)
-			e.Search(&wg, depth, mateIn, nodes)
-		}()
-		wg.Wait()
-	} else {
-		r.ClearForSearch()
-		for i := 0; i < len(r.Engines); i++ {
-			wg.Add(1)
-			go func(e *Engine, depth int8, i int) {
-				e.ParallelSearch(&wg, depth, mateIn, nodes)
-			}(r.Engines[i], depth, i)
-		}
-		wg.Wait()
-		for e.TimeManager().Pondering {
-			// busy waiting
-		}
-		r.SendBestMove()
+	r.ClearForSearch()
+	for i := 0; i < len(r.Engines); i++ {
+		wg.Add(1)
+		go func(e *Engine, depth int8, i int) {
+			e.ParallelSearch(&wg, depth, mateIn, nodes)
+		}(r.Engines[i], depth, i)
 	}
+	wg.Wait()
+	for e.TimeManager().Pondering {
+		// busy waiting
+	}
+	r.SendBestMove()
 	TranspositionTable.AdvanceAge()
 }
 
 func (e *Engine) ParallelSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
 	e.ClearForSearch()
 	e.rootSearch(wg, depth, mateIn, nodes)
-}
-
-func (e *Engine) Search(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
-	e.parent.ClearForSearch()
-	e.ClearForSearch()
-	e.rootSearch(wg, depth, mateIn, nodes)
-	for e.TimeManager().Pondering {
-		// busy waiting
-	}
-	e.parent.SendBestMove()
 }
 
 var p = WhitePawn.Weight()
@@ -96,15 +77,6 @@ func initLMR(isQuiet bool) [32][32]int {
 	return reductions
 }
 
-func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) {
-	parent := e.parent
-	parent.pv.Clone(pvLine)
-	parent.move = parent.pv.MoveAt(0)
-	parent.score = score
-	parent.depth = depth
-	parent.isBookmove = isBookmove
-}
-
 func recoverFromTimeout(wg *sync.WaitGroup) {
 	wg.Done()
 	err := recover()
@@ -114,17 +86,17 @@ func recoverFromTimeout(wg *sync.WaitGroup) {
 }
 
 func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
-	pv := NewPVLine(MAX_DEPTH)
-
-	lastDepth := int8(1)
 
 	defer recoverFromTimeout(wg)
 
 	bookmove := GetBookMove(e.Position)
 	if e.isMainThread && bookmove != EmptyMove {
-		pv.Recycle()
-		pv.AddFirst(bookmove)
-		e.updatePv(pv, 0, 1, true)
+		e.parent.pv.Recycle()
+		e.parent.pv.AddFirst(bookmove)
+		// e.parent.pv.Clone(pvLine)
+		e.parent.move = bookmove // parent.pv.MoveAt(0)
+		e.parent.score = 0
+		e.parent.depth = 1
 	} else {
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
 
@@ -136,21 +108,23 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 				e.TimeManager().ExtraTime()
 			}
 
-			lastDepth = iterationDepth
 			e.pred.Clear()
 			e.score = newScore
 			e.rootMove = e.MultiPVs[0].MoveAt(0)
-			if e.isMainThread && !e.MultiPVs[0].IsEmpty() {
-				pv.Clone(e.MultiPVs[0])
+			if e.isMainThread {
+				e.parent.move = e.rootMove
+				e.parent.score = newScore
+				e.parent.depth = iterationDepth
+				e.parent.pv.Clone(e.MultiPVs[0])
 				if e.MultiPV > 1 {
-					e.SendMultiPv(pv, e.score, lastDepth)
+					e.SendMultiPv(e.parent.pv, e.score, iterationDepth)
 				} else {
-					e.SendPv(pv, e.score, iterationDepth)
+					e.SendPv(e.parent.pv, e.score, iterationDepth)
 				}
 			}
 
 			if e.isMainThread && (e.stop || ((foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)) || !e.TimeManager().CanStartNewIteration())) {
-				panic(errTimeout)
+				break
 			}
 		}
 	}

@@ -2,7 +2,6 @@ package search
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	. "github.com/amanjpro/zahak/engine"
@@ -73,10 +72,7 @@ func RunBenchmark() {
 		TranspositionTable = NewCache(cacheSize)
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
-		var wg sync.WaitGroup
-		wg.Add(1)
-		runner.Engines[0].Search(&wg, depth, -2, -1)
-		wg.Wait()
+		runner.Search(depth, -2, -1)
 		nodes += runner.Engines[0].nodesVisited
 		totalTime += runner.Engines[0].TotalTime
 	}
