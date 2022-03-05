@@ -57,6 +57,7 @@ type Engine struct {
 	Scores          []int16
 	NoMoves         bool
 	tbHit           int64
+	stop            bool
 }
 
 const MaxMultiPV = 120
@@ -127,6 +128,7 @@ func NewEngine(parent *Runner) *Engine {
 		MultiPV:         1,
 		MultiPVs:        multiPVs,
 		Scores:          make([]int16, MaxMultiPV),
+		stop:            false,
 	}
 }
 
@@ -170,6 +172,7 @@ func (e *Engine) ClearForSearch() {
 		e.staticEvals[i] = 0
 	}
 
+	e.stop = false
 	e.seldepth = 0
 	e.tbHit = 0
 	e.score = 0

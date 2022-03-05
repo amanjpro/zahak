@@ -222,13 +222,13 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			delta += delta * 2 / 3
 			maxSeldepth = max8(e.seldepth, maxSeldepth)
 			firstIteration = false
-			if e.isMainThread && e.TimeManager().Stopped {
-				goto sortPVs
-			}
+			// if e.isMainThread && e.stop {
+			// 	goto sortPVs
+			// }
 		}
 	}
 
-sortPVs:
+	// sortPVs:
 	for i := 0; i < e.MultiPV; i++ {
 		for j := i + 1; j < e.MultiPV; j++ {
 			if e.Scores[i] < e.Scores[j] {
@@ -659,12 +659,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var seeScore int16
 	for true {
 
-		if isRootNode {
-			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
-				e.TimeManager().Stopped = true
-				break
-			}
-		}
+		// if isRootNode {
+		// if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
+		// 	e.stop = true
+		// 	break
+		// }
+		// }
 
 		move = movePicker.Next()
 
@@ -831,9 +831,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
-		e.TimeManager().Stopped = true
-	} else if e.isMainThread && isRootNode && !searchedAMove {
+	// if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
+	// 	e.stop = true
+	// } else
+	if e.isMainThread && isRootNode && !searchedAMove {
 		e.NoMoves = true
 	}
 	return bestscore
