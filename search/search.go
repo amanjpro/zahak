@@ -138,10 +138,6 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 	} else {
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
 
-			if e.isMainThread && iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
-				break
-			}
-
 			e.startDepth = iterationDepth
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
@@ -163,7 +159,7 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 				}
 			}
 
-			if e.isMainThread && (foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)) {
+			if e.isMainThread && ((foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)) || !e.TimeManager().CanStartNewIteration()) {
 				break
 			}
 		}
@@ -226,9 +222,13 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			delta += delta * 2 / 3
 			maxSeldepth = max8(e.seldepth, maxSeldepth)
 			firstIteration = false
+			if e.isMainThread && e.TimeManager().Stopped {
+				goto sortPVs
+			}
 		}
 	}
 
+sortPVs:
 	for i := 0; i < e.MultiPV; i++ {
 		for j := i + 1; j < e.MultiPV; j++ {
 			if e.Scores[i] < e.Scores[j] {
