@@ -446,7 +446,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// Prob cut
 		// The idea is basically cherry picked from multiple engines, Weiss, Ethereal and Berserk for example
-		probBeta := min16(beta+50, WIN_IN_MAX)
+		probBeta := min16(beta+200, WIN_IN_MAX)
 		if depthLeft > 4 && abs16(beta) < WIN_IN_MAX && !(ttHit && nDepth >= depthLeft-3 && nEval < probBeta) {
 
 			hashMove := EmptyMove
