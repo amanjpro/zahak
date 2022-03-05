@@ -120,7 +120,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 		noisyMoves += 1
 		// isCaptureMove := move.IsCapture()
 		promo := move.PromoType()
-		if promo != NoType && promo != Queen {
+		if !move.IsCapture() && promo != NoType && promo != Queen {
 			continue
 		}
 
