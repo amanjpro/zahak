@@ -127,9 +127,6 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 			} else {
 				e.SendPv(*pv, e.score, *lastDepth)
 			}
-			if e.Stop {
-				e.parent.CancelFunc()
-			}
 		}(&lastDepth, &pv)
 	}
 
@@ -141,7 +138,7 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 	} else {
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
 
-			if e.isMainThread && iterationDepth > 1 && (!e.TimeManager().CanStartNewIteration() || e.Stop) {
+			if e.isMainThread && iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
 				break
 			}
 
@@ -166,7 +163,9 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 				}
 			}
 
-			e.Stop = e.Stop || (e.isMainThread && (foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)))
+			if e.isMainThread && (foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)) {
+				break
+			}
 		}
 	}
 }
@@ -662,7 +661,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if isRootNode {
 			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
-				e.Stop = true
+				e.TimeManager().Stopped = true
 				break
 			}
 		}
@@ -833,7 +832,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
-		e.Stop = true
+		e.TimeManager().Stopped = true
 	} else if e.isMainThread && isRootNode && !searchedAMove {
 		e.NoMoves = true
 	}

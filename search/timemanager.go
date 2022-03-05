@@ -59,12 +59,11 @@ func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
 	}
 	tm.NodesSinceLastCheck = 0
 	if isRoot && canCutNow {
-		stop := tm.Stopped || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
-		return stop
+		tm.Stopped = tm.Stopped || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 	} else {
 		tm.Stopped = tm.Stopped || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
-		return tm.Stopped
 	}
+	return tm.Stopped
 }
 
 func (tm *TimeManager) CanStartNewIteration() bool {
@@ -77,10 +76,10 @@ func (tm *TimeManager) CanStartNewIteration() bool {
 
 	if tm.IsPerMove {
 		return time.Since(tm.StartTime).Milliseconds() <= tm.SoftLimit
-	} else {
-		limit := 70 * tm.SoftLimit / 100
-		return time.Since(tm.StartTime).Milliseconds() <= limit
 	}
+
+	limit := 70 * tm.SoftLimit / 100
+	return time.Since(tm.StartTime).Milliseconds() <= limit
 }
 
 func (tm *TimeManager) ExtraTime() {
