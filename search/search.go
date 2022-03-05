@@ -150,19 +150,10 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 			}
 
 			if e.isMainThread && (e.stop || ((foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)) || !e.TimeManager().CanStartNewIteration())) {
-				break
+				panic(errTimeout)
 			}
 		}
 	}
-	if e.isMainThread {
-		e.updatePv(pv, e.score, lastDepth, false)
-		if e.MultiPV > 1 {
-			e.SendMultiPv(pv, e.score, lastDepth)
-		} else {
-			e.SendPv(pv, e.score, lastDepth)
-		}
-	}
-
 }
 
 func foundMate(newScore int16, mateIn int16) bool {
