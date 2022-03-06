@@ -12,7 +12,10 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	game := FromFen("3rbbn1/BQ1kp3/2p1q2p/N4p2/8/3P4/P1P2PPP/5RK1 b - - 0 27")
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	e.Ply = 27
@@ -29,7 +32,10 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/2r4n/3K4 b - - 0 1")
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	e.Ply = 1
@@ -46,7 +52,10 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/2K5 b - - 1 1")
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	r.Search(7, -2, -1)
@@ -62,7 +71,10 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pb3/3r3n/3K4 w - - 0 1")
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	r.Search(7, -2, -1)
@@ -78,7 +90,10 @@ func TestSearchOnlyMove(t *testing.T) {
 	game := FromFen("rnbqkbnr/ppppp1p1/7p/5P1Q/8/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1")
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	r.Search(7, -2, -1)
@@ -98,7 +113,10 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	game := FromFen("3N1k2/N7/1p2ppR1/1P6/P2pP3/3Pbn2/3r4/4K3 w - - 2 2")
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	r.Search(7, -2, -1)
@@ -167,7 +185,10 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	game := FromFen(fen)
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	r.Search(25, -2, -1)
@@ -184,7 +205,10 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	game := FromFen(fen)
 	TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 	r := NewRunner(1)
-	r.AddTimeManager(NewTimeManager(time.Now(), 400_000, true, 0, 0, false))
+	tm, ctx, cancel := NewTimeManager(time.Now(), 400_000, true, 0, 0, false)
+	r.AddTimeManager(tm)
+	r.Ctx = ctx
+	r.CancelFunc = cancel
 	e := r.Engines[0]
 	e.Position = game.Position()
 	r.Search(13, -2, -1)
