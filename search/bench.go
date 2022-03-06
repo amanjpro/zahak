@@ -67,12 +67,14 @@ func RunBenchmark() {
 	runner := NewRunner(1)
 	nodes := int64(0)
 	totalTime := float64(0)
-	tm, _, _ := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false)
-	runner.AddTimeManager(tm)
 	for _, fen := range fens {
 		TranspositionTable = NewCache(cacheSize)
 		game := FromFen(fen)
 		runner.Engines[0].Position = game.Position()
+		tm, ctx, cancel := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false)
+		runner.AddTimeManager(tm)
+		runner.Ctx = ctx
+		runner.CancelFunc = cancel
 		runner.Search(depth, -2, -1)
 		nodes += runner.Engines[0].nodesVisited
 		totalTime += runner.Engines[0].TotalTime

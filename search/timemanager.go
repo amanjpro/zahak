@@ -40,7 +40,7 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 	if pondering {
 		ctx, cancel = context.WithCancel(context.Background())
 	} else {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*time.Duration(hardLimit))
+		ctx, cancel = context.WithDeadline(context.Background(), startTime.Add(time.Millisecond*time.Duration(hardLimit)))
 	}
 	tm = &TimeManager{
 		HardLimit:           hardLimit,
