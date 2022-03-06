@@ -67,7 +67,8 @@ func RunBenchmark() {
 	runner := NewRunner(1)
 	nodes := int64(0)
 	totalTime := float64(0)
-	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
+	tm, _, _ := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false)
+	runner.AddTimeManager(tm)
 	for _, fen := range fens {
 		TranspositionTable = NewCache(cacheSize)
 		game := FromFen(fen)

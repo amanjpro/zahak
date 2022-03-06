@@ -127,7 +127,7 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 		}
 	}
 	if e.isMainThread {
-		panic(errTimeout)
+		e.parent.CancelFunc()
 	}
 }
 
@@ -191,7 +191,6 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 				return
 			}
 			delta += delta * 2 / 3
-			maxSeldepth = max8(e.seldepth, maxSeldepth)
 			firstIteration = false
 		}
 	}
@@ -316,9 +315,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					alpha = max16(alpha, score)
 				}
 			}
-		}
-		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-			panic(errTimeout)
 		}
 	}
 
@@ -623,7 +619,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var seeScore int16
 	for true {
 
-		if isRootNode && e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
+		if isRootNode && e.isMainThread && bestscore-e.score >= -20 && e.TimeManager().ShouldStop() {
 			e.stop = true
 			break
 		}

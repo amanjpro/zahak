@@ -143,6 +143,8 @@ func (t *Runner) AddTimeManager(tm *TimeManager) {
 
 func (r *Runner) Ponderhit() {
 	r.TimeManager.StartTime = time.Now()
+	ctx, cancel := context.WithDeadline(context.Background(), r.TimeManager.StartTime.Add(time.Duration(r.TimeManager.HardLimit)))
+	r.Ctx, r.CancelFunc = ctx, cancel
 	r.TimeManager.Pondering = false
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
@@ -322,7 +324,7 @@ func (e *Engine) VisitNode(searchHeight int8) {
 	if searchHeight > e.seldepth {
 		e.seldepth = searchHeight
 	}
-	if (e.nodesVisited % 511) == 0 {
+	if (e.nodesVisited % 2048) == 0 {
 		select {
 		case <-e.parent.Ctx.Done():
 			panic(errTimeout)

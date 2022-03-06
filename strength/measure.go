@@ -81,7 +81,8 @@ func RunTestPositions(path string) {
 		game := FromFen(epd.fen)
 		TranspositionTable = NewCache(DEFAULT_CACHE_SIZE)
 		r := NewRunner(1)
-		r.AddTimeManager(NewTimeManager(time.Now(), 15000, true, 0, 0, false))
+		tm, _, _ := NewTimeManager(time.Now(), 15000, true, 0, 0, false)
+		r.AddTimeManager(tm)
 		pos := game.Position()
 		r.Engines[0].Position = pos
 		r.Search(MAX_DEPTH, -2, -1)

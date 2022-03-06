@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"time"
 )
 
@@ -14,14 +15,13 @@ type TimeManager struct {
 	HardLimit           int64
 	SoftLimit           int64
 	NodesSinceLastCheck int64
-	Stopped             bool
 	IsPerMove           bool
 	ExtensionCounter    int
 	Pondering           bool
 }
 
 func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
-	increment int64, movesToTimeControl int64, pondering bool) *TimeManager {
+	increment int64, movesToTimeControl int64, pondering bool) (tm *TimeManager, ctx context.Context, cancel context.CancelFunc) {
 	softLimit := int64(0)
 	hardLimit := int64(0)
 	if isPerMove {
@@ -37,41 +37,33 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		hardLimit = min64(softLimit*10, availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
 	}
 
-	return &TimeManager{
+	if pondering {
+		ctx, cancel = context.WithCancel(context.Background())
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(hardLimit))
+	}
+	tm = &TimeManager{
 		HardLimit:           hardLimit,
 		SoftLimit:           softLimit,
 		StartTime:           startTime,
 		NodesSinceLastCheck: 0,
-		Stopped:             false,
 		IsPerMove:           isPerMove,
 		ExtensionCounter:    0,
 		Pondering:           pondering,
 	}
+	return
 }
 
-func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
+func (tm *TimeManager) ShouldStop() bool {
 	if tm.Pondering {
 		return false
 	}
-	if tm.NodesSinceLastCheck < 2000 {
-		tm.NodesSinceLastCheck += 1
-		return tm.Stopped
-	}
-	tm.NodesSinceLastCheck = 0
-	if isRoot && canCutNow {
-		return tm.Stopped || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
-	} else {
-		tm.Stopped = tm.Stopped || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
-		return tm.Stopped
-	}
+	return time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 }
 
 func (tm *TimeManager) CanStartNewIteration() bool {
 	if tm.Pondering {
 		return true
-	}
-	if tm.Stopped {
-		return false
 	}
 
 	if tm.IsPerMove {

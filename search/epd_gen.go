@@ -21,7 +21,8 @@ func GenerateEpds() {
 	cacheSize := 32
 	TranspositionTable = NewCache(cacheSize)
 	runner := NewRunner(1)
-	runner.AddTimeManager(NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false))
+	tm, _, _ := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false)
+	runner.AddTimeManager(tm)
 	engine := runner.Engines[0]
 
 	game := FromFen(startFen)
