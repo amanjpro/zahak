@@ -41,11 +41,19 @@ ifdef EXE
 	$(MV)
 endif
 
+debug: netgen
+	$(MKDIR)
+	$(FLAGS) go build -o bin ./...
+	mv bin/zahak bin/zahak_debug
+
 run_perft: netgen build
 	bin/zahak -perft
 
 run: netgen build
 	bin/zahak
+
+debug_run: netgen debug
+	bin/zahak_debug
 
 test: netgen
 	go test ./...

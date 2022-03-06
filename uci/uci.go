@@ -2,6 +2,7 @@ package uci
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -331,6 +332,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 		}
 	}
 
+	now := time.Now()
 	for i := 0; i < len(uci.runner.Engines); i++ {
 		uci.runner.Engines[i].Position = game.Position().Copy()
 		uci.runner.Engines[i].Ply = ply
@@ -340,18 +342,19 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	if timeToThink == 0 && inc == 0 {
 		noTC = true
 	}
+	uci.runner.Ctx, uci.runner.CancelFunc = context.WithCancel(context.Background())
 	if !noTC {
 		if pondering {
-			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
+			tm := NewTimeManager(now, int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.timeManager = tm
 			uci.runner.AddTimeManager(tm)
 		} else {
-			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
+			tm := NewTimeManager(now, int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.runner.AddTimeManager(tm)
 		}
 		go uci.runner.Search(depth, 2*int16(mateIn), int64(nodes))
 	} else {
-		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
+		tm := NewTimeManager(now, MAX_TIME, false, 0, 0, pondering)
 		uci.runner.AddTimeManager(tm)
 		uci.timeManager = tm
 		go uci.runner.Search(depth, 2*int16(mateIn), int64(nodes))

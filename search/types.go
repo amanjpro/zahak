@@ -20,7 +20,7 @@ type Runner struct {
 	depth        int8
 	move         Move
 	score        int16
-	done         context.Context
+	Ctx          context.Context
 	CancelFunc   context.CancelFunc
 }
 
@@ -158,7 +158,6 @@ func (r *Runner) ClearForSearch() {
 	r.depth = 0
 	r.isBookmove = false
 	r.cacheHits = 0
-	r.done, r.CancelFunc = context.WithCancel(context.Background())
 }
 
 func (e *Engine) ClearForSearch() {
@@ -324,7 +323,7 @@ func (e *Engine) VisitNode(searchHeight int8) {
 	}
 	if (e.nodesVisited % 511) == 0 {
 		select {
-		case <-e.parent.done.Done():
+		case <-e.parent.Ctx.Done():
 			panic(errTimeout)
 		default:
 		}

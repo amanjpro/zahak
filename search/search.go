@@ -35,9 +35,7 @@ func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	r.ClearForSearch()
 	for i := 0; i < len(r.Engines); i++ {
 		wg.Add(1)
-		go func(e *Engine, depth int8, i int) {
-			e.ParallelSearch(&wg, depth, mateIn, nodes)
-		}(r.Engines[i], depth, i)
+		go r.Engines[i].ParallelSearch(&wg, depth, mateIn, nodes)
 	}
 	wg.Wait()
 	for e.TimeManager().Pondering {
@@ -129,7 +127,7 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 		}
 	}
 	if e.isMainThread {
-		e.parent.CancelFunc()
+		panic(errTimeout)
 	}
 }
 
@@ -320,8 +318,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 		}
 		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-			e.parent.CancelFunc()
-			return -MAX_INT
+			panic(errTimeout)
 		}
 	}
 

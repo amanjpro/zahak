@@ -84,8 +84,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	}
 
 	if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-		e.parent.CancelFunc()
-		return -MAX_INT
+		panic(errTimeout)
 	}
 
 	var isInCheck = e.Position.IsInCheck()
