@@ -143,7 +143,7 @@ func (t *Runner) AddTimeManager(tm *TimeManager) {
 
 func (r *Runner) Ponderhit() {
 	r.TimeManager.StartTime = time.Now()
-	ctx, cancel := context.WithDeadline(context.Background(), r.TimeManager.StartTime.Add(time.Duration(r.TimeManager.HardLimit)))
+	ctx, cancel := context.WithDeadline(context.Background(), r.TimeManager.StartTime.Add(time.Duration(1000*r.TimeManager.HardLimit)))
 	r.Ctx, r.CancelFunc = ctx, cancel
 	r.TimeManager.Pondering = false
 	fmt.Printf("info nodes %d\n", r.nodesVisited)

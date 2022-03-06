@@ -7,7 +7,7 @@ import (
 
 var COMMUNICATION_TIME_BUFFER int64 = 50
 
-const MAX_TIME int64 = 922_337_203_685_477_580
+const MAX_TIME int64 = 922_337_203_685
 
 // Implements this: http://talkchess.com/forum3/viewtopic.php?f=7&t=77396&p=894325&hilit=cold+turkey#p894294
 type TimeManager struct {
@@ -40,7 +40,7 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 	if pondering {
 		ctx, cancel = context.WithCancel(context.Background())
 	} else {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(hardLimit))
+		ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*time.Duration(hardLimit))
 	}
 	tm = &TimeManager{
 		HardLimit:           hardLimit,
