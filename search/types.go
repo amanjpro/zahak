@@ -71,6 +71,7 @@ func (e *Engine) TimeManager() *TimeManager {
 
 func NewRunner(numberOfThreads int) *Runner {
 	t := &Runner{}
+	t.Ctx, t.CancelFunc = context.WithCancel(context.Background())
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
