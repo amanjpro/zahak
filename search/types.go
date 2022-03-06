@@ -16,7 +16,6 @@ type Runner struct {
 	TimeManager  *TimeManager
 	DebugMode    bool
 	pv           PVLine
-	isBookmove   bool
 	depth        int8
 	move         Move
 	score        int16
@@ -159,7 +158,7 @@ func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
 	r.score = -MAX_INT
 	r.depth = 0
-	r.isBookmove = false
+	r.move = EmptyMove
 	r.cacheHits = 0
 }
 
@@ -203,8 +202,13 @@ func (e *Engine) ClearForSearch() {
 	e.nodesVisited = 0
 	e.cacheHits = 0
 
-	e.StartTime = time.Now()
-
+	e.StartTime = e.TimeManager().StartTime
+	movePickers := make([]*MovePicker, MAX_DEPTH)
+	for i := int8(0); i < MAX_DEPTH; i++ {
+		movePickers[i] = EmptyMovePicker()
+	}
+	e.MovePickers = movePickers
+	e.TempMovePicker = EmptyMovePicker()
 	e.pred.Clear()
 
 	e.Position.Net.Recalculate(e.Position.NetInput())
