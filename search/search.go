@@ -152,7 +152,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 		firstIteration := true
 		e.NoMoves = false
 		for !e.NoMoves {
-			e.innerLines[0].Recycle()
+			e.innerLines[i].Recycle()
 			if firstIteration {
 				score = e.Scores[i]
 				alpha = max16(score-initialWindow, -MAX_INT)
