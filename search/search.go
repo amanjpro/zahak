@@ -129,7 +129,7 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 		}
 	}
 	if e.isMainThread {
-		panic(errTimeout)
+		e.parent.CancelFunc()
 	}
 }
 
@@ -320,7 +320,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 		}
 		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-			panic(errTimeout)
+			e.parent.CancelFunc()
+			return -MAX_INT
 		}
 	}
 
