@@ -78,8 +78,8 @@ func initLMR(isQuiet bool) [32][32]int {
 }
 
 func recoverFromTimeout(wg *sync.WaitGroup) {
-	wg.Done()
 	err := recover()
+	wg.Done()
 	if err != nil && err != errTimeout {
 		panic(err)
 	}
@@ -90,8 +90,8 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 	defer recoverFromTimeout(wg)
 
 	bookmove := GetBookMove(e.Position)
+	e.parent.pv.Recycle()
 	if e.isMainThread && bookmove != EmptyMove {
-		e.parent.pv.Recycle()
 		e.parent.pv.AddFirst(bookmove)
 		// e.parent.pv.Clone(pvLine)
 		e.parent.move = bookmove // parent.pv.MoveAt(0)
@@ -127,6 +127,9 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 				break
 			}
 		}
+	}
+	if e.isMainThread {
+		panic(errTimeout)
 	}
 }
 
@@ -168,6 +171,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
 
+			e.seldepth = max8(e.seldepth, maxSeldepth)
 			if score <= alpha {
 				alpha = max16(alpha-delta, -MAX_INT)
 				beta = (alpha + 3*beta) / 4
@@ -178,7 +182,6 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 					iterationDepth = max8(1, iterationDepth-1)
 				}
 			} else {
-				e.seldepth = max8(e.seldepth, maxSeldepth)
 				e.Scores[i] = score
 				e.MultiPVs[i].Clone(e.innerLines[0])
 				if e.isMainThread && e.stop {
@@ -187,7 +190,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 				break
 			}
 			if e.isMainThread && e.stop {
-				panic(errTimeout)
+				return
 			}
 			delta += delta * 2 / 3
 			maxSeldepth = max8(e.seldepth, maxSeldepth)
@@ -204,8 +207,7 @@ sortPVs:
 			}
 		}
 	}
-	e.seldepth = max8(e.seldepth, maxSeldepth)
-	// We should never get here
+
 }
 
 func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16) int16 {
@@ -317,17 +319,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 			}
 		}
+		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
+			panic(errTimeout)
+		}
 	}
 
 	// Internal iterative reduction based on Rebel's idea
 	if /* !isPvNode && */ !ttHit && depthLeft >= 5 {
 		depthLeft -= 1
-	}
-
-	if !isRootNode {
-		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-			panic(errTimeout)
-		}
 	}
 
 	var eval int16 = position.Evaluate() //-MAX_INT
@@ -626,11 +625,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var seeScore int16
 	for true {
 
-		if isRootNode {
-			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
-				e.stop = true
-				break
-			}
+		if isRootNode && e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
+			e.stop = true
+			break
 		}
 
 		move = movePicker.Next()
@@ -780,16 +777,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				rangeReduction += 1
 			}
 		}
-
-		// if !isRootNode && e.startDepth > 6 {
-		// 	e.parent.mu.RLock()
-		// 	if e.startDepth <= e.parent.depth {
-		// 		e.startDepth = 0
-		// 		e.parent.mu.RUnlock()
-		// 		return -MAX_INT
-		// 	}
-		// 	e.parent.mu.RUnlock()
-		// }
 	}
 	if !firstLayerOfSingularity {
 		if alpha > oldAlpha {
@@ -798,10 +785,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
-		e.stop = true
-	} else if e.isMainThread && isRootNode && !searchedAMove {
-		e.NoMoves = true
+	if e.isMainThread && isRootNode {
+		e.stop = legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1
+		e.NoMoves = !searchedAMove
 	}
 	return bestscore
 }
