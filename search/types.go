@@ -203,11 +203,6 @@ func (e *Engine) ClearForSearch() {
 	e.cacheHits = 0
 
 	e.StartTime = e.TimeManager().StartTime
-	movePickers := make([]*MovePicker, MAX_DEPTH)
-	for i := int8(0); i < MAX_DEPTH; i++ {
-		movePickers[i] = EmptyMovePicker()
-	}
-	e.MovePickers = movePickers
 	e.TempMovePicker = EmptyMovePicker()
 	e.pred.Clear()
 
