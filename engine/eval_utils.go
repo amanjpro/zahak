@@ -41,12 +41,11 @@ func (b *Bitboard) getLeastValuablePiece(attacks uint64, color Color) (uint64, P
 }
 
 func (b *Bitboard) StaticExchangeEval(toSq Square, target Piece, frSq Square, aPiece Piece) int16 {
-	return b.SeeGe(toSq, target, frSq, aPiece, 0)
+	return b.SeeGe(make([]int16, 32), toSq, target, frSq, aPiece, 0)
 }
 
-func (b *Bitboard) SeeGe(toSq Square, target Piece, frSq Square, aPiece Piece, bound int16) int16 {
+func (b *Bitboard) SeeGe(gain []int16, toSq Square, target Piece, frSq Square, aPiece Piece, bound int16) int16 {
 
-	gain := make([]int16, 32)
 	d := 0
 
 	mayXray := b.blackBishop | b.whiteBishop |

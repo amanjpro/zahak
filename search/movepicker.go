@@ -22,6 +22,7 @@ type MovePicker struct {
 	killerIndex     int
 	counterMove     Move
 	currentDepth    int8
+	gain            []int16
 }
 
 func EmptyMovePicker() *MovePicker {
@@ -41,6 +42,7 @@ func EmptyMovePicker() *MovePicker {
 		killer2:         EmptyMove,
 		killerIndex:     0,
 		counterMove:     EmptyMove,
+		gain:            make([]int16, 32),
 	}
 	return mp
 }
@@ -183,7 +185,7 @@ func (mp *MovePicker) scoreCaptureMoves() int {
 				scores[i] = history + 2000 + int32(p.Weight()+capPiece.Weight())
 			} else if !move.IsEnPassant() {
 				// SEE for ordering
-				gain := int32(board.SeeGe(dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
+				gain := int32(board.SeeGe(mp.gain, dest, capPiece, source, piece, -50*int16(mp.currentDepth)))
 				mp.captureSees[i] = gain
 				if gain < 0 {
 					scores[i] = history + /* -90_000_000 + */ gain
