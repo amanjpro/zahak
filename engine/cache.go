@@ -106,7 +106,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	if oldData == 0 {
 		replace = true
 	} else if oldHash == hash {
-		replace = depth >= oldDepth-3 || nodeType == Exact
+		replace = depth >= oldDepth || nodeType == Exact
 	} else {
 		replace = oldAge != age || depth >= oldDepth
 	}
