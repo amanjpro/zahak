@@ -31,41 +31,23 @@ func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 		return
 	}
 
-	if len(r.Engines) == 1 {
-		e := r.Engines[0]
-		e.Search(depth, mateIn, nodes)
-	} else {
-		r.ClearForSearch()
-		var wg sync.WaitGroup
-		for i := 0; i < len(r.Engines); i++ {
-			wg.Add(1)
-			go func(e *Engine, depth int8, i int) {
-				e.ParallelSearch(depth, mateIn, nodes)
-				wg.Done()
-			}(r.Engines[i], depth, i)
-		}
-		wg.Wait()
-		for e.TimeManager().Pondering {
-			// busy waiting
-		}
-		r.SendBestMove()
+	var wg sync.WaitGroup
+	r.ClearForSearch()
+	for i := 0; i < len(r.Engines); i++ {
+		wg.Add(1)
+		go r.Engines[i].ParallelSearch(&wg, depth, mateIn, nodes)
 	}
-	TranspositionTable.AdvanceAge()
-}
-
-func (e *Engine) ParallelSearch(depth int8, mateIn int16, nodes int64) {
-	e.ClearForSearch()
-	e.rootSearch(depth, mateIn, nodes)
-}
-
-func (e *Engine) Search(depth int8, mateIn int16, nodes int64) {
-	e.parent.ClearForSearch()
-	e.ClearForSearch()
-	e.rootSearch(depth, mateIn, nodes)
+	wg.Wait()
 	for e.TimeManager().Pondering {
 		// busy waiting
 	}
-	e.parent.SendBestMove()
+	r.SendBestMove()
+	TranspositionTable.AdvanceAge()
+}
+
+func (e *Engine) ParallelSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
+	e.ClearForSearch()
+	e.rootSearch(wg, depth, mateIn, nodes)
 }
 
 var p = WhitePawn.Weight()
@@ -93,83 +75,65 @@ func initLMR(isQuiet bool) [32][32]int {
 	return reductions
 }
 
-func (e *Engine) updatePv(pvLine PVLine, score int16, depth int8, isBookmove bool) {
-	parent := e.parent
-	parent.pv.Clone(pvLine)
-	parent.move = parent.pv.MoveAt(0)
-	parent.score = score
-	parent.depth = depth
-	parent.isBookmove = isBookmove
+func recoverFromTimeout(wg *sync.WaitGroup) {
+	err := recover()
+	wg.Done()
+	if err != nil && err != errTimeout {
+		panic(err)
+	}
 }
 
-func (e *Engine) rootSearch(depth int8, mateIn int16, nodes int64) {
-	pv := NewPVLine(MAX_DEPTH)
+func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes int64) {
 
-	lastDepth := int8(1)
+	defer recoverFromTimeout(wg)
 
 	bookmove := GetBookMove(e.Position)
+	e.parent.pv.Recycle()
 	if e.isMainThread && bookmove != EmptyMove {
-		pv.Recycle()
-		pv.AddFirst(bookmove)
-		e.updatePv(pv, 0, 1, true)
+		e.parent.pv.AddFirst(bookmove)
+		// e.parent.pv.Clone(pvLine)
+		e.parent.move = bookmove // parent.pv.MoveAt(0)
+		e.parent.score = 0
+		e.parent.depth = 1
 	} else {
 		for iterationDepth := int8(1); iterationDepth <= depth; iterationDepth += 1 {
-			if e.isMainThread && nodes > 0 && nodes <= e.nodesVisited {
-				break
-			}
-
-			if e.isMainThread {
-				if iterationDepth > 1 && !e.TimeManager().CanStartNewIteration() {
-					break
-				}
-			} else if iterationDepth > 1 && e.parent.Stop {
-				break
-			}
 
 			e.startDepth = iterationDepth
 			e.aspirationWindow(iterationDepth, mateIn != -2)
 			newScore := e.Scores[0]
 
-			if (e.isMainThread && e.TimeManager().AbruptStop) || (!e.isMainThread && e.parent.Stop) {
-				break
-			}
-
 			if e.isMainThread && iterationDepth >= 8 && e.score-newScore >= 30 { // Position degrading
 				e.TimeManager().ExtraTime()
 			}
 
-			lastDepth = iterationDepth
 			e.pred.Clear()
 			e.score = newScore
 			e.rootMove = e.MultiPVs[0].MoveAt(0)
-			if e.isMainThread && !e.MultiPVs[0].IsEmpty() {
-				pv.Clone(e.MultiPVs[0])
+			if e.isMainThread {
+				e.parent.move = e.rootMove
+				e.parent.score = newScore
+				e.parent.depth = iterationDepth
+				e.parent.pv.Clone(e.MultiPVs[0])
 				if e.MultiPV > 1 {
-					e.SendMultiPv(pv, e.score, lastDepth)
+					e.SendMultiPv(e.parent.pv, e.score, iterationDepth)
 				} else {
-					e.SendPv(pv, e.score, iterationDepth)
+					e.SendPv(e.parent.pv, e.score, iterationDepth)
 				}
 			}
 
-			if e.isMainThread && mateIn != -1 && (newScore == -CHECKMATE_EVAL+mateIn || newScore == CHECKMATE_EVAL-mateIn ||
-				newScore == -CHECKMATE_EVAL+mateIn-1 || newScore == CHECKMATE_EVAL-mateIn+1) {
+			if e.isMainThread && (e.stop || ((foundMate(newScore, mateIn) || (nodes > 0 && nodes <= e.nodesVisited)) || !e.TimeManager().CanStartNewIteration())) {
 				break
 			}
-			// if isCheckmateEval(e.score) {
-			// 	break
-			// }
 		}
 	}
 	if e.isMainThread {
-		// e.TimeManager().Pondering = false
-		e.parent.Stop = true
-		e.updatePv(pv, e.score, lastDepth, false)
-		if e.MultiPV > 1 {
-			e.SendMultiPv(pv, e.score, lastDepth)
-		} else {
-			e.SendPv(pv, e.score, lastDepth)
-		}
+		e.parent.CancelFunc()
 	}
+}
+
+func foundMate(newScore int16, mateIn int16) bool {
+	return mateIn != -1 && (newScore == -CHECKMATE_EVAL+mateIn || newScore == CHECKMATE_EVAL-mateIn ||
+		newScore == -CHECKMATE_EVAL+mateIn-1 || newScore == CHECKMATE_EVAL-mateIn+1)
 }
 
 func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
@@ -188,7 +152,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 		firstIteration := true
 		e.NoMoves = false
 		for !e.NoMoves {
-			e.innerLines[0].Recycle()
+			e.innerLines[i].Recycle()
 			if firstIteration {
 				score = e.Scores[i]
 				alpha = max16(score-initialWindow, -MAX_INT)
@@ -204,11 +168,8 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 			}
 
 			score = e.alphaBeta(iterationDepth, 0, alpha, beta)
-			if /* e.startDepth == 0 || */ e.TimeManager().AbruptStop || e.parent.Stop {
-				e.seldepth = max8(e.seldepth, maxSeldepth)
-				e.Scores[i] = -MAX_INT
-				goto sortPVs
-			}
+
+			e.seldepth = max8(e.seldepth, maxSeldepth)
 			if score <= alpha {
 				alpha = max16(alpha-delta, -MAX_INT)
 				beta = (alpha + 3*beta) / 4
@@ -219,13 +180,17 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 					iterationDepth = max8(1, iterationDepth-1)
 				}
 			} else {
-				e.seldepth = max8(e.seldepth, maxSeldepth)
 				e.Scores[i] = score
 				e.MultiPVs[i].Clone(e.innerLines[0])
+				if e.isMainThread && e.stop {
+					goto sortPVs
+				}
 				break
 			}
+			if e.isMainThread && e.stop {
+				return
+			}
 			delta += delta * 2 / 3
-			maxSeldepth = max8(e.seldepth, maxSeldepth)
 			firstIteration = false
 		}
 	}
@@ -239,8 +204,7 @@ sortPVs:
 			}
 		}
 	}
-	e.seldepth = max8(e.seldepth, maxSeldepth)
-	// We should never get here
+
 }
 
 func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta int16) int16 {
@@ -357,16 +321,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// Internal iterative reduction based on Rebel's idea
 	if /* !isPvNode && */ !ttHit && depthLeft >= 5 {
 		depthLeft -= 1
-	}
-
-	if !isRootNode {
-		if e.isMainThread && e.TimeManager().ShouldStop(false, false) {
-			return -MAX_INT
-		}
-	}
-
-	if !e.isMainThread && e.parent.Stop {
-		return -MAX_INT
 	}
 
 	var eval int16 = position.Evaluate() //-MAX_INT
@@ -616,14 +570,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 			if bestscore > alpha {
 				if bestscore >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
-						if !firstLayerOfSingularity {
-							e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
-						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
-						noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
-						e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
+					if !firstLayerOfSingularity {
+						e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, LowerBound)
 					}
+					quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
+					noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
+					e.searchHistory.AddHistory(hashmove, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
 					return bestscore
 				}
 				// Potential PV move, lets copy it to the current pv-line
@@ -667,10 +619,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var seeScore int16
 	for true {
 
-		if isRootNode {
-			if e.isMainThread && e.TimeManager().ShouldStop(true, bestscore-e.score >= -20) {
-				break
-			}
+		if isRootNode && e.isMainThread && bestscore-e.score >= -20 && e.TimeManager().ShouldStop() {
+			e.stop = true
+			break
 		}
 
 		move = movePicker.Next()
@@ -802,14 +753,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			if score > bestscore {
 				if score >= beta {
-					if (e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop) {
-						if !firstLayerOfSingularity {
-							e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
-						}
-						quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
-						noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
-						e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
+					if !firstLayerOfSingularity {
+						e.tt.Set(hash, move, evalToTT(score, searchHeight), depthLeft, LowerBound)
 					}
+					quietMoves := e.triedQuietMoves[searchHeight][:legalQuietMoves]
+					noisyMoves := e.triedNoisyMoves[searchHeight][:legalNoisyMoves]
+					e.searchHistory.AddHistory(move, currentMove, gpMove, histDepth, searchHeight, quietMoves, noisyMoves)
 					return score
 				}
 				// Potential PV move, lets copy it to the current pv-line
@@ -822,28 +771,17 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				rangeReduction += 1
 			}
 		}
-
-		// if !isRootNode && e.startDepth > 6 {
-		// 	e.parent.mu.RLock()
-		// 	if e.startDepth <= e.parent.depth {
-		// 		e.startDepth = 0
-		// 		e.parent.mu.RUnlock()
-		// 		return -MAX_INT
-		// 	}
-		// 	e.parent.mu.RUnlock()
-		// }
 	}
-	if ((e.isMainThread && !e.TimeManager().AbruptStop) || (!e.isMainThread && !e.parent.Stop)) && !firstLayerOfSingularity {
+	if !firstLayerOfSingularity {
 		if alpha > oldAlpha {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, Exact)
 		} else {
 			e.tt.Set(hash, hashmove, evalToTT(bestscore, searchHeight), depthLeft, UpperBound)
 		}
 	}
-	if e.isMainThread && isRootNode && legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1 {
-		e.TimeManager().StopSearchNow = true
-	} else if e.isMainThread && isRootNode && !searchedAMove {
-		e.NoMoves = true
+	if e.isMainThread && isRootNode {
+		e.stop = legalMoves == 1 && len(e.MovesToSearch) == 0 && e.MultiPV == 1
+		e.NoMoves = !searchedAMove
 	}
 	return bestscore
 }

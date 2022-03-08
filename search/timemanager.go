@@ -1,12 +1,13 @@
 package search
 
 import (
+	"context"
 	"time"
 )
 
 var COMMUNICATION_TIME_BUFFER int64 = 50
 
-const MAX_TIME int64 = 922_337_203_685_477_580
+const MAX_TIME int64 = 922_337_203_685
 
 // Implements this: http://talkchess.com/forum3/viewtopic.php?f=7&t=77396&p=894325&hilit=cold+turkey#p894294
 type TimeManager struct {
@@ -14,15 +15,13 @@ type TimeManager struct {
 	HardLimit           int64
 	SoftLimit           int64
 	NodesSinceLastCheck int64
-	AbruptStop          bool
-	StopSearchNow       bool
 	IsPerMove           bool
 	ExtensionCounter    int
 	Pondering           bool
 }
 
 func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove bool,
-	increment int64, movesToTimeControl int64, pondering bool) *TimeManager {
+	increment int64, movesToTimeControl int64, pondering bool) (tm *TimeManager, ctx context.Context, cancel context.CancelFunc) {
 	softLimit := int64(0)
 	hardLimit := int64(0)
 	if isPerMove {
@@ -38,52 +37,41 @@ func NewTimeManager(startTime time.Time, availableTimeInMillis int64, isPerMove 
 		hardLimit = min64(softLimit*10, availableTimeInMillis-COMMUNICATION_TIME_BUFFER)
 	}
 
-	return &TimeManager{
+	if pondering {
+		ctx, cancel = context.WithCancel(context.Background())
+	} else {
+		ctx, cancel = context.WithDeadline(context.Background(), startTime.Add(time.Millisecond*time.Duration(hardLimit)))
+	}
+	tm = &TimeManager{
 		HardLimit:           hardLimit,
 		SoftLimit:           softLimit,
 		StartTime:           startTime,
 		NodesSinceLastCheck: 0,
-		AbruptStop:          false,
-		StopSearchNow:       false,
 		IsPerMove:           isPerMove,
 		ExtensionCounter:    0,
 		Pondering:           pondering,
 	}
+	return
 }
 
-func (tm *TimeManager) ShouldStop(isRoot bool, canCutNow bool) bool {
+func (tm *TimeManager) ShouldStop() bool {
 	if tm.Pondering {
 		return false
 	}
-	if tm.NodesSinceLastCheck < 2000 {
-		tm.NodesSinceLastCheck += 1
-		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow
-		return tm.AbruptStop
-	}
-	tm.NodesSinceLastCheck = 0
-	if isRoot && canCutNow {
-		stop := tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
-		return stop
-	} else {
-		tm.AbruptStop = tm.AbruptStop || tm.StopSearchNow || time.Since(tm.StartTime).Milliseconds() >= tm.HardLimit
-		return tm.AbruptStop
-	}
+	return time.Since(tm.StartTime).Milliseconds() >= 2*tm.SoftLimit
 }
 
 func (tm *TimeManager) CanStartNewIteration() bool {
 	if tm.Pondering {
 		return true
 	}
-	if tm.AbruptStop || tm.StopSearchNow {
-		return false
-	}
 
 	if tm.IsPerMove {
 		return time.Since(tm.StartTime).Milliseconds() <= tm.SoftLimit
-	} else {
-		limit := 70 * tm.SoftLimit / 100
-		return time.Since(tm.StartTime).Milliseconds() <= limit
 	}
+
+	limit := 70 * tm.SoftLimit / 100
+	return time.Since(tm.StartTime).Milliseconds() <= limit
 }
 
 func (tm *TimeManager) ExtraTime() {

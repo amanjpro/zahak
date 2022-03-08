@@ -26,19 +26,17 @@ var EnableTuning = false
 const MaxSkillLevels = 7
 
 type UCI struct {
-	version     string
-	runner      *Runner
-	timeManager *TimeManager
-	withBook    bool
-	bookPath    string
-	multiPV     int
+	version  string
+	runner   *Runner
+	withBook bool
+	bookPath string
+	multiPV  int
 }
 
 func NewUCI(version string, withBook bool, bookPath string) *UCI {
 	return &UCI{
 		version,
 		NewRunner(1),
-		nil,
 		withBook,
 		bookPath,
 		1,
@@ -68,7 +66,6 @@ func (uci *UCI) Start() {
 				uci.runner.DebugMode = false
 			case "ponderhit":
 				uci.runner.Ponderhit()
-				uci.timeManager = nil
 			case "quit":
 				return
 			case "eval":
@@ -115,7 +112,7 @@ func (uci *UCI) Start() {
 					if uci.runner.TimeManager.Pondering {
 						uci.stopPondering()
 					} else {
-						uci.runner.TimeManager.StopSearchNow = true
+						uci.runner.CancelFunc()
 					}
 				}
 			default:
@@ -269,12 +266,12 @@ func (uci *UCI) Start() {
 }
 
 func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
-	uci.timeManager = nil
 	fields := strings.Fields(cmd)
 	nodes := -1
 	mateIn := -1
 
 	pos := game.Position()
+	now := time.Now()
 	noTC := false
 	timeToThink := 0
 	inc := 0
@@ -342,18 +339,22 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	}
 	if !noTC {
 		if pondering {
-			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
-			uci.timeManager = tm
+			tm, ctx, cancel := NewTimeManager(now, int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.runner.AddTimeManager(tm)
+			uci.runner.Ctx = ctx
+			uci.runner.CancelFunc = cancel
 		} else {
-			tm := NewTimeManager(time.Now(), int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
+			tm, ctx, cancel := NewTimeManager(now, int64(timeToThink), perMove, int64(inc), int64(movesToGo), pondering)
 			uci.runner.AddTimeManager(tm)
+			uci.runner.Ctx = ctx
+			uci.runner.CancelFunc = cancel
 		}
 		go uci.runner.Search(depth, 2*int16(mateIn), int64(nodes))
 	} else {
-		tm := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, pondering)
+		tm, ctx, cancel := NewTimeManager(now, MAX_TIME, false, 0, 0, pondering)
 		uci.runner.AddTimeManager(tm)
-		uci.timeManager = tm
+		uci.runner.Ctx = ctx
+		uci.runner.CancelFunc = cancel
 		go uci.runner.Search(depth, 2*int16(mateIn), int64(nodes))
 	}
 }
@@ -361,7 +362,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 func (uci *UCI) stopPondering() {
 	if uci.runner.TimeManager != nil && uci.runner.TimeManager.Pondering {
 		uci.runner.TimeManager.Pondering = false
-		uci.runner.TimeManager.StopSearchNow = true
+		uci.runner.CancelFunc()
 		for uci.runner.TimeManager.Pondering {
 		} // wait until stopped
 	}

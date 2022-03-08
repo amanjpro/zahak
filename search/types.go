@@ -1,6 +1,8 @@
 package search
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,14 +13,14 @@ type Runner struct {
 	nodesVisited int64
 	cacheHits    int64
 	Engines      []*Engine
-	Stop         bool
 	TimeManager  *TimeManager
 	DebugMode    bool
 	pv           PVLine
-	isBookmove   bool
 	depth        int8
 	move         Move
 	score        int16
+	Ctx          context.Context
+	CancelFunc   context.CancelFunc
 }
 
 type Engine struct {
@@ -54,10 +56,13 @@ type Engine struct {
 	Scores          []int16
 	NoMoves         bool
 	tbHit           int64
+	stop            bool
 }
 
 const MaxMultiPV = 120
 const MAX_DEPTH int8 = int8(100)
+
+var errTimeout = errors.New("Search timeout")
 
 func (e *Engine) TimeManager() *TimeManager {
 	return e.parent.TimeManager
@@ -65,6 +70,7 @@ func (e *Engine) TimeManager() *TimeManager {
 
 func NewRunner(numberOfThreads int) *Runner {
 	t := &Runner{}
+	t.Ctx, t.CancelFunc = context.WithCancel(context.Background())
 	engines := make([]*Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
 		var engine *Engine
@@ -122,6 +128,7 @@ func NewEngine(parent *Runner) *Engine {
 		MultiPV:         1,
 		MultiPVs:        multiPVs,
 		Scores:          make([]int16, MaxMultiPV),
+		stop:            false,
 	}
 }
 
@@ -135,6 +142,8 @@ func (t *Runner) AddTimeManager(tm *TimeManager) {
 
 func (r *Runner) Ponderhit() {
 	r.TimeManager.StartTime = time.Now()
+	ctx, cancel := context.WithDeadline(context.Background(), r.TimeManager.StartTime.Add(time.Millisecond*time.Duration(r.TimeManager.HardLimit)))
+	r.Ctx, r.CancelFunc = ctx, cancel
 	r.TimeManager.Pondering = false
 	fmt.Printf("info nodes %d\n", r.nodesVisited)
 }
@@ -149,9 +158,8 @@ func (r *Runner) ClearForSearch() {
 	r.nodesVisited = 0
 	r.score = -MAX_INT
 	r.depth = 0
-	r.isBookmove = false
+	r.move = EmptyMove
 	r.cacheHits = 0
-	r.Stop = false
 }
 
 func (e *Engine) ClearForSearch() {
@@ -165,6 +173,7 @@ func (e *Engine) ClearForSearch() {
 		e.staticEvals[i] = 0
 	}
 
+	e.stop = false
 	e.seldepth = 0
 	e.tbHit = 0
 	e.score = 0
@@ -193,8 +202,8 @@ func (e *Engine) ClearForSearch() {
 	e.nodesVisited = 0
 	e.cacheHits = 0
 
-	e.StartTime = time.Now()
-
+	e.StartTime = e.TimeManager().StartTime
+	e.TempMovePicker = EmptyMovePicker()
 	e.pred.Clear()
 
 	e.Position.Net.Recalculate(e.Position.NetInput())
@@ -313,6 +322,13 @@ func (e *Engine) VisitNode(searchHeight int8) {
 	e.nodesVisited += 1
 	if searchHeight > e.seldepth {
 		e.seldepth = searchHeight
+	}
+	if (e.nodesVisited % 2048) == 0 {
+		select {
+		case <-e.parent.Ctx.Done():
+			panic(errTimeout)
+		default:
+		}
 	}
 }
 
