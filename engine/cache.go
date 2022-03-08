@@ -92,7 +92,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	oldValue := c.items[index]
 	oldKey := oldValue.Key
 	oldData := oldValue.Data
-	oldHash := oldKey ^ oldData
+	// oldHash := oldKey ^ oldData
 
 	// very good for debugging hash issues
 	// newHashmove, newEval, newDepth, newNodeType, newAge := Unpack(newData)
@@ -105,7 +105,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	var replace bool
 	if oldData == 0 {
 		replace = true
-	} else if oldHash == hash {
+	} else if oldKey == hash {
 		replace = depth >= oldDepth || nodeType == Exact
 	} else {
 		replace = oldAge != age || depth >= oldDepth
@@ -113,7 +113,7 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	if replace {
 
 		newData := Pack(hashmove, eval, depth, nodeType, age)
-		newKey := newData ^ hash
+		newKey := /* newData ^ */ hash
 		c.items[index].Update(newKey, newData)
 	}
 }
@@ -127,8 +127,8 @@ func (c *Cache) Get(hash uint64) (Move, int16, int8, NodeType, bool) {
 	value := c.items[index]
 	data := value.Data
 	key := value.Key
-	ok := hash == (key ^ data)
-	if ok {
+	// ok := hash == (key ^ data)
+	if hash == key {
 		move, eval, depth, nType, _ := Unpack(data)
 		return move, eval, depth, nType, true
 	}
