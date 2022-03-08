@@ -101,17 +101,8 @@ func (c *Cache) Set(hash uint64, hashmove Move, eval int16, depth int8, nodeType
 	// 		"Culprits are: %d %d %d %d %d\nSomehow became: %d %d %d %d %d\n", hashmove, eval, depth, nodeType, age, newHashmove, newEval, newDepth, newNodeType, newAge))
 	// }
 
-	_, _, oldDepth, _, oldAge := Unpack(oldData)
-	var replace bool
-	if oldData == 0 {
-		replace = true
-	} else if oldHash == hash {
-		replace = depth >= oldDepth-3 || nodeType == Exact
-	} else {
-		replace = oldAge != age || depth >= oldDepth
-	}
-	if replace {
-
+	_, _, oldDepth, _, _ := Unpack(oldData)
+	if nodeType == Exact || oldHash != hash || (depth+2) >= oldDepth {
 		newData := Pack(hashmove, eval, depth, nodeType, age)
 		newKey := newData ^ hash
 		c.items[index].Update(newKey, newData)
