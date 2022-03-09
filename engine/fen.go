@@ -79,8 +79,8 @@ func (g *Game) Fen() string {
 	return fen
 }
 
-func bitboardFromFen(fen string) *Bitboard {
-	board := &Bitboard{}
+func bitboardFromFen(fen string) Bitboard {
+	board := Bitboard{}
 	ranks := []Square{A8, A7, A6, A5, A4, A3, A2, A1}
 	rank := 0
 	bitboardIndex := A8
@@ -122,7 +122,7 @@ func positionFromFen(fen string) Position {
 	p := Position{
 		bitboardFromFen(fen),
 		NewNetworkState(),
-		&newUpdates,
+		newUpdates,
 		NoSquare,
 		0,
 		0,
@@ -169,7 +169,7 @@ func positionFromFen(fen string) Position {
 	} else if ok {
 		p.EnPassant = sq
 	}
-	if isInCheck(p.Board, p.Turn()) {
+	if isInCheck(&p.Board, p.Turn()) {
 		p.SetTag(InCheck)
 	}
 

@@ -13,9 +13,9 @@ var phaseValues = []int{0, 1, 1, 2, 4, 0, 0, 1, 1, 2, 4, 0}
 var maxPhase int = 24
 
 type Position struct {
-	Board         *Bitboard
-	Net           *NetworkState
-	Updates       *Updates
+	Board         Bitboard
+	Net           NetworkState
+	Updates       Updates
 	EnPassant     Square
 	Tag           PositionTag
 	hash          uint64
@@ -66,7 +66,7 @@ func (p *Position) MakeNullMove() Square {
 	} else {
 		p.Updates.Add(768, Remove)
 	}
-	p.Net.UpdateHidden(p.Updates)
+	p.Net.UpdateHidden(&p.Updates)
 	return ep
 }
 
@@ -279,7 +279,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 		p.ClearTag(WhiteCanCastleKingSide)
 	}
 
-	if isInCheck(p.Board, p.Turn()) { // Is the move legal (bad way to determine legality
+	if isInCheck(&p.Board, p.Turn()) { // Is the move legal (bad way to determine legality
 		p.unMakeMoveHelper(move, tag, ep, hc, false)
 		return NoSquare, 0, 0, false
 	}
@@ -288,7 +288,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 	p.ToggleTurn()
 
 	// Set check tag
-	if isInCheck(p.Board, p.Turn()) {
+	if isInCheck(&p.Board, p.Turn()) {
 		p.SetTag(InCheck)
 	} else {
 		p.ClearTag(InCheck)
@@ -302,7 +302,7 @@ func (p *Position) makeMoveHelper(move Move, updateHidden bool) (Square, Positio
 
 	if updateHidden {
 		p.hashAcc[p.hashHeight] = p.hash
-		p.Net.UpdateHidden(p.Updates)
+		p.Net.UpdateHidden(&p.Updates)
 		p.hashHeight += 1
 	}
 
@@ -504,7 +504,7 @@ func (p *Position) Copy() *Position {
 	newPos := &Position{
 		p.Board.copy(),
 		NewNetworkState(),
-		&newUpdates,
+		newUpdates,
 		p.EnPassant,
 		p.Tag,
 		p.hash,
