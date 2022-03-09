@@ -329,7 +329,7 @@ func (uci *UCI) findMove(game Game, depth int8, ply uint16, cmd string) {
 	}
 
 	for i := 0; i < len(uci.runner.Engines); i++ {
-		uci.runner.Engines[i].Position = game.Position().Copy()
+		uci.runner.Engines[i].Position = *game.Position().Copy()
 		uci.runner.Engines[i].Ply = ply
 		uci.runner.Engines[i].MovesToSearch = movesToSearch
 	}

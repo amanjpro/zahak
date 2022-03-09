@@ -86,7 +86,7 @@ func RunTestPositions(path string) {
 		r.Ctx = ctx
 		r.CancelFunc = cancel
 		pos := game.Position()
-		r.Engines[0].Position = pos
+		r.Engines[0].Position = *pos
 		r.Search(MAX_DEPTH, -2, -1)
 		mv := pos.MoveToPGN(r.Move())
 

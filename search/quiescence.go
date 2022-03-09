@@ -39,7 +39,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 
 	e.VisitNode(searchHeight)
 
-	position := e.Position
+	position := &e.Position
 	e.tt.Prefetch(position.Hash())
 	// pawnhash := e.Pawnhash
 

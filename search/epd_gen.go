@@ -28,9 +28,9 @@ func GenerateEpds() {
 	engine := runner.Engines[0]
 
 	game := FromFen(startFen)
-	engine.Position = game.Position()
+	engine.Position = *game.Position()
 	for true {
-		gen(engine, 8)
+		gen(&engine, 8)
 	}
 }
 

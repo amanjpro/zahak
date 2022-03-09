@@ -16,8 +16,8 @@ func TestBlackShouldFindEscape(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	e.Ply = 27
 	r.Search(7, -2, -1)
 	expected := NewMove(D7, D6, BlackKing, NoPiece, NoType, 0)
@@ -36,8 +36,8 @@ func TestBlackCanFindASimpleTactic(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	e.Ply = 1
 	r.Search(20, -2, -1)
 	expected := NewMove(C2, D2, BlackRook, NoPiece, NoType, 0)
@@ -56,8 +56,8 @@ func TestBlackCanFindASimpleMaterialGainWithDiscoveredCheck(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	r.Search(7, -2, -1)
 	expected := NewMove(D2, G2, BlackRook, NoPiece, NoType, 0)
 	mv := r.Move()
@@ -75,8 +75,8 @@ func TestWhiteShouldAcceptMaterialLossToAvoidCheckmate(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	r.Search(7, -2, -1)
 	expected := NewMove(D1, C1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
@@ -94,8 +94,8 @@ func TestSearchOnlyMove(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	r.Search(7, -2, -1)
 	expected := NewMove(G7, G6, BlackPawn, NoPiece, NoType, 0)
 	mv := r.Move()
@@ -117,8 +117,8 @@ func TestWhiteCanFindMateInTwo(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	r.Search(7, -2, -1)
 	expected := NewMove(E1, F1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
@@ -189,8 +189,8 @@ func TestReubenFineBasicChessEndingsPosition70(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	r.Search(25, -2, -1)
 	expected := NewMove(A1, B1, WhiteKing, NoPiece, NoType, 0)
 	mv := r.Move()
@@ -209,8 +209,8 @@ func TestSearchFindsThreeFoldRepetitionToAvoidMate(t *testing.T) {
 	r.AddTimeManager(tm)
 	r.Ctx = ctx
 	r.CancelFunc = cancel
-	e := r.Engines[0]
-	e.Position = game.Position()
+	e := &r.Engines[0]
+	e.Position = *game.Position()
 	r.Search(13, -2, -1)
 	expected := []Move{
 		NewMove(B3, A3, BlackQueen, NoPiece, NoType, 0),

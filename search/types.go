@@ -12,7 +12,7 @@ import (
 type Runner struct {
 	nodesVisited int64
 	cacheHits    int64
-	Engines      []*Engine
+	Engines      []Engine
 	TimeManager  *TimeManager
 	DebugMode    bool
 	pv           PVLine
@@ -24,7 +24,7 @@ type Runner struct {
 }
 
 type Engine struct {
-	Position        *Position
+	Position        Position
 	Ply             uint16
 	nodesVisited    int64
 	cacheHits       int64
@@ -71,9 +71,9 @@ func (e *Engine) TimeManager() *TimeManager {
 func NewRunner(numberOfThreads int) *Runner {
 	t := &Runner{}
 	t.Ctx, t.CancelFunc = context.WithCancel(context.Background())
-	engines := make([]*Engine, numberOfThreads)
+	engines := make([]Engine, numberOfThreads)
 	for i := 0; i < numberOfThreads; i++ {
-		var engine *Engine
+		var engine Engine
 		engine = NewEngine(t)
 		if i == 0 {
 			engine.isMainThread = true
@@ -85,7 +85,7 @@ func NewRunner(numberOfThreads int) *Runner {
 	return t
 }
 
-func NewEngine(parent *Runner) *Engine {
+func NewEngine(parent *Runner) Engine {
 	innerLines := make([]PVLine, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
 		line := NewPVLine(MAX_DEPTH)
@@ -102,8 +102,8 @@ func NewEngine(parent *Runner) *Engine {
 		multiPVs[i] = line
 	}
 
-	return &Engine{
-		Position:        nil,
+	return Engine{
+		Position:        Position{},
 		Ply:             0,
 		nodesVisited:    0,
 		cacheHits:       0,

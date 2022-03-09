@@ -23,7 +23,7 @@ var LMRCaptureMargin int16 = 84
 
 func (r *Runner) Search(depth int8, mateIn int16, nodes int64) {
 	e := r.Engines[0]
-	if bestmove := ProbeDTZ(e.Position); bestmove != EmptyMove {
+	if bestmove := ProbeDTZ(&e.Position); bestmove != EmptyMove {
 		for e.TimeManager().Pondering {
 			// busy waiting
 		}
@@ -87,7 +87,7 @@ func (e *Engine) rootSearch(wg *sync.WaitGroup, depth int8, mateIn int16, nodes 
 
 	defer recoverFromTimeout(wg)
 
-	bookmove := GetBookMove(e.Position)
+	bookmove := GetBookMove(&e.Position)
 	e.parent.pv.Recycle()
 	if e.isMainThread && bookmove != EmptyMove {
 		e.parent.pv.AddFirst(bookmove)
@@ -213,7 +213,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	isRootNode := searchHeight == 0
 	isPvNode := alpha != beta-1
 
-	position := e.Position
+	position := &e.Position
 	e.tt.Prefetch(position.Hash())
 
 	currentMove := e.positionMoves[searchHeight]

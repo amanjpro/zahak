@@ -70,7 +70,7 @@ func RunBenchmark() {
 	for _, fen := range fens {
 		TranspositionTable = NewCache(cacheSize)
 		game := FromFen(fen)
-		runner.Engines[0].Position = game.Position()
+		runner.Engines[0].Position = *game.Position()
 		tm, ctx, cancel := NewTimeManager(time.Now(), MAX_TIME, false, 0, 0, false)
 		runner.AddTimeManager(tm)
 		runner.Ctx = ctx
