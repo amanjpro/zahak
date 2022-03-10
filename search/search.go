@@ -400,8 +400,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		// Prob cut
 		// The idea is basically cherry picked from multiple engines, Weiss, Ethereal and Berserk for example
-		probBeta := min16(beta+220, WIN_IN_MAX)
-		if depthLeft > 5 && abs16(beta) < WIN_IN_MAX && !(ttHit && nDepth >= depthLeft-3 && nEval < probBeta) {
+		probBeta := min16(beta+230, WIN_IN_MAX)
+		if depthLeft > 5 && abs16(beta) < WIN_IN_MAX && !(ttHit && nDepth >= depthLeft-4 && nEval < probBeta) {
 
 			hashMove := EmptyMove
 			if hashMove.IsCapture() || hashMove.PromoType() != NoType {
