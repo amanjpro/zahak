@@ -380,8 +380,8 @@ func (b *Bitboard) Draw() string {
 	return s
 }
 
-func (b *Bitboard) copy() *Bitboard {
-	return &Bitboard{
+func (b *Bitboard) copy() Bitboard {
+	return Bitboard{
 		b.blackPawn,
 		b.blackKnight,
 		b.blackBishop,

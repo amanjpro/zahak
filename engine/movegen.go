@@ -13,7 +13,7 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 	dest := move.Destination()
 	srcMask := SquareMask[src]
 	destMask := SquareMask[dest]
-	board := p.Board
+	board := &p.Board
 	var ownPieces, enemyPieces, enemyKing, enemyPawns uint64
 	var canQueenSideCastle, canKingSideCastle bool
 	var queenSideRookSquare, kingSideRookSquare Square
@@ -124,15 +124,15 @@ func (p *Position) IsPseudoLegal(move Move) bool {
 func (p *Position) PseudoLegalMoves() []Move {
 	ml := NewMoveList(500)
 
-	p.GetCaptureMoves(ml)
-	p.GetQuietMoves(ml)
+	p.GetCaptureMoves(&ml)
+	p.GetQuietMoves(&ml)
 
 	return ml.Moves[:ml.Size]
 }
 
 func (p *Position) GetQuietMoves(ml *MoveList) {
 	color := p.Turn()
-	board := p.Board
+	board := &p.Board
 
 	var taboo uint64
 

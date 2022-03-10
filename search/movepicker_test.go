@@ -15,14 +15,14 @@ func TestMovepickerNextWithQuietHashmove(t *testing.T) {
 		nil,
 		NewEngine(nil),
 		10,
-		&MoveList{
+		MoveList{
 			Moves:    []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
 			Scores:   []int32{10000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
 			IsScored: true,
 			Size:     10,
 			Next:     1,
 		},
-		&MoveList{
+		MoveList{
 			Moves:    []Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
 			Scores:   []int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
 			IsScored: true,
@@ -58,14 +58,14 @@ func TestMovepickerNextWithCaptureHashmove(t *testing.T) {
 		nil,
 		NewEngine(nil),
 		capture,
-		&MoveList{
+		MoveList{
 			Moves:    []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
 			Scores:   []int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
 			IsScored: true,
 			Size:     10,
 			Next:     0,
 		},
-		&MoveList{
+		MoveList{
 			Moves:    []Move{capture, 20, 15, 14, 13, 12, 11, 16, 17, 19},
 			Scores:   []int32{18000, 2000, 1500, 1400, 1300, 1200, 1100, 1600, 1700, -1900},
 			IsScored: true,
@@ -107,14 +107,14 @@ func TestMovepickerNextWithNoHashmove(t *testing.T) {
 		nil,
 		NewEngine(nil),
 		0,
-		&MoveList{
+		MoveList{
 			Moves:    []Move{10, 5, 4, 8, 3, 2, 1, 6, 7, 9},
 			Scores:   []int32{1000, 500, 400, 800, 300, 200, 100, 600, 700, 900},
 			IsScored: true,
 			Size:     10,
 			Next:     0,
 		},
-		&MoveList{
+		MoveList{
 			Moves:    []Move{20, 15, 14, 18, 13, 12, 11, 16, 17, 19},
 			Scores:   []int32{2000, 1500, 1400, 1800, 1300, 1200, 1100, 1600, 1700, -1900},
 			IsScored: true,

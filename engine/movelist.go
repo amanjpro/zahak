@@ -8,8 +8,8 @@ type MoveList struct {
 	Next     int
 }
 
-func NewMoveList(capacity int) *MoveList {
-	return &MoveList{
+func NewMoveList(capacity int) MoveList {
+	return MoveList{
 		make([]Move, capacity),
 		make([]int32, capacity),
 		false,

@@ -91,7 +91,7 @@ type NetworkState struct {
 	OutputBias        float32
 }
 
-func NewNetworkState() *NetworkState {
+func NewNetworkState() NetworkState {
 	net := NetworkState{
 		HiddenWeights: CurrentHiddenWeights,
 		HiddenBiases:  CurrentHiddenBiases,
@@ -104,7 +104,7 @@ func NewNetworkState() *NetworkState {
 	for i := 0; i < MaximumDepth; i++ {
 		net.HiddenOutputs[i] = make([]float32, NetHiddenSize)
 	}
-	return &net
+	return net
 }
 
 const Remove int8 = -1

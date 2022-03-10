@@ -9,8 +9,8 @@ func TestBishopMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen)
 	ml := NewMoveList(13)
-	g.position.slidingQuietMoves(White, Bishop, ml)
-	g.position.slidingCaptureMoves(White, Bishop, ml)
+	g.position.slidingQuietMoves(White, Bishop, &ml)
+	g.position.slidingCaptureMoves(White, Bishop, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(E2, F1, WhiteBishop, NoPiece, NoType, 0),
@@ -46,8 +46,8 @@ func TestRookMoves(t *testing.T) {
 	fen := "rnkqbbnr/ppp1pppp/4P3/3pP3/3P4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen)
 	ml := NewMoveList(8)
-	g.position.slidingQuietMoves(White, Rook, ml)
-	g.position.slidingCaptureMoves(White, Rook, ml)
+	g.position.slidingQuietMoves(White, Rook, &ml)
+	g.position.slidingCaptureMoves(White, Rook, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(H1, G1, WhiteRook, NoPiece, NoType, 0),
@@ -78,8 +78,8 @@ func TestQueenMoves(t *testing.T) {
 	fen := "rnbqkbnr/pPp1pppp/4P3/3pP3/3p4/4B1N1/PP2BPPP/1NRQK2R w Kkq - 0 1"
 	g := FromFen(fen)
 	ml := NewMoveList(6)
-	g.position.slidingCaptureMoves(White, Queen, ml)
-	g.position.slidingQuietMoves(White, Queen, ml)
+	g.position.slidingCaptureMoves(White, Queen, &ml)
+	g.position.slidingQuietMoves(White, Queen, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(D1, D2, WhiteQueen, NoPiece, NoType, 0),
@@ -110,9 +110,9 @@ func TestKingMoves(t *testing.T) {
 	board := g.position.Board
 	color := White
 	ml := NewMoveList(3)
-	taboo := tabooSquares(board, color)
-	g.position.kingCaptureMoves(color, ml)
-	g.position.kingQuietMoves(taboo, color, ml)
+	taboo := tabooSquares(&board, color)
+	g.position.kingCaptureMoves(color, &ml)
+	g.position.kingQuietMoves(taboo, color, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(E1, D2, WhiteKing, BlackRook, NoType, Capture),
@@ -139,10 +139,10 @@ func TestKingCastlingWithOccupiedSquares(t *testing.T) {
 	g := FromFen(fen)
 	board := g.position.Board
 	color := White
-	taboo := tabooSquares(board, color)
+	taboo := tabooSquares(&board, color)
 	ml := NewMoveList(3)
-	g.position.kingCaptureMoves(color, ml)
-	g.position.kingQuietMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, &ml)
+	g.position.kingQuietMoves(taboo, color, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(E1, E2, WhiteKing, NoPiece, NoType, 0),
@@ -169,10 +169,10 @@ func TestKingQueenSideCastling(t *testing.T) {
 	g := FromFen(fen)
 	board := g.position.Board
 	color := White
-	taboo := tabooSquares(board, color)
+	taboo := tabooSquares(&board, color)
 	ml := NewMoveList(4)
-	g.position.kingCaptureMoves(color, ml)
-	g.position.kingQuietMoves(taboo, color, ml)
+	g.position.kingCaptureMoves(color, &ml)
+	g.position.kingQuietMoves(taboo, color, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(E1, E2, WhiteKing, NoPiece, NoType, 0),
@@ -200,8 +200,8 @@ func TestPawnMovesForWhite(t *testing.T) {
 	g := FromFen(fen)
 	ml := NewMoveList(18)
 	color := White
-	g.position.pawnQuietMoves(color, ml)
-	g.position.pawnCaptureMoves(color, ml)
+	g.position.pawnQuietMoves(color, &ml)
+	g.position.pawnCaptureMoves(color, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(H2, H4, WhitePawn, NoPiece, NoType, 0),
@@ -243,8 +243,8 @@ func TestPawnMovesForBlack(t *testing.T) {
 	g := FromFen(fen)
 	ml := NewMoveList(13)
 	color := Black
-	g.position.pawnQuietMoves(color, ml)
-	g.position.pawnCaptureMoves(color, ml)
+	g.position.pawnQuietMoves(color, &ml)
+	g.position.pawnCaptureMoves(color, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(H7, H6, BlackPawn, NoPiece, NoType, 0),
@@ -280,8 +280,8 @@ func TestKnightMoves(t *testing.T) {
 	fen := "rnbqkbn1/pPp1pppp/4P3/1N1pP3/3p4/4B1N1/PP1rBPPP/R3K2R w Kkq d6 0 1"
 	g := FromFen(fen)
 	ml := NewMoveList(10)
-	g.position.knightQuietMoves(White, ml)
-	g.position.knightCaptureMoves(White, ml)
+	g.position.knightQuietMoves(White, &ml)
+	g.position.knightCaptureMoves(White, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(G3, F1, WhiteKnight, NoPiece, NoType, 0),
@@ -339,9 +339,9 @@ func TestCastleAndPawnAttack(t *testing.T) {
 	board := g.position.Board
 	ml := NewMoveList(1)
 	color := White
-	taboo := tabooSquares(board, color)
-	g.position.kingCaptureMoves(color, ml)
-	g.position.kingQuietMoves(taboo, color, ml)
+	taboo := tabooSquares(&board, color)
+	g.position.kingCaptureMoves(color, &ml)
+	g.position.kingQuietMoves(taboo, color, &ml)
 	moves := ml.Moves
 	expectedMoves := []Move{
 		NewMove(E1, D1, WhiteKing, NoPiece, NoType, 0),

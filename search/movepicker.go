@@ -10,8 +10,8 @@ type MovePicker struct {
 	position        *Position
 	engine          *Engine
 	hashmove        Move
-	quietMoveList   *MoveList
-	captureMoveList *MoveList
+	quietMoveList   MoveList
+	captureMoveList MoveList
 	captureSees     []int32
 	searchHeight    int8
 	currentMove     Move
@@ -104,14 +104,14 @@ func (mp *MovePicker) generateQuietMoves() {
 	if mp.isQuiescence || !mp.quietMoveList.IsEmpty() {
 		return
 	}
-	mp.position.GetQuietMoves(mp.quietMoveList)
+	mp.position.GetQuietMoves(&mp.quietMoveList)
 }
 
 func (mp *MovePicker) generateCaptureMoves() {
 	if !mp.captureMoveList.IsEmpty() || !mp.quietMoveList.IsEmpty() {
 		return
 	}
-	mp.position.GetCaptureMoves(mp.captureMoveList)
+	mp.position.GetCaptureMoves(&mp.captureMoveList)
 }
 
 func (mp *MovePicker) HasNoPVMove() bool {
