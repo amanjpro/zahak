@@ -30,7 +30,7 @@ type Engine struct {
 	cacheHits       int64
 	positionMoves   []Move
 	searchHistory   MoveHistory
-	MovePickers     []*MovePicker
+	MovePickers     []MovePicker
 	triedQuietMoves [][]Move
 	triedNoisyMoves [][]Move
 	pred            Predecessors
@@ -49,7 +49,7 @@ type Engine struct {
 	rootMove        Move
 	skipHeight      int8
 	MovesToSearch   []Move
-	TempMovePicker  *MovePicker
+	TempMovePicker  MovePicker
 	MultiPV         int
 	CurrentPV       int
 	MultiPVs        []PVLine
@@ -91,7 +91,7 @@ func NewEngine(parent *Runner) Engine {
 		line := NewPVLine(MAX_DEPTH)
 		innerLines[i] = line
 	}
-	movePickers := make([]*MovePicker, MAX_DEPTH)
+	movePickers := make([]MovePicker, MAX_DEPTH)
 	for i := int8(0); i < MAX_DEPTH; i++ {
 		movePickers[i] = EmptyMovePicker()
 	}

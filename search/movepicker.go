@@ -24,10 +24,10 @@ type MovePicker struct {
 	currentDepth    int8
 }
 
-func EmptyMovePicker() *MovePicker {
+func EmptyMovePicker() MovePicker {
 	qml := NewMoveList(250)
 	cml := NewMoveList(250)
-	mp := &MovePicker{
+	mp := MovePicker{
 		position:        nil,
 		engine:          nil,
 		hashmove:        EmptyMove,
