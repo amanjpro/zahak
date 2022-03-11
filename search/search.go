@@ -343,6 +343,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if eval+p > beta {
 		histDepth += 1
 	}
+	var failedNMP bool
 
 	if pruningAllowed {
 		if ttHit && ((nEval > eval && nType == LowerBound) ||
@@ -368,6 +369,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		// NullMove pruning
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
+			failedNMP = true
 			var R = 4 + min8(depthLeft/4, 3)
 			if eval >= beta+100 {
 				R += 1
@@ -723,6 +725,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 
 				if improving {
+					LMR -= 1
+				}
+
+				if failedNMP {
 					LMR -= 1
 				}
 
