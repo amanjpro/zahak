@@ -615,7 +615,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	}
 
 	// seeScores := movePicker.captureMoveList.Scores
-	// quietScores := movePicker.quietMoveList.Scores
+	quietScores := movePicker.quietMoveList.Scores
 	// var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
 	var seeScore int16
@@ -704,7 +704,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			if e.doPruning && (isQuiet || isCaptureMove && seeScore < 0) && depthLeft > 2 && legalMoves > lmrThreashold {
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
-					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
+					LMR -= int8(quietScores[quietMoves] / 10649) //12288)
 				} else {
 					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					if eval+move.CapturedPiece().Weight()+LMRCaptureMargin < beta {
