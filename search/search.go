@@ -507,60 +507,63 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// Singular Extension
 			var extension int8
 			if depthLeft >= 8 &&
-				hashmove == nHashMove &&
-				ttHit &&
-				e.skipMove == EmptyMove &&
-				nDepth >= depthLeft-3 &&
-				nType != UpperBound &&
+				e.skipMove == EmptyMove && // Avoid extending extension proving lines
 				!position.IsInCheck() && // Check moves are automatically extended
-				abs16(nEval) < WIN_IN_MAX &&
 				!isRootNode {
-
-				// ttMove has been made to check legality
-				position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
-
-				// Search to reduced depth with a zero window a bit lower than ttScore
-				threshold := max16(nEval-3*int16(depthLeft)/2, -CHECKMATE_EVAL)
-
-				e.skipMove = hashmove
-				e.skipHeight = searchHeight
-				e.innerLines[searchHeight].Recycle()
-				e.MovePickers[searchHeight] = e.TempMovePicker
-				score := e.alphaBeta((depthLeft-1)/2, searchHeight, threshold-1, threshold)
-				e.MovePickers[searchHeight] = movePicker
-				e.innerLines[searchHeight].Recycle()
-				e.skipMove = EmptyMove
-				e.skipHeight = MAX_DEPTH
-
-				// Extend as this move seems forced
-				if score < threshold {
+				if failedNMP && abs16(eval) < WIN_IN_MAX {
 					extension += 1
-				} else {
+				} else if hashmove == nHashMove &&
+					ttHit &&
+					nDepth >= depthLeft-3 &&
+					nType != UpperBound &&
+					abs16(nEval) < WIN_IN_MAX {
 
-					// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
-					if pruningAllowed {
-						if threshold >= beta {
-							return beta
-						} else if score >= beta {
-							e.skipHeight = searchHeight
-							e.skipMove = hashmove
-							e.innerLines[searchHeight].Recycle()
-							e.MovePickers[searchHeight] = e.TempMovePicker
-							score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
-							e.MovePickers[searchHeight] = movePicker
-							e.innerLines[searchHeight].Recycle()
-							e.skipMove = EmptyMove
-							e.skipHeight = MAX_DEPTH
+					// ttMove has been made to check legality
+					position.UnMakeMove(hashmove, oldTag, oldEnPassant, hc)
 
-							if score >= beta {
+					// Search to reduced depth with a zero window a bit lower than ttScore
+					threshold := max16(nEval-3*int16(depthLeft)/2, -CHECKMATE_EVAL)
+
+					e.skipMove = hashmove
+					e.skipHeight = searchHeight
+					e.innerLines[searchHeight].Recycle()
+					e.MovePickers[searchHeight] = e.TempMovePicker
+					score := e.alphaBeta((depthLeft-1)/2, searchHeight, threshold-1, threshold)
+					e.MovePickers[searchHeight] = movePicker
+					e.innerLines[searchHeight].Recycle()
+					e.skipMove = EmptyMove
+					e.skipHeight = MAX_DEPTH
+
+					// Extend as this move seems forced
+					if score < threshold {
+						extension += 1
+					} else {
+
+						// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
+						if pruningAllowed {
+							if threshold >= beta {
 								return beta
+							} else if score >= beta {
+								e.skipHeight = searchHeight
+								e.skipMove = hashmove
+								e.innerLines[searchHeight].Recycle()
+								e.MovePickers[searchHeight] = e.TempMovePicker
+								score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
+								e.MovePickers[searchHeight] = movePicker
+								e.innerLines[searchHeight].Recycle()
+								e.skipMove = EmptyMove
+								e.skipHeight = MAX_DEPTH
+
+								if score >= beta {
+									return beta
+								}
 							}
 						}
 					}
-				}
 
-				// Replay ttMove
-				position.MakeMove(hashmove)
+					// Replay ttMove
+					position.MakeMove(hashmove)
+				}
 			}
 
 			e.pred.Push(position.Hash())
