@@ -13,6 +13,14 @@ type MoveHistory struct {
 	tacticalHistory [6 * 64][6]int32
 }
 
+func (m *MoveHistory) GetHistory(gpMove Move, pMove Move, move Move, isTactical bool) int32 {
+	if isTactical {
+		return m.TacticalHistory(move)
+	} else {
+		return m.QuietHistory(gpMove, pMove, move)
+	}
+}
+
 func (m *MoveHistory) TacticalHistory(move Move) int32 {
 	tpe := int(move.MovingPiece().Type() - 1)
 	dest := int(move.Destination())
