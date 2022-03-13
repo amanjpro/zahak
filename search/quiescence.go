@@ -123,7 +123,7 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 			break
 		}
 
-		if !IsPromoting(move) && e.searchHistory.TacticalHistory(move) < -5128 {
+		if /* !IsPromoting(move) && */ e.searchHistory.TacticalHistory(move) < -6256 {
 			// margin := p + move.CapturedPiece().Weight()
 			// if standPat+margin <= alpha {
 			continue
