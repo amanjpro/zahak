@@ -671,7 +671,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			}
 
 			seeBound = -35 * int16(depthLeft)
-			if isQuiet && depthLeft < 7 && !isKiller {
+			if isQuiet && depthLeft < 10 && !isKiller {
 				seeScore = position.Board.SeeGe(move.Destination(), move.CapturedPiece(), move.Source(), move.MovingPiece(), seeBound)
 				if seeScore < seeBound {
 					continue // Quiet SEE
