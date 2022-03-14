@@ -663,14 +663,14 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 			// SEE pruning
 			seeBound := -50 * int16(depthLeft)
-			if isCaptureMove && depthLeft < 7 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
+			if isCaptureMove && depthLeft < 10 && eval <= alpha && abs16(alpha) < WIN_IN_MAX {
 				seeScore = int16(movePicker.captureSees[noisyMoves])
 				if seeScore < seeBound {
 					break
 				}
 			}
 
-			seeBound = -60 * int16(depthLeft)
+			seeBound = -50 * int16(depthLeft)
 			if isQuiet && depthLeft < 10 && !isKiller {
 				seeScore = position.Board.SeeGe(move.Destination(), move.CapturedPiece(), move.Source(), move.MovingPiece(), seeBound)
 				if seeScore < seeBound {
