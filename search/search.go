@@ -735,11 +735,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				if failedSingular {
-					LMR -= 1
-				}
-
-				if failedNMP {
+				if failedSingular || failedNMP {
 					LMR -= 1
 				}
 
