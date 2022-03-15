@@ -477,6 +477,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	legalNoisyMoves := 0
 	noisyMoves := -1
 	searchedAMove := false
+	var failedSingular bool
 	for true {
 		hashmove = movePicker.Next()
 		if hashmove == EmptyMove {
@@ -536,6 +537,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if score < threshold {
 					extension += 1
 				} else {
+					failedSingular = true
 
 					// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
 					if pruningAllowed {
@@ -730,6 +732,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 
 				if improving {
+					LMR -= 1
+				}
+
+				if failedSingular {
 					LMR -= 1
 				}
 
