@@ -721,12 +721,12 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if isKiller {
 					LMR -= 1
+				} else if hasNoisySingular {
+					LMR += 1
 				}
 
 				if isPvNode {
 					LMR -= 1
-				} else if hasNoisySingular {
-					LMR += 1
 				}
 
 				if improving {
