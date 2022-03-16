@@ -87,15 +87,15 @@ func (e *Engine) quiescence(alpha int16, beta int16, searchHeight int8) int16 {
 	bestscore := -CHECKMATE_EVAL + int16(searchHeight)
 	if !isInCheck {
 		bestscore = standPat
-	}
 
-	// Delta Pruning
-	if standPat+dynamicMargin(position) < alpha {
-		return alpha
-	}
+		// Delta Pruning
+		if standPat+dynamicMargin(position) < alpha {
+			return alpha
+		}
 
-	if alpha < standPat {
-		alpha = standPat
+		if alpha < standPat {
+			alpha = standPat
+		}
 	}
 
 	bestMove := EmptyMove
