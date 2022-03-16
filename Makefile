@@ -15,7 +15,7 @@ RM=rm -f engine/nn.go engine/nn_*.go
 
 MKDIR=mkdir -p bin
 MV=mv bin/zahak $(EXE)
-FLAGS=CC=cc CGO_ENABLED="1"
+FLAGS=CC=cc CGO_ENABLED="1" GOAMD64=v3
 ifeq ($(OS), Windows_NT)
 	RM=del engine\nn.go engine\nn_*.go
 	MKDIR=IF not exist bin (mkdir bin)
