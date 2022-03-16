@@ -725,6 +725,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if isPvNode {
 					LMR -= 1
+				} else if hasNoisySingular {
+					LMR += 1
 				}
 
 				if improving {
@@ -733,10 +735,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if failedNMP {
 					LMR -= 1
-				}
-
-				if hasNoisySingular {
-					LMR += 1
 				}
 
 				// Credit to Ofek Shochat
