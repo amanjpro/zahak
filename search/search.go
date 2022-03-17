@@ -608,7 +608,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	if isPvNode {
 		lmrThreashold += 1
 	}
-	fpMargin := eval + FPMargin*int16(depthLeft)
+	// fpMargin := eval + FPMargin*int16(depthLeft)
 	rangeReduction := 0
 	if eval-bestscore < RangeReductionMargin && depthLeft > 7 {
 		rangeReduction += 1
@@ -648,9 +648,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 		if e.doPruning && !isRootNode && bestscore > -WIN_IN_MAX {
 
-			if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
-				continue
-			}
+			// if depthLeft < 8 && isQuiet && !isKiller && fpMargin <= alpha && abs16(alpha) < WIN_IN_MAX {
+			// 	continue
+			// }
 
 			// Late Move Pruning
 			if isQuiet && depthLeft < 8 &&
