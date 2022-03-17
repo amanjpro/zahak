@@ -619,6 +619,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
 	var seeScore int16
+	noisyHash := ttHit && (nHashMove.IsCapture() || nHashMove.PromoType() != NoType)
 	for true {
 
 		if isRootNode && e.isMainThread && bestscore-e.score >= -20 && e.TimeManager().ShouldStop() {
@@ -715,6 +716,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if isInCheck {
 					LMR -= 1
+				}
+
+				if noisyHash {
+					LMR += 1
 				}
 
 				if isKiller {
