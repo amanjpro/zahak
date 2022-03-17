@@ -477,7 +477,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	legalNoisyMoves := 0
 	noisyMoves := -1
 	searchedAMove := false
-	var hasNoisySingular bool
+	var hasQuietSingular bool
 	for true {
 		hashmove = movePicker.Next()
 		if hashmove == EmptyMove {
@@ -535,7 +535,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// Extend as this move seems forced
 				if score < threshold {
-					hasNoisySingular = !isQuiet
+					hasQuietSingular = isQuiet
 					extension += 1
 				} else {
 
@@ -735,7 +735,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					LMR -= 1
 				}
 
-				if hasNoisySingular {
+				if hasQuietSingular {
 					LMR += 1
 				}
 
