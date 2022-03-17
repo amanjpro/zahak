@@ -707,6 +707,9 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
+					if noisyHash {
+						LMR += 1
+					}
 				} else {
 					LMR = int8(noisyLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					if eval+move.CapturedPiece().Weight()+LMRCaptureMargin < beta {
@@ -716,10 +719,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if isInCheck {
 					LMR -= 1
-				}
-
-				if noisyHash {
-					LMR += 1
 				}
 
 				if isKiller {
