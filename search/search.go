@@ -477,7 +477,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	legalNoisyMoves := 0
 	noisyMoves := -1
 	searchedAMove := false
-	var hasNoisySingular bool
+	var hasSingular bool
 	for true {
 		hashmove = movePicker.Next()
 		if hashmove == EmptyMove {
@@ -535,7 +535,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				// Extend as this move seems forced
 				if score < threshold {
-					hasNoisySingular = !isQuiet
+					hasSingular = true
 					extension += 1
 				} else {
 
@@ -709,7 +709,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				if isQuiet {
 					LMR = int8(quietLmrReductions[min8(31, depthLeft)][min(31, legalMoves)])
 					LMR -= int8(e.searchHistory.QuietHistory(gpMove, currentMove, move) / 10649) //12288)
-					if noisyHash {
+					if noisyHash || hasSingular {
 						LMR += 1
 					}
 				} else {
@@ -737,10 +737,6 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 				if failedNMP {
 					LMR -= 1
-				}
-
-				if hasNoisySingular {
-					LMR += 1
 				}
 
 				// Credit to Ofek Shochat
