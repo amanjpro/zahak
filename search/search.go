@@ -552,7 +552,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 							e.skipMove = EmptyMove
 							e.skipHeight = MAX_DEPTH
 
-							if score >= beta {
+							if score >= beta+20 {
 								return beta
 							}
 						}
