@@ -66,9 +66,9 @@ func initLMR(isQuiet bool) [32][32]int {
 	for depth := 1; depth < 32; depth++ {
 		for moves := 1; moves < 32; moves++ {
 			if isQuiet {
-				reductions[depth][moves] = int(0.6 + math.Log(float64(depth))*math.Log(2.5*float64(moves))/2.5)
+				reductions[depth][moves] = int(0.65 + math.Log(float64(depth))*math.Log(1.9*float64(moves))/2.5)
 			} else {
-				reductions[depth][moves] = int(math.Log(float64(depth)) * math.Log(1.8*float64(moves)) / 3.5)
+				reductions[depth][moves] = int(math.Log(float64(depth)) * math.Log(1.5*float64(moves)) / 3.5)
 			}
 		}
 	}
