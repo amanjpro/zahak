@@ -538,23 +538,21 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				} else {
 
 					// Multi-Cut, at least 2 moves beat beta, idea is taken from Stockfish
-					if pruningAllowed {
-						if threshold >= beta {
-							return beta
-						} else if score >= beta {
-							e.skipHeight = searchHeight
-							e.skipMove = hashmove
-							e.innerLines[searchHeight].Recycle()
-							e.MovePickers[searchHeight] = e.TempMovePicker
-							score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
-							e.MovePickers[searchHeight] = movePicker
-							e.innerLines[searchHeight].Recycle()
-							e.skipMove = EmptyMove
-							e.skipHeight = MAX_DEPTH
+					if threshold >= beta {
+						return beta
+					} else if score >= beta {
+						e.skipHeight = searchHeight
+						e.skipMove = hashmove
+						e.innerLines[searchHeight].Recycle()
+						e.MovePickers[searchHeight] = e.TempMovePicker
+						score = e.alphaBeta((depthLeft+3)/2, searchHeight, beta-1, beta)
+						e.MovePickers[searchHeight] = movePicker
+						e.innerLines[searchHeight].Recycle()
+						e.skipMove = EmptyMove
+						e.skipHeight = MAX_DEPTH
 
-							if score >= beta {
-								return beta
-							}
+						if score >= beta {
+							return beta
 						}
 					}
 				}
