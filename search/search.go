@@ -619,7 +619,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	var seeScore int16
 	for true {
 
-		if isRootNode && e.isMainThread && bestscore-e.score >= -20 && e.TimeManager().ShouldStop() {
+		if isRootNode && e.isMainThread && bestscore-e.score >= -40 && e.TimeManager().ShouldStop() {
 			e.stop = true
 			break
 		}
