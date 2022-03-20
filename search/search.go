@@ -336,7 +336,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 
 	e.searchHistory.ResetKillers(searchHeight + 1)
 	// Pruning
-	pruningAllowed := !isPvNode && !isInCheck && e.doPruning && !firstLayerOfSingularity
+	pruningAllowed := !isRootNode && !isInCheck && e.doPruning && !firstLayerOfSingularity
 
 	// Idea taken from Berserk
 	histDepth := depthLeft
