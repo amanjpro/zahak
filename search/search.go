@@ -371,7 +371,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
 			failedNMP = true
 			var R = 4 + min8(depthLeft/4, 3)
-			if eval >= beta+150 {
+			if eval >= beta+200 {
 				R += 1
 			}
 			R = min8(R, depthLeft)
