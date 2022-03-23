@@ -597,7 +597,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		}
 	}
 	d := int(depthLeft)
-	pruningThreashold := 2 + 2*d*d
+	pruningThreashold := 3 + 3*d*d/2
 	if !improving {
 		pruningThreashold = pruningThreashold / 2
 	}
