@@ -717,7 +717,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 				}
 
 				if e.lastNullMover == turn {
-					LMR -= 1
+					LMR += 1
 				}
 
 				if isInCheck {
