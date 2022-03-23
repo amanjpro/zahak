@@ -57,6 +57,7 @@ type Engine struct {
 	NoMoves         bool
 	tbHit           int64
 	stop            bool
+	lastNullMover   Color
 }
 
 const MaxMultiPV = 120
@@ -184,6 +185,7 @@ func (e *Engine) ClearForSearch() {
 
 	e.skipMove = EmptyMove
 	e.skipHeight = MAX_DEPTH
+	e.lastNullMover = NoColor
 
 	for i := 0; i < len(e.triedQuietMoves); i++ {
 		if e.triedQuietMoves[i] == nil {

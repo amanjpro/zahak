@@ -153,6 +153,7 @@ func (e *Engine) aspirationWindow(iterationDepth int8, mateFinderMode bool) {
 		e.NoMoves = false
 		for !e.NoMoves {
 			e.innerLines[i].Recycle()
+			e.lastNullMover = NoColor
 			if firstIteration {
 				score = e.Scores[i]
 				alpha = max16(score-initialWindow, -MAX_INT)
@@ -370,8 +371,8 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 		isNullMoveAllowed := currentMove != EmptyMove && !position.IsEndGame()
 		if isNullMoveAllowed && depthLeft >= 2 && eval > beta {
 			failedNMP = true
-			var R = 4 + min8(depthLeft/4, 3)
-			if eval >= beta+175 {
+			var R = 4 + min8(depthLeft/4, 2)
+			if eval >= beta+100 {
 				R += 1
 			}
 			R = min8(R, depthLeft)
@@ -380,10 +381,13 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 			// }
 			// if R >= 2 {
 			ep := position.MakeNullMove()
+			nmp := e.lastNullMover
 			e.pred.Push(position.Hash())
 			e.innerLines[searchHeight+1].Recycle()
 			e.positionMoves[searchHeight+1] = EmptyMove
+			e.lastNullMover = position.Turn()
 			score := -e.alphaBeta(depthLeft-R, searchHeight+1, -beta, -beta+1)
+			e.lastNullMover = nmp
 			e.pred.Pop()
 			position.UnMakeNullMove(ep)
 			if score >= beta {
@@ -617,6 +621,7 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 	// var historyThreashold int32 = int32(depthLeft) * -1024
 	var move Move
 	var seeScore int16
+	turn := position.Turn()
 	for true {
 
 		if isRootNode && e.isMainThread && bestscore-e.score >= -20 && e.TimeManager().ShouldStop() {
@@ -709,6 +714,10 @@ func (e *Engine) alphaBeta(depthLeft int8, searchHeight int8, alpha int16, beta 
 					if eval+move.CapturedPiece().Weight()+LMRCaptureMargin < beta {
 						LMR += 1
 					}
+				}
+
+				if e.lastNullMover == turn {
+					LMR -= 1
 				}
 
 				if isInCheck {
