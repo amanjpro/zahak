@@ -84,7 +84,7 @@ Zahak is in almost all major rating lists, here are the details:
 
 | **version** |   [**GRL 40/2 Rating**](http://rebel13.nl/history.html#57)   |     [**SPCC Rating**](https://www.sp-cc.de/index.htm)       |     [**BRUCE Rating**](https://e4e6.com/)      |  [**Fast GM 60+06**](http://fastgm.de/60-0.60.html) | [**Fast GM 10m+6s**](http://fastgm.de/10min.html) |
 |-------------|-------------------------|---------------------------|---------------------------|--------------------|--------------------|
-| 9.x         | 3244                    | 3273                      | 3283                      | N/A                | N/A                |
+| 9.x         | 3244                    | 3273                      | 3283                      | N/A                | 3138               |
 | 8.x         | 3140                    | N/A                       | 3169                      | N/A                | 3057               |
 | 7.x         | 2929                    | N/A                       | 2981                      | 2749               | N/A                |
 | 6.x         | 2785                    | N/A                       | 2841                      | 2584               | 2720               |
